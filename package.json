@@ -1,0 +1,28 @@
+{
+  "name": "automatisation-support",
+  "version": "1.0.0",
+  "description": "Backend service for automated customer support management: automated responses and AI-assisted ticket filling powered by SLM/LLM analysis.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "vitest --globals",
+    "test:run": "vitest run --globals"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/georgesabolin1/automatisation-support.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/georgesabolin1/automatisation-support/issues"
+  },
+  "homepage": "https://github.com/georgesabolin1/automatisation-support#readme",
+  "private": true,
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.5"
+  }
+}
