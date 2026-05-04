@@ -5,22 +5,29 @@
  *
  * Its responsibility is to coordinate the high-level processing steps:
  *
- * 1. Analyze the latest user message and produce a structured analysis.
- * 2. Produce an initial decision based on this structured analysis.
- * 3. Optionally retrieve a solution if the initial decision requires it.
- * 4. Refine the initial decision with the retrieval result if retrieval was used.
- * 5. Build a response plan for the user from the final decision.
- * 6. Finalize the output: user response, ticket patch, logs and debug data.
+ * 1. Analyze the latest user message with context and produce a structured analysis: message-analysis
+ *    INPUTS  - latestUserMessage, attachments, previousAnalysisOutput, conversationLogs, attemptHistory
+ *    OUTPUTS - currentAnalysisOutput
  *
- * Important:
- * This file should remain an orchestrator only.
- * Business logic must stay inside the dedicated modules:
- * - message-analysis
- * - decision-engine
- * - solution-retrieval
- * - decision-refinement
- * - response-planning
- * - output-finalizer
+ * 2. Apply deterministic rules to decide whether we should search for a solution in our database: searching-decision
+ *    INPUTS  - currentAnalysisOutput, conversationLogs, attemptHistory, userInformations
+ *    OUTPUTS - decisionSearchingSolution (true/false)
+ *
+ * 3. Retrieve a solution if the searching decision requires it: solution-retrieval
+ *    INPUTS  - decisionSearchingSolution, currentAnalysisOutput, conversationLogs, attemptHistory
+ *    OUTPUTS - possibleSolutions ("not_searched", "not_found", "solutions_found")
+ *
+ * 4. Apply decision rules to produce the automatic answer plan: response-decision
+ *    INPUTS  - currentAnalysisOutput, conversationLogs, attemptHistory, userInformations, possibleSolutions
+ *    OUTPUTS - responsePlan
+ *
+ * 5. Build a response for the user from the response plan and predefined templates: response-producer
+ *    INPUTS  - responsePlan
+ *    OUTPUTS - userResponse
+ *
+ * 6. Produce the data needed to update the ticket state: data-producer
+ *    INPUTS  - currentAnalysisOutput, conversationLogs, attemptHistory, userInformations, possibleSolutions, responsePlan
+ *    OUTPUTS - updatedDataTicket
  */
 
 /**
@@ -30,7 +37,6 @@
  * is missing, the error message clearly identifies which step still needs to be implemented.
  *
  * @param {string} stepName - Name of the missing pipeline step.
- *
  * @returns {Function}
  * A function that throws an explicit "not implemented" error.
  */
@@ -49,281 +55,122 @@ function createMissingStep(stepName) {
  * or Twake services.
  *
  * @param {Object} input - Full support processing input.
- * @param {Object} input.latestUserMessage - Latest user message to process.
- * @param {string} input.latestUserMessage.text - Latest user message text.
- * @param {string} [input.latestUserMessage.messageId] - Optional message identifier.
- * @param {string} [input.latestUserMessage.createdAt] - Optional message creation date.
+ * @param {Object|string} input.latestUserMessage - Latest user message to process.
  * @param {Array<Object>} [input.attachments] - Optional message attachments.
  * @param {Object|null} [input.previousAnalysisOutput] - Previous structured analysis if available.
  * @param {Array<Object>} [input.conversationLogs] - Conversation history.
  * @param {Array<Object>} [input.attemptHistory] - Previous actions attempted by the user or support system.
- * @param {Object|null} [input.userContext] - User metadata and context.
+ * @param {Object|null} [input.userInformations] - User metadata and context.
  *
  * @param {Object} [steps] - Optional injected pipeline steps, mainly used for tests.
+ * @param {Function} [steps.runMessageAnalysis] - Analyzes the latest message and its context.
+ * @param {Function} [steps.runSearchingDecision] - Decides whether the pipeline should search for a solution.
+ * @param {Function} [steps.runSolutionRetrieval] - Retrieves possible solutions when searchingSolution is true.
+ * @param {Function} [steps.runResponseDecision] - Applies decision rules to produce the response plan.
+ * @param {Function} [steps.produceResponse] - Builds the final text response from the response plan.
+ * @param {Function} [steps.produceTicketData] - Produces the ticket data update.
  *
- * @param {Function} [steps.runMessageAnalysis]
- * Analyzes the latest message and its context.
- *
- * Expected input:
- * {
- *   latestUserMessage,
- *   attachments,
- *   previousAnalysisOutput,
- *   conversationLogs,
- *   attemptHistory,
- * }
- *
- * Expected output:
- * {
- *   currentAnalysisOutput : MAJ de previousAnalysisOutput 
- * }
- *
- * @param {Function} [steps.runSupportDecisionEngine]
- * Produces the initial decision from the structured analysis.
- *
- * Expected input:
- * {
- *   supportAnalysisOutput,
- *   conversationLogs,
- *   attemptHistory,
- *   userContext
- * }
- *
- * Expected output:
- * {
- *   nextAction,
- *   responsePlanDraft,
- *   ticketPatchDraft,
- *   reason,
- *   debug
- * }
- *
- * Expected nextAction examples:
- * - ask_info
- * - retrieve_solution
- * - handover
- * - store_signal
- * - store_scope_boundary
- * - no_action_needed
- *
- * @param {Function} [steps.runSolutionRetrieval]
- * Retrieves a solution when the initial decision requires it.
- *
- * Expected input:
- * {
- *   initialDecision,
- *   supportAnalysisOutput,
- *   conversationLogs,
- *   attemptHistory,
- *   userContext
- * }
- *
- * Expected output:
- * {
- *   solutionFound,
- *   confidence,
- *   sources,
- *   suggestedSteps,
- *   evidencePackage,
- *   debug
- * }
- *
- * @param {Function} [steps.refineSupportDecision]
- * Refines the initial decision after optional solution retrieval.
- *
- * Expected input:
- * {
- *   initialDecision,
- *   retrievalResult,
- *   supportAnalysisOutput,
- *   userContext
- * }
- *
- * Expected output:
- * {
- *   nextAction,
- *   responsePlan,
- *   ticketPatch,
- *   reason,
- *   debug
- * }
- *
- * If no retrieval was required, this step can simply return a final decision
- * equivalent to the initial decision.
- *
- * @param {Function} [steps.buildResponsePlan]
- * Builds the response strategy and draft user response from the final decision.
- *
- * Expected input:
- * {
- *   finalDecision,
- *   retrievalResult,
- *   supportAnalysisOutput,
- *   userContext
- * }
- *
- * Expected output:
- * {
- *   userResponseDraft,
- *   responsePlan,
- *   ticketPatchDraft,
- *   debug
- * }
- *
- * @param {Function} [steps.finalizeSupportOutput]
- * Assembles the final standardized output.
- *
- * Expected input:
- * {
- *   messageAnalysisResult,
- *   initialDecision,
- *   retrievalResult,
- *   finalDecision,
- *   responseResult
- * }
- *
- * Expected output:
- * {
- *   userResponse,
- *   ticketPatch,
- *   logs,
- *   debug
- * }
- *
- * @returns {Object}
- * Final support processing output.
- *
- * Expected output:
- * {
- *   userResponse,
- *   ticketPatch,
- *   logs,
- *   debug
- * }
+ * @returns {Object} - Final support processing output including: userResponse, updatedDataTicket, dataCollectorProcessing.
  */
 function runSupportProcessingPipeline(input, steps = {}) {
   const pipelineSteps = {
     runMessageAnalysis:
       steps.runMessageAnalysis || createMissingStep("runMessageAnalysis"),
 
-    runSupportDecisionEngine:
-      steps.runSupportDecisionEngine || createMissingStep("runSupportDecisionEngine"),
+    runSearchingDecision:
+      steps.runSearchingDecision || createMissingStep("runSearchingDecision"),
 
     runSolutionRetrieval:
       steps.runSolutionRetrieval || createMissingStep("runSolutionRetrieval"),
 
-    refineSupportDecision:
-      steps.refineSupportDecision || createMissingStep("refineSupportDecision"),
+    runResponseDecision:
+      steps.runResponseDecision || createMissingStep("runResponseDecision"),
 
-    buildResponsePlan:
-      steps.buildResponsePlan || createMissingStep("buildResponsePlan"),
+    produceResponse:
+      steps.produceResponse || createMissingStep("produceResponse"),
 
-    finalizeSupportOutput:
-      steps.finalizeSupportOutput || createMissingStep("finalizeSupportOutput")
+    produceTicketData:
+      steps.produceTicketData || createMissingStep("produceTicketData")
   };
+
+  const dataCollectorProcessing = {};
 
   /**
    * Step 1: Message analysis
-   *
-   * Transforms the latest user message and its context into a normalized
-   * supportAnalysisOutput.
-   *
-   * This step may later involve spam detection, attachment analysis, LLM0
-   * lightweight routing, LLM1 full support analysis, schema validation and
-   * normalization.
    */
-  const messageAnalysisResult = pipelineSteps.runMessageAnalysis({
+  const currentAnalysisOutput = pipelineSteps.runMessageAnalysis({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     previousAnalysisOutput: input.previousAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
-    userContext: input.userContext
+    dataCollectorProcessing
   });
 
   /**
-   * Step 2: Initial decision
-   *
-   * Reads the structured support analysis and decides the next action before
-   * any optional solution retrieval.
+   * Step 2: Searching decision
    */
-  const initialDecision = pipelineSteps.runSupportDecisionEngine({
-    supportAnalysisOutput: messageAnalysisResult.supportAnalysisOutput,
+  const decisionSearchingSolution = pipelineSteps.runSearchingDecision({
+    currentAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
-    userContext: input.userContext
+    userInformations: input.userInformations,
+    dataCollectorProcessing
   });
 
   /**
-   * Step 3: Optional solution retrieval
-   *
-   * This step only runs when the initial decision explicitly asks for solution
-   * retrieval.
-   *
-   * The action name is intentionally business-oriented: "retrieve_solution".
-   * The fact that the implementation may use RAG/OpenRAG is an internal detail.
+   * Step 3: Solution retrieval
    */
-  let retrievalResult = null;
-
-  if (initialDecision.nextAction === "retrieve_solution") {
-    retrievalResult = pipelineSteps.runSolutionRetrieval({
-      initialDecision,
-      supportAnalysisOutput: messageAnalysisResult.supportAnalysisOutput,
-      conversationLogs: input.conversationLogs,
-      attemptHistory: input.attemptHistory,
-      userContext: input.userContext
-    });
-  }
-
-  /**
-   * Step 4: Decision refinement
-   *
-   * Converts the initial decision into a final decision.
-   *
-   * If retrieval was executed, this step uses the retrieval result to decide
-   * whether the system should answer directly, hand over, ask for more
-   * information, or keep another appropriate action.
-   *
-   * If retrieval was not executed, this step should mostly preserve the initial
-   * decision while converting it to the final decision contract.
-   */
-  const finalDecision = pipelineSteps.refineSupportDecision({
-    initialDecision,
-    retrievalResult,
-    supportAnalysisOutput: messageAnalysisResult.supportAnalysisOutput,
-    userContext: input.userContext
+  const possibleSolutions = pipelineSteps.runSolutionRetrieval({
+    decisionSearchingSolution,
+    currentAnalysisOutput,
+    conversationLogs: input.conversationLogs,
+    attemptHistory: input.attemptHistory,
+    userInformations: input.userInformations,
+    dataCollectorProcessing
   });
 
   /**
-   * Step 5: Response planning
-   *
-   * Builds the response plan from the final decision.
-   *
-   * This step should not decide whether a solution is reliable.
-   * That decision belongs to decision-refinement.
+   * Step 4: Response decision
    */
-  const responseResult = pipelineSteps.buildResponsePlan({
-    finalDecision,
-    retrievalResult,
-    supportAnalysisOutput: messageAnalysisResult.supportAnalysisOutput,
-    userContext: input.userContext
+  const responsePlan = pipelineSteps.runResponseDecision({
+    currentAnalysisOutput,
+    conversationLogs: input.conversationLogs,
+    attemptHistory: input.attemptHistory,
+    userInformations: input.userInformations,
+    possibleSolutions,
+    dataCollectorProcessing
   });
 
   /**
-   * Step 6: Output finalization
-   *
-   * Assembles the final standardized output.
-   *
-   * This step should not make new business decisions.
-   * It only packages the final user response, ticket patch, logs and debug data.
+   * Step 5: Response producer
    */
-  return pipelineSteps.finalizeSupportOutput({
-    messageAnalysisResult,
-    initialDecision,
-    retrievalResult,
-    finalDecision,
-    responseResult
+  const userResponse = pipelineSteps.produceResponse({
+    responsePlan,
+    currentAnalysisOutput,
+    possibleSolutions,
+    userInformations: input.userInformations,
+    dataCollectorProcessing
   });
+
+  /**
+   * Step 6: Data producer
+   */
+  const updatedDataTicket = pipelineSteps.produceTicketData({
+    currentAnalysisOutput,
+    conversationLogs: input.conversationLogs,
+    attemptHistory: input.attemptHistory,
+    userInformations: input.userInformations,
+    possibleSolutions,
+    responsePlan,
+    dataCollectorProcessing
+  });
+
+  return {
+    userResponse,
+    updatedDataTicket,
+    dataCollectorProcessing
+  };
 }
 
 module.exports = {
