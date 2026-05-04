@@ -113,6 +113,7 @@ function runSupportProcessingPipeline(input, steps = {}) {
    */
   const decisionSearchingSolution = pipelineSteps.runSearchingDecision({
     currentAnalysisOutput,
+    previousAnalysisOutput: input.previousAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,

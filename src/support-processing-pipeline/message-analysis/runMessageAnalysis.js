@@ -196,7 +196,7 @@ function runMessageAnalysis(input, steps = {}) {
       steps.assembleCurrentAnalysisOutput || createMissingStep("assembleCurrentAnalysisOutput")
   };
 
-  let decisionRoute = createInitialDecisionRoute();
+  let decisionRouteMessageAnalysis = createInitialDecisionRoute();
 
   /**
    * Step 1: Deterministic routing
@@ -209,18 +209,18 @@ function runMessageAnalysis(input, steps = {}) {
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
     dataCollectorProcessing: input.dataCollectorProcessing,
-    decisionRoute
+    decisionRouteMessageAnalysis: decisionRouteMessageAnalysis
   });
 
-  decisionRoute = updateDecisionRoute(decisionRoute, {
+  decisionRouteMessageAnalysis = updateDecisionRoute(decisionRouteMessageAnalysis, {
     shouldAnalyzeMessage:
-      deterministicRoutingResult.shouldAnalyzeMessage ?? decisionRoute.shouldAnalyzeMessage,
+      deterministicRoutingResult.shouldAnalyzeMessage ?? decisionRouteMessageAnalysis.shouldAnalyzeMessage,
 
     shouldRunAttachmentAnalysis:
-      deterministicRoutingResult.shouldRunAttachmentAnalysis ?? decisionRoute.shouldRunAttachmentAnalysis,
+      deterministicRoutingResult.shouldRunAttachmentAnalysis ?? decisionRouteMessageAnalysis.shouldRunAttachmentAnalysis,
 
     reason:
-      deterministicRoutingResult.reason ?? decisionRoute.reason
+      deterministicRoutingResult.reason ?? decisionRouteMessageAnalysis.reason
   });
 
   /**
@@ -237,7 +237,7 @@ function runMessageAnalysis(input, steps = {}) {
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
     dataCollectorProcessing: input.dataCollectorProcessing,
-    decisionRoute,
+    decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult
   });
 
@@ -252,20 +252,20 @@ function runMessageAnalysis(input, steps = {}) {
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
     dataCollectorProcessing: input.dataCollectorProcessing,
-    decisionRoute,
+    decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult,
     attachmentAnalysisResult
   });
 
-  decisionRoute = updateDecisionRoute(decisionRoute, {
+  decisionRouteMessageAnalysis = updateDecisionRoute(decisionRouteMessageAnalysis, {
     shouldRunPreAnalysis:
-      analysisRoutingResult.shouldRunPreAnalysis ?? decisionRoute.shouldRunPreAnalysis,
+      analysisRoutingResult.shouldRunPreAnalysis ?? decisionRouteMessageAnalysis.shouldRunPreAnalysis,
 
     shouldRunFullAnalysis:
-      analysisRoutingResult.shouldRunFullAnalysis ?? decisionRoute.shouldRunFullAnalysis,
+      analysisRoutingResult.shouldRunFullAnalysis ?? decisionRouteMessageAnalysis.shouldRunFullAnalysis,
 
     reason:
-      analysisRoutingResult.reason ?? decisionRoute.reason
+      analysisRoutingResult.reason ?? decisionRouteMessageAnalysis.reason
   });
 
   /**
@@ -282,18 +282,18 @@ function runMessageAnalysis(input, steps = {}) {
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
     dataCollectorProcessing: input.dataCollectorProcessing,
-    decisionRoute,
+    decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult,
     attachmentAnalysisResult,
     analysisRoutingResult
   });
 
-  decisionRoute = updateDecisionRoute(decisionRoute, {
+  decisionRouteMessageAnalysis = updateDecisionRoute(decisionRouteMessageAnalysis, {
     shouldRunFullAnalysis:
-      preAnalysisResult.shouldRunFullAnalysis ?? decisionRoute.shouldRunFullAnalysis,
+      preAnalysisResult.shouldRunFullAnalysis ?? decisionRouteMessageAnalysis.shouldRunFullAnalysis,
 
     reason:
-      preAnalysisResult.reason ?? decisionRoute.reason
+      preAnalysisResult.reason ?? decisionRouteMessageAnalysis.reason
   });
 
   /**
@@ -310,7 +310,7 @@ function runMessageAnalysis(input, steps = {}) {
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
     dataCollectorProcessing: input.dataCollectorProcessing,
-    decisionRoute,
+    decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult,
     attachmentAnalysisResult,
     analysisRoutingResult,
@@ -328,7 +328,7 @@ function runMessageAnalysis(input, steps = {}) {
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
     dataCollectorProcessing: input.dataCollectorProcessing,
-    decisionRoute,
+    decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult,
     attachmentAnalysisResult,
     analysisRoutingResult,
