@@ -91,6 +91,66 @@ function updateDecisionRoute(currentDecisionRoute, updates) {
 }
 
 /**
+ * Validates the minimum input/output contract of runMessageAnalysis.
+ *
+ * This validation is intentionally lightweight.
+ * It only checks the fields needed to safely run the local orchestrator.
+ *
+ * @param {Object} input - Message-analysis input.
+ * @returns {void}
+ */
+function assertValidMessageAnalysisInput(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new Error("runMessageAnalysis input must be an object");
+  }
+
+  const latestUserMessageIsValid =
+    typeof input.latestUserMessage === "string" ||
+    (
+      input.latestUserMessage &&
+      typeof input.latestUserMessage === "object" &&
+      !Array.isArray(input.latestUserMessage)
+    );
+
+  if (!latestUserMessageIsValid) {
+    throw new Error("latestUserMessage must be a string or an object");
+  }
+
+  if (input.attachments !== undefined && !Array.isArray(input.attachments)) {
+    throw new Error("attachments must be an array when provided");
+  }
+
+  if (input.conversationLogs !== undefined && !Array.isArray(input.conversationLogs)) {
+    throw new Error("conversationLogs must be an array when provided");
+  }
+
+  if (input.attemptHistory !== undefined && !Array.isArray(input.attemptHistory)) {
+    throw new Error("attemptHistory must be an array when provided");
+  }
+
+  if (
+    input.dataCollectorProcessing !== undefined &&
+    (
+      !input.dataCollectorProcessing ||
+      typeof input.dataCollectorProcessing !== "object" ||
+      Array.isArray(input.dataCollectorProcessing)
+    )
+  ) {
+    throw new Error("dataCollectorProcessing must be an object when provided");
+  }
+}
+
+function assertValidCurrentAnalysisOutput(currentAnalysisOutput) {
+  if (
+    !currentAnalysisOutput ||
+    typeof currentAnalysisOutput !== "object" ||
+    Array.isArray(currentAnalysisOutput)
+  ) {
+    throw new Error("currentAnalysisOutput must be an object");
+  }
+}
+
+/**
  * Runs the message-analysis block.
  *
  * @param {Object} input - Message-analysis input.
@@ -114,6 +174,8 @@ function updateDecisionRoute(currentDecisionRoute, updates) {
  * currentAnalysisOutput
  */
 function runMessageAnalysis(input, steps = {}) {
+  assertValidMessageAnalysisInput(input);
+  
   const messageAnalysisSteps = {
     runDeterministicRouting:
       steps.runDeterministicRouting || createMissingStep("runDeterministicRouting"),
@@ -273,6 +335,8 @@ function runMessageAnalysis(input, steps = {}) {
     preAnalysisResult,
     fullAnalysisResult
   });
+  
+  assertValidCurrentAnalysisOutput(currentAnalysisOutput);
 
   return currentAnalysisOutput;
 }
@@ -280,5 +344,7 @@ function runMessageAnalysis(input, steps = {}) {
 module.exports = {
   runMessageAnalysis,
   createInitialDecisionRoute,
-  updateDecisionRoute
+  updateDecisionRoute,
+  assertValidMessageAnalysisInput,
+  assertValidCurrentAnalysisOutput
 };
