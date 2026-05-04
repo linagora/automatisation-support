@@ -6,7 +6,7 @@
  * Its responsibility is to coordinate the high-level processing steps:
  *
  * 1. Analyze the latest user message with context and produce a structured analysis: message-analysis
- *    INPUTS  - latestUserMessage, attachments, previousAnalysisOutput, conversationLogs, attemptHistory
+ *    INPUTS  - latestUserMessage, attachments, previousAnalysisOutput, conversationLogs, attemptHistory, userInformation
  *    OUTPUTS - currentAnalysisOutput
  *
  * 2. Apply deterministic rules to decide whether we should search for a solution in our database: searching-decision
@@ -104,6 +104,7 @@ function runSupportProcessingPipeline(input, steps = {}) {
     previousAnalysisOutput: input.previousAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
+    userInformations: input.userInformations,
     dataCollectorProcessing
   });
 
