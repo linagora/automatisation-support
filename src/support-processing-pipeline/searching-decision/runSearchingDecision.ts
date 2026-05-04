@@ -49,15 +49,67 @@
  *    OUTPUTS - decisionSearchingSolution
  */
 
+type UnknownObject = Record<string, unknown>;
+
+type SearchingDecisionStep<TInput, TOutput> = (input: TInput) => TOutput;
+
+interface SearchingDecisionInput {
+  currentAnalysisOutput: UnknownObject;
+  previousAnalysisOutput?: UnknownObject | null;
+  conversationLogs?: UnknownObject[];
+  attemptHistory?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+  dataCollectorProcessing?: UnknownObject;
+}
+
+interface DecisionRouteSearchingDecision {
+  topicIsPresent: boolean | null;
+  shouldEvaluateSolutionLikelihood: boolean;
+  shouldEvaluateTopicQualification: boolean;
+  shouldEvaluateHelpfulness: boolean;
+  shouldCalculateFinalDecision: boolean;
+  stopReason: string | null;
+}
+
+interface TopicRoutingResult {
+  topicIsPresent?: boolean;
+  stopReason?: string | null;
+  [key: string]: unknown;
+}
+
+interface SolutionLikelihoodResult {
+  shouldEvaluateSolutionLikelihood?: boolean;
+  stopReason?: string | null;
+  [key: string]: unknown;
+}
+
+interface TopicsQualificationResult {
+  shouldEvaluateTopicQualification?: boolean;
+  stopReason?: string | null;
+  [key: string]: unknown;
+}
+
+interface HelpfulnessEvaluationResult {
+  shouldEvaluateHelpfulness?: boolean;
+  stopReason?: string | null;
+  [key: string]: unknown;
+}
+
+interface SearchingDecisionSteps {
+  runTopicRouting?: SearchingDecisionStep<UnknownObject, TopicRoutingResult>;
+  evaluateSolutionLikelihood?: SearchingDecisionStep<UnknownObject, SolutionLikelihoodResult>;
+  evaluateTopicQualification?: SearchingDecisionStep<UnknownObject, TopicsQualificationResult>;
+  evaluateHelpfulness?: SearchingDecisionStep<UnknownObject, HelpfulnessEvaluationResult>;
+  calculateSearchingDecision?: SearchingDecisionStep<UnknownObject, boolean>;
+}
+
 /**
  * Creates a placeholder function for searching-decision steps that are not implemented yet.
- *
- * @param {string} stepName - Name of the missing searching-decision step.
- * @returns {Function}
- * A function that throws an explicit "not implemented" error.
  */
-function createMissingStep(stepName) {
-  return function missingStep() {
+function createMissingStep<TInput, TOutput>(
+  stepName: string
+): SearchingDecisionStep<TInput, TOutput> {
+  return function missingStep(): never {
     throw new Error(`${stepName} is not implemented yet`);
   };
 }
@@ -66,10 +118,8 @@ function createMissingStep(stepName) {
  * Creates the initial decision route for the searching-decision flow.
  *
  * This object is updated progressively by each step.
- *
- * @returns {Object}
  */
-function createInitialSearchingDecisionRoute() {
+function createInitialSearchingDecisionRoute(): DecisionRouteSearchingDecision {
   return {
     topicIsPresent: null,
     shouldEvaluateSolutionLikelihood: true,
@@ -82,13 +132,11 @@ function createInitialSearchingDecisionRoute() {
 
 /**
  * Updates the searching-decision route without mutating the previous object.
- *
- * @param {Object} currentDecisionRoute - Current decision route.
- * @param {Object} updates - Fields to update.
- * @returns {Object}
- * Updated decision route.
  */
-function updateSearchingDecisionRoute(currentDecisionRoute, updates) {
+function updateSearchingDecisionRoute(
+  currentDecisionRoute: DecisionRouteSearchingDecision,
+  updates: Partial<DecisionRouteSearchingDecision>
+): DecisionRouteSearchingDecision {
   return {
     ...currentDecisionRoute,
     ...updates
@@ -100,59 +148,66 @@ function updateSearchingDecisionRoute(currentDecisionRoute, updates) {
  *
  * This validation is intentionally lightweight.
  * It only checks the fields needed to safely run the local orchestrator.
- *
- * @param {Object} input - Searching-decision input.
- * @returns {void}
  */
-function assertValidSearchingDecisionInput(input) {
+function assertValidSearchingDecisionInput(
+  input: unknown
+): asserts input is SearchingDecisionInput {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throw new Error("runSearchingDecision input must be an object");
   }
 
+  const searchingDecisionInput = input as Partial<SearchingDecisionInput>;
+
   if (
-    !input.currentAnalysisOutput ||
-    typeof input.currentAnalysisOutput !== "object" ||
-    Array.isArray(input.currentAnalysisOutput)
+    !searchingDecisionInput.currentAnalysisOutput ||
+    typeof searchingDecisionInput.currentAnalysisOutput !== "object" ||
+    Array.isArray(searchingDecisionInput.currentAnalysisOutput)
   ) {
     throw new Error("currentAnalysisOutput must be an object");
   }
 
   if (
-    input.previousAnalysisOutput !== undefined &&
-    input.previousAnalysisOutput !== null &&
+    searchingDecisionInput.previousAnalysisOutput !== undefined &&
+    searchingDecisionInput.previousAnalysisOutput !== null &&
     (
-      typeof input.previousAnalysisOutput !== "object" ||
-      Array.isArray(input.previousAnalysisOutput)
+      typeof searchingDecisionInput.previousAnalysisOutput !== "object" ||
+      Array.isArray(searchingDecisionInput.previousAnalysisOutput)
     )
   ) {
     throw new Error("previousAnalysisOutput must be an object or null when provided");
   }
 
-  if (input.conversationLogs !== undefined && !Array.isArray(input.conversationLogs)) {
+  if (
+    searchingDecisionInput.conversationLogs !== undefined &&
+    !Array.isArray(searchingDecisionInput.conversationLogs)
+  ) {
     throw new Error("conversationLogs must be an array when provided");
   }
 
-  if (input.attemptHistory !== undefined && !Array.isArray(input.attemptHistory)) {
+  if (
+    searchingDecisionInput.attemptHistory !== undefined &&
+    !Array.isArray(searchingDecisionInput.attemptHistory)
+  ) {
     throw new Error("attemptHistory must be an array when provided");
   }
 
   if (
-    input.userInformations !== undefined &&
-    input.userInformations !== null &&
+    searchingDecisionInput.userInformations !== undefined &&
+    searchingDecisionInput.userInformations !== null &&
     (
-      typeof input.userInformations !== "object" ||
-      Array.isArray(input.userInformations)
+      typeof searchingDecisionInput.userInformations !== "object" ||
+      Array.isArray(searchingDecisionInput.userInformations)
     )
   ) {
     throw new Error("userInformations must be an object or null when provided");
   }
 
   if (
-    input.dataCollectorProcessing !== undefined &&
+    searchingDecisionInput.dataCollectorProcessing !== undefined &&
     (
-      !input.dataCollectorProcessing ||
-      typeof input.dataCollectorProcessing !== "object" ||
-      Array.isArray(input.dataCollectorProcessing)
+      !searchingDecisionInput.dataCollectorProcessing ||
+      typeof searchingDecisionInput.dataCollectorProcessing !== "object" ||
+      Array.isArray(searchingDecisionInput.dataCollectorProcessing)
     )
   ) {
     throw new Error("dataCollectorProcessing must be an object when provided");
@@ -161,11 +216,10 @@ function assertValidSearchingDecisionInput(input) {
 
 /**
  * Validates the output contract of runSearchingDecision.
- *
- * @param {boolean} decisionSearchingSolution - Final searching decision.
- * @returns {void}
  */
-function assertValidDecisionSearchingSolution(decisionSearchingSolution) {
+function assertValidDecisionSearchingSolution(
+  decisionSearchingSolution: unknown
+): asserts decisionSearchingSolution is boolean {
   if (typeof decisionSearchingSolution !== "boolean") {
     throw new Error("decisionSearchingSolution must be a boolean");
   }
@@ -173,43 +227,33 @@ function assertValidDecisionSearchingSolution(decisionSearchingSolution) {
 
 /**
  * Runs the searching-decision block.
- *
- * @param {Object} input - Searching-decision input.
- * @param {Object} input.currentAnalysisOutput - Current structured analysis.
- * @param {Object|null} [input.previousAnalysisOutput] - Previous structured analysis if available.
- * @param {Array<Object>} [input.conversationLogs] - Conversation history.
- * @param {Array<Object>} [input.attemptHistory] - Previous actions attempted by the user or support system.
- * @param {Object|null} [input.userInformations] - User metadata and context.
- * @param {Object} [input.dataCollectorProcessing] - Open object used to collect useful processing data.
- *
- * @param {Object} [steps] - Optional injected searching-decision steps, mainly used for tests.
- * @param {Function} [steps.runTopicRouting] - Checks if at least one exploitable support topic is present.
- * @param {Function} [steps.evaluateSolutionLikelihood] - Evaluates if solutions are likely to exist.
- * @param {Function} [steps.evaluateTopicQualification] - Evaluates if topics are sufficiently qualified.
- * @param {Function} [steps.evaluateHelpfulness] - Evaluates if searching is likely to help the user.
- * @param {Function} [steps.calculateSearchingDecision] - Combines evaluations into the final boolean decision.
- *
- * @returns {boolean}
- * decisionSearchingSolution
  */
-ffunction runSearchingDecision(input, steps = {}) {
+function runSearchingDecision(
+  input: SearchingDecisionInput,
+  steps: SearchingDecisionSteps = {}
+): boolean {
   assertValidSearchingDecisionInput(input);
 
-  const searchingDecisionSteps = {
+  const searchingDecisionSteps: Required<SearchingDecisionSteps> = {
     runTopicRouting:
-      steps.runTopicRouting || createMissingStep("runTopicRouting"),
+      steps.runTopicRouting ||
+      createMissingStep<UnknownObject, TopicRoutingResult>("runTopicRouting"),
 
     evaluateSolutionLikelihood:
-      steps.evaluateSolutionLikelihood || createMissingStep("evaluateSolutionLikelihood"),
+      steps.evaluateSolutionLikelihood ||
+      createMissingStep<UnknownObject, SolutionLikelihoodResult>("evaluateSolutionLikelihood"),
 
     evaluateTopicQualification:
-      steps.evaluateTopicQualification || createMissingStep("evaluateTopicQualification"),
+      steps.evaluateTopicQualification ||
+      createMissingStep<UnknownObject, TopicsQualificationResult>("evaluateTopicQualification"),
 
     evaluateHelpfulness:
-      steps.evaluateHelpfulness || createMissingStep("evaluateHelpfulness"),
+      steps.evaluateHelpfulness ||
+      createMissingStep<UnknownObject, HelpfulnessEvaluationResult>("evaluateHelpfulness"),
 
     calculateSearchingDecision:
-      steps.calculateSearchingDecision || createMissingStep("calculateSearchingDecision")
+      steps.calculateSearchingDecision ||
+      createMissingStep<UnknownObject, boolean>("calculateSearchingDecision")
   };
 
   let decisionRouteSearchingDecision = createInitialSearchingDecisionRoute();
@@ -231,10 +275,12 @@ ffunction runSearchingDecision(input, steps = {}) {
 
   decisionRouteSearchingDecision = updateSearchingDecisionRoute(decisionRouteSearchingDecision, {
     topicIsPresent:
-      topicRoutingResult.topicIsPresent ?? decisionRouteSearchingDecision.topicIsPresent,
+      topicRoutingResult.topicIsPresent ??
+      decisionRouteSearchingDecision.topicIsPresent,
 
     stopReason:
-      topicRoutingResult.stopReason ?? decisionRouteSearchingDecision.stopReason
+      topicRoutingResult.stopReason ??
+      decisionRouteSearchingDecision.stopReason
   });
 
   /**
@@ -260,7 +306,8 @@ ffunction runSearchingDecision(input, steps = {}) {
       decisionRouteSearchingDecision.shouldEvaluateSolutionLikelihood,
 
     stopReason:
-      solutionLikelihoodResult.stopReason ?? decisionRouteSearchingDecision.stopReason
+      solutionLikelihoodResult.stopReason ??
+      decisionRouteSearchingDecision.stopReason
   });
 
   /**
@@ -287,7 +334,8 @@ ffunction runSearchingDecision(input, steps = {}) {
       decisionRouteSearchingDecision.shouldEvaluateTopicQualification,
 
     stopReason:
-      topicsQualificationResult.stopReason ?? decisionRouteSearchingDecision.stopReason
+      topicsQualificationResult.stopReason ??
+      decisionRouteSearchingDecision.stopReason
   });
 
   /**
@@ -315,7 +363,8 @@ ffunction runSearchingDecision(input, steps = {}) {
       decisionRouteSearchingDecision.shouldEvaluateHelpfulness,
 
     stopReason:
-      helpfulnessEvaluationResult.stopReason ?? decisionRouteSearchingDecision.stopReason
+      helpfulnessEvaluationResult.stopReason ??
+      decisionRouteSearchingDecision.stopReason
   });
 
   /**
@@ -343,10 +392,20 @@ ffunction runSearchingDecision(input, steps = {}) {
   return decisionSearchingSolution;
 }
 
-module.exports = {
+export {
   runSearchingDecision,
   createInitialSearchingDecisionRoute,
   updateSearchingDecisionRoute,
   assertValidSearchingDecisionInput,
   assertValidDecisionSearchingSolution
+};
+
+export type {
+  SearchingDecisionInput,
+  SearchingDecisionSteps,
+  DecisionRouteSearchingDecision,
+  TopicRoutingResult,
+  SolutionLikelihoodResult,
+  TopicsQualificationResult,
+  HelpfulnessEvaluationResult
 };

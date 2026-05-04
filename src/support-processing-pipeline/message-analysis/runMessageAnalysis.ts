@@ -45,15 +45,62 @@
  *    OUTPUTS - currentAnalysisOutput
  */
 
+type UnknownObject = Record<string, unknown>;
+
+type MessageAnalysisStep<TInput, TOutput> = (input: TInput) => TOutput;
+
+interface MessageAnalysisInput {
+  latestUserMessage: string | UnknownObject;
+  attachments?: UnknownObject[];
+  previousAnalysisOutput?: UnknownObject | null;
+  conversationLogs?: UnknownObject[];
+  attemptHistory?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+  dataCollectorProcessing?: UnknownObject;
+}
+
+interface DecisionRouteMessageAnalysis {
+  shouldAnalyzeMessage: boolean;
+  shouldRunAttachmentAnalysis: boolean;
+  shouldRunPreAnalysis: boolean;
+  shouldRunFullAnalysis: boolean;
+  reason: string | null;
+}
+
+interface DeterministicRoutingResult {
+  shouldAnalyzeMessage?: boolean;
+  shouldRunAttachmentAnalysis?: boolean;
+  reason?: string | null;
+  [key: string]: unknown;
+}
+
+interface AnalysisRoutingResult {
+  shouldRunPreAnalysis?: boolean;
+  shouldRunFullAnalysis?: boolean;
+  reason?: string | null;
+  [key: string]: unknown;
+}
+
+interface PreAnalysisResult {
+  shouldRunFullAnalysis?: boolean;
+  reason?: string | null;
+  [key: string]: unknown;
+}
+
+interface MessageAnalysisSteps {
+  runDeterministicRouting?: MessageAnalysisStep<UnknownObject, DeterministicRoutingResult>;
+  runAttachmentAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  runAnalysisRouting?: MessageAnalysisStep<UnknownObject, AnalysisRoutingResult>;
+  runPreAnalysis?: MessageAnalysisStep<UnknownObject, PreAnalysisResult>;
+  runFullAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  assembleCurrentAnalysisOutput?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+}
+
 /**
  * Creates a placeholder function for message-analysis steps that are not implemented yet.
- *
- * @param {string} stepName - Name of the missing message-analysis step.
- * @returns {Function}
- * A function that throws an explicit "not implemented" error.
  */
-function createMissingStep(stepName) {
-  return function missingStep() {
+function createMissingStep<TInput, TOutput>(stepName: string): MessageAnalysisStep<TInput, TOutput> {
+  return function missingStep(): never {
     throw new Error(`${stepName} is not implemented yet`);
   };
 }
@@ -62,10 +109,8 @@ function createMissingStep(stepName) {
  * Creates the initial decision route for the message-analysis flow.
  *
  * This object is updated progressively by each step.
- *
- * @returns {Object}
  */
-function createInitialDecisionRoute() {
+function createInitialDecisionRoute(): DecisionRouteMessageAnalysis {
   return {
     shouldAnalyzeMessage: true,
     shouldRunAttachmentAnalysis: false,
@@ -77,13 +122,11 @@ function createInitialDecisionRoute() {
 
 /**
  * Updates the decision route without mutating the previous object.
- *
- * @param {Object} currentDecisionRoute - Current decision route.
- * @param {Object} updates - Fields to update.
- * @returns {Object}
- * Updated decision route.
  */
-function updateDecisionRoute(currentDecisionRoute, updates) {
+function updateDecisionRoute(
+  currentDecisionRoute: DecisionRouteMessageAnalysis,
+  updates: Partial<DecisionRouteMessageAnalysis>
+): DecisionRouteMessageAnalysis {
   return {
     ...currentDecisionRoute,
     ...updates
@@ -95,52 +138,62 @@ function updateDecisionRoute(currentDecisionRoute, updates) {
  *
  * This validation is intentionally lightweight.
  * It only checks the fields needed to safely run the local orchestrator.
- *
- * @param {Object} input - Message-analysis input.
- * @returns {void}
  */
-function assertValidMessageAnalysisInput(input) {
+function assertValidMessageAnalysisInput(input: unknown): asserts input is MessageAnalysisInput {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throw new Error("runMessageAnalysis input must be an object");
   }
 
+  const messageAnalysisInput = input as Partial<MessageAnalysisInput>;
+
   const latestUserMessageIsValid =
-    typeof input.latestUserMessage === "string" ||
+    typeof messageAnalysisInput.latestUserMessage === "string" ||
     (
-      input.latestUserMessage &&
-      typeof input.latestUserMessage === "object" &&
-      !Array.isArray(input.latestUserMessage)
+      messageAnalysisInput.latestUserMessage !== null &&
+      typeof messageAnalysisInput.latestUserMessage === "object" &&
+      !Array.isArray(messageAnalysisInput.latestUserMessage)
     );
 
   if (!latestUserMessageIsValid) {
     throw new Error("latestUserMessage must be a string or an object");
   }
 
-  if (input.attachments !== undefined && !Array.isArray(input.attachments)) {
+  if (
+    messageAnalysisInput.attachments !== undefined &&
+    !Array.isArray(messageAnalysisInput.attachments)
+  ) {
     throw new Error("attachments must be an array when provided");
   }
 
-  if (input.conversationLogs !== undefined && !Array.isArray(input.conversationLogs)) {
+  if (
+    messageAnalysisInput.conversationLogs !== undefined &&
+    !Array.isArray(messageAnalysisInput.conversationLogs)
+  ) {
     throw new Error("conversationLogs must be an array when provided");
   }
 
-  if (input.attemptHistory !== undefined && !Array.isArray(input.attemptHistory)) {
+  if (
+    messageAnalysisInput.attemptHistory !== undefined &&
+    !Array.isArray(messageAnalysisInput.attemptHistory)
+  ) {
     throw new Error("attemptHistory must be an array when provided");
   }
 
   if (
-    input.dataCollectorProcessing !== undefined &&
+    messageAnalysisInput.dataCollectorProcessing !== undefined &&
     (
-      !input.dataCollectorProcessing ||
-      typeof input.dataCollectorProcessing !== "object" ||
-      Array.isArray(input.dataCollectorProcessing)
+      !messageAnalysisInput.dataCollectorProcessing ||
+      typeof messageAnalysisInput.dataCollectorProcessing !== "object" ||
+      Array.isArray(messageAnalysisInput.dataCollectorProcessing)
     )
   ) {
     throw new Error("dataCollectorProcessing must be an object when provided");
   }
 }
 
-function assertValidCurrentAnalysisOutput(currentAnalysisOutput) {
+function assertValidCurrentAnalysisOutput(
+  currentAnalysisOutput: unknown
+): asserts currentAnalysisOutput is UnknownObject {
   if (
     !currentAnalysisOutput ||
     typeof currentAnalysisOutput !== "object" ||
@@ -152,48 +205,37 @@ function assertValidCurrentAnalysisOutput(currentAnalysisOutput) {
 
 /**
  * Runs the message-analysis block.
- *
- * @param {Object} input - Message-analysis input.
- * @param {Object|string} input.latestUserMessage - Latest user message to analyze.
- * @param {Array<Object>} [input.attachments] - Optional message attachments.
- * @param {Object|null} [input.previousAnalysisOutput] - Previous structured analysis if available.
- * @param {Array<Object>} [input.conversationLogs] - Conversation history.
- * @param {Array<Object>} [input.attemptHistory] - Previous actions attempted by the user or support system.
- * @param {Object|null} [input.userInformations] - User metadata and context.
- * @param {Object} [input.dataCollectorProcessing] - Open object used to collect useful processing data.
- *
- * @param {Object} [steps] - Optional injected message-analysis steps, mainly used for tests.
- * @param {Function} [steps.runDeterministicRouting] - Detects obvious spam, abuse, empty or out-of-scope cases.
- * @param {Function} [steps.runAttachmentAnalysis] - Analyzes attachments if needed.
- * @param {Function} [steps.runAnalysisRouting] - Decides which analysis path should be used.
- * @param {Function} [steps.runPreAnalysis] - Runs lightweight pre-analysis if needed.
- * @param {Function} [steps.runFullAnalysis] - Runs full support analysis if needed.
- * @param {Function} [steps.assembleCurrentAnalysisOutput] - Builds the final currentAnalysisOutput.
- *
- * @returns {Object}
- * currentAnalysisOutput
  */
-function runMessageAnalysis(input, steps = {}) {
+function runMessageAnalysis(
+  input: MessageAnalysisInput,
+  steps: MessageAnalysisSteps = {}
+): UnknownObject {
   assertValidMessageAnalysisInput(input);
-  
-  const messageAnalysisSteps = {
+
+  const messageAnalysisSteps: Required<MessageAnalysisSteps> = {
     runDeterministicRouting:
-      steps.runDeterministicRouting || createMissingStep("runDeterministicRouting"),
+      steps.runDeterministicRouting ||
+      createMissingStep<UnknownObject, DeterministicRoutingResult>("runDeterministicRouting"),
 
     runAttachmentAnalysis:
-      steps.runAttachmentAnalysis || createMissingStep("runAttachmentAnalysis"),
+      steps.runAttachmentAnalysis ||
+      createMissingStep<UnknownObject, UnknownObject>("runAttachmentAnalysis"),
 
     runAnalysisRouting:
-      steps.runAnalysisRouting || createMissingStep("runAnalysisRouting"),
+      steps.runAnalysisRouting ||
+      createMissingStep<UnknownObject, AnalysisRoutingResult>("runAnalysisRouting"),
 
     runPreAnalysis:
-      steps.runPreAnalysis || createMissingStep("runPreAnalysis"),
+      steps.runPreAnalysis ||
+      createMissingStep<UnknownObject, PreAnalysisResult>("runPreAnalysis"),
 
     runFullAnalysis:
-      steps.runFullAnalysis || createMissingStep("runFullAnalysis"),
+      steps.runFullAnalysis ||
+      createMissingStep<UnknownObject, UnknownObject>("runFullAnalysis"),
 
     assembleCurrentAnalysisOutput:
-      steps.assembleCurrentAnalysisOutput || createMissingStep("assembleCurrentAnalysisOutput")
+      steps.assembleCurrentAnalysisOutput ||
+      createMissingStep<UnknownObject, UnknownObject>("assembleCurrentAnalysisOutput")
   };
 
   let decisionRouteMessageAnalysis = createInitialDecisionRoute();
@@ -209,18 +251,21 @@ function runMessageAnalysis(input, steps = {}) {
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
     dataCollectorProcessing: input.dataCollectorProcessing,
-    decisionRouteMessageAnalysis: decisionRouteMessageAnalysis
+    decisionRouteMessageAnalysis
   });
 
   decisionRouteMessageAnalysis = updateDecisionRoute(decisionRouteMessageAnalysis, {
     shouldAnalyzeMessage:
-      deterministicRoutingResult.shouldAnalyzeMessage ?? decisionRouteMessageAnalysis.shouldAnalyzeMessage,
+      deterministicRoutingResult.shouldAnalyzeMessage ??
+      decisionRouteMessageAnalysis.shouldAnalyzeMessage,
 
     shouldRunAttachmentAnalysis:
-      deterministicRoutingResult.shouldRunAttachmentAnalysis ?? decisionRouteMessageAnalysis.shouldRunAttachmentAnalysis,
+      deterministicRoutingResult.shouldRunAttachmentAnalysis ??
+      decisionRouteMessageAnalysis.shouldRunAttachmentAnalysis,
 
     reason:
-      deterministicRoutingResult.reason ?? decisionRouteMessageAnalysis.reason
+      deterministicRoutingResult.reason ??
+      decisionRouteMessageAnalysis.reason
   });
 
   /**
@@ -259,13 +304,16 @@ function runMessageAnalysis(input, steps = {}) {
 
   decisionRouteMessageAnalysis = updateDecisionRoute(decisionRouteMessageAnalysis, {
     shouldRunPreAnalysis:
-      analysisRoutingResult.shouldRunPreAnalysis ?? decisionRouteMessageAnalysis.shouldRunPreAnalysis,
+      analysisRoutingResult.shouldRunPreAnalysis ??
+      decisionRouteMessageAnalysis.shouldRunPreAnalysis,
 
     shouldRunFullAnalysis:
-      analysisRoutingResult.shouldRunFullAnalysis ?? decisionRouteMessageAnalysis.shouldRunFullAnalysis,
+      analysisRoutingResult.shouldRunFullAnalysis ??
+      decisionRouteMessageAnalysis.shouldRunFullAnalysis,
 
     reason:
-      analysisRoutingResult.reason ?? decisionRouteMessageAnalysis.reason
+      analysisRoutingResult.reason ??
+      decisionRouteMessageAnalysis.reason
   });
 
   /**
@@ -290,10 +338,12 @@ function runMessageAnalysis(input, steps = {}) {
 
   decisionRouteMessageAnalysis = updateDecisionRoute(decisionRouteMessageAnalysis, {
     shouldRunFullAnalysis:
-      preAnalysisResult.shouldRunFullAnalysis ?? decisionRouteMessageAnalysis.shouldRunFullAnalysis,
+      preAnalysisResult.shouldRunFullAnalysis ??
+      decisionRouteMessageAnalysis.shouldRunFullAnalysis,
 
     reason:
-      preAnalysisResult.reason ?? decisionRouteMessageAnalysis.reason
+      preAnalysisResult.reason ??
+      decisionRouteMessageAnalysis.reason
   });
 
   /**
@@ -335,16 +385,25 @@ function runMessageAnalysis(input, steps = {}) {
     preAnalysisResult,
     fullAnalysisResult
   });
-  
+
   assertValidCurrentAnalysisOutput(currentAnalysisOutput);
 
   return currentAnalysisOutput;
 }
 
-module.exports = {
+export {
   runMessageAnalysis,
   createInitialDecisionRoute,
   updateDecisionRoute,
   assertValidMessageAnalysisInput,
   assertValidCurrentAnalysisOutput
+};
+
+export type {
+  MessageAnalysisInput,
+  MessageAnalysisSteps,
+  DecisionRouteMessageAnalysis,
+  DeterministicRoutingResult,
+  AnalysisRoutingResult,
+  PreAnalysisResult
 };

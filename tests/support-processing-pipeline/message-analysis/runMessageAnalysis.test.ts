@@ -1,6 +1,6 @@
-const {
+import {
   runMessageAnalysis
-} = require("../../../src/support-processing-pipeline/message-analysis/runMessageAnalysis");
+} from "../../../src/support-processing-pipeline/message-analysis/runMessageAnalysis";
 
 describe("runMessageAnalysis", function () {
   it("runs all message-analysis steps and returns currentAnalysisOutput", function () {
@@ -23,10 +23,10 @@ describe("runMessageAnalysis", function () {
       dataCollectorProcessing: {}
     };
 
-    const callOrder = [];
+    const callOrder: string[] = [];
 
     const steps = {
-      runDeterministicRouting: function ({ decisionRoute, dataCollectorProcessing }) {
+      runDeterministicRouting: function ({ dataCollectorProcessing }: any) {
         callOrder.push("deterministic-routing");
 
         dataCollectorProcessing.deterministicRoutingCalled = true;
@@ -38,7 +38,7 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      runAttachmentAnalysis: function ({ decisionRoute, dataCollectorProcessing }) {
+      runAttachmentAnalysis: function ({ decisionRoute, dataCollectorProcessing }: any) {
         callOrder.push("attachment-analysis");
 
         dataCollectorProcessing.attachmentAnalysisCalled = true;
@@ -49,7 +49,7 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      runAnalysisRouting: function ({ decisionRoute, dataCollectorProcessing }) {
+      runAnalysisRouting: function ({ dataCollectorProcessing }: any) {
         callOrder.push("analysis-routing");
 
         dataCollectorProcessing.analysisRoutingCalled = true;
@@ -61,7 +61,7 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      runPreAnalysis: function ({ decisionRoute, dataCollectorProcessing }) {
+      runPreAnalysis: function ({ dataCollectorProcessing }: any) {
         callOrder.push("pre-analysis");
 
         dataCollectorProcessing.preAnalysisCalled = true;
@@ -73,7 +73,7 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      runFullAnalysis: function ({ decisionRoute, dataCollectorProcessing }) {
+      runFullAnalysis: function ({ dataCollectorProcessing }: any) {
         callOrder.push("full-analysis");
 
         dataCollectorProcessing.fullAnalysisCalled = true;
@@ -97,7 +97,7 @@ describe("runMessageAnalysis", function () {
         preAnalysisResult,
         fullAnalysisResult,
         dataCollectorProcessing
-      }) {
+      }: any) {
         callOrder.push("analysis-assembler");
 
         dataCollectorProcessing.analysisAssemblerCalled = true;

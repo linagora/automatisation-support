@@ -1,6 +1,6 @@
-const {
+import {
   runSupportProcessingPipeline
-} = require("../../src/support-processing-pipeline/runSupportProcessingPipeline");
+} from "../../src/support-processing-pipeline/runSupportProcessingPipeline";
 
 describe("runSupportProcessingPipeline", function () {
   it("runs all pipeline steps and returns the final output", function () {

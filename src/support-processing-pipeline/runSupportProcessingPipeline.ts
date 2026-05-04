@@ -6,7 +6,7 @@
  * Its responsibility is to coordinate the high-level processing steps:
  *
  * 1. Analyze the latest user message with context and produce a structured analysis: message-analysis
- *    INPUTS  - latestUserMessage, attachments, previousAnalysisOutput, conversationLogs, attemptHistory, userInformation
+ *    INPUTS  - latestUserMessage, attachments, previousAnalysisOutput, conversationLogs, attemptHistory, userInformations
  *    OUTPUTS - currentAnalysisOutput
  *
  * 2. Apply deterministic rules to decide whether we should search for a solution in our database: searching-decision
@@ -30,18 +30,97 @@
  *    OUTPUTS - updatedDataTicket
  */
 
+type UnknownObject = Record<string, unknown>;
+
+type PipelineStep<TInput, TOutput> = (input: TInput) => TOutput;
+
+interface SupportProcessingPipelineInput {
+  latestUserMessage: string | UnknownObject;
+  attachments?: UnknownObject[];
+  previousAnalysisOutput?: UnknownObject | null;
+  conversationLogs?: UnknownObject[];
+  attemptHistory?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+}
+
+interface MessageAnalysisInput {
+  latestUserMessage: string | UnknownObject;
+  attachments?: UnknownObject[];
+  previousAnalysisOutput?: UnknownObject | null;
+  conversationLogs?: UnknownObject[];
+  attemptHistory?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+  dataCollectorProcessing: UnknownObject;
+}
+
+interface SearchingDecisionInput {
+  currentAnalysisOutput: UnknownObject;
+  previousAnalysisOutput?: UnknownObject | null;
+  conversationLogs?: UnknownObject[];
+  attemptHistory?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+  dataCollectorProcessing: UnknownObject;
+}
+
+interface SolutionRetrievalInput {
+  decisionSearchingSolution: boolean;
+  currentAnalysisOutput: UnknownObject;
+  conversationLogs?: UnknownObject[];
+  attemptHistory?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+  dataCollectorProcessing: UnknownObject;
+}
+
+interface ResponseDecisionInput {
+  currentAnalysisOutput: UnknownObject;
+  conversationLogs?: UnknownObject[];
+  attemptHistory?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+  possibleSolutions: unknown;
+  dataCollectorProcessing: UnknownObject;
+}
+
+interface ResponseProducerInput {
+  responsePlan: unknown;
+  currentAnalysisOutput: UnknownObject;
+  possibleSolutions: unknown;
+  userInformations?: UnknownObject | null;
+  dataCollectorProcessing: UnknownObject;
+}
+
+interface DataProducerInput {
+  currentAnalysisOutput: UnknownObject;
+  conversationLogs?: UnknownObject[];
+  attemptHistory?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+  possibleSolutions: unknown;
+  responsePlan: unknown;
+  dataCollectorProcessing: UnknownObject;
+}
+
+interface SupportProcessingPipelineSteps {
+  runMessageAnalysis?: PipelineStep<MessageAnalysisInput, UnknownObject>;
+  runSearchingDecision?: PipelineStep<SearchingDecisionInput, boolean>;
+  runSolutionRetrieval?: PipelineStep<SolutionRetrievalInput, unknown>;
+  runResponseDecision?: PipelineStep<ResponseDecisionInput, unknown>;
+  produceResponse?: PipelineStep<ResponseProducerInput, unknown>;
+  produceTicketData?: PipelineStep<DataProducerInput, unknown>;
+}
+
+interface SupportProcessingPipelineOutput {
+  userResponse: unknown;
+  updatedDataTicket: unknown;
+  dataCollectorProcessing: UnknownObject;
+}
+
 /**
  * Creates a placeholder function for pipeline steps that are not implemented yet.
  *
  * This makes the orchestrator explicit: every expected step is named, and if one
  * is missing, the error message clearly identifies which step still needs to be implemented.
- *
- * @param {string} stepName - Name of the missing pipeline step.
- * @returns {Function}
- * A function that throws an explicit "not implemented" error.
  */
-function createMissingStep(stepName) {
-  return function missingStep() {
+function createMissingStep<TInput, TOutput>(stepName: string): PipelineStep<TInput, TOutput> {
+  return function missingStep(): never {
     throw new Error(`${stepName} is not implemented yet`);
   };
 }
@@ -53,47 +132,38 @@ function createMissingStep(stepName) {
  * During early development and unit testing, the `steps` parameter allows us to
  * inject mock implementations without calling real SLM/LLM APIs, RAG, database,
  * or Twake services.
- *
- * @param {Object} input - Full support processing input.
- * @param {Object|string} input.latestUserMessage - Latest user message to process.
- * @param {Array<Object>} [input.attachments] - Optional message attachments.
- * @param {Object|null} [input.previousAnalysisOutput] - Previous structured analysis if available.
- * @param {Array<Object>} [input.conversationLogs] - Conversation history.
- * @param {Array<Object>} [input.attemptHistory] - Previous actions attempted by the user or support system.
- * @param {Object|null} [input.userInformations] - User metadata and context.
- *
- * @param {Object} [steps] - Optional injected pipeline steps, mainly used for tests.
- * @param {Function} [steps.runMessageAnalysis] - Analyzes the latest message and its context.
- * @param {Function} [steps.runSearchingDecision] - Decides whether the pipeline should search for a solution.
- * @param {Function} [steps.runSolutionRetrieval] - Retrieves possible solutions when searchingSolution is true.
- * @param {Function} [steps.runResponseDecision] - Applies decision rules to produce the response plan.
- * @param {Function} [steps.produceResponse] - Builds the final text response from the response plan.
- * @param {Function} [steps.produceTicketData] - Produces the ticket data update.
- *
- * @returns {Object} - Final support processing output including: userResponse, updatedDataTicket, dataCollectorProcessing.
  */
-function runSupportProcessingPipeline(input, steps = {}) {
-  const pipelineSteps = {
+function runSupportProcessingPipeline(
+  input: SupportProcessingPipelineInput,
+  steps: SupportProcessingPipelineSteps = {}
+): SupportProcessingPipelineOutput {
+  const pipelineSteps: Required<SupportProcessingPipelineSteps> = {
     runMessageAnalysis:
-      steps.runMessageAnalysis || createMissingStep("runMessageAnalysis"),
+      steps.runMessageAnalysis ||
+      createMissingStep<MessageAnalysisInput, UnknownObject>("runMessageAnalysis"),
 
     runSearchingDecision:
-      steps.runSearchingDecision || createMissingStep("runSearchingDecision"),
+      steps.runSearchingDecision ||
+      createMissingStep<SearchingDecisionInput, boolean>("runSearchingDecision"),
 
     runSolutionRetrieval:
-      steps.runSolutionRetrieval || createMissingStep("runSolutionRetrieval"),
+      steps.runSolutionRetrieval ||
+      createMissingStep<SolutionRetrievalInput, unknown>("runSolutionRetrieval"),
 
     runResponseDecision:
-      steps.runResponseDecision || createMissingStep("runResponseDecision"),
+      steps.runResponseDecision ||
+      createMissingStep<ResponseDecisionInput, unknown>("runResponseDecision"),
 
     produceResponse:
-      steps.produceResponse || createMissingStep("produceResponse"),
+      steps.produceResponse ||
+      createMissingStep<ResponseProducerInput, unknown>("produceResponse"),
 
     produceTicketData:
-      steps.produceTicketData || createMissingStep("produceTicketData")
+      steps.produceTicketData ||
+      createMissingStep<DataProducerInput, unknown>("produceTicketData")
   };
 
-  const dataCollectorProcessing = {};
+  const dataCollectorProcessing: UnknownObject = {};
 
   /**
    * Step 1: Message analysis
@@ -175,6 +245,12 @@ function runSupportProcessingPipeline(input, steps = {}) {
   };
 }
 
-module.exports = {
+export {
   runSupportProcessingPipeline
+};
+
+export type {
+  SupportProcessingPipelineInput,
+  SupportProcessingPipelineSteps,
+  SupportProcessingPipelineOutput
 };
