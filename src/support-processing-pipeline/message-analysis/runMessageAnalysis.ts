@@ -3,263 +3,119 @@
  *
  * This file is the local orchestrator of the message-analysis block.
  *
- * Its responsibility is to analyze the latest user message with context and
- * produce a structured output: currentAnalysisOutput, including analysisDelta.
+ * Its responsibility is to process the latest user message and produce an updated
+ * structured support knowledge state for the ticket.
+ *
+ * It combines deterministic backend checks, optional attachment description,
+ * lightweight LLM routing, full LLM support analysis, and backend assembly.
  *
  * INPUTS:
  * - latestUserMessage
  * - attachments
- * - previousAnalysisOutput
- * - conversationLogs
- * - attemptHistory
- * - userInformations
+ * - ticketMemoryBeforeTurn
  *
  * OUTPUT:
- * - currentAnalysisOutput, including analysisDelta
+ * - supportKnowledgeAfterTurn
+ * - supportKnowledgeDelta
  *
  * Internal steps:
  *
- * 1. Deterministic routing
- *    Detects obvious cases such as spam, abuse, empty message, or clear out-of-scope message.
- *    OUTPUTS - deterministicRoutingResult
+ * 1. Deterministic input clean
+ *    Detects obvious cases such as spam, abuse, empty message, injection,
+ *    or clear out-of-scope content.
+ *    OUTPUTS - inputClean
  *
- * 2. Attachment analysis
- *    Analyzes attachments if needed.
- *    OUTPUTS - attachmentAnalysisResult
+ * 2. LLM attachment description
+ *    Describes useful information from attachments if needed.
+ *    This may include screenshots, images, videos, files or logs.
+ *    OUTPUTS - attachmentDescriptionLlmvisual
  *
- * 3. Analysis routing
- *    Decides whether we should run pre-analysis, full analysis, or both.
- *    OUTPUTS - analysisRoutingResult
+ * 3. Deterministic analysis run decision
+ *    Decides whether we should run LLM0, LLM1, both, or no LLM analysis.
+ *    OUTPUTS - runDecisionPreAnalysis
  *
- * 4. Pre-analysis manager
- *    Runs the lightweight pre-analysis step if needed.
- *    OUTPUTS - preAnalysisResult
+ * 4. LLM0 pre-analysis
+ *    Runs a lightweight analysis or routing step if needed.
+ *    OUTPUTS - preAnalysisLlm0
  *
- * 5. Full-analysis manager
- *    Runs the full support analysis step if needed.
- *    OUTPUTS - fullAnalysisResult
+ * 5. LLM1 support analysis
+ *    Runs the full structured support analysis if needed.
+ *    This output describes what the current user message appears to add,
+ *    update, correct or resolve.
+ *    OUTPUTS - supportAnalysisLlm1
  *
- * 6. Analysis assembler
- *    Builds the final currentAnalysisOutput from all intermediate results.
- *    It normalizes the current analysis and computes analysisDelta by comparing
- *    the current analysis with previousAnalysisOutput.
- *    OUTPUTS - currentAnalysisOutput, including analysisDelta
+ * 6. Support knowledge assembly
+ *    Builds supportKnowledgeAfterTurn and supportKnowledgeDelta from the previous
+ *    support knowledge and supportAnalysisLlm1.
+ *    It normalizes model outputs, merges new information with existing support
+ *    knowledge, cleans obsolete data if needed, and computes supportKnowledgeDelta
+ *    as a separate object.
+ *    OUTPUTS - supportKnowledgeAfterTurn, supportKnowledgeDelta
  */
 
 type UnknownObject = Record<string, unknown>;
 
+type SupportKnowledge = UnknownObject;
+
+type SupportKnowledgeDelta = UnknownObject;
+
 type MessageAnalysisStep<TInput, TOutput> = (input: TInput) => TOutput;
+
+interface TicketMemory {
+  supportKnowledge?: SupportKnowledge;
+  lastSupportKnowledgeDelta?: SupportKnowledgeDelta | null;
+  supportKnowledgeDeltaHistory?: SupportKnowledgeDelta[];
+  conversationLogs?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+  visibility?: UnknownObject;
+  metadata?: UnknownObject;
+  [key: string]: unknown;
+}
 
 interface MessageAnalysisInput {
   latestUserMessage: string | UnknownObject;
   attachments?: UnknownObject[];
-  previousAnalysisOutput?: UnknownObject | null;
-  conversationLogs?: UnknownObject[];
-  attemptHistory?: UnknownObject[];
-  userInformations?: UnknownObject | null;
+  ticketMemoryBeforeTurn?: TicketMemory | null;
 }
 
-interface AnalysisDelta {
-  hasNewInformation: boolean;
-  newTopics: UnknownObject[];
-  updatedTopics: UnknownObject[];
-  resolvedTopics: UnknownObject[];
-  newSignals: UnknownObject[];
-  newScopeBoundaries: UnknownObject[];
-  warningComprehensionChanged?: boolean;
-  [key: string]: unknown;
-}
-
-interface CurrentAnalysisOutput {
-  analysisDelta: AnalysisDelta;
-  [key: string]: unknown;
-}
-
-interface DecisionRouteMessageAnalysis {
-  shouldAnalyzeMessage: boolean;
-  shouldRunAttachmentAnalysis: boolean;
-  shouldRunPreAnalysis: boolean;
-  shouldRunFullAnalysis: boolean;
-  reason: string | null;
-}
-
-interface DeterministicRoutingResult {
-  shouldAnalyzeMessage?: boolean;
-  shouldRunAttachmentAnalysis?: boolean;
-  reason?: string | null;
-  [key: string]: unknown;
-}
-
-interface AnalysisRoutingResult {
-  shouldRunPreAnalysis?: boolean;
-  shouldRunFullAnalysis?: boolean;
-  reason?: string | null;
-  [key: string]: unknown;
-}
-
-interface PreAnalysisResult {
-  shouldRunFullAnalysis?: boolean;
-  reason?: string | null;
-  [key: string]: unknown;
+interface MessageAnalysisOutput {
+  supportKnowledgeAfterTurn: SupportKnowledge;
+  supportKnowledgeDelta: SupportKnowledgeDelta;
 }
 
 interface MessageAnalysisSteps {
-  runDeterministicRouting?: MessageAnalysisStep<UnknownObject, DeterministicRoutingResult>;
-  runAttachmentAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  runAnalysisRouting?: MessageAnalysisStep<UnknownObject, AnalysisRoutingResult>;
-  runPreAnalysis?: MessageAnalysisStep<UnknownObject, PreAnalysisResult>;
-  runFullAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  assembleCurrentAnalysisOutput?: MessageAnalysisStep<UnknownObject, CurrentAnalysisOutput>;
+  runInputClean?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  describeAttachmentLlmvisual?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  decideRunPreAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  runPreAnalysisLlm0?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  runSupportAnalysisLlm1?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  assembleSupportKnowledge?: MessageAnalysisStep<UnknownObject, MessageAnalysisOutput>;
 }
 
 /**
  * Creates a placeholder function for message-analysis steps that are not implemented yet.
  */
-function createMissingStep<TInput, TOutput>(stepName: string): MessageAnalysisStep<TInput, TOutput> {
+function createMissingStep<TInput, TOutput>(
+  stepName: string
+): MessageAnalysisStep<TInput, TOutput> {
   return function missingStep(): never {
     throw new Error(`${stepName} is not implemented yet`);
   };
 }
 
 /**
- * Creates the initial decision route for the message-analysis flow.
+ * Temporary assertion placeholders.
  *
- * This object is updated progressively by each step.
+ * These functions are intentionally empty for now.
+ * Their real validation logic can be implemented later in a dedicated assertions file.
  */
-function createInitialDecisionRoute(): DecisionRouteMessageAnalysis {
-  return {
-    shouldAnalyzeMessage: true,
-    shouldRunAttachmentAnalysis: false,
-    shouldRunPreAnalysis: false,
-    shouldRunFullAnalysis: false,
-    reason: null
-  };
-}
+function assertValidMessageAnalysisInput(
+  input: unknown
+): asserts input is MessageAnalysisInput {}
 
-/**
- * Updates the decision route without mutating the previous object.
- */
-function updateDecisionRoute(
-  currentDecisionRoute: DecisionRouteMessageAnalysis,
-  updates: Partial<DecisionRouteMessageAnalysis>
-): DecisionRouteMessageAnalysis {
-  return {
-    ...currentDecisionRoute,
-    ...updates
-  };
-}
-
-/**
- * Validates the minimum input contract of runMessageAnalysis.
- *
- * This validation is intentionally lightweight.
- * It only checks the fields needed to safely run the local orchestrator.
- */
-function assertValidMessageAnalysisInput(input: unknown): asserts input is MessageAnalysisInput {
-  if (!input || typeof input !== "object" || Array.isArray(input)) {
-    throw new Error("runMessageAnalysis input must be an object");
-  }
-
-  const messageAnalysisInput = input as Partial<MessageAnalysisInput>;
-
-  const latestUserMessageIsValid =
-    typeof messageAnalysisInput.latestUserMessage === "string" ||
-    (
-      messageAnalysisInput.latestUserMessage !== null &&
-      typeof messageAnalysisInput.latestUserMessage === "object" &&
-      !Array.isArray(messageAnalysisInput.latestUserMessage)
-    );
-
-  if (!latestUserMessageIsValid) {
-    throw new Error("latestUserMessage must be a string or an object");
-  }
-
-  if (
-    messageAnalysisInput.attachments !== undefined &&
-    !Array.isArray(messageAnalysisInput.attachments)
-  ) {
-    throw new Error("attachments must be an array when provided");
-  }
-
-  if (
-    messageAnalysisInput.conversationLogs !== undefined &&
-    !Array.isArray(messageAnalysisInput.conversationLogs)
-  ) {
-    throw new Error("conversationLogs must be an array when provided");
-  }
-
-  if (
-    messageAnalysisInput.attemptHistory !== undefined &&
-    !Array.isArray(messageAnalysisInput.attemptHistory)
-  ) {
-    throw new Error("attemptHistory must be an array when provided");
-  }
-}
-
-/**
- * Validates the analysisDelta contract.
- */
-function assertValidAnalysisDelta(analysisDelta: unknown): asserts analysisDelta is AnalysisDelta {
-  if (
-    !analysisDelta ||
-    typeof analysisDelta !== "object" ||
-    Array.isArray(analysisDelta)
-  ) {
-    throw new Error("analysisDelta must be an object");
-  }
-
-  const analysisDeltaOutput = analysisDelta as Partial<AnalysisDelta>;
-
-  if (typeof analysisDeltaOutput.hasNewInformation !== "boolean") {
-    throw new Error("analysisDelta.hasNewInformation must be a boolean");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.newTopics)) {
-    throw new Error("analysisDelta.newTopics must be an array");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.updatedTopics)) {
-    throw new Error("analysisDelta.updatedTopics must be an array");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.resolvedTopics)) {
-    throw new Error("analysisDelta.resolvedTopics must be an array");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.newSignals)) {
-    throw new Error("analysisDelta.newSignals must be an array");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.newScopeBoundaries)) {
-    throw new Error("analysisDelta.newScopeBoundaries must be an array");
-  }
-
-  if (
-    analysisDeltaOutput.warningComprehensionChanged !== undefined &&
-    typeof analysisDeltaOutput.warningComprehensionChanged !== "boolean"
-  ) {
-    throw new Error("analysisDelta.warningComprehensionChanged must be a boolean when provided");
-  }
-}
-
-/**
- * Validates the output contract of runMessageAnalysis.
- */
-function assertValidCurrentAnalysisOutput(
-  currentAnalysisOutput: unknown
-): asserts currentAnalysisOutput is CurrentAnalysisOutput {
-  if (
-    !currentAnalysisOutput ||
-    typeof currentAnalysisOutput !== "object" ||
-    Array.isArray(currentAnalysisOutput)
-  ) {
-    throw new Error("currentAnalysisOutput must be an object");
-  }
-
-  const currentAnalysis = currentAnalysisOutput as Partial<CurrentAnalysisOutput>;
-
-  assertValidAnalysisDelta(currentAnalysis.analysisDelta);
-}
+function assertValidMessageAnalysisOutput(
+  messageAnalysisOutput: unknown
+): asserts messageAnalysisOutput is MessageAnalysisOutput {}
 
 /**
  * Runs the message-analysis block.
@@ -267,201 +123,120 @@ function assertValidCurrentAnalysisOutput(
 function runMessageAnalysis(
   input: MessageAnalysisInput,
   steps: MessageAnalysisSteps = {}
-): CurrentAnalysisOutput {
+): MessageAnalysisOutput {
   assertValidMessageAnalysisInput(input);
 
   const messageAnalysisSteps: Required<MessageAnalysisSteps> = {
-    runDeterministicRouting:
-      steps.runDeterministicRouting ||
-      createMissingStep<UnknownObject, DeterministicRoutingResult>("runDeterministicRouting"),
+    runInputClean:
+      steps.runInputClean ||
+      createMissingStep<UnknownObject, UnknownObject>("runInputClean"),
 
-    runAttachmentAnalysis:
-      steps.runAttachmentAnalysis ||
-      createMissingStep<UnknownObject, UnknownObject>("runAttachmentAnalysis"),
+    describeAttachmentLlmvisual:
+      steps.describeAttachmentLlmvisual ||
+      createMissingStep<UnknownObject, UnknownObject>("describeAttachmentLlmvisual"),
 
-    runAnalysisRouting:
-      steps.runAnalysisRouting ||
-      createMissingStep<UnknownObject, AnalysisRoutingResult>("runAnalysisRouting"),
+    decideRunPreAnalysis:
+      steps.decideRunPreAnalysis ||
+      createMissingStep<UnknownObject, UnknownObject>("decideRunPreAnalysis"),
 
-    runPreAnalysis:
-      steps.runPreAnalysis ||
-      createMissingStep<UnknownObject, PreAnalysisResult>("runPreAnalysis"),
+    runPreAnalysisLlm0:
+      steps.runPreAnalysisLlm0 ||
+      createMissingStep<UnknownObject, UnknownObject>("runPreAnalysisLlm0"),
 
-    runFullAnalysis:
-      steps.runFullAnalysis ||
-      createMissingStep<UnknownObject, UnknownObject>("runFullAnalysis"),
+    runSupportAnalysisLlm1:
+      steps.runSupportAnalysisLlm1 ||
+      createMissingStep<UnknownObject, UnknownObject>("runSupportAnalysisLlm1"),
 
-    assembleCurrentAnalysisOutput:
-      steps.assembleCurrentAnalysisOutput ||
-      createMissingStep<UnknownObject, CurrentAnalysisOutput>("assembleCurrentAnalysisOutput")
+    assembleSupportKnowledge:
+      steps.assembleSupportKnowledge ||
+      createMissingStep<UnknownObject, MessageAnalysisOutput>("assembleSupportKnowledge")
   };
 
-  let decisionRouteMessageAnalysis = createInitialDecisionRoute();
-
   /**
-   * Step 1: Deterministic routing
+   * Step 1: Deterministic input clean
    */
-  const deterministicRoutingResult = messageAnalysisSteps.runDeterministicRouting({
+  const inputClean = messageAnalysisSteps.runInputClean({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    decisionRouteMessageAnalysis
-  });
-
-  decisionRouteMessageAnalysis = updateDecisionRoute(decisionRouteMessageAnalysis, {
-    shouldAnalyzeMessage:
-      deterministicRoutingResult.shouldAnalyzeMessage ??
-      decisionRouteMessageAnalysis.shouldAnalyzeMessage,
-
-    shouldRunAttachmentAnalysis:
-      deterministicRoutingResult.shouldRunAttachmentAnalysis ??
-      decisionRouteMessageAnalysis.shouldRunAttachmentAnalysis,
-
-    reason:
-      deterministicRoutingResult.reason ??
-      decisionRouteMessageAnalysis.reason
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
   });
 
   /**
-   * Step 2: Attachment analysis
-   *
-   * This step is always called, but it can return a skipped result if
-   * decisionRoute.shouldRunAttachmentAnalysis is false.
+   * Step 2: LLM attachment description
    */
-  const attachmentAnalysisResult = messageAnalysisSteps.runAttachmentAnalysis({
+  const attachmentDescriptionLlmvisual = messageAnalysisSteps.describeAttachmentLlmvisual({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    decisionRoute: decisionRouteMessageAnalysis,
-    deterministicRoutingResult
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
+    inputClean
   });
 
   /**
-   * Step 3: Analysis routing
+   * Step 3: Deterministic analysis run decision
    */
-  const analysisRoutingResult = messageAnalysisSteps.runAnalysisRouting({
+  const runDecisionPreAnalysis = messageAnalysisSteps.decideRunPreAnalysis({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    decisionRoute: decisionRouteMessageAnalysis,
-    deterministicRoutingResult,
-    attachmentAnalysisResult
-  });
-
-  decisionRouteMessageAnalysis = updateDecisionRoute(decisionRouteMessageAnalysis, {
-    shouldRunPreAnalysis:
-      analysisRoutingResult.shouldRunPreAnalysis ??
-      decisionRouteMessageAnalysis.shouldRunPreAnalysis,
-
-    shouldRunFullAnalysis:
-      analysisRoutingResult.shouldRunFullAnalysis ??
-      decisionRouteMessageAnalysis.shouldRunFullAnalysis,
-
-    reason:
-      analysisRoutingResult.reason ??
-      decisionRouteMessageAnalysis.reason
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
+    inputClean,
+    attachmentDescriptionLlmvisual
   });
 
   /**
-   * Step 4: Pre-analysis manager
-   *
-   * This step is always called, but it can return a skipped result if
-   * decisionRoute.shouldRunPreAnalysis is false.
+   * Step 4: LLM0 pre-analysis
    */
-  const preAnalysisResult = messageAnalysisSteps.runPreAnalysis({
+  const preAnalysisLlm0 = messageAnalysisSteps.runPreAnalysisLlm0({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    decisionRoute: decisionRouteMessageAnalysis,
-    deterministicRoutingResult,
-    attachmentAnalysisResult,
-    analysisRoutingResult
-  });
-
-  decisionRouteMessageAnalysis = updateDecisionRoute(decisionRouteMessageAnalysis, {
-    shouldRunFullAnalysis:
-      preAnalysisResult.shouldRunFullAnalysis ??
-      decisionRouteMessageAnalysis.shouldRunFullAnalysis,
-
-    reason:
-      preAnalysisResult.reason ??
-      decisionRouteMessageAnalysis.reason
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
+    inputClean,
+    attachmentDescriptionLlmvisual,
+    runDecisionPreAnalysis
   });
 
   /**
-   * Step 5: Full-analysis manager
-   *
-   * This step is always called, but it can return a skipped result if
-   * decisionRoute.shouldRunFullAnalysis is false.
+   * Step 5: LLM1 support analysis
    */
-  const fullAnalysisResult = messageAnalysisSteps.runFullAnalysis({
+  const supportAnalysisLlm1 = messageAnalysisSteps.runSupportAnalysisLlm1({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    decisionRoute: decisionRouteMessageAnalysis,
-    deterministicRoutingResult,
-    attachmentAnalysisResult,
-    analysisRoutingResult,
-    preAnalysisResult
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
+    inputClean,
+    attachmentDescriptionLlmvisual,
+    runDecisionPreAnalysis,
+    preAnalysisLlm0
   });
 
   /**
-   * Step 6: Analysis assembler
-   *
-   * This step is responsible for producing the final currentAnalysisOutput,
-   * including analysisDelta.
+   * Step 6: Support knowledge assembly
    */
-  const currentAnalysisOutput = messageAnalysisSteps.assembleCurrentAnalysisOutput({
+  const messageAnalysisOutput = messageAnalysisSteps.assembleSupportKnowledge({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    decisionRoute: decisionRouteMessageAnalysis,
-    deterministicRoutingResult,
-    attachmentAnalysisResult,
-    analysisRoutingResult,
-    preAnalysisResult,
-    fullAnalysisResult
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
+    inputClean,
+    attachmentDescriptionLlmvisual,
+    runDecisionPreAnalysis,
+    preAnalysisLlm0,
+    supportAnalysisLlm1
   });
 
-  assertValidCurrentAnalysisOutput(currentAnalysisOutput);
+  assertValidMessageAnalysisOutput(messageAnalysisOutput);
 
-  return currentAnalysisOutput;
+  return messageAnalysisOutput;
 }
 
 export {
   runMessageAnalysis,
-  createInitialDecisionRoute,
-  updateDecisionRoute,
   assertValidMessageAnalysisInput,
-  assertValidAnalysisDelta,
-  assertValidCurrentAnalysisOutput
+  assertValidMessageAnalysisOutput
 };
 
 export type {
   MessageAnalysisInput,
   MessageAnalysisSteps,
-  AnalysisDelta,
-  CurrentAnalysisOutput,
-  DecisionRouteMessageAnalysis,
-  DeterministicRoutingResult,
-  AnalysisRoutingResult,
-  PreAnalysisResult
+  MessageAnalysisOutput,
+  SupportKnowledge,
+  SupportKnowledgeDelta,
+  TicketMemory
 };

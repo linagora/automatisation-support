@@ -5,135 +5,117 @@
  *
  * Its responsibility is to coordinate the high-level processing steps:
  *
- * 1. Analyze the latest user message with context and produce a structured analysis: message-analysis
- *    INPUTS  - latestUserMessage, attachments, previousAnalysisOutput, conversationLogs, attemptHistory, userInformations
- *    OUTPUTS - currentAnalysisOutput, including analysisDelta
+ * 1. Message analysis
+ *    INPUTS  - latestUserMessage, attachments, ticketMemoryBeforeTurn
+ *    OUTPUTS - supportKnowledgeAfterTurn, supportKnowledgeDelta
  *
- * 2. Apply deterministic rules to decide whether we should search for a solution in our database: searching-decision
- *    INPUTS  - currentAnalysisOutput, analysisDelta, previousAnalysisOutput, conversationLogs, attemptHistory, userInformations
- *    OUTPUTS - decisionSearchingSolution (true/false)
+ * 2. Searching decision
+ *    INPUTS  - supportKnowledgeAfterTurn, supportKnowledgeDelta, ticketMemoryBeforeTurn
+ *    OUTPUTS - decisionSearchingSolution
  *
- * 3. Retrieve a solution if the searching decision requires it: solution-retrieval
- *    INPUTS  - decisionSearchingSolution, currentAnalysisOutput, analysisDelta, conversationLogs, attemptHistory
- *    OUTPUTS - possibleSolutions ("not_searched", "not_found", "solutions_found")
+ * 3. Solution retrieval
+ *    INPUTS  - decisionSearchingSolution, supportKnowledgeAfterTurn, supportKnowledgeDelta, ticketMemoryBeforeTurn
+ *    OUTPUTS - possibleSolutions
  *
- * 4. Apply decision rules to produce the automatic answer plan: response-decision
- *    INPUTS  - currentAnalysisOutput, analysisDelta, previousAnalysisOutput, conversationLogs, attemptHistory, userInformations, possibleSolutions
+ * 4. Response decision
+ *    INPUTS  - supportKnowledgeAfterTurn, supportKnowledgeDelta, ticketMemoryBeforeTurn, possibleSolutions
  *    OUTPUTS - responsePlan
  *
- * 5. Build a response for the user from the response plan and predefined templates: response-producer
- *    INPUTS  - responsePlan, currentAnalysisOutput, analysisDelta, possibleSolutions
+ * 5. Response producer
+ *    INPUTS  - responsePlan
  *    OUTPUTS - userResponse
  *
- * 6. Produce the data needed to update the ticket state: data-producer
- *    INPUTS  - currentAnalysisOutput, analysisDelta, conversationLogs, attemptHistory, userInformations, possibleSolutions, responsePlan
- *    OUTPUTS - updatedDataTicket
+ * 6. Data producer
+ *    INPUTS  - ticketMemoryBeforeTurn, supportKnowledgeAfterTurn, supportKnowledgeDelta,
+ *              conversationLogs, userInformations, responsePlan
+ *    OUTPUTS - ticketMemoryAfterTurn
  */
 
 type UnknownObject = Record<string, unknown>;
 
 type PipelineStep<TInput, TOutput> = (input: TInput) => TOutput;
 
-interface AnalysisDelta {
-  hasNewInformation: boolean;
-  newTopics: UnknownObject[];
-  updatedTopics: UnknownObject[];
-  resolvedTopics: UnknownObject[];
-  newSignals: UnknownObject[];
-  newScopeBoundaries: UnknownObject[];
-  warningComprehensionChanged?: boolean;
-  [key: string]: unknown;
-}
+type SupportKnowledge = UnknownObject;
 
-interface CurrentAnalysisOutput {
-  analysisDelta: AnalysisDelta;
+type SupportKnowledgeDelta = UnknownObject;
+
+interface TicketMemory {
+  supportKnowledge?: SupportKnowledge;
+  lastSupportKnowledgeDelta?: SupportKnowledgeDelta | null;
+  supportKnowledgeDeltaHistory?: SupportKnowledgeDelta[];
+  conversationLogs?: UnknownObject[];
+  userInformations?: UnknownObject | null;
+  visibility?: UnknownObject;
+  metadata?: UnknownObject;
   [key: string]: unknown;
 }
 
 interface SupportProcessingPipelineInput {
   latestUserMessage: string | UnknownObject;
   attachments?: UnknownObject[];
-  previousAnalysisOutput?: UnknownObject | null;
-  conversationLogs?: UnknownObject[];
-  attemptHistory?: UnknownObject[];
-  userInformations?: UnknownObject | null;
+  ticketMemoryBeforeTurn?: TicketMemory | null;
 }
 
 interface MessageAnalysisInput {
   latestUserMessage: string | UnknownObject;
   attachments?: UnknownObject[];
-  previousAnalysisOutput?: UnknownObject | null;
-  conversationLogs?: UnknownObject[];
-  attemptHistory?: UnknownObject[];
-  userInformations?: UnknownObject | null;
+  ticketMemoryBeforeTurn?: TicketMemory | null;
+}
+
+interface MessageAnalysisOutput {
+  supportKnowledgeAfterTurn: SupportKnowledge;
+  supportKnowledgeDelta: SupportKnowledgeDelta;
 }
 
 interface SearchingDecisionInput {
-  currentAnalysisOutput: CurrentAnalysisOutput;
-  analysisDelta: AnalysisDelta;
-  previousAnalysisOutput?: UnknownObject | null;
-  conversationLogs?: UnknownObject[];
-  attemptHistory?: UnknownObject[];
-  userInformations?: UnknownObject | null;
+  supportKnowledgeAfterTurn: SupportKnowledge;
+  supportKnowledgeDelta: SupportKnowledgeDelta;
+  ticketMemoryBeforeTurn?: TicketMemory | null;
 }
 
 interface SolutionRetrievalInput {
   decisionSearchingSolution: boolean;
-  currentAnalysisOutput: CurrentAnalysisOutput;
-  analysisDelta: AnalysisDelta;
-  conversationLogs?: UnknownObject[];
-  attemptHistory?: UnknownObject[];
-  userInformations?: UnknownObject | null;
+  supportKnowledgeAfterTurn: SupportKnowledge;
+  supportKnowledgeDelta: SupportKnowledgeDelta;
+  ticketMemoryBeforeTurn?: TicketMemory | null;
 }
 
 interface ResponseDecisionInput {
-  currentAnalysisOutput: CurrentAnalysisOutput;
-  analysisDelta: AnalysisDelta;
-  previousAnalysisOutput?: UnknownObject | null;
-  conversationLogs?: UnknownObject[];
-  attemptHistory?: UnknownObject[];
-  userInformations?: UnknownObject | null;
+  supportKnowledgeAfterTurn: SupportKnowledge;
+  supportKnowledgeDelta: SupportKnowledgeDelta;
+  ticketMemoryBeforeTurn?: TicketMemory | null;
   possibleSolutions: unknown;
 }
 
 interface ResponseProducerInput {
   responsePlan: unknown;
-  currentAnalysisOutput: CurrentAnalysisOutput;
-  analysisDelta: AnalysisDelta;
-  possibleSolutions: unknown;
-  userInformations?: UnknownObject | null;
 }
 
 interface DataProducerInput {
-  currentAnalysisOutput: CurrentAnalysisOutput;
-  analysisDelta: AnalysisDelta;
-  previousAnalysisOutput?: UnknownObject | null;
+  ticketMemoryBeforeTurn?: TicketMemory | null;
+  supportKnowledgeAfterTurn: SupportKnowledge;
+  supportKnowledgeDelta: SupportKnowledgeDelta;
   conversationLogs?: UnknownObject[];
-  attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
-  possibleSolutions: unknown;
   responsePlan: unknown;
 }
 
 interface SupportProcessingPipelineSteps {
-  runMessageAnalysis?: PipelineStep<MessageAnalysisInput, CurrentAnalysisOutput>;
+  runMessageAnalysis?: PipelineStep<MessageAnalysisInput, MessageAnalysisOutput>;
   runSearchingDecision?: PipelineStep<SearchingDecisionInput, boolean>;
   runSolutionRetrieval?: PipelineStep<SolutionRetrievalInput, unknown>;
   runResponseDecision?: PipelineStep<ResponseDecisionInput, unknown>;
-  produceResponse?: PipelineStep<ResponseProducerInput, unknown>;
-  produceTicketData?: PipelineStep<DataProducerInput, unknown>;
+  runResponseProducer?: PipelineStep<ResponseProducerInput, unknown>;
+  runDataProducer?: PipelineStep<DataProducerInput, TicketMemory>;
 }
 
 interface SupportProcessingPipelineOutput {
   userResponse: unknown;
-  updatedDataTicket: unknown;
+  ticketMemoryAfterTurn: TicketMemory;
 }
 
 /**
  * Creates a placeholder function for pipeline steps that are not implemented yet.
- *
- * This makes the orchestrator explicit: every expected step is named, and if one
- * is missing, the error message clearly identifies which step still needs to be implemented.
  */
 function createMissingStep<TInput, TOutput>(stepName: string): PipelineStep<TInput, TOutput> {
   return function missingStep(): never {
@@ -142,77 +124,21 @@ function createMissingStep<TInput, TOutput>(stepName: string): PipelineStep<TInp
 }
 
 /**
- * Validates the analysisDelta contract.
+ * Temporary assertion placeholders.
+ *
+ * These functions are intentionally empty for now.
+ * Their real validation logic can be implemented later in a dedicated assertions file.
  */
-function assertValidAnalysisDelta(analysisDelta: unknown): asserts analysisDelta is AnalysisDelta {
-  if (
-    !analysisDelta ||
-    typeof analysisDelta !== "object" ||
-    Array.isArray(analysisDelta)
-  ) {
-    throw new Error("analysisDelta must be an object");
-  }
+function assertValidMessageAnalysisOutput(
+  messageAnalysisOutput: unknown
+): asserts messageAnalysisOutput is MessageAnalysisOutput {}
 
-  const analysisDeltaOutput = analysisDelta as Partial<AnalysisDelta>;
-
-  if (typeof analysisDeltaOutput.hasNewInformation !== "boolean") {
-    throw new Error("analysisDelta.hasNewInformation must be a boolean");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.newTopics)) {
-    throw new Error("analysisDelta.newTopics must be an array");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.updatedTopics)) {
-    throw new Error("analysisDelta.updatedTopics must be an array");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.resolvedTopics)) {
-    throw new Error("analysisDelta.resolvedTopics must be an array");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.newSignals)) {
-    throw new Error("analysisDelta.newSignals must be an array");
-  }
-
-  if (!Array.isArray(analysisDeltaOutput.newScopeBoundaries)) {
-    throw new Error("analysisDelta.newScopeBoundaries must be an array");
-  }
-
-  if (
-    analysisDeltaOutput.warningComprehensionChanged !== undefined &&
-    typeof analysisDeltaOutput.warningComprehensionChanged !== "boolean"
-  ) {
-    throw new Error("analysisDelta.warningComprehensionChanged must be a boolean when provided");
-  }
-}
-
-/**
- * Validates that message-analysis returned a usable currentAnalysisOutput.
- */
-function assertValidCurrentAnalysisOutput(
-  currentAnalysisOutput: unknown
-): asserts currentAnalysisOutput is CurrentAnalysisOutput {
-  if (
-    !currentAnalysisOutput ||
-    typeof currentAnalysisOutput !== "object" ||
-    Array.isArray(currentAnalysisOutput)
-  ) {
-    throw new Error("currentAnalysisOutput must be an object");
-  }
-
-  const currentAnalysis = currentAnalysisOutput as Partial<CurrentAnalysisOutput>;
-
-  assertValidAnalysisDelta(currentAnalysis.analysisDelta);
-}
+function assertValidTicketMemory(
+  ticketMemory: unknown
+): asserts ticketMemory is TicketMemory {}
 
 /**
  * Runs the full support processing pipeline.
- *
- * In production, this function will use the real implementations of each step.
- * During early development and unit testing, the `steps` parameter allows us to
- * inject mock implementations without calling real SLM/LLM APIs, RAG, database,
- * or Twake services.
  */
 function runSupportProcessingPipeline(
   input: SupportProcessingPipelineInput,
@@ -221,7 +147,7 @@ function runSupportProcessingPipeline(
   const pipelineSteps: Required<SupportProcessingPipelineSteps> = {
     runMessageAnalysis:
       steps.runMessageAnalysis ||
-      createMissingStep<MessageAnalysisInput, CurrentAnalysisOutput>("runMessageAnalysis"),
+      createMissingStep<MessageAnalysisInput, MessageAnalysisOutput>("runMessageAnalysis"),
 
     runSearchingDecision:
       steps.runSearchingDecision ||
@@ -235,41 +161,36 @@ function runSupportProcessingPipeline(
       steps.runResponseDecision ||
       createMissingStep<ResponseDecisionInput, unknown>("runResponseDecision"),
 
-    produceResponse:
-      steps.produceResponse ||
-      createMissingStep<ResponseProducerInput, unknown>("produceResponse"),
+    runResponseProducer:
+      steps.runResponseProducer ||
+      createMissingStep<ResponseProducerInput, unknown>("runResponseProducer"),
 
-    produceTicketData:
-      steps.produceTicketData ||
-      createMissingStep<DataProducerInput, unknown>("produceTicketData")
+    runDataProducer:
+      steps.runDataProducer ||
+      createMissingStep<DataProducerInput, TicketMemory>("runDataProducer")
   };
 
   /**
    * Step 1: Message analysis
    */
-  const currentAnalysisOutput = pipelineSteps.runMessageAnalysis({
+  const messageAnalysisOutput = pipelineSteps.runMessageAnalysis({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
   });
 
-  assertValidCurrentAnalysisOutput(currentAnalysisOutput);
+  assertValidMessageAnalysisOutput(messageAnalysisOutput);
 
-  const analysisDelta = currentAnalysisOutput.analysisDelta;
+  const supportKnowledgeAfterTurn = messageAnalysisOutput.supportKnowledgeAfterTurn;
+  const supportKnowledgeDelta = messageAnalysisOutput.supportKnowledgeDelta;
 
   /**
    * Step 2: Searching decision
    */
   const decisionSearchingSolution = pipelineSteps.runSearchingDecision({
-    currentAnalysisOutput,
-    analysisDelta,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations
+    supportKnowledgeAfterTurn,
+    supportKnowledgeDelta,
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
   });
 
   /**
@@ -277,67 +198,66 @@ function runSupportProcessingPipeline(
    */
   const possibleSolutions = pipelineSteps.runSolutionRetrieval({
     decisionSearchingSolution,
-    currentAnalysisOutput,
-    analysisDelta,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations
+    supportKnowledgeAfterTurn,
+    supportKnowledgeDelta,
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
   });
 
   /**
    * Step 4: Response decision
    */
   const responsePlan = pipelineSteps.runResponseDecision({
-    currentAnalysisOutput,
-    analysisDelta,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
+    supportKnowledgeAfterTurn,
+    supportKnowledgeDelta,
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
     possibleSolutions
   });
 
   /**
    * Step 5: Response producer
    */
-  const userResponse = pipelineSteps.produceResponse({
-    responsePlan,
-    currentAnalysisOutput,
-    analysisDelta,
-    possibleSolutions,
-    userInformations: input.userInformations
+  const userResponse = pipelineSteps.runResponseProducer({
+    responsePlan
   });
 
   /**
    * Step 6: Data producer
    */
-  const updatedDataTicket = pipelineSteps.produceTicketData({
-    currentAnalysisOutput,
-    analysisDelta,
-    previousAnalysisOutput: input.previousAnalysisOutput,
-    conversationLogs: input.conversationLogs,
-    attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    possibleSolutions,
+  const ticketMemoryAfterTurn = pipelineSteps.runDataProducer({
+    ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
+    supportKnowledgeAfterTurn,
+    supportKnowledgeDelta,
+    conversationLogs: input.ticketMemoryBeforeTurn?.conversationLogs,
+    userInformations: input.ticketMemoryBeforeTurn?.userInformations,
     responsePlan
   });
 
+  assertValidTicketMemory(ticketMemoryAfterTurn);
+
   return {
     userResponse,
-    updatedDataTicket
+    ticketMemoryAfterTurn
   };
 }
 
 export {
   runSupportProcessingPipeline,
-  assertValidAnalysisDelta,
-  assertValidCurrentAnalysisOutput
+  assertValidMessageAnalysisOutput,
+  assertValidTicketMemory
 };
 
 export type {
   SupportProcessingPipelineInput,
   SupportProcessingPipelineSteps,
   SupportProcessingPipelineOutput,
-  AnalysisDelta,
-  CurrentAnalysisOutput
+  MessageAnalysisInput,
+  MessageAnalysisOutput,
+  SearchingDecisionInput,
+  SolutionRetrievalInput,
+  ResponseDecisionInput,
+  ResponseProducerInput,
+  DataProducerInput,
+  SupportKnowledge,
+  SupportKnowledgeDelta,
+  TicketMemory
 };
