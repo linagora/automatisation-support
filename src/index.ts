@@ -1,10 +1,13 @@
-function healthCheck() {
+function healthCheck(): {
+  status: "ok";
+  service: "automatisation-support";
+} {
   return {
     status: "ok",
     service: "automatisation-support"
   };
 }
 
-module.exports = {
+export {
   healthCheck
 };

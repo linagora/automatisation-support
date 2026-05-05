@@ -1,4 +1,4 @@
-const { healthCheck } = require("../src/index");
+import { healthCheck } from "../src/index";
 
 describe("healthCheck", () => {
   it("should return service status", () => {

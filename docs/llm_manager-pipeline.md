@@ -141,3 +141,172 @@ class V openrag;
 class A0X,ZS,Z,Z2 final;
 
 ```
+
+```mermaid
+flowchart TD
+
+    A["Entrée globale<br/><br/>
+    latest_user_message<br/>
+    attachments optionnels<br/>
+    previous_analysis_output optionnel<br/>
+    conversation_logs optionnel<br/>
+    attempt_history optionnel"]
+
+    A --> B
+
+    subgraph B["1. Support Analysis Pipeline"]
+        direction TB
+        B_IN["Entrée<br/><br/>
+        Message utilisateur brut<br/>
+        Pièces jointes éventuelles<br/>
+        Historique conversationnel<br/>
+        Analyse précédente éventuelle"]
+
+        B_FN["Fonction<br/><br/>
+        Analyser le message support<br/>
+        Faire le pré-routing<br/>
+        Gérer LLM0 si besoin<br/>
+        Gérer LLM1 si besoin<br/>
+        Gérer analyse image / vidéo si besoin<br/>
+        Valider et normaliser la sortie"]
+
+        B_OUT["Sortie<br/><br/>
+        supportAnalysisOutput<br/>
+        JSON structuré propre<br/>
+        segments: topic / signal / scope_boundary"]
+
+        B_IN --> B_FN --> B_OUT
+    end
+
+    B --> C
+
+    subgraph C["2. Support Decision Engine"]
+        direction TB
+        C_IN["Entrée<br/><br/>
+        supportAnalysisOutput<br/>
+        previousTicketState optionnel<br/>
+        conversationContext optionnel<br/>
+        userContext optionnel"]
+
+        C_FN["Fonction<br/><br/>
+        Séparer les segments<br/>
+        Identifier les topics exploitables<br/>
+        Gérer signaux et hors-scope<br/>
+        Merger avec l'état ticket<br/>
+        Calculer la complétude<br/>
+        Choisir la prochaine action"]
+
+        C_OUT["Sortie<br/><br/>
+        decisionResult<br/>
+        nextAction<br/>
+        responsePlanDraft<br/>
+        ticketPatchDraft"]
+
+        C_IN --> C_FN --> C_OUT
+    end
+
+    C --> D{nextAction ?}
+
+    D -->|"ask_info"| E
+    D -->|"ready_for_rag"| F
+    D -->|"relational / scope_boundary"| E
+    D -->|"handover"| E
+
+    subgraph F["3. Solution Retrieval Engine"]
+        direction TB
+        F_IN["Entrée<br/><br/>
+        topic complet<br/>
+        userContext<br/>
+        conversationContext<br/>
+        ticket context"]
+
+        F_FN["Fonction<br/><br/>
+        Préparer la requête RAG<br/>
+        Interroger OpenRAG<br/>
+        Rechercher dans docs / FAQ / tickets / incidents<br/>
+        Évaluer confiance, fraîcheur et sources"]
+
+        F_OUT["Sortie<br/><br/>
+        evidencePackage<br/>
+        solutionFound: true / false<br/>
+        confidence<br/>
+        sources<br/>
+        suggestedSteps éventuels"]
+
+        F_IN --> F_FN --> F_OUT
+    end
+
+    F --> E
+
+    subgraph E["4. Response Planning Engine"]
+        direction TB
+        E_IN["Entrée<br/><br/>
+        decisionResult<br/>
+        responsePlanDraft<br/>
+        ticketPatchDraft<br/>
+        evidencePackage optionnel"]
+
+        E_FN["Fonction<br/><br/>
+        Choisir le type de réponse<br/>
+        Préparer une clarification si topic incomplet<br/>
+        Préparer une réponse directe si solution fiable<br/>
+        Préparer un handover si nécessaire<br/>
+        Appliquer un template ou préparer LLM2 plus tard"]
+
+        E_OUT["Sortie<br/><br/>
+        userResponseDraft<br/>
+        responsePlan finalisé<br/>
+        ticketPatch enrichi"]
+
+        E_IN --> E_FN --> E_OUT
+    end
+
+    E --> G
+
+    subgraph G["5. Support Output Assembler"]
+        direction TB
+        G_IN["Entrée<br/><br/>
+        userResponseDraft<br/>
+        responsePlan<br/>
+        ticketPatch<br/>
+        supportAnalysisOutput<br/>
+        decisionResult<br/>
+        evidencePackage optionnel"]
+
+        G_FN["Fonction<br/><br/>
+        Assembler la sortie finale<br/>
+        Préparer le texte utilisateur<br/>
+        Préparer le JSON ticket mis à jour<br/>
+        Préparer les logs<br/>
+        Préparer le debug éventuel"]
+
+        G_OUT["Sortie finale<br/><br/>
+        userResponse<br/>
+        updatedTicketJson / ticketPatch<br/>
+        logs<br/>
+        debug"]
+
+        G_IN --> G_FN --> G_OUT
+    end
+
+    G --> H["Sortie globale<br/><br/>
+    Réponse utilisateur prête à envoyer<br/>
+    Mise à jour ticket prête à appliquer<br/>
+    Logs et debug prêts à stocker"]
+
+    classDef input fill:#F7F7F7,stroke:#777,stroke-width:1px,color:#111;
+    classDef analysis fill:#FFF4B8,stroke:#C9A400,stroke-width:1.5px,color:#3A3200;
+    classDef decision fill:#EAF2FF,stroke:#5B7DB1,stroke-width:1.5px,color:#1F2D3D;
+    classDef retrieval fill:#FFD9B3,stroke:#D9822B,stroke-width:1.5px,color:#4A2A00;
+    classDef response fill:#E9DDFF,stroke:#7B61FF,stroke-width:1.5px,color:#2E1A63;
+    classDef output fill:#FCE4EC,stroke:#C2185B,stroke-width:1.5px,color:#4A1025;
+    classDef router fill:#FFFFFF,stroke:#444,stroke-width:1.5px,color:#111;
+
+    class A,H input;
+    class B,B_IN,B_FN,B_OUT analysis;
+    class C,C_IN,C_FN,C_OUT decision;
+    class D router;
+    class F,F_IN,F_FN,F_OUT retrieval;
+    class E,E_IN,E_FN,E_OUT response;
+    class G,G_IN,G_FN,G_OUT output;
+```
