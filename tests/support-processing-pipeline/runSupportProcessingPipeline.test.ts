@@ -4,20 +4,36 @@ import {
 
 describe("runSupportProcessingPipeline", function () {
   it("runs all pipeline steps and returns the final output", function () {
-    const input = {
-      latestUserMessage: {
-        text: "Bonjour, je n'arrive pas à me connecter."
+    const ticketMemoryBeforeTurn = {
+      supportKnowledge: {
+        topics: []
       },
-      attachments: [],
-      previousAnalysisOutput: null,
+      supportKnowledgeDeltaHistory: [],
       conversationLogs: [],
-      attemptHistory: [],
       userInformations: {
         userId: "user_123"
       }
     };
 
-    const analysisDelta = {
+    const input = {
+      latestUserMessage: {
+        text: "Bonjour, je n'arrive pas à me connecter."
+      },
+      attachments: [],
+      ticketMemoryBeforeTurn
+    };
+
+    const supportKnowledgeAfterTurn = {
+      userLanguage: "fr",
+      topics: [
+        {
+          id_topic: 1,
+          topic_label: "Problème de connexion"
+        }
+      ]
+    };
+
+    const supportKnowledgeDelta = {
       hasNewInformation: true,
       newTopics: [
         {
@@ -32,11 +48,6 @@ describe("runSupportProcessingPipeline", function () {
       warningComprehensionChanged: false
     };
 
-    const expectedCurrentAnalysisOutput = {
-      intent: "login_issue",
-      analysisDelta
-    };
-
     const possibleSolutions = {
       status: "solutions_found",
       solutions: [
@@ -46,21 +57,55 @@ describe("runSupportProcessingPipeline", function () {
       ]
     };
 
+    const responsePlan = {
+      userLanguage: "fr",
+      messages: [
+        {
+          messageType: "topic_response",
+          topicId: 1
+        }
+      ]
+    };
+
+    const userResponse = {
+      messages: [
+        "Réponse automatique"
+      ]
+    };
+
+    const ticketMemoryAfterTurn = {
+      supportKnowledge: supportKnowledgeAfterTurn,
+      supportKnowledgeDeltaHistory: [
+        supportKnowledgeDelta
+      ],
+      conversationLogs: [],
+      userInformations: {
+        userId: "user_123"
+      }
+    };
+
     const callOrder: string[] = [];
 
     const steps = {
-      runMessageAnalysis: function () {
+      runMessageAnalysis: function (stepInput: any) {
         callOrder.push("message-analysis");
 
-        return expectedCurrentAnalysisOutput;
+        expect(stepInput.latestUserMessage).toEqual(input.latestUserMessage);
+        expect(stepInput.attachments).toEqual(input.attachments);
+        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
+
+        return {
+          supportKnowledgeAfterTurn,
+          supportKnowledgeDelta
+        };
       },
 
       runSearchingDecision: function (stepInput: any) {
         callOrder.push("searching-decision");
 
-        expect(stepInput.currentAnalysisOutput).toEqual(expectedCurrentAnalysisOutput);
-        expect(stepInput.analysisDelta).toEqual(analysisDelta);
-        expect(stepInput.previousAnalysisOutput).toBeNull();
+        expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
+        expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
+        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
 
         return true;
       },
@@ -69,8 +114,9 @@ describe("runSupportProcessingPipeline", function () {
         callOrder.push("solution-retrieval");
 
         expect(stepInput.decisionSearchingSolution).toBe(true);
-        expect(stepInput.currentAnalysisOutput).toEqual(expectedCurrentAnalysisOutput);
-        expect(stepInput.analysisDelta).toEqual(analysisDelta);
+        expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
+        expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
+        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
 
         return possibleSolutions;
       },
@@ -78,41 +124,33 @@ describe("runSupportProcessingPipeline", function () {
       runResponseDecision: function (stepInput: any) {
         callOrder.push("response-decision");
 
-        expect(stepInput.currentAnalysisOutput).toEqual(expectedCurrentAnalysisOutput);
-        expect(stepInput.analysisDelta).toEqual(analysisDelta);
+        expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
+        expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
+        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
         expect(stepInput.possibleSolutions).toEqual(possibleSolutions);
 
-        return {
-          type: "answer_with_solution"
-        };
+        return responsePlan;
       },
 
-      produceResponse: function (stepInput: any) {
+      runResponseProducer: function (stepInput: any) {
         callOrder.push("response-producer");
 
-        expect(stepInput.responsePlan).toEqual({
-          type: "answer_with_solution"
-        });
-        expect(stepInput.currentAnalysisOutput).toEqual(expectedCurrentAnalysisOutput);
-        expect(stepInput.analysisDelta).toEqual(analysisDelta);
-        expect(stepInput.possibleSolutions).toEqual(possibleSolutions);
+        expect(stepInput.responsePlan).toEqual(responsePlan);
 
-        return "Réponse automatique";
+        return userResponse;
       },
 
-      produceTicketData: function (stepInput: any) {
+      runDataProducer: function (stepInput: any) {
         callOrder.push("data-producer");
 
-        expect(stepInput.currentAnalysisOutput).toEqual(expectedCurrentAnalysisOutput);
-        expect(stepInput.analysisDelta).toEqual(analysisDelta);
-        expect(stepInput.possibleSolutions).toEqual(possibleSolutions);
-        expect(stepInput.responsePlan).toEqual({
-          type: "answer_with_solution"
-        });
+        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
+        expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
+        expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
+        expect(stepInput.conversationLogs).toEqual(ticketMemoryBeforeTurn.conversationLogs);
+        expect(stepInput.userInformations).toEqual(ticketMemoryBeforeTurn.userInformations);
+        expect(stepInput.responsePlan).toEqual(responsePlan);
 
-        return {
-          status: "waiting_user"
-        };
+        return ticketMemoryAfterTurn;
       }
     };
 
@@ -128,10 +166,8 @@ describe("runSupportProcessingPipeline", function () {
     ]);
 
     expect(output).toEqual({
-      userResponse: "Réponse automatique",
-      updatedDataTicket: {
-        status: "waiting_user"
-      }
+      userResponse,
+      ticketMemoryAfterTurn
     });
   });
 });

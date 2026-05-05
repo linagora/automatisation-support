@@ -3,7 +3,18 @@ import {
 } from "../../../src/support-processing-pipeline/message-analysis/runMessageAnalysis";
 
 describe("runMessageAnalysis", function () {
-  it("runs all message-analysis steps and returns currentAnalysisOutput with analysisDelta", function () {
+  it("runs all message-analysis steps and returns messageAnalysisOutput", function () {
+    const ticketMemoryBeforeTurn = {
+      supportKnowledge: {
+        topics: []
+      },
+      supportKnowledgeDeltaHistory: [],
+      conversationLogs: [],
+      userInformations: {
+        userId: "user_123"
+      }
+    };
+
     const input = {
       latestUserMessage: {
         text: "Bonjour, je n'arrive pas à me connecter."
@@ -14,35 +25,18 @@ describe("runMessageAnalysis", function () {
           name: "screenshot.png"
         }
       ],
-      previousAnalysisOutput: null,
-      conversationLogs: [],
-      attemptHistory: [],
-      userInformations: {
-        userId: "user_123"
-      }
+      ticketMemoryBeforeTurn
     };
 
     const callOrder: string[] = [];
 
-    const analysisDelta = {
-      hasNewInformation: true,
-      newTopics: [
-        {
-          id_topic: 1,
-          topicLabel: "Problème de connexion",
-          category: "login_issue"
-        }
-      ],
-      updatedTopics: [],
-      resolvedTopics: [],
-      newSignals: [],
-      newScopeBoundaries: [],
-      warningComprehensionChanged: false
-    };
-
     const steps = {
-      runDeterministicRouting: function () {
+      runDeterministicRouting: function (stepInput: any) {
         callOrder.push("deterministic-routing");
+
+        expect(stepInput.latestUserMessage).toEqual(input.latestUserMessage);
+        expect(stepInput.attachments).toEqual(input.attachments);
+        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
 
         return {
           shouldAnalyzeMessage: true,
@@ -51,68 +45,118 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      runAttachmentAnalysis: function ({ decisionRoute }: any) {
+      runAttachmentAnalysis: function (stepInput: any) {
         callOrder.push("attachment-analysis");
 
+        expect(stepInput.deterministicRoutingResult).toEqual({
+          shouldAnalyzeMessage: true,
+          shouldRunAttachmentAnalysis: true,
+          reason: "message_has_attachment"
+        });
+
         return {
-          status: decisionRoute.shouldRunAttachmentAnalysis ? "analyzed" : "skipped",
+          status: stepInput.deterministicRoutingResult.shouldRunAttachmentAnalysis
+            ? "analyzed"
+            : "skipped",
           extractedText: "Erreur de connexion visible sur la capture."
         };
       },
 
-      runAnalysisRouting: function () {
+      runAnalysisRouting: function (stepInput: any) {
         callOrder.push("analysis-routing");
+
+        expect(stepInput.attachmentAnalysisResult).toEqual({
+          status: "analyzed",
+          extractedText: "Erreur de connexion visible sur la capture."
+        });
 
         return {
           shouldRunPreAnalysis: true,
-          shouldRunFullAnalysis: false,
-          reason: "pre_analysis_needed"
-        };
-      },
-
-      runPreAnalysis: function () {
-        callOrder.push("pre-analysis");
-
-        return {
-          route: "run_full_analysis",
           shouldRunFullAnalysis: true,
           reason: "support_request_confirmed"
         };
       },
 
-      runFullAnalysis: function () {
+      runPreAnalysis: function (stepInput: any) {
+        callOrder.push("pre-analysis");
+
+        expect(stepInput.analysisRoutingResult).toEqual({
+          shouldRunPreAnalysis: true,
+          shouldRunFullAnalysis: true,
+          reason: "support_request_confirmed"
+        });
+
+        return {
+          route: "run_full_analysis",
+          reason: "support_request_confirmed"
+        };
+      },
+
+      runFullAnalysis: function (stepInput: any) {
         callOrder.push("full-analysis");
+
+        expect(stepInput.preAnalysisResult).toEqual({
+          route: "run_full_analysis",
+          reason: "support_request_confirmed"
+        });
 
         return {
           userLanguage: "fr",
           topics: [
             {
-              topicLabel: "Problème de connexion",
-              category: "login_issue"
+              id_topic: 1,
+              topic_label: "Problème de connexion"
             }
           ]
         };
       },
 
-      assembleCurrentAnalysisOutput: function ({
-        decisionRoute,
-        deterministicRoutingResult,
-        attachmentAnalysisResult,
-        analysisRoutingResult,
-        preAnalysisResult,
-        fullAnalysisResult
-      }: any) {
+      assembleCurrentAnalysisOutput: function (stepInput: any) {
         callOrder.push("analysis-assembler");
 
+        expect(stepInput.decisionRoute).toEqual({
+          shouldAnalyzeMessage: true,
+          shouldRunAttachmentAnalysis: true,
+          reason: "support_request_confirmed",
+          shouldRunPreAnalysis: true,
+          shouldRunFullAnalysis: true,
+          route: "run_full_analysis"
+        });
+
+        expect(stepInput.fullAnalysisResult).toEqual({
+          userLanguage: "fr",
+          topics: [
+            {
+              id_topic: 1,
+              topic_label: "Problème de connexion"
+            }
+          ]
+        });
+
         return {
-          analysisStatus: "completed",
-          analysisDelta,
-          decisionRoute,
-          deterministicRoutingResult,
-          attachmentAnalysisResult,
-          analysisRoutingResult,
-          preAnalysisResult,
-          fullAnalysisResult
+          supportKnowledgeAfterTurn: {
+            userLanguage: "fr",
+            topics: [
+              {
+                id_topic: 1,
+                topic_label: "Problème de connexion"
+              }
+            ]
+          },
+          supportKnowledgeDelta: {
+            hasNewInformation: true,
+            newTopics: [
+              {
+                id_topic: 1,
+                topic_label: "Problème de connexion"
+              }
+            ],
+            updatedTopics: [],
+            resolvedTopics: [],
+            newSignals: [],
+            newScopeBoundaries: [],
+            warningComprehensionChanged: false
+          }
         };
       }
     };
@@ -128,45 +172,30 @@ describe("runMessageAnalysis", function () {
       "analysis-assembler"
     ]);
 
-    expect(output.analysisStatus).toBe("completed");
-
-    expect(output.analysisDelta).toEqual({
-      hasNewInformation: true,
-      newTopics: [
-        {
-          id_topic: 1,
-          topicLabel: "Problème de connexion",
-          category: "login_issue"
-        }
-      ],
-      updatedTopics: [],
-      resolvedTopics: [],
-      newSignals: [],
-      newScopeBoundaries: [],
-      warningComprehensionChanged: false
-    });
-
-    expect(output.decisionRoute).toEqual({
-      shouldAnalyzeMessage: true,
-      shouldRunAttachmentAnalysis: true,
-      shouldRunPreAnalysis: true,
-      shouldRunFullAnalysis: true,
-      reason: "support_request_confirmed"
-    });
-
-    expect(output.attachmentAnalysisResult).toEqual({
-      status: "analyzed",
-      extractedText: "Erreur de connexion visible sur la capture."
-    });
-
-    expect(output.fullAnalysisResult).toEqual({
-      userLanguage: "fr",
-      topics: [
-        {
-          topicLabel: "Problème de connexion",
-          category: "login_issue"
-        }
-      ]
+    expect(output).toEqual({
+      supportKnowledgeAfterTurn: {
+        userLanguage: "fr",
+        topics: [
+          {
+            id_topic: 1,
+            topic_label: "Problème de connexion"
+          }
+        ]
+      },
+      supportKnowledgeDelta: {
+        hasNewInformation: true,
+        newTopics: [
+          {
+            id_topic: 1,
+            topic_label: "Problème de connexion"
+          }
+        ],
+        updatedTopics: [],
+        resolvedTopics: [],
+        newSignals: [],
+        newScopeBoundaries: [],
+        warningComprehensionChanged: false
+      }
     });
   });
 
@@ -176,10 +205,7 @@ describe("runMessageAnalysis", function () {
         text: "Bonjour"
       },
       attachments: [],
-      previousAnalysisOutput: null,
-      conversationLogs: [],
-      attemptHistory: [],
-      userInformations: {}
+      ticketMemoryBeforeTurn: null
     };
 
     expect(function () {
