@@ -4,7 +4,7 @@
  * This file is the local orchestrator of the message-analysis block.
  *
  * Its responsibility is to analyze the latest user message with context and
- * produce a structured output: currentAnalysisOutput.
+ * produce a structured output: currentAnalysisOutput, including analysisDelta.
  *
  * INPUTS:
  * - latestUserMessage
@@ -15,7 +15,7 @@
  * - userInformations
  *
  * OUTPUT:
- * - currentAnalysisOutput
+ * - currentAnalysisOutput, including analysisDelta
  *
  * Internal steps:
  *
@@ -41,7 +41,9 @@
  *
  * 6. Analysis assembler
  *    Builds the final currentAnalysisOutput from all intermediate results.
- *    OUTPUTS - currentAnalysisOutput
+ *    It normalizes the current analysis and computes analysisDelta by comparing
+ *    the current analysis with previousAnalysisOutput.
+ *    OUTPUTS - currentAnalysisOutput, including analysisDelta
  */
 
 type UnknownObject = Record<string, unknown>;
@@ -55,6 +57,22 @@ interface MessageAnalysisInput {
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
+}
+
+interface AnalysisDelta {
+  hasNewInformation: boolean;
+  newTopics: UnknownObject[];
+  updatedTopics: UnknownObject[];
+  resolvedTopics: UnknownObject[];
+  newSignals: UnknownObject[];
+  newScopeBoundaries: UnknownObject[];
+  warningComprehensionChanged?: boolean;
+  [key: string]: unknown;
+}
+
+interface CurrentAnalysisOutput {
+  analysisDelta: AnalysisDelta;
+  [key: string]: unknown;
 }
 
 interface DecisionRouteMessageAnalysis {
@@ -91,7 +109,7 @@ interface MessageAnalysisSteps {
   runAnalysisRouting?: MessageAnalysisStep<UnknownObject, AnalysisRoutingResult>;
   runPreAnalysis?: MessageAnalysisStep<UnknownObject, PreAnalysisResult>;
   runFullAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  assembleCurrentAnalysisOutput?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  assembleCurrentAnalysisOutput?: MessageAnalysisStep<UnknownObject, CurrentAnalysisOutput>;
 }
 
 /**
@@ -132,7 +150,7 @@ function updateDecisionRoute(
 }
 
 /**
- * Validates the minimum input/output contract of runMessageAnalysis.
+ * Validates the minimum input contract of runMessageAnalysis.
  *
  * This validation is intentionally lightweight.
  * It only checks the fields needed to safely run the local orchestrator.
@@ -178,9 +196,58 @@ function assertValidMessageAnalysisInput(input: unknown): asserts input is Messa
   }
 }
 
+/**
+ * Validates the analysisDelta contract.
+ */
+function assertValidAnalysisDelta(analysisDelta: unknown): asserts analysisDelta is AnalysisDelta {
+  if (
+    !analysisDelta ||
+    typeof analysisDelta !== "object" ||
+    Array.isArray(analysisDelta)
+  ) {
+    throw new Error("analysisDelta must be an object");
+  }
+
+  const analysisDeltaOutput = analysisDelta as Partial<AnalysisDelta>;
+
+  if (typeof analysisDeltaOutput.hasNewInformation !== "boolean") {
+    throw new Error("analysisDelta.hasNewInformation must be a boolean");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.newTopics)) {
+    throw new Error("analysisDelta.newTopics must be an array");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.updatedTopics)) {
+    throw new Error("analysisDelta.updatedTopics must be an array");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.resolvedTopics)) {
+    throw new Error("analysisDelta.resolvedTopics must be an array");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.newSignals)) {
+    throw new Error("analysisDelta.newSignals must be an array");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.newScopeBoundaries)) {
+    throw new Error("analysisDelta.newScopeBoundaries must be an array");
+  }
+
+  if (
+    analysisDeltaOutput.warningComprehensionChanged !== undefined &&
+    typeof analysisDeltaOutput.warningComprehensionChanged !== "boolean"
+  ) {
+    throw new Error("analysisDelta.warningComprehensionChanged must be a boolean when provided");
+  }
+}
+
+/**
+ * Validates the output contract of runMessageAnalysis.
+ */
 function assertValidCurrentAnalysisOutput(
   currentAnalysisOutput: unknown
-): asserts currentAnalysisOutput is UnknownObject {
+): asserts currentAnalysisOutput is CurrentAnalysisOutput {
   if (
     !currentAnalysisOutput ||
     typeof currentAnalysisOutput !== "object" ||
@@ -188,6 +255,10 @@ function assertValidCurrentAnalysisOutput(
   ) {
     throw new Error("currentAnalysisOutput must be an object");
   }
+
+  const currentAnalysis = currentAnalysisOutput as Partial<CurrentAnalysisOutput>;
+
+  assertValidAnalysisDelta(currentAnalysis.analysisDelta);
 }
 
 /**
@@ -196,7 +267,7 @@ function assertValidCurrentAnalysisOutput(
 function runMessageAnalysis(
   input: MessageAnalysisInput,
   steps: MessageAnalysisSteps = {}
-): UnknownObject {
+): CurrentAnalysisOutput {
   assertValidMessageAnalysisInput(input);
 
   const messageAnalysisSteps: Required<MessageAnalysisSteps> = {
@@ -222,7 +293,7 @@ function runMessageAnalysis(
 
     assembleCurrentAnalysisOutput:
       steps.assembleCurrentAnalysisOutput ||
-      createMissingStep<UnknownObject, UnknownObject>("assembleCurrentAnalysisOutput")
+      createMissingStep<UnknownObject, CurrentAnalysisOutput>("assembleCurrentAnalysisOutput")
   };
 
   let decisionRouteMessageAnalysis = createInitialDecisionRoute();
@@ -351,6 +422,9 @@ function runMessageAnalysis(
 
   /**
    * Step 6: Analysis assembler
+   *
+   * This step is responsible for producing the final currentAnalysisOutput,
+   * including analysisDelta.
    */
   const currentAnalysisOutput = messageAnalysisSteps.assembleCurrentAnalysisOutput({
     latestUserMessage: input.latestUserMessage,
@@ -377,12 +451,15 @@ export {
   createInitialDecisionRoute,
   updateDecisionRoute,
   assertValidMessageAnalysisInput,
+  assertValidAnalysisDelta,
   assertValidCurrentAnalysisOutput
 };
 
 export type {
   MessageAnalysisInput,
   MessageAnalysisSteps,
+  AnalysisDelta,
+  CurrentAnalysisOutput,
   DecisionRouteMessageAnalysis,
   DeterministicRoutingResult,
   AnalysisRoutingResult,

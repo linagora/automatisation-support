@@ -7,32 +7,48 @@
  *
  * 1. Analyze the latest user message with context and produce a structured analysis: message-analysis
  *    INPUTS  - latestUserMessage, attachments, previousAnalysisOutput, conversationLogs, attemptHistory, userInformations
- *    OUTPUTS - currentAnalysisOutput
+ *    OUTPUTS - currentAnalysisOutput, including analysisDelta
  *
  * 2. Apply deterministic rules to decide whether we should search for a solution in our database: searching-decision
- *    INPUTS  - currentAnalysisOutput, conversationLogs, attemptHistory, userInformations
+ *    INPUTS  - currentAnalysisOutput, analysisDelta, previousAnalysisOutput, conversationLogs, attemptHistory, userInformations
  *    OUTPUTS - decisionSearchingSolution (true/false)
  *
  * 3. Retrieve a solution if the searching decision requires it: solution-retrieval
- *    INPUTS  - decisionSearchingSolution, currentAnalysisOutput, conversationLogs, attemptHistory
+ *    INPUTS  - decisionSearchingSolution, currentAnalysisOutput, analysisDelta, conversationLogs, attemptHistory
  *    OUTPUTS - possibleSolutions ("not_searched", "not_found", "solutions_found")
  *
  * 4. Apply decision rules to produce the automatic answer plan: response-decision
- *    INPUTS  - currentAnalysisOutput, conversationLogs, attemptHistory, userInformations, possibleSolutions
+ *    INPUTS  - currentAnalysisOutput, analysisDelta, previousAnalysisOutput, conversationLogs, attemptHistory, userInformations, possibleSolutions
  *    OUTPUTS - responsePlan
  *
  * 5. Build a response for the user from the response plan and predefined templates: response-producer
- *    INPUTS  - responsePlan
+ *    INPUTS  - responsePlan, currentAnalysisOutput, analysisDelta, possibleSolutions
  *    OUTPUTS - userResponse
  *
  * 6. Produce the data needed to update the ticket state: data-producer
- *    INPUTS  - currentAnalysisOutput, conversationLogs, attemptHistory, userInformations, possibleSolutions, responsePlan
+ *    INPUTS  - currentAnalysisOutput, analysisDelta, conversationLogs, attemptHistory, userInformations, possibleSolutions, responsePlan
  *    OUTPUTS - updatedDataTicket
  */
 
 type UnknownObject = Record<string, unknown>;
 
 type PipelineStep<TInput, TOutput> = (input: TInput) => TOutput;
+
+interface AnalysisDelta {
+  hasNewInformation: boolean;
+  newTopics: UnknownObject[];
+  updatedTopics: UnknownObject[];
+  resolvedTopics: UnknownObject[];
+  newSignals: UnknownObject[];
+  newScopeBoundaries: UnknownObject[];
+  warningComprehensionChanged?: boolean;
+  [key: string]: unknown;
+}
+
+interface CurrentAnalysisOutput {
+  analysisDelta: AnalysisDelta;
+  [key: string]: unknown;
+}
 
 interface SupportProcessingPipelineInput {
   latestUserMessage: string | UnknownObject;
@@ -53,7 +69,8 @@ interface MessageAnalysisInput {
 }
 
 interface SearchingDecisionInput {
-  currentAnalysisOutput: UnknownObject;
+  currentAnalysisOutput: CurrentAnalysisOutput;
+  analysisDelta: AnalysisDelta;
   previousAnalysisOutput?: UnknownObject | null;
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
@@ -62,14 +79,17 @@ interface SearchingDecisionInput {
 
 interface SolutionRetrievalInput {
   decisionSearchingSolution: boolean;
-  currentAnalysisOutput: UnknownObject;
+  currentAnalysisOutput: CurrentAnalysisOutput;
+  analysisDelta: AnalysisDelta;
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
 }
 
 interface ResponseDecisionInput {
-  currentAnalysisOutput: UnknownObject;
+  currentAnalysisOutput: CurrentAnalysisOutput;
+  analysisDelta: AnalysisDelta;
+  previousAnalysisOutput?: UnknownObject | null;
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
@@ -78,13 +98,16 @@ interface ResponseDecisionInput {
 
 interface ResponseProducerInput {
   responsePlan: unknown;
-  currentAnalysisOutput: UnknownObject;
+  currentAnalysisOutput: CurrentAnalysisOutput;
+  analysisDelta: AnalysisDelta;
   possibleSolutions: unknown;
   userInformations?: UnknownObject | null;
 }
 
 interface DataProducerInput {
-  currentAnalysisOutput: UnknownObject;
+  currentAnalysisOutput: CurrentAnalysisOutput;
+  analysisDelta: AnalysisDelta;
+  previousAnalysisOutput?: UnknownObject | null;
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
@@ -93,7 +116,7 @@ interface DataProducerInput {
 }
 
 interface SupportProcessingPipelineSteps {
-  runMessageAnalysis?: PipelineStep<MessageAnalysisInput, UnknownObject>;
+  runMessageAnalysis?: PipelineStep<MessageAnalysisInput, CurrentAnalysisOutput>;
   runSearchingDecision?: PipelineStep<SearchingDecisionInput, boolean>;
   runSolutionRetrieval?: PipelineStep<SolutionRetrievalInput, unknown>;
   runResponseDecision?: PipelineStep<ResponseDecisionInput, unknown>;
@@ -119,6 +142,71 @@ function createMissingStep<TInput, TOutput>(stepName: string): PipelineStep<TInp
 }
 
 /**
+ * Validates the analysisDelta contract.
+ */
+function assertValidAnalysisDelta(analysisDelta: unknown): asserts analysisDelta is AnalysisDelta {
+  if (
+    !analysisDelta ||
+    typeof analysisDelta !== "object" ||
+    Array.isArray(analysisDelta)
+  ) {
+    throw new Error("analysisDelta must be an object");
+  }
+
+  const analysisDeltaOutput = analysisDelta as Partial<AnalysisDelta>;
+
+  if (typeof analysisDeltaOutput.hasNewInformation !== "boolean") {
+    throw new Error("analysisDelta.hasNewInformation must be a boolean");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.newTopics)) {
+    throw new Error("analysisDelta.newTopics must be an array");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.updatedTopics)) {
+    throw new Error("analysisDelta.updatedTopics must be an array");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.resolvedTopics)) {
+    throw new Error("analysisDelta.resolvedTopics must be an array");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.newSignals)) {
+    throw new Error("analysisDelta.newSignals must be an array");
+  }
+
+  if (!Array.isArray(analysisDeltaOutput.newScopeBoundaries)) {
+    throw new Error("analysisDelta.newScopeBoundaries must be an array");
+  }
+
+  if (
+    analysisDeltaOutput.warningComprehensionChanged !== undefined &&
+    typeof analysisDeltaOutput.warningComprehensionChanged !== "boolean"
+  ) {
+    throw new Error("analysisDelta.warningComprehensionChanged must be a boolean when provided");
+  }
+}
+
+/**
+ * Validates that message-analysis returned a usable currentAnalysisOutput.
+ */
+function assertValidCurrentAnalysisOutput(
+  currentAnalysisOutput: unknown
+): asserts currentAnalysisOutput is CurrentAnalysisOutput {
+  if (
+    !currentAnalysisOutput ||
+    typeof currentAnalysisOutput !== "object" ||
+    Array.isArray(currentAnalysisOutput)
+  ) {
+    throw new Error("currentAnalysisOutput must be an object");
+  }
+
+  const currentAnalysis = currentAnalysisOutput as Partial<CurrentAnalysisOutput>;
+
+  assertValidAnalysisDelta(currentAnalysis.analysisDelta);
+}
+
+/**
  * Runs the full support processing pipeline.
  *
  * In production, this function will use the real implementations of each step.
@@ -133,7 +221,7 @@ function runSupportProcessingPipeline(
   const pipelineSteps: Required<SupportProcessingPipelineSteps> = {
     runMessageAnalysis:
       steps.runMessageAnalysis ||
-      createMissingStep<MessageAnalysisInput, UnknownObject>("runMessageAnalysis"),
+      createMissingStep<MessageAnalysisInput, CurrentAnalysisOutput>("runMessageAnalysis"),
 
     runSearchingDecision:
       steps.runSearchingDecision ||
@@ -168,11 +256,16 @@ function runSupportProcessingPipeline(
     userInformations: input.userInformations
   });
 
+  assertValidCurrentAnalysisOutput(currentAnalysisOutput);
+
+  const analysisDelta = currentAnalysisOutput.analysisDelta;
+
   /**
    * Step 2: Searching decision
    */
   const decisionSearchingSolution = pipelineSteps.runSearchingDecision({
     currentAnalysisOutput,
+    analysisDelta,
     previousAnalysisOutput: input.previousAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
@@ -185,6 +278,7 @@ function runSupportProcessingPipeline(
   const possibleSolutions = pipelineSteps.runSolutionRetrieval({
     decisionSearchingSolution,
     currentAnalysisOutput,
+    analysisDelta,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations
@@ -195,6 +289,8 @@ function runSupportProcessingPipeline(
    */
   const responsePlan = pipelineSteps.runResponseDecision({
     currentAnalysisOutput,
+    analysisDelta,
+    previousAnalysisOutput: input.previousAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
@@ -207,6 +303,7 @@ function runSupportProcessingPipeline(
   const userResponse = pipelineSteps.produceResponse({
     responsePlan,
     currentAnalysisOutput,
+    analysisDelta,
     possibleSolutions,
     userInformations: input.userInformations
   });
@@ -216,6 +313,8 @@ function runSupportProcessingPipeline(
    */
   const updatedDataTicket = pipelineSteps.produceTicketData({
     currentAnalysisOutput,
+    analysisDelta,
+    previousAnalysisOutput: input.previousAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
@@ -230,11 +329,15 @@ function runSupportProcessingPipeline(
 }
 
 export {
-  runSupportProcessingPipeline
+  runSupportProcessingPipeline,
+  assertValidAnalysisDelta,
+  assertValidCurrentAnalysisOutput
 };
 
 export type {
   SupportProcessingPipelineInput,
   SupportProcessingPipelineSteps,
-  SupportProcessingPipelineOutput
+  SupportProcessingPipelineOutput,
+  AnalysisDelta,
+  CurrentAnalysisOutput
 };

@@ -3,7 +3,7 @@ import {
 } from "../../../src/support-processing-pipeline/message-analysis/runMessageAnalysis";
 
 describe("runMessageAnalysis", function () {
-  it("runs all message-analysis steps and returns currentAnalysisOutput", function () {
+  it("runs all message-analysis steps and returns currentAnalysisOutput with analysisDelta", function () {
     const input = {
       latestUserMessage: {
         text: "Bonjour, je n'arrive pas à me connecter."
@@ -23,6 +23,22 @@ describe("runMessageAnalysis", function () {
     };
 
     const callOrder: string[] = [];
+
+    const analysisDelta = {
+      hasNewInformation: true,
+      newTopics: [
+        {
+          id_topic: 1,
+          topicLabel: "Problème de connexion",
+          category: "login_issue"
+        }
+      ],
+      updatedTopics: [],
+      resolvedTopics: [],
+      newSignals: [],
+      newScopeBoundaries: [],
+      warningComprehensionChanged: false
+    };
 
     const steps = {
       runDeterministicRouting: function () {
@@ -90,6 +106,7 @@ describe("runMessageAnalysis", function () {
 
         return {
           analysisStatus: "completed",
+          analysisDelta,
           decisionRoute,
           deterministicRoutingResult,
           attachmentAnalysisResult,
@@ -112,6 +129,22 @@ describe("runMessageAnalysis", function () {
     ]);
 
     expect(output.analysisStatus).toBe("completed");
+
+    expect(output.analysisDelta).toEqual({
+      hasNewInformation: true,
+      newTopics: [
+        {
+          id_topic: 1,
+          topicLabel: "Problème de connexion",
+          category: "login_issue"
+        }
+      ],
+      updatedTopics: [],
+      resolvedTopics: [],
+      newSignals: [],
+      newScopeBoundaries: [],
+      warningComprehensionChanged: false
+    });
 
     expect(output.decisionRoute).toEqual({
       shouldAnalyzeMessage: true,
