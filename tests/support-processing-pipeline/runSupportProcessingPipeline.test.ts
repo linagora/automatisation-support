@@ -58,8 +58,7 @@ describe("runSupportProcessingPipeline", function () {
       userResponse: "Réponse automatique",
       updatedDataTicket: {
         status: "waiting_user"
-      },
-      dataCollectorProcessing: {}
+      }
     });
   });
 });

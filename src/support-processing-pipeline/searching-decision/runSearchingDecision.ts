@@ -15,7 +15,6 @@
  * - conversationLogs
  * - attemptHistory
  * - userInformations
- * - dataCollectorProcessing
  *
  * OUTPUT:
  * - decisionSearchingSolution (true/false)
@@ -59,7 +58,6 @@ interface SearchingDecisionInput {
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
-  dataCollectorProcessing?: UnknownObject;
 }
 
 interface DecisionRouteSearchingDecision {
@@ -201,17 +199,6 @@ function assertValidSearchingDecisionInput(
   ) {
     throw new Error("userInformations must be an object or null when provided");
   }
-
-  if (
-    searchingDecisionInput.dataCollectorProcessing !== undefined &&
-    (
-      !searchingDecisionInput.dataCollectorProcessing ||
-      typeof searchingDecisionInput.dataCollectorProcessing !== "object" ||
-      Array.isArray(searchingDecisionInput.dataCollectorProcessing)
-    )
-  ) {
-    throw new Error("dataCollectorProcessing must be an object when provided");
-  }
 }
 
 /**
@@ -269,7 +256,6 @@ function runSearchingDecision(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRouteSearchingDecision
   });
 
@@ -295,7 +281,6 @@ function runSearchingDecision(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRouteSearchingDecision,
     topicRoutingResult
   });
@@ -322,7 +307,6 @@ function runSearchingDecision(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRouteSearchingDecision,
     topicRoutingResult,
     solutionLikelihoodResult
@@ -350,7 +334,6 @@ function runSearchingDecision(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRouteSearchingDecision,
     topicRoutingResult,
     solutionLikelihoodResult,
@@ -379,7 +362,6 @@ function runSearchingDecision(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRouteSearchingDecision,
     topicRoutingResult,
     solutionLikelihoodResult,

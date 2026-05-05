@@ -50,7 +50,6 @@ interface MessageAnalysisInput {
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
-  dataCollectorProcessing: UnknownObject;
 }
 
 interface SearchingDecisionInput {
@@ -59,7 +58,6 @@ interface SearchingDecisionInput {
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
-  dataCollectorProcessing: UnknownObject;
 }
 
 interface SolutionRetrievalInput {
@@ -68,7 +66,6 @@ interface SolutionRetrievalInput {
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
-  dataCollectorProcessing: UnknownObject;
 }
 
 interface ResponseDecisionInput {
@@ -77,7 +74,6 @@ interface ResponseDecisionInput {
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
   possibleSolutions: unknown;
-  dataCollectorProcessing: UnknownObject;
 }
 
 interface ResponseProducerInput {
@@ -85,7 +81,6 @@ interface ResponseProducerInput {
   currentAnalysisOutput: UnknownObject;
   possibleSolutions: unknown;
   userInformations?: UnknownObject | null;
-  dataCollectorProcessing: UnknownObject;
 }
 
 interface DataProducerInput {
@@ -95,7 +90,6 @@ interface DataProducerInput {
   userInformations?: UnknownObject | null;
   possibleSolutions: unknown;
   responsePlan: unknown;
-  dataCollectorProcessing: UnknownObject;
 }
 
 interface SupportProcessingPipelineSteps {
@@ -110,7 +104,6 @@ interface SupportProcessingPipelineSteps {
 interface SupportProcessingPipelineOutput {
   userResponse: unknown;
   updatedDataTicket: unknown;
-  dataCollectorProcessing: UnknownObject;
 }
 
 /**
@@ -163,8 +156,6 @@ function runSupportProcessingPipeline(
       createMissingStep<DataProducerInput, unknown>("produceTicketData")
   };
 
-  const dataCollectorProcessing: UnknownObject = {};
-
   /**
    * Step 1: Message analysis
    */
@@ -174,8 +165,7 @@ function runSupportProcessingPipeline(
     previousAnalysisOutput: input.previousAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    dataCollectorProcessing
+    userInformations: input.userInformations
   });
 
   /**
@@ -186,8 +176,7 @@ function runSupportProcessingPipeline(
     previousAnalysisOutput: input.previousAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    dataCollectorProcessing
+    userInformations: input.userInformations
   });
 
   /**
@@ -198,8 +187,7 @@ function runSupportProcessingPipeline(
     currentAnalysisOutput,
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
-    userInformations: input.userInformations,
-    dataCollectorProcessing
+    userInformations: input.userInformations
   });
 
   /**
@@ -210,8 +198,7 @@ function runSupportProcessingPipeline(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    possibleSolutions,
-    dataCollectorProcessing
+    possibleSolutions
   });
 
   /**
@@ -221,8 +208,7 @@ function runSupportProcessingPipeline(
     responsePlan,
     currentAnalysisOutput,
     possibleSolutions,
-    userInformations: input.userInformations,
-    dataCollectorProcessing
+    userInformations: input.userInformations
   });
 
   /**
@@ -234,14 +220,12 @@ function runSupportProcessingPipeline(
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
     possibleSolutions,
-    responsePlan,
-    dataCollectorProcessing
+    responsePlan
   });
 
   return {
     userResponse,
-    updatedDataTicket,
-    dataCollectorProcessing
+    updatedDataTicket
   };
 }
 

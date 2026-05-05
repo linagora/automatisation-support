@@ -19,17 +19,14 @@ describe("runMessageAnalysis", function () {
       attemptHistory: [],
       userInformations: {
         userId: "user_123"
-      },
-      dataCollectorProcessing: {}
+      }
     };
 
     const callOrder: string[] = [];
 
     const steps = {
-      runDeterministicRouting: function ({ dataCollectorProcessing }: any) {
+      runDeterministicRouting: function () {
         callOrder.push("deterministic-routing");
-
-        dataCollectorProcessing.deterministicRoutingCalled = true;
 
         return {
           shouldAnalyzeMessage: true,
@@ -38,10 +35,8 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      runAttachmentAnalysis: function ({ decisionRoute, dataCollectorProcessing }: any) {
+      runAttachmentAnalysis: function ({ decisionRoute }: any) {
         callOrder.push("attachment-analysis");
-
-        dataCollectorProcessing.attachmentAnalysisCalled = true;
 
         return {
           status: decisionRoute.shouldRunAttachmentAnalysis ? "analyzed" : "skipped",
@@ -49,10 +44,8 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      runAnalysisRouting: function ({ dataCollectorProcessing }: any) {
+      runAnalysisRouting: function () {
         callOrder.push("analysis-routing");
-
-        dataCollectorProcessing.analysisRoutingCalled = true;
 
         return {
           shouldRunPreAnalysis: true,
@@ -61,10 +54,8 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      runPreAnalysis: function ({ dataCollectorProcessing }: any) {
+      runPreAnalysis: function () {
         callOrder.push("pre-analysis");
-
-        dataCollectorProcessing.preAnalysisCalled = true;
 
         return {
           route: "run_full_analysis",
@@ -73,10 +64,8 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      runFullAnalysis: function ({ dataCollectorProcessing }: any) {
+      runFullAnalysis: function () {
         callOrder.push("full-analysis");
-
-        dataCollectorProcessing.fullAnalysisCalled = true;
 
         return {
           userLanguage: "fr",
@@ -95,12 +84,9 @@ describe("runMessageAnalysis", function () {
         attachmentAnalysisResult,
         analysisRoutingResult,
         preAnalysisResult,
-        fullAnalysisResult,
-        dataCollectorProcessing
+        fullAnalysisResult
       }: any) {
         callOrder.push("analysis-assembler");
-
-        dataCollectorProcessing.analysisAssemblerCalled = true;
 
         return {
           analysisStatus: "completed",
@@ -149,15 +135,6 @@ describe("runMessageAnalysis", function () {
         }
       ]
     });
-
-    expect(input.dataCollectorProcessing).toEqual({
-      deterministicRoutingCalled: true,
-      attachmentAnalysisCalled: true,
-      analysisRoutingCalled: true,
-      preAnalysisCalled: true,
-      fullAnalysisCalled: true,
-      analysisAssemblerCalled: true
-    });
   });
 
   it("throws an explicit error when a required step is missing", function () {
@@ -169,8 +146,7 @@ describe("runMessageAnalysis", function () {
       previousAnalysisOutput: null,
       conversationLogs: [],
       attemptHistory: [],
-      userInformations: {},
-      dataCollectorProcessing: {}
+      userInformations: {}
     };
 
     expect(function () {

@@ -13,7 +13,6 @@
  * - conversationLogs
  * - attemptHistory
  * - userInformations
- * - dataCollectorProcessing
  *
  * OUTPUT:
  * - currentAnalysisOutput
@@ -56,7 +55,6 @@ interface MessageAnalysisInput {
   conversationLogs?: UnknownObject[];
   attemptHistory?: UnknownObject[];
   userInformations?: UnknownObject | null;
-  dataCollectorProcessing?: UnknownObject;
 }
 
 interface DecisionRouteMessageAnalysis {
@@ -178,17 +176,6 @@ function assertValidMessageAnalysisInput(input: unknown): asserts input is Messa
   ) {
     throw new Error("attemptHistory must be an array when provided");
   }
-
-  if (
-    messageAnalysisInput.dataCollectorProcessing !== undefined &&
-    (
-      !messageAnalysisInput.dataCollectorProcessing ||
-      typeof messageAnalysisInput.dataCollectorProcessing !== "object" ||
-      Array.isArray(messageAnalysisInput.dataCollectorProcessing)
-    )
-  ) {
-    throw new Error("dataCollectorProcessing must be an object when provided");
-  }
 }
 
 function assertValidCurrentAnalysisOutput(
@@ -250,7 +237,6 @@ function runMessageAnalysis(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRouteMessageAnalysis
   });
 
@@ -281,7 +267,6 @@ function runMessageAnalysis(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult
   });
@@ -296,7 +281,6 @@ function runMessageAnalysis(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult,
     attachmentAnalysisResult
@@ -329,7 +313,6 @@ function runMessageAnalysis(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult,
     attachmentAnalysisResult,
@@ -359,7 +342,6 @@ function runMessageAnalysis(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult,
     attachmentAnalysisResult,
@@ -377,7 +359,6 @@ function runMessageAnalysis(
     conversationLogs: input.conversationLogs,
     attemptHistory: input.attemptHistory,
     userInformations: input.userInformations,
-    dataCollectorProcessing: input.dataCollectorProcessing,
     decisionRoute: decisionRouteMessageAnalysis,
     deterministicRoutingResult,
     attachmentAnalysisResult,
