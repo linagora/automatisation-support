@@ -6,8 +6,8 @@
  * It checks whether attachments are present, whether they are analyzable,
  * and calls a visual attachment analysis function.
  *
- * The real API call to an LLM vision model should be implemented separately
- * in requestVisualAttachmentAnalysis.
+ * The real API call to an LLM vision model is implemented in
+ * requestVisualAttachmentAnalysis.
  */
 
 import {
@@ -130,9 +130,9 @@ function splitAttachmentsByAnalyzability(attachments: Attachment[]) {
   };
 }
 
-function runAttachmentDescriptionLLM(
+async function runAttachmentDescriptionLLM(
   input: RunAttachmentDescriptionLLMInput
-): RunAttachmentDescriptionLLMOutput {
+): Promise<RunAttachmentDescriptionLLMOutput> {
   const attachments = input.attachments || [];
 
   if (!hasAttachments(attachments)) {
@@ -160,7 +160,7 @@ function runAttachmentDescriptionLLM(
     };
   }
 
-  const visualAttachmentAnalysis = requestVisualAttachmentAnalysis({
+  const visualAttachmentAnalysis = await requestVisualAttachmentAnalysis({
     attachments: analyzableAttachments,
     latestUserMessage: input.latestUserMessage
   });

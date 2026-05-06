@@ -7,7 +7,9 @@
     "test": "vitest",
     "test:run": "vitest run",
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:vision:local": "tsx -r dotenv/config scripts/test-vision/test-local-image.ts",
+    "test:vision:url": "tsx -r dotenv/config scripts/test-vision/test-image-analysis.ts"
   },
   "repository": {
     "type": "git",
@@ -22,10 +24,12 @@
   "homepage": "https://github.com/georgesabolin1/automatisation-support#readme",
   "private": true,
   "dependencies": {
+    "dotenv": "^17.4.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   }
