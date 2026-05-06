@@ -31,8 +31,8 @@ describe("runMessageAnalysis", function () {
     const callOrder: string[] = [];
 
     const steps = {
-      runDeterministicRouting: function (stepInput: any) {
-        callOrder.push("deterministic-routing");
+      runInputClean: function (stepInput: any) {
+        callOrder.push("input-clean");
 
         expect(stepInput.latestUserMessage).toEqual(input.latestUserMessage);
         expect(stepInput.attachments).toEqual(input.attachments);
@@ -40,63 +40,61 @@ describe("runMessageAnalysis", function () {
 
         return {
           shouldAnalyzeMessage: true,
-          shouldRunAttachmentAnalysis: true,
+          shouldDescribeAttachments: true,
           reason: "message_has_attachment"
         };
       },
 
-      runAttachmentAnalysis: function (stepInput: any) {
-        callOrder.push("attachment-analysis");
+      describeAttachmentLlmvisual: function (stepInput: any) {
+        callOrder.push("attachment-description-llmvisual");
 
-        expect(stepInput.deterministicRoutingResult).toEqual({
+        expect(stepInput.inputClean).toEqual({
           shouldAnalyzeMessage: true,
-          shouldRunAttachmentAnalysis: true,
+          shouldDescribeAttachments: true,
           reason: "message_has_attachment"
         });
 
         return {
-          status: stepInput.deterministicRoutingResult.shouldRunAttachmentAnalysis
-            ? "analyzed"
-            : "skipped",
+          status: stepInput.inputClean.shouldDescribeAttachments ? "described" : "skipped",
           extractedText: "Erreur de connexion visible sur la capture."
         };
       },
 
-      runAnalysisRouting: function (stepInput: any) {
-        callOrder.push("analysis-routing");
+      decideRunPreAnalysis: function (stepInput: any) {
+        callOrder.push("run-decision-pre-analysis");
 
-        expect(stepInput.attachmentAnalysisResult).toEqual({
-          status: "analyzed",
+        expect(stepInput.attachmentDescriptionLlmvisual).toEqual({
+          status: "described",
           extractedText: "Erreur de connexion visible sur la capture."
         });
 
         return {
-          shouldRunPreAnalysis: true,
-          shouldRunFullAnalysis: true,
+          shouldRunPreAnalysisLlm0: true,
+          shouldRunSupportAnalysisLlm1: true,
           reason: "support_request_confirmed"
         };
       },
 
-      runPreAnalysis: function (stepInput: any) {
-        callOrder.push("pre-analysis");
+      runPreAnalysisLlm0: function (stepInput: any) {
+        callOrder.push("pre-analysis-llm0");
 
-        expect(stepInput.analysisRoutingResult).toEqual({
-          shouldRunPreAnalysis: true,
-          shouldRunFullAnalysis: true,
+        expect(stepInput.runDecisionPreAnalysis).toEqual({
+          shouldRunPreAnalysisLlm0: true,
+          shouldRunSupportAnalysisLlm1: true,
           reason: "support_request_confirmed"
         });
 
         return {
-          route: "run_full_analysis",
+          route: "run_support_analysis_llm1",
           reason: "support_request_confirmed"
         };
       },
 
-      runFullAnalysis: function (stepInput: any) {
-        callOrder.push("full-analysis");
+      runSupportAnalysisLlm1: function (stepInput: any) {
+        callOrder.push("support-analysis-llm1");
 
-        expect(stepInput.preAnalysisResult).toEqual({
-          route: "run_full_analysis",
+        expect(stepInput.preAnalysisLlm0).toEqual({
+          route: "run_support_analysis_llm1",
           reason: "support_request_confirmed"
         });
 
@@ -111,19 +109,32 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      assembleCurrentAnalysisOutput: function (stepInput: any) {
-        callOrder.push("analysis-assembler");
+      assembleSupportKnowledge: function (stepInput: any) {
+        callOrder.push("support-knowledge-assembly");
 
-        expect(stepInput.decisionRoute).toEqual({
+        expect(stepInput.inputClean).toEqual({
           shouldAnalyzeMessage: true,
-          shouldRunAttachmentAnalysis: true,
-          reason: "support_request_confirmed",
-          shouldRunPreAnalysis: true,
-          shouldRunFullAnalysis: true,
-          route: "run_full_analysis"
+          shouldDescribeAttachments: true,
+          reason: "message_has_attachment"
         });
 
-        expect(stepInput.fullAnalysisResult).toEqual({
+        expect(stepInput.attachmentDescriptionLlmvisual).toEqual({
+          status: "described",
+          extractedText: "Erreur de connexion visible sur la capture."
+        });
+
+        expect(stepInput.runDecisionPreAnalysis).toEqual({
+          shouldRunPreAnalysisLlm0: true,
+          shouldRunSupportAnalysisLlm1: true,
+          reason: "support_request_confirmed"
+        });
+
+        expect(stepInput.preAnalysisLlm0).toEqual({
+          route: "run_support_analysis_llm1",
+          reason: "support_request_confirmed"
+        });
+
+        expect(stepInput.supportAnalysisLlm1).toEqual({
           userLanguage: "fr",
           topics: [
             {
@@ -164,12 +175,12 @@ describe("runMessageAnalysis", function () {
     const output = runMessageAnalysis(input, steps);
 
     expect(callOrder).toEqual([
-      "deterministic-routing",
-      "attachment-analysis",
-      "analysis-routing",
-      "pre-analysis",
-      "full-analysis",
-      "analysis-assembler"
+      "input-clean",
+      "attachment-description-llmvisual",
+      "run-decision-pre-analysis",
+      "pre-analysis-llm0",
+      "support-analysis-llm1",
+      "support-knowledge-assembly"
     ]);
 
     expect(output).toEqual({
@@ -210,6 +221,6 @@ describe("runMessageAnalysis", function () {
 
     expect(function () {
       runMessageAnalysis(input);
-    }).toThrow("runDeterministicRouting is not implemented yet");
+    }).toThrow("runInputClean is not implemented yet");
   });
 });

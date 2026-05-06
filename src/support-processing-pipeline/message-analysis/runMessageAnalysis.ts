@@ -6,7 +6,7 @@
  * Its responsibility is to process the latest user message and produce an updated
  * structured support knowledge state for the ticket.
  *
- * It combines deterministic backend checks, optional attachment analysis,
+ * It combines deterministic backend checks, optional attachment description,
  * lightweight LLM routing, full LLM support analysis, and backend assembly.
  *
  * INPUTS:
@@ -20,31 +20,37 @@
  *
  * Internal steps:
  *
- * 1. Deterministic routing
- *    Decides whether to analyze the message and/or attachments.
- *    OUTPUTS - deterministicRoutingResult
+ * 1. Deterministic input clean
+ *    Detects obvious cases such as spam, abuse, empty message, injection,
+ *    or clear out-of-scope content.
+ *    OUTPUTS - inputClean
  *
- * 2. Attachment analysis
- *    Analyzes attachments if needed (screenshots, images, files, logs).
- *    OUTPUTS - attachmentAnalysisResult
+ * 2. LLM attachment description
+ *    Describes useful information from attachments if needed.
+ *    This may include screenshots, images, videos, files or logs.
+ *    OUTPUTS - attachmentDescriptionLlmvisual
  *
- * 3. Analysis routing
- *    Decides whether we should run pre-analysis, full analysis, both, or neither.
- *    OUTPUTS - analysisRoutingResult
+ * 3. Deterministic analysis run decision
+ *    Decides whether we should run LLM0, LLM1, both, or no LLM analysis.
+ *    OUTPUTS - runDecisionPreAnalysis
  *
- * 4. Pre-analysis
+ * 4. LLM0 pre-analysis
  *    Runs a lightweight analysis or routing step if needed.
- *    OUTPUTS - preAnalysisResult
+ *    OUTPUTS - preAnalysisLlm0
  *
- * 5. Full analysis
+ * 5. LLM1 support analysis
  *    Runs the full structured support analysis if needed.
  *    This output describes what the current user message appears to add,
  *    update, correct or resolve.
- *    OUTPUTS - fullAnalysisResult
+ *    OUTPUTS - supportAnalysisLlm1
  *
- * 6. Current analysis output assembly
- *    Builds the final analysis output from all previous steps.
- *    OUTPUTS - messageAnalysisOutput
+ * 6. Support knowledge assembly
+ *    Builds supportKnowledgeAfterTurn and supportKnowledgeDelta from the previous
+ *    support knowledge and supportAnalysisLlm1.
+ *    It normalizes model outputs, merges new information with existing support
+ *    knowledge, cleans obsolete data if needed, and computes supportKnowledgeDelta
+ *    as a separate object.
+ *    OUTPUTS - supportKnowledgeAfterTurn, supportKnowledgeDelta
  */
 
 type UnknownObject = Record<string, unknown>;
@@ -79,12 +85,12 @@ interface MessageAnalysisOutput {
 }
 
 interface MessageAnalysisSteps {
-  runDeterministicRouting?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  runAttachmentAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  runAnalysisRouting?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  runPreAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  runFullAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  assembleCurrentAnalysisOutput?: MessageAnalysisStep<UnknownObject, MessageAnalysisOutput>;
+  runInputClean?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  describeAttachmentLlmvisual?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  decideRunPreAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  runPreAnalysisLlm0?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  runSupportAnalysisLlm1?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  assembleSupportKnowledge?: MessageAnalysisStep<UnknownObject, MessageAnalysisOutput>;
 }
 
 /**
@@ -122,108 +128,98 @@ function runMessageAnalysis(
   assertValidMessageAnalysisInput(input);
 
   const messageAnalysisSteps: Required<MessageAnalysisSteps> = {
-    runDeterministicRouting:
-      steps.runDeterministicRouting ||
-      createMissingStep<UnknownObject, UnknownObject>("runDeterministicRouting"),
+    runInputClean:
+      steps.runInputClean ||
+      createMissingStep<UnknownObject, UnknownObject>("runInputClean"),
 
-    runAttachmentAnalysis:
-      steps.runAttachmentAnalysis ||
-      createMissingStep<UnknownObject, UnknownObject>("runAttachmentAnalysis"),
+    describeAttachmentLlmvisual:
+      steps.describeAttachmentLlmvisual ||
+      createMissingStep<UnknownObject, UnknownObject>("describeAttachmentLlmvisual"),
 
-    runAnalysisRouting:
-      steps.runAnalysisRouting ||
-      createMissingStep<UnknownObject, UnknownObject>("runAnalysisRouting"),
+    decideRunPreAnalysis:
+      steps.decideRunPreAnalysis ||
+      createMissingStep<UnknownObject, UnknownObject>("decideRunPreAnalysis"),
 
-    runPreAnalysis:
-      steps.runPreAnalysis ||
-      createMissingStep<UnknownObject, UnknownObject>("runPreAnalysis"),
+    runPreAnalysisLlm0:
+      steps.runPreAnalysisLlm0 ||
+      createMissingStep<UnknownObject, UnknownObject>("runPreAnalysisLlm0"),
 
-    runFullAnalysis:
-      steps.runFullAnalysis ||
-      createMissingStep<UnknownObject, UnknownObject>("runFullAnalysis"),
+    runSupportAnalysisLlm1:
+      steps.runSupportAnalysisLlm1 ||
+      createMissingStep<UnknownObject, UnknownObject>("runSupportAnalysisLlm1"),
 
-    assembleCurrentAnalysisOutput:
-      steps.assembleCurrentAnalysisOutput ||
-      createMissingStep<UnknownObject, MessageAnalysisOutput>("assembleCurrentAnalysisOutput")
+    assembleSupportKnowledge:
+      steps.assembleSupportKnowledge ||
+      createMissingStep<UnknownObject, MessageAnalysisOutput>("assembleSupportKnowledge")
   };
 
   /**
-   * Step 1: Deterministic routing
+   * Step 1: Deterministic input clean
    */
-  const deterministicRoutingResult = messageAnalysisSteps.runDeterministicRouting({
+  const inputClean = messageAnalysisSteps.runInputClean({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
   });
 
   /**
-   * Step 2: Attachment analysis
+   * Step 2: LLM attachment description
    */
-  const attachmentAnalysisResult = messageAnalysisSteps.runAttachmentAnalysis({
+  const attachmentDescriptionLlmvisual = messageAnalysisSteps.describeAttachmentLlmvisual({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    deterministicRoutingResult
+    inputClean
   });
 
   /**
-   * Step 3: Analysis routing
+   * Step 3: Deterministic analysis run decision
    */
-  const analysisRoutingResult = messageAnalysisSteps.runAnalysisRouting({
+  const runDecisionPreAnalysis = messageAnalysisSteps.decideRunPreAnalysis({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    deterministicRoutingResult,
-    attachmentAnalysisResult
+    inputClean,
+    attachmentDescriptionLlmvisual
   });
 
   /**
-   * Step 4: Pre-analysis
+   * Step 4: LLM0 pre-analysis
    */
-  const preAnalysisResult = messageAnalysisSteps.runPreAnalysis({
+  const preAnalysisLlm0 = messageAnalysisSteps.runPreAnalysisLlm0({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    deterministicRoutingResult,
-    attachmentAnalysisResult,
-    analysisRoutingResult
+    inputClean,
+    attachmentDescriptionLlmvisual,
+    runDecisionPreAnalysis
   });
 
   /**
-   * Step 5: Full analysis
+   * Step 5: LLM1 support analysis
    */
-  const fullAnalysisResult = messageAnalysisSteps.runFullAnalysis({
+  const supportAnalysisLlm1 = messageAnalysisSteps.runSupportAnalysisLlm1({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    deterministicRoutingResult,
-    attachmentAnalysisResult,
-    analysisRoutingResult,
-    preAnalysisResult
+    inputClean,
+    attachmentDescriptionLlmvisual,
+    runDecisionPreAnalysis,
+    preAnalysisLlm0
   });
 
   /**
-   * Build decision route from routing results.
+   * Step 6: Support knowledge assembly
    */
-  const decisionRoute = {
-    ...deterministicRoutingResult,
-    ...analysisRoutingResult,
-    ...preAnalysisResult
-  };
-
-  /**
-   * Step 6: Assemble current analysis output
-   */
-  const messageAnalysisOutput = messageAnalysisSteps.assembleCurrentAnalysisOutput({
+  const messageAnalysisOutput = messageAnalysisSteps.assembleSupportKnowledge({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    decisionRoute,
-    deterministicRoutingResult,
-    attachmentAnalysisResult,
-    analysisRoutingResult,
-    preAnalysisResult,
-    fullAnalysisResult
+    inputClean,
+    attachmentDescriptionLlmvisual,
+    runDecisionPreAnalysis,
+    preAnalysisLlm0,
+    supportAnalysisLlm1
   });
 
   assertValidMessageAnalysisOutput(messageAnalysisOutput);
