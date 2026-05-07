@@ -30,9 +30,9 @@
  *    This may include screenshots, images, videos, files or logs.
  *    OUTPUTS - attachmentAnalysis
  *
- * 3. Deterministic pre-analysis decision
+ * 3. Deterministic analysis routing decision
  *    Decides whether we should run LLM0, LLM1, both, or no LLM analysis.
- *    OUTPUTS - runDecisionPreAnalysis
+ *    OUTPUTS - analysisRoutingDecision
  *
  * 4. LLM0 pre-analysis
  *    Runs a lightweight analysis or routing step if needed.
@@ -87,7 +87,7 @@ interface MessageAnalysisOutput {
 interface MessageAnalysisSteps {
   runInputCleaning?: MessageAnalysisStep<UnknownObject, UnknownObject>;
   runAttachmentAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  decideRunPreAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  runAnalysisRoutingDecision?: MessageAnalysisStep<UnknownObject, UnknownObject>;
   runPreAnalysisLlm0?: MessageAnalysisStep<UnknownObject, UnknownObject>;
   runSupportAnalysisLlm1?: MessageAnalysisStep<UnknownObject, UnknownObject>;
   assembleSupportKnowledge?: MessageAnalysisStep<UnknownObject, MessageAnalysisOutput>;
@@ -136,9 +136,9 @@ function runMessageAnalysis(
       steps.runAttachmentAnalysis ||
       createMissingStep<UnknownObject, UnknownObject>("runAttachmentAnalysis"),
 
-    decideRunPreAnalysis:
-      steps.decideRunPreAnalysis ||
-      createMissingStep<UnknownObject, UnknownObject>("decideRunPreAnalysis"),
+    runAnalysisRoutingDecision:
+      steps.runAnalysisRoutingDecision ||
+      createMissingStep<UnknownObject, UnknownObject>("runAnalysisRoutingDecision"),
 
     runPreAnalysisLlm0:
       steps.runPreAnalysisLlm0 ||
@@ -173,9 +173,9 @@ function runMessageAnalysis(
   });
 
   /**
-   * Step 3: Deterministic pre-analysis decision
+   * Step 3: Deterministic analysis routing decision
    */
-  const runDecisionPreAnalysis = messageAnalysisSteps.decideRunPreAnalysis({
+  const analysisRoutingDecision = messageAnalysisSteps.runAnalysisRoutingDecision({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
