@@ -1,9 +1,9 @@
 import {
-  runResponseProducer
-} from "../../../src/support-processing-pipeline/response-producer/runResponseProducer";
+  runResponseProduction
+} from "../../../src/support-processing-pipeline/response-production/runResponseProduction";
 
-describe("runResponseProducer", function () {
-  it("runs all response-producer steps and returns userResponse", function () {
+describe("runResponseProduction", function () {
+  it("runs all response-production steps and returns userResponse", function () {
     const input = {
       responsePlan: {
         userLanguage: "fr",
@@ -52,7 +52,7 @@ describe("runResponseProducer", function () {
       }
     };
 
-    const output = runResponseProducer(input, steps);
+    const output = runResponseProduction(input, steps);
 
     expect(callOrder).toEqual([
       "apply-response-templates",
@@ -76,7 +76,7 @@ describe("runResponseProducer", function () {
     };
 
     expect(function () {
-      runResponseProducer(input);
+      runResponseProduction(input);
     }).toThrow("applyResponseTemplates is not implemented yet");
   });
 
@@ -97,7 +97,7 @@ describe("runResponseProducer", function () {
     };
 
     expect(function () {
-      runResponseProducer(input, steps);
+      runResponseProduction(input, steps);
     }).toThrow("assembleUserResponse is not implemented yet");
   });
 });

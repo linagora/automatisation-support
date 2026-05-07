@@ -1,45 +1,46 @@
 /**
- * Visual attachment analysis request
+ * Image Analysis Request
  *
  * This file handles the API call to an LLM vision model for analyzing
- * visual attachments (images and videos).
+ * image attachments.
  *
- * It builds the appropriate prompts, calls the LLM API, and parses
- * the response into a structured format.
+ * It builds the appropriate prompts, calls the LLM API with the imageAnalysis preset,
+ * and parses the response into a structured format.
  */
 
 import type {
   Attachment,
   VisualAttachmentAnalyzerOutput
-} from "./runAttachmentDescriptionLLM";
-import { buildVisionMessages } from "./visual-analysis-prompts";
-import { callVisionLLM, parseLLMResponse } from "./llm-client";
+} from "./runAttachmentAnalysis";
+import { buildImagePrompt } from "./buildVisualPrompt";
+import { callLLM } from "../../../llm/llm-client";
+import { parseLLMResponse } from "../../../llm/parseLLMResponse";
 
-interface RequestVisualAttachmentAnalysisInput {
+interface RequestImageAnalysisInput {
   attachments: Attachment[];
   latestUserMessage?: string;
 }
 
-interface RequestVisualAttachmentAnalysisOutput {
+interface RequestImageAnalysisOutput {
   status: "analyzed" | "analysis_not_available";
   analysis: VisualAttachmentAnalyzerOutput | null;
   reason: string | null;
 }
 
 /**
- * Request visual attachment analysis from LLM
- * @param input - The input containing attachments and optional message
+ * Request image analysis from LLM
+ * @param input - The input containing image attachments and optional message
  * @returns The analysis result
  */
-async function requestVisualAttachmentAnalysis(
-  input: RequestVisualAttachmentAnalysisInput
-): Promise<RequestVisualAttachmentAnalysisOutput> {
+async function requestImageAnalysis(
+  input: RequestImageAnalysisInput
+): Promise<RequestImageAnalysisOutput> {
   const { attachments, latestUserMessage } = input;
 
   try {
-    const messages = buildVisionMessages(attachments, latestUserMessage);
+    const messages = buildImagePrompt(attachments, latestUserMessage);
 
-    const result = await callVisionLLM(messages);
+    const result = await callLLM(messages, { preset: "imageAnalysis" });
 
     if (!result.success || !result.content) {
       return {
@@ -78,10 +79,10 @@ async function requestVisualAttachmentAnalysis(
 }
 
 export {
-  requestVisualAttachmentAnalysis
+  requestImageAnalysis
 };
 
 export type {
-  RequestVisualAttachmentAnalysisInput,
-  RequestVisualAttachmentAnalysisOutput
+  RequestImageAnalysisInput,
+  RequestImageAnalysisOutput
 };

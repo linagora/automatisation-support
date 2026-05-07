@@ -1,7 +1,7 @@
 /**
- * Response Producer
+ * Response Production
  *
- * This file is the local orchestrator of the response-producer block.
+ * This file is the local orchestrator of the response-production block.
  *
  * This block applies response templates to produce user-facing string messages
  * according to the structured responsePlan.
@@ -27,14 +27,14 @@
 
 type UnknownObject = Record<string, unknown>;
 
-type ResponseProducerStep<TInput, TOutput> = (input: TInput) => TOutput;
+type ResponseProductionStep<TInput, TOutput> = (input: TInput) => TOutput;
 
 interface ResponsePlan {
   userLanguage: string | null;
   messages: UnknownObject[];
 }
 
-interface ResponseProducerInput {
+interface ResponseProductionInput {
   responsePlan: ResponsePlan;
 }
 
@@ -42,17 +42,17 @@ interface UserResponse {
   messages: string[];
 }
 
-interface ResponseProducerSteps {
-  applyResponseTemplates?: ResponseProducerStep<UnknownObject, string[]>;
-  assembleUserResponse?: ResponseProducerStep<UnknownObject, UserResponse>;
+interface ResponseProductionSteps {
+  applyResponseTemplates?: ResponseProductionStep<UnknownObject, string[]>;
+  assembleUserResponse?: ResponseProductionStep<UnknownObject, UserResponse>;
 }
 
 /**
- * Creates a placeholder function for response-producer steps that are not implemented yet.
+ * Creates a placeholder function for response-production steps that are not implemented yet.
  */
 function createMissingStep<TInput, TOutput>(
   stepName: string
-): ResponseProducerStep<TInput, TOutput> {
+): ResponseProductionStep<TInput, TOutput> {
   return function missingStep(): never {
     throw new Error(`${stepName} is not implemented yet`);
   };
@@ -64,9 +64,9 @@ function createMissingStep<TInput, TOutput>(
  * These functions are intentionally minimal for now.
  * Their real validation logic can be implemented later in a dedicated assertions file.
  */
-function assertValidResponseProducerInput(
+function assertValidResponseProductionInput(
   input: unknown
-): asserts input is ResponseProducerInput {}
+): asserts input is ResponseProductionInput {}
 
 function assertValidResponseStrings(
   responseStrings: unknown
@@ -77,15 +77,15 @@ function assertValidUserResponse(
 ): asserts userResponse is UserResponse {}
 
 /**
- * Runs the response-producer block.
+ * Runs the response-production block.
  */
-function runResponseProducer(
-  input: ResponseProducerInput,
-  steps: ResponseProducerSteps = {}
+function runResponseProduction(
+  input: ResponseProductionInput,
+  steps: ResponseProductionSteps = {}
 ): UserResponse {
-  assertValidResponseProducerInput(input);
+  assertValidResponseProductionInput(input);
 
-  const responseProducerSteps: Required<ResponseProducerSteps> = {
+  const responseProductionSteps: Required<ResponseProductionSteps> = {
     applyResponseTemplates:
       steps.applyResponseTemplates ||
       createMissingStep<UnknownObject, string[]>("applyResponseTemplates"),
@@ -98,7 +98,7 @@ function runResponseProducer(
   /**
    * Step 1: Apply response templates
    */
-  const responseStrings = responseProducerSteps.applyResponseTemplates({
+  const responseStrings = responseProductionSteps.applyResponseTemplates({
     responsePlan: input.responsePlan
   });
 
@@ -107,7 +107,7 @@ function runResponseProducer(
   /**
    * Step 2: Assemble user response
    */
-  const userResponse = responseProducerSteps.assembleUserResponse({
+  const userResponse = responseProductionSteps.assembleUserResponse({
     responsePlan: input.responsePlan,
     responseStrings
   });
@@ -118,15 +118,15 @@ function runResponseProducer(
 }
 
 export {
-  runResponseProducer,
-  assertValidResponseProducerInput,
+  runResponseProduction,
+  assertValidResponseProductionInput,
   assertValidResponseStrings,
   assertValidUserResponse
 };
 
 export type {
-  ResponseProducerInput,
-  ResponseProducerSteps,
+  ResponseProductionInput,
+  ResponseProductionSteps,
   ResponsePlan,
   UserResponse
 };

@@ -1,0 +1,170 @@
+/**
+ * Test local image analysis
+ *
+ * Usage:
+ *   npm run test:vision:local:image -- ./screen_error.png
+ *   npm run test:vision:local:image -- ./image1.png ./image2.jpg "Optional user message"
+ */
+
+import * as fs from "fs";
+import * as path from "path";
+import { runAttachmentAnalysis } from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/runAttachmentAnalysis";
+
+const SUPPORTED_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"];
+
+const MIME_TYPES: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".bmp": "image/bmp"
+};
+
+function isSupportedImagePath(filePath: string): boolean {
+  const extension = path.extname(filePath).toLowerCase();
+  return SUPPORTED_IMAGE_EXTENSIONS.includes(extension);
+}
+
+function fileToDataUrl(filePath: string): string {
+  const extension = path.extname(filePath).toLowerCase();
+  const mimeType = MIME_TYPES[extension];
+
+  if (!mimeType) {
+    throw new Error(`Unsupported image extension: ${extension}`);
+  }
+
+  const buffer = fs.readFileSync(filePath);
+  return `data:${mimeType};base64,${buffer.toString("base64")}`;
+}
+
+function parseArguments(args: string[]): {
+  imagePaths: string[];
+  latestUserMessage?: string;
+} {
+  const imagePaths: string[] = [];
+  const messageParts: string[] = [];
+  let isReadingMessage = false;
+
+  for (const arg of args) {
+    if (!isReadingMessage && isSupportedImagePath(arg)) {
+      imagePaths.push(arg);
+      continue;
+    }
+
+    isReadingMessage = true;
+    messageParts.push(arg);
+  }
+
+  return {
+    imagePaths,
+    latestUserMessage: messageParts.length > 0 ? messageParts.join(" ") : undefined
+  };
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+
+  console.log("\n============================================================");
+  console.log("Testing Local Image Analysis");
+  console.log("============================================================\n");
+
+  if (args.length === 0) {
+    console.error("Usage:");
+    console.error("  npm run test:vision:local:image -- ./screen_error.png");
+    console.error("  npm run test:vision:local:image -- ./image1.png ./image2.jpg \"Optional user message\"");
+    process.exit(1);
+  }
+
+  const { imagePaths, latestUserMessage } = parseArguments(args);
+
+  if (imagePaths.length === 0) {
+    console.error("Error: No supported local image provided.");
+    console.error(`Supported extensions: ${SUPPORTED_IMAGE_EXTENSIONS.join(", ")}`);
+    process.exit(1);
+  }
+
+  const attachments = [];
+
+  console.log(`Preparing ${imagePaths.length} local image(s)...`);
+
+  for (const imagePath of imagePaths) {
+    const resolvedPath = path.resolve(imagePath);
+
+    if (!fs.existsSync(resolvedPath)) {
+      console.error(`  ✗ ${imagePath}: File not found: ${resolvedPath}`);
+      process.exit(1);
+    }
+
+    const stats = fs.statSync(resolvedPath);
+
+    if (!stats.isFile()) {
+      console.error(`  ✗ ${imagePath}: Not a file`);
+      process.exit(1);
+    }
+
+    const extension = path.extname(resolvedPath).toLowerCase();
+    const mimeType = MIME_TYPES[extension];
+
+    const dataUrl = fileToDataUrl(resolvedPath);
+
+    attachments.push({
+      name: path.basename(resolvedPath),
+      mimeType,
+      path: resolvedPath,
+      url: dataUrl,
+      sizeBytes: stats.size
+    });
+
+    console.log(`  ✓ ${path.basename(resolvedPath)} (${(stats.size / 1024).toFixed(1)} KB)`);
+  }
+
+  if (latestUserMessage) {
+    console.log(`\nUser message: "${latestUserMessage}"`);
+  }
+
+  console.log("\n------------------------------------------------------------");
+  console.log("Sending request to LLM...");
+  console.log("------------------------------------------------------------\n");
+
+  const startTime = Date.now();
+
+  const result = await runAttachmentAnalysis({
+    attachments,
+    latestUserMessage
+  });
+
+  const durationMs = Date.now() - startTime;
+
+  console.log("\n============================================================");
+  console.log("RESULT");
+  console.log("============================================================");
+  console.log(`Status: ${result.status}`);
+  console.log(`Duration: ${durationMs}ms`);
+
+  if (result.reason) {
+    console.log(`Reason: ${result.reason}`);
+  }
+
+  console.log(`\nAnalyzable attachments: ${result.analyzableAttachments.length}`);
+  console.log(`Ignored attachments: ${result.ignoredAttachments.length}`);
+
+  if (result.analysis) {
+    console.log("\n--- Analysis Output ---");
+    console.log(JSON.stringify(result.analysis.extractedInformations, null, 2));
+  }
+
+  console.log("\n============================================================");
+
+  if (result.status === "analyzed") {
+    console.log("✅ SUCCESS: Local image(s) analyzed successfully!");
+  } else {
+    console.log("❌ Analysis not available");
+  }
+}
+
+main().catch((error) => {
+  console.error("\nUnexpected error:");
+  console.error(error);
+  process.exit(1);
+});

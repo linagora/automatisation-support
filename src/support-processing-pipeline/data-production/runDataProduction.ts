@@ -1,7 +1,7 @@
 /**
- * Data Producer
+ * Data Production
  *
- * This file is the local orchestrator of the data-producer block.
+ * This file is the local orchestrator of the data-production block.
  *
  * Its responsibility is to produce the updated ticket memory after the current
  * pipeline turn.
@@ -65,7 +65,7 @@ type SupportKnowledge = UnknownObject;
 
 type SupportKnowledgeDelta = UnknownObject;
 
-type DataProducerStep<TInput, TOutput> = (input: TInput) => TOutput;
+type DataProductionStep<TInput, TOutput> = (input: TInput) => TOutput;
 
 interface TicketMemory {
   supportKnowledge?: SupportKnowledge;
@@ -78,7 +78,7 @@ interface TicketMemory {
   [key: string]: unknown;
 }
 
-interface DataProducerInput {
+interface DataProductionInput {
   ticketMemoryBeforeTurn?: TicketMemory | null;
   supportKnowledgeAfterTurn: SupportKnowledge;
   supportKnowledgeDelta: SupportKnowledgeDelta;
@@ -87,20 +87,20 @@ interface DataProducerInput {
   responsePlan: unknown;
 }
 
-interface DataProducerSteps {
-  updateConversationLogs?: DataProducerStep<UnknownObject, UnknownObject[]>;
-  updateSupportKnowledgeDeltaMemory?: DataProducerStep<UnknownObject, UnknownObject>;
-  updateVisibility?: DataProducerStep<UnknownObject, UnknownObject>;
-  cleanupAndCompact?: DataProducerStep<UnknownObject, UnknownObject>;
-  assembleTicketMemory?: DataProducerStep<UnknownObject, TicketMemory>;
+interface DataProductionSteps {
+  updateConversationLogs?: DataProductionStep<UnknownObject, UnknownObject[]>;
+  updateSupportKnowledgeDeltaMemory?: DataProductionStep<UnknownObject, UnknownObject>;
+  updateVisibility?: DataProductionStep<UnknownObject, UnknownObject>;
+  cleanupAndCompact?: DataProductionStep<UnknownObject, UnknownObject>;
+  assembleTicketMemory?: DataProductionStep<UnknownObject, TicketMemory>;
 }
 
 /**
- * Creates a placeholder function for data-producer steps that are not implemented yet.
+ * Creates a placeholder function for data-production steps that are not implemented yet.
  */
 function createMissingStep<TInput, TOutput>(
   stepName: string
-): DataProducerStep<TInput, TOutput> {
+): DataProductionStep<TInput, TOutput> {
   return function missingStep(): never {
     throw new Error(`${stepName} is not implemented yet`);
   };
@@ -112,7 +112,7 @@ function createMissingStep<TInput, TOutput>(
  * These functions are intentionally empty for now.
  * Their real validation logic can be implemented later in a dedicated assertions file.
  */
-function assertValidDataProducerInput(input: unknown): asserts input is DataProducerInput {}
+function assertValidDataProductionInput(input: unknown): asserts input is DataProductionInput {}
 
 function assertValidConversationLogsAfterTurn(
   conversationLogsAfterTurn: unknown
@@ -131,15 +131,15 @@ function assertValidCleanupResult(cleanupResult: unknown): asserts cleanupResult
 function assertValidTicketMemory(ticketMemory: unknown): asserts ticketMemory is TicketMemory {}
 
 /**
- * Runs the data-producer block.
+ * Runs the data-production block.
  */
-function runDataProducer(
-  input: DataProducerInput,
-  steps: DataProducerSteps = {}
+function runDataProduction(
+  input: DataProductionInput,
+  steps: DataProductionSteps = {}
 ): TicketMemory {
-  assertValidDataProducerInput(input);
+  assertValidDataProductionInput(input);
 
-  const dataProducerSteps: Required<DataProducerSteps> = {
+  const dataProductionSteps: Required<DataProductionSteps> = {
     updateConversationLogs:
       steps.updateConversationLogs ||
       createMissingStep<UnknownObject, UnknownObject[]>("updateConversationLogs"),
@@ -164,7 +164,7 @@ function runDataProducer(
   /**
    * Step 1: Conversation logs update
    */
-  const conversationLogsAfterTurn = dataProducerSteps.updateConversationLogs({
+  const conversationLogsAfterTurn = dataProductionSteps.updateConversationLogs({
     conversationLogs: input.conversationLogs,
     responsePlan: input.responsePlan,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
@@ -175,7 +175,7 @@ function runDataProducer(
   /**
    * Step 2: Support knowledge delta memory update
    */
-  const supportKnowledgeDeltaMemory = dataProducerSteps.updateSupportKnowledgeDeltaMemory({
+  const supportKnowledgeDeltaMemory = dataProductionSteps.updateSupportKnowledgeDeltaMemory({
     supportKnowledgeDelta: input.supportKnowledgeDelta,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
   });
@@ -185,7 +185,7 @@ function runDataProducer(
   /**
    * Step 3: Visibility update
    */
-  const visibilityAfterTurn = dataProducerSteps.updateVisibility({
+  const visibilityAfterTurn = dataProductionSteps.updateVisibility({
     supportKnowledgeAfterTurn: input.supportKnowledgeAfterTurn,
     supportKnowledgeDelta: input.supportKnowledgeDelta,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
@@ -196,7 +196,7 @@ function runDataProducer(
   /**
    * Step 4: Cleanup and compaction
    */
-  const cleanupResult = dataProducerSteps.cleanupAndCompact({
+  const cleanupResult = dataProductionSteps.cleanupAndCompact({
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
     supportKnowledgeAfterTurn: input.supportKnowledgeAfterTurn,
     supportKnowledgeDelta: input.supportKnowledgeDelta
@@ -207,7 +207,7 @@ function runDataProducer(
   /**
    * Step 5: Ticket memory assembly
    */
-  const ticketMemoryAfterTurn = dataProducerSteps.assembleTicketMemory({
+  const ticketMemoryAfterTurn = dataProductionSteps.assembleTicketMemory({
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
     supportKnowledgeAfterTurn: input.supportKnowledgeAfterTurn,
     supportKnowledgeDelta: input.supportKnowledgeDelta,
@@ -225,8 +225,8 @@ function runDataProducer(
 }
 
 export {
-  runDataProducer,
-  assertValidDataProducerInput,
+  runDataProduction,
+  assertValidDataProductionInput,
   assertValidConversationLogsAfterTurn,
   assertValidSupportKnowledgeDeltaMemory,
   assertValidVisibilityAfterTurn,
@@ -235,8 +235,8 @@ export {
 };
 
 export type {
-  DataProducerInput,
-  DataProducerSteps,
+  DataProductionInput,
+  DataProductionSteps,
   TicketMemory,
   SupportKnowledge,
   SupportKnowledgeDelta

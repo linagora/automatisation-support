@@ -20,17 +20,17 @@
  *
  * Internal steps:
  *
- * 1. Deterministic input clean
+ * 1. Deterministic input cleaning
  *    Detects obvious cases such as spam, abuse, empty message, injection,
  *    or clear out-of-scope content.
- *    OUTPUTS - inputClean
+ *    OUTPUTS - inputCleaning
  *
- * 2. LLM attachment description
+ * 2. Attachment analysis
  *    Describes useful information from attachments if needed.
  *    This may include screenshots, images, videos, files or logs.
- *    OUTPUTS - attachmentDescriptionLlmvisual
+ *    OUTPUTS - attachmentAnalysis
  *
- * 3. Deterministic analysis run decision
+ * 3. Deterministic pre-analysis decision
  *    Decides whether we should run LLM0, LLM1, both, or no LLM analysis.
  *    OUTPUTS - runDecisionPreAnalysis
  *
@@ -85,8 +85,8 @@ interface MessageAnalysisOutput {
 }
 
 interface MessageAnalysisSteps {
-  runInputClean?: MessageAnalysisStep<UnknownObject, UnknownObject>;
-  describeAttachmentLlmvisual?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  runInputCleaning?: MessageAnalysisStep<UnknownObject, UnknownObject>;
+  runAttachmentAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
   decideRunPreAnalysis?: MessageAnalysisStep<UnknownObject, UnknownObject>;
   runPreAnalysisLlm0?: MessageAnalysisStep<UnknownObject, UnknownObject>;
   runSupportAnalysisLlm1?: MessageAnalysisStep<UnknownObject, UnknownObject>;
@@ -128,13 +128,13 @@ function runMessageAnalysis(
   assertValidMessageAnalysisInput(input);
 
   const messageAnalysisSteps: Required<MessageAnalysisSteps> = {
-    runInputClean:
-      steps.runInputClean ||
-      createMissingStep<UnknownObject, UnknownObject>("runInputClean"),
+    runInputCleaning:
+      steps.runInputCleaning ||
+      createMissingStep<UnknownObject, UnknownObject>("runInputCleaning"),
 
-    describeAttachmentLlmvisual:
-      steps.describeAttachmentLlmvisual ||
-      createMissingStep<UnknownObject, UnknownObject>("describeAttachmentLlmvisual"),
+    runAttachmentAnalysis:
+      steps.runAttachmentAnalysis ||
+      createMissingStep<UnknownObject, UnknownObject>("runAttachmentAnalysis"),
 
     decideRunPreAnalysis:
       steps.decideRunPreAnalysis ||
@@ -154,33 +154,33 @@ function runMessageAnalysis(
   };
 
   /**
-   * Step 1: Deterministic input clean
+   * Step 1: Deterministic input cleaning
    */
-  const inputClean = messageAnalysisSteps.runInputClean({
+  const inputCleaning = messageAnalysisSteps.runInputCleaning({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
   });
 
   /**
-   * Step 2: LLM attachment description
+   * Step 2: Attachment analysis
    */
-  const attachmentDescriptionLlmvisual = messageAnalysisSteps.describeAttachmentLlmvisual({
+  const attachmentAnalysis = messageAnalysisSteps.runAttachmentAnalysis({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    inputClean
+    inputCleaning
   });
 
   /**
-   * Step 3: Deterministic analysis run decision
+   * Step 3: Deterministic pre-analysis decision
    */
   const runDecisionPreAnalysis = messageAnalysisSteps.decideRunPreAnalysis({
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    inputClean,
-    attachmentDescriptionLlmvisual
+    inputCleaning,
+    attachmentAnalysis
   });
 
   /**
@@ -190,8 +190,8 @@ function runMessageAnalysis(
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    inputClean,
-    attachmentDescriptionLlmvisual,
+    inputCleaning,
+    attachmentAnalysis,
     runDecisionPreAnalysis
   });
 
@@ -202,8 +202,8 @@ function runMessageAnalysis(
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    inputClean,
-    attachmentDescriptionLlmvisual,
+    inputCleaning,
+    attachmentAnalysis,
     runDecisionPreAnalysis,
     preAnalysisLlm0
   });
@@ -215,8 +215,8 @@ function runMessageAnalysis(
     latestUserMessage: input.latestUserMessage,
     attachments: input.attachments,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
-    inputClean,
-    attachmentDescriptionLlmvisual,
+    inputCleaning,
+    attachmentAnalysis,
     runDecisionPreAnalysis,
     preAnalysisLlm0,
     supportAnalysisLlm1

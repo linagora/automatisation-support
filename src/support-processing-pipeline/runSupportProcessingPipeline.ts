@@ -9,7 +9,7 @@
  *    INPUTS  - latestUserMessage, attachments, ticketMemoryBeforeTurn
  *    OUTPUTS - supportKnowledgeAfterTurn, supportKnowledgeDelta
  *
- * 2. Searching decision
+ * 2. Search decision
  *    INPUTS  - supportKnowledgeAfterTurn, supportKnowledgeDelta, ticketMemoryBeforeTurn
  *    OUTPUTS - decisionSearchingSolution
  *
@@ -21,11 +21,11 @@
  *    INPUTS  - supportKnowledgeAfterTurn, supportKnowledgeDelta, ticketMemoryBeforeTurn, possibleSolutions
  *    OUTPUTS - responsePlan
  *
- * 5. Response producer
+ * 5. Response production
  *    INPUTS  - responsePlan
  *    OUTPUTS - userResponse
  *
- * 6. Data producer
+ * 6. Data production
  *    INPUTS  - ticketMemoryBeforeTurn, supportKnowledgeAfterTurn, supportKnowledgeDelta,
  *              conversationLogs, userInformations, responsePlan
  *    OUTPUTS - ticketMemoryAfterTurn
@@ -67,7 +67,7 @@ interface MessageAnalysisOutput {
   supportKnowledgeDelta: SupportKnowledgeDelta;
 }
 
-interface SearchingDecisionInput {
+interface SearchDecisionInput {
   supportKnowledgeAfterTurn: SupportKnowledge;
   supportKnowledgeDelta: SupportKnowledgeDelta;
   ticketMemoryBeforeTurn?: TicketMemory | null;
@@ -87,11 +87,11 @@ interface ResponseDecisionInput {
   possibleSolutions: unknown;
 }
 
-interface ResponseProducerInput {
+interface ResponseProductionInput {
   responsePlan: unknown;
 }
 
-interface DataProducerInput {
+interface DataProductionInput {
   ticketMemoryBeforeTurn?: TicketMemory | null;
   supportKnowledgeAfterTurn: SupportKnowledge;
   supportKnowledgeDelta: SupportKnowledgeDelta;
@@ -102,11 +102,11 @@ interface DataProducerInput {
 
 interface SupportProcessingPipelineSteps {
   runMessageAnalysis?: PipelineStep<MessageAnalysisInput, MessageAnalysisOutput>;
-  runSearchingDecision?: PipelineStep<SearchingDecisionInput, boolean>;
+  runSearchDecision?: PipelineStep<SearchDecisionInput, boolean>;
   runSolutionRetrieval?: PipelineStep<SolutionRetrievalInput, unknown>;
   runResponseDecision?: PipelineStep<ResponseDecisionInput, unknown>;
-  runResponseProducer?: PipelineStep<ResponseProducerInput, unknown>;
-  runDataProducer?: PipelineStep<DataProducerInput, TicketMemory>;
+  runResponseProduction?: PipelineStep<ResponseProductionInput, unknown>;
+  runDataProduction?: PipelineStep<DataProductionInput, TicketMemory>;
 }
 
 interface SupportProcessingPipelineOutput {
@@ -149,9 +149,9 @@ function runSupportProcessingPipeline(
       steps.runMessageAnalysis ||
       createMissingStep<MessageAnalysisInput, MessageAnalysisOutput>("runMessageAnalysis"),
 
-    runSearchingDecision:
-      steps.runSearchingDecision ||
-      createMissingStep<SearchingDecisionInput, boolean>("runSearchingDecision"),
+    runSearchDecision:
+      steps.runSearchDecision ||
+      createMissingStep<SearchDecisionInput, boolean>("runSearchDecision"),
 
     runSolutionRetrieval:
       steps.runSolutionRetrieval ||
@@ -161,13 +161,13 @@ function runSupportProcessingPipeline(
       steps.runResponseDecision ||
       createMissingStep<ResponseDecisionInput, unknown>("runResponseDecision"),
 
-    runResponseProducer:
-      steps.runResponseProducer ||
-      createMissingStep<ResponseProducerInput, unknown>("runResponseProducer"),
+    runResponseProduction:
+      steps.runResponseProduction ||
+      createMissingStep<ResponseProductionInput, unknown>("runResponseProduction"),
 
-    runDataProducer:
-      steps.runDataProducer ||
-      createMissingStep<DataProducerInput, TicketMemory>("runDataProducer")
+    runDataProduction:
+      steps.runDataProduction ||
+      createMissingStep<DataProductionInput, TicketMemory>("runDataProduction")
   };
 
   /**
@@ -185,9 +185,9 @@ function runSupportProcessingPipeline(
   const supportKnowledgeDelta = messageAnalysisOutput.supportKnowledgeDelta;
 
   /**
-   * Step 2: Searching decision
+   * Step 2: Search decision
    */
-  const decisionSearchingSolution = pipelineSteps.runSearchingDecision({
+  const decisionSearchingSolution = pipelineSteps.runSearchDecision({
     supportKnowledgeAfterTurn,
     supportKnowledgeDelta,
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn
@@ -214,16 +214,16 @@ function runSupportProcessingPipeline(
   });
 
   /**
-   * Step 5: Response producer
+   * Step 5: Response production
    */
-  const userResponse = pipelineSteps.runResponseProducer({
+  const userResponse = pipelineSteps.runResponseProduction({
     responsePlan
   });
 
   /**
-   * Step 6: Data producer
+   * Step 6: Data production
    */
-  const ticketMemoryAfterTurn = pipelineSteps.runDataProducer({
+  const ticketMemoryAfterTurn = pipelineSteps.runDataProduction({
     ticketMemoryBeforeTurn: input.ticketMemoryBeforeTurn,
     supportKnowledgeAfterTurn,
     supportKnowledgeDelta,
@@ -252,11 +252,11 @@ export type {
   SupportProcessingPipelineOutput,
   MessageAnalysisInput,
   MessageAnalysisOutput,
-  SearchingDecisionInput,
+  SearchDecisionInput,
   SolutionRetrievalInput,
   ResponseDecisionInput,
-  ResponseProducerInput,
-  DataProducerInput,
+  ResponseProductionInput,
+  DataProductionInput,
   SupportKnowledge,
   SupportKnowledgeDelta,
   TicketMemory

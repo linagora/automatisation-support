@@ -31,8 +31,8 @@ describe("runMessageAnalysis", function () {
     const callOrder: string[] = [];
 
     const steps = {
-      runInputClean: function (stepInput: any) {
-        callOrder.push("input-clean");
+      runInputCleaning: function (stepInput: any) {
+        callOrder.push("input-cleaning");
 
         expect(stepInput.latestUserMessage).toEqual(input.latestUserMessage);
         expect(stepInput.attachments).toEqual(input.attachments);
@@ -45,17 +45,17 @@ describe("runMessageAnalysis", function () {
         };
       },
 
-      describeAttachmentLlmvisual: function (stepInput: any) {
-        callOrder.push("attachment-description-llmvisual");
+      runAttachmentAnalysis: function (stepInput: any) {
+        callOrder.push("attachment-analysis");
 
-        expect(stepInput.inputClean).toEqual({
+        expect(stepInput.inputCleaning).toEqual({
           shouldAnalyzeMessage: true,
           shouldDescribeAttachments: true,
           reason: "message_has_attachment"
         });
 
         return {
-          status: stepInput.inputClean.shouldDescribeAttachments ? "described" : "skipped",
+          status: stepInput.inputCleaning.shouldDescribeAttachments ? "described" : "skipped",
           extractedText: "Erreur de connexion visible sur la capture."
         };
       },
@@ -63,7 +63,7 @@ describe("runMessageAnalysis", function () {
       decideRunPreAnalysis: function (stepInput: any) {
         callOrder.push("run-decision-pre-analysis");
 
-        expect(stepInput.attachmentDescriptionLlmvisual).toEqual({
+        expect(stepInput.attachmentAnalysis).toEqual({
           status: "described",
           extractedText: "Erreur de connexion visible sur la capture."
         });
@@ -112,13 +112,13 @@ describe("runMessageAnalysis", function () {
       assembleSupportKnowledge: function (stepInput: any) {
         callOrder.push("support-knowledge-assembly");
 
-        expect(stepInput.inputClean).toEqual({
+        expect(stepInput.inputCleaning).toEqual({
           shouldAnalyzeMessage: true,
           shouldDescribeAttachments: true,
           reason: "message_has_attachment"
         });
 
-        expect(stepInput.attachmentDescriptionLlmvisual).toEqual({
+        expect(stepInput.attachmentAnalysis).toEqual({
           status: "described",
           extractedText: "Erreur de connexion visible sur la capture."
         });
@@ -175,8 +175,8 @@ describe("runMessageAnalysis", function () {
     const output = runMessageAnalysis(input, steps);
 
     expect(callOrder).toEqual([
-      "input-clean",
-      "attachment-description-llmvisual",
+      "input-cleaning",
+      "attachment-analysis",
       "run-decision-pre-analysis",
       "pre-analysis-llm0",
       "support-analysis-llm1",
@@ -221,6 +221,6 @@ describe("runMessageAnalysis", function () {
 
     expect(function () {
       runMessageAnalysis(input);
-    }).toThrow("runInputClean is not implemented yet");
+    }).toThrow("runInputCleaning is not implemented yet");
   });
 });

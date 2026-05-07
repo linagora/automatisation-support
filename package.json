@@ -8,8 +8,10 @@
     "test:run": "vitest run",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test:vision:local": "tsx -r dotenv/config scripts/test-vision/test-local-image.ts",
-    "test:vision:url": "tsx -r dotenv/config scripts/test-vision/test-image-analysis.ts"
+    "test:local:image": "tsx -r dotenv/config scripts/test-attachment-analysis/test-local-image.ts",
+    "test:online:image": "tsx -r dotenv/config scripts/test-attachment-analysis/test-online-image.ts",
+    "test:local:video": "tsx -r dotenv/config scripts/test-attachment-analysis/test-local-video.ts",
+    "test:online:video": "tsx -r dotenv/config scripts/test-attachment-analysis/test-online-video.ts"
   },
   "repository": {
     "type": "git",
@@ -25,9 +27,12 @@
   "private": true,
   "dependencies": {
     "dotenv": "^17.4.2",
+    "ffmpeg-static": "^5.3.0",
+    "ffprobe-static": "^3.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/ffprobe-static": "^2.0.3",
     "@types/node": "^25.6.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",

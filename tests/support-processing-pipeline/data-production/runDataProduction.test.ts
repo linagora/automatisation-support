@@ -1,9 +1,9 @@
 import {
-  runDataProducer
-} from "../../../src/support-processing-pipeline/data-producer/runDataProducer";
+  runDataProduction
+} from "../../../src/support-processing-pipeline/data-production/runDataProduction";
 
-describe("runDataProducer", function () {
-  it("runs all data-producer steps and returns ticketMemoryAfterTurn", function () {
+describe("runDataProduction", function () {
+  it("runs all data-production steps and returns ticketMemoryAfterTurn", function () {
     const ticketMemoryBeforeTurn = {
       supportKnowledge: {
         topics: []
@@ -167,7 +167,7 @@ describe("runDataProducer", function () {
       }
     };
 
-    const output = runDataProducer(input, steps);
+    const output = runDataProduction(input, steps);
 
     expect(callOrder).toEqual([
       "update-conversation-logs",
@@ -193,7 +193,7 @@ describe("runDataProducer", function () {
     };
 
     expect(function () {
-      runDataProducer(input);
+      runDataProduction(input);
     }).toThrow("updateConversationLogs is not implemented yet");
   });
 
@@ -228,7 +228,7 @@ describe("runDataProducer", function () {
     };
 
     expect(function () {
-      runDataProducer(input, steps);
+      runDataProduction(input, steps);
     }).toThrow("assembleTicketMemory is not implemented yet");
   });
 });

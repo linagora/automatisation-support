@@ -100,8 +100,8 @@ describe("runSupportProcessingPipeline", function () {
         };
       },
 
-      runSearchingDecision: function (stepInput: any) {
-        callOrder.push("searching-decision");
+      runSearchDecision: function (stepInput: any) {
+        callOrder.push("search-decision");
 
         expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
         expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
@@ -132,16 +132,16 @@ describe("runSupportProcessingPipeline", function () {
         return responsePlan;
       },
 
-      runResponseProducer: function (stepInput: any) {
-        callOrder.push("response-producer");
+      runResponseProduction: function (stepInput: any) {
+        callOrder.push("response-production");
 
         expect(stepInput.responsePlan).toEqual(responsePlan);
 
         return userResponse;
       },
 
-      runDataProducer: function (stepInput: any) {
-        callOrder.push("data-producer");
+      runDataProduction: function (stepInput: any) {
+        callOrder.push("data-production");
 
         expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
         expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
@@ -158,11 +158,11 @@ describe("runSupportProcessingPipeline", function () {
 
     expect(callOrder).toEqual([
       "message-analysis",
-      "searching-decision",
+      "search-decision",
       "solution-retrieval",
       "response-decision",
-      "response-producer",
-      "data-producer"
+      "response-production",
+      "data-production"
     ]);
 
     expect(output).toEqual({

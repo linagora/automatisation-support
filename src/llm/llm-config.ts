@@ -2,8 +2,8 @@
  * LLM Configuration
  *
  * This file manages configurations for multiple LLM providers and models.
- * It supports different models for different use cases (vision, text, etc.)
- * with flexible environment variable naming.
+ * It supports different model presets for different use cases with flexible
+ * environment variable naming.
  */
 
 type LLMProvider = "openai" | "mistral" | "anthropic" | "custom";
@@ -28,33 +28,47 @@ interface LLMModelDefinition {
  * Predefined model configurations for different use cases
  */
 const MODEL_DEFINITIONS: Record<string, LLMModelDefinition> = {
-  // Default model for general text processing
+  // Image analysis - optimized for analyzing screenshots and images
+  imageAnalysis: {
+    name: "imageAnalysis",
+    envPrefix: "LLM_IMAGE",
+    defaultModel: "mistralai/mistral-small-3.2-24b-instruct",
+    defaultProvider: "mistral"
+  },
+  // Video analysis - optimized for analyzing video content
+  videoAnalysis: {
+    name: "videoAnalysis",
+    envPrefix: "LLM_VIDEO",
+    defaultModel: "mistralai/mistral-small-3.2-24b-instruct",
+    defaultProvider: "mistral"
+  },
+  // Quick decision - for fast, simple decisions
+  quickDecision: {
+    name: "quickDecision",
+    envPrefix: "LLM_QUICK",
+    defaultModel: "mistralai/mistral-small-3.2-24b-instruct",
+    defaultProvider: "mistral"
+  },
+  // Full analysis - for complex reasoning and full analysis
+  fullAnalysis: {
+    name: "fullAnalysis",
+    envPrefix: "LLM_FULL",
+    defaultModel: "gpt-4",
+    defaultProvider: "openai"
+  },
+  // RAG search - for retrieval-augmented generation
+  ragSearch: {
+    name: "ragSearch",
+    envPrefix: "LLM_RAG",
+    defaultModel: "mistralai/mistral-small-3.2-24b-instruct",
+    defaultProvider: "mistral"
+  },
+  // Default fallback - general purpose
   default: {
     name: "default",
     envPrefix: "LLM",
     defaultModel: "mistralai/mistral-small-3.2-24b-instruct",
     defaultProvider: "mistral"
-  },
-  // Vision model for image/video analysis
-  vision: {
-    name: "vision",
-    envPrefix: "LLM_VISION",
-    defaultModel: "mistralai/mistral-small-3.2-24b-instruct",
-    defaultProvider: "mistral"
-  },
-  // Fast model for quick, simple tasks
-  fast: {
-    name: "fast",
-    envPrefix: "LLM_FAST",
-    defaultModel: "mistralai/mistral-small-3.2-24b-instruct",
-    defaultProvider: "mistral"
-  },
-  // Premium model for complex reasoning
-  premium: {
-    name: "premium",
-    envPrefix: "LLM_PREMIUM",
-    defaultModel: "gpt-4",
-    defaultProvider: "openai"
   }
 };
 
@@ -76,7 +90,7 @@ function getEnvWithFallback(names: string[], defaultValue?: string): string | un
 
 /**
  * Build configuration for a specific model preset
- * @param presetName - Name of the preset (default, vision, fast, premium)
+ * @param presetName - Name of the preset
  * @returns {LLMModelConfig} The complete configuration for this preset
  * @throws {Error} If required environment variables are not set
  */

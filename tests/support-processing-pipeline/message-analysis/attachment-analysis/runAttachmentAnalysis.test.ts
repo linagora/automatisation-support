@@ -1,12 +1,12 @@
 import {
-  runAttachmentDescriptionLLM,
+  runAttachmentAnalysis,
   hasAttachments,
   isVisualAttachment,
   hasUsableLocation,
   isAttachmentSizeAcceptable,
   isAnalyzableAttachment,
   splitAttachmentsByAnalyzability
-} from "../../../../src/support-processing-pipeline/message-analysis/attachement-description-llm/runAttachmentDescriptionLLM";
+} from "../../../../src/support-processing-pipeline/message-analysis/attachment-analysis/runAttachmentAnalysis";
 
 describe("hasAttachments", function () {
   it("returns false when attachments is undefined", function () {
@@ -100,9 +100,9 @@ describe("hasUsableLocation", function () {
 });
 
 describe("isAttachmentSizeAcceptable", function () {
-  it("returns true when sizeBytes is not defined", function () {
+  it("returns false when sizeBytes is not defined", function () {
     const result = isAttachmentSizeAcceptable({ name: "image.png" });
-    expect(result).toBe(true);
+    expect(result).toBe(false);
   });
 
   it("returns true for small files", function () {
@@ -168,7 +168,8 @@ describe("splitAttachmentsByAnalyzability", function () {
     const analyzableAttachment = {
       name: "image.png",
       mimeType: "image/png",
-      url: "https://example.com/image.png"
+      url: "https://example.com/image.png",
+      sizeBytes: 1024 * 1024
     };
     const nonAnalyzableAttachment = {
       name: "doc.pdf",
@@ -192,8 +193,8 @@ describe("splitAttachmentsByAnalyzability", function () {
 
   it("puts all in analyzable when all are analyzable", function () {
     const attachments = [
-      { name: "img1.png", mimeType: "image/png", url: "url1" },
-      { name: "img2.jpg", mimeType: "image/jpeg", url: "url2" }
+      { name: "img1.png", mimeType: "image/png", url: "url1", sizeBytes: 1024 },
+      { name: "img2.jpg", mimeType: "image/jpeg", url: "url2", sizeBytes: 2048 }
     ];
 
     const result = splitAttachmentsByAnalyzability(attachments);
@@ -213,9 +214,9 @@ describe("splitAttachmentsByAnalyzability", function () {
   });
 });
 
-describe("runAttachmentDescriptionLLM", function () {
+describe("runAttachmentAnalysis", function () {
   it("returns not_present status when no attachments provided", async function () {
-    const result = await runAttachmentDescriptionLLM({});
+    const result = await runAttachmentAnalysis({});
 
     expect(result).toEqual({
       status: "not_present",
@@ -227,7 +228,7 @@ describe("runAttachmentDescriptionLLM", function () {
   });
 
   it("returns not_present status when attachments is empty array", async function () {
-    const result = await runAttachmentDescriptionLLM({ attachments: [] });
+    const result = await runAttachmentAnalysis({ attachments: [] });
 
     expect(result.status).toBe("not_present");
     expect(result.reason).toBe("no_attachment_provided");
@@ -237,7 +238,7 @@ describe("runAttachmentDescriptionLLM", function () {
   });
 
   it("returns not_analyzable status when no visual attachments", async function () {
-    const result = await runAttachmentDescriptionLLM({
+    const result = await runAttachmentAnalysis({
       attachments: [{ name: "doc.pdf", mimeType: "application/pdf", url: "https://example.com/doc.pdf" }]
     });
 
@@ -248,7 +249,7 @@ describe("runAttachmentDescriptionLLM", function () {
   });
 
   it("returns not_analyzable when visual attachments lack usable location", async function () {
-    const result = await runAttachmentDescriptionLLM({
+    const result = await runAttachmentAnalysis({
       attachments: [{ name: "image.png", mimeType: "image/png" }]
     });
 
@@ -257,8 +258,8 @@ describe("runAttachmentDescriptionLLM", function () {
   });
 
   it("returns analyzed or analysis_not_available when there are analyzable attachments", async function () {
-    const result = await runAttachmentDescriptionLLM({
-      attachments: [{ name: "image.png", mimeType: "image/png", url: "https://example.com/image.png" }]
+    const result = await runAttachmentAnalysis({
+      attachments: [{ name: "image.png", mimeType: "image/png", url: "https://example.com/image.png", sizeBytes: 1024 }]
     });
 
     expect(["analyzed", "analysis_not_available"]).toContain(result.status);
@@ -267,11 +268,11 @@ describe("runAttachmentDescriptionLLM", function () {
   });
 
   it("correctly splits attachments into analyzable and ignored", async function () {
-    const result = await runAttachmentDescriptionLLM({
+    const result = await runAttachmentAnalysis({
       attachments: [
-        { name: "image.png", mimeType: "image/png", url: "https://example.com/image.png" },
+        { name: "image.png", mimeType: "image/png", url: "https://example.com/image.png", sizeBytes: 1024 },
         { name: "doc.pdf", mimeType: "application/pdf", url: "https://example.com/doc.pdf" },
-        { name: "video.mp4", mimeType: "video/mp4", path: "/tmp/video.mp4" }
+        { name: "video.mp4", mimeType: "video/mp4", path: "/tmp/video.mp4", sizeBytes: 1024 * 1024 }
       ]
     });
 
@@ -281,8 +282,8 @@ describe("runAttachmentDescriptionLLM", function () {
   });
 
   it("includes latestUserMessage in the analysis request", async function () {
-    const result = await runAttachmentDescriptionLLM({
-      attachments: [{ name: "image.png", mimeType: "image/png", url: "https://example.com/image.png" }],
+    const result = await runAttachmentAnalysis({
+      attachments: [{ name: "image.png", mimeType: "image/png", url: "https://example.com/image.png", sizeBytes: 1024 }],
       latestUserMessage: "What do you see in this image?"
     });
 
@@ -291,7 +292,7 @@ describe("runAttachmentDescriptionLLM", function () {
 
   it("filters out oversized attachments", async function () {
     const maxSizeBytes = 25 * 1024 * 1024;
-    const result = await runAttachmentDescriptionLLM({
+    const result = await runAttachmentAnalysis({
       attachments: [
         { name: "small.png", mimeType: "image/png", url: "https://example.com/small.png", sizeBytes: 1024 },
         { name: "large.jpg", mimeType: "image/jpeg", url: "https://example.com/large.jpg", sizeBytes: maxSizeBytes + 1 }
@@ -305,10 +306,10 @@ describe("runAttachmentDescriptionLLM", function () {
   });
 
   it("handles mixed case file extensions", async function () {
-    const result = await runAttachmentDescriptionLLM({
+    const result = await runAttachmentAnalysis({
       attachments: [
-        { name: "image.PNG", url: "https://example.com/image.PNG" },
-        { name: "photo.JPG", url: "https://example.com/photo.JPG" }
+        { name: "image.PNG", url: "https://example.com/image.PNG", sizeBytes: 1024 },
+        { name: "photo.JPG", url: "https://example.com/photo.JPG", sizeBytes: 2048 }
       ]
     });
 
@@ -317,24 +318,24 @@ describe("runAttachmentDescriptionLLM", function () {
   });
 
   it("handles attachments with only mime type", async function () {
-    const result = await runAttachmentDescriptionLLM({
-      attachments: [{ mimeType: "image/webp", url: "https://example.com/image" }]
+    const result = await runAttachmentAnalysis({
+      attachments: [{ mimeType: "image/webp", url: "https://example.com/image", sizeBytes: 1024 }]
     });
 
     expect(["analyzed", "analysis_not_available"]).toContain(result.status);
   });
 
   it("handles attachments with only file extension", async function () {
-    const result = await runAttachmentDescriptionLLM({
-      attachments: [{ name: "animation.gif", path: "/uploads/animation.gif" }]
+    const result = await runAttachmentAnalysis({
+      attachments: [{ name: "animation.gif", path: "/uploads/animation.gif", sizeBytes: 1024 }]
     });
 
     expect(["analyzed", "analysis_not_available"]).toContain(result.status);
   });
 
   it("handles video files correctly", async function () {
-    const result = await runAttachmentDescriptionLLM({
-      attachments: [{ name: "movie.mov", mimeType: "video/quicktime", url: "https://example.com/movie.mov" }]
+    const result = await runAttachmentAnalysis({
+      attachments: [{ name: "movie.mov", mimeType: "video/quicktime", url: "https://example.com/movie.mov", sizeBytes: 1024 * 1024 }]
     });
 
     expect(["analyzed", "analysis_not_available"]).toContain(result.status);

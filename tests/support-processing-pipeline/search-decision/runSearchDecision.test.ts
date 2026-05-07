@@ -1,11 +1,11 @@
 import {
-  runSearchingDecision,
-  createInitialSearchingDecisionRoute,
-  updateSearchingDecisionRoute
-} from "../../../src/support-processing-pipeline/searching-decision/runSearchingDecision";
+  runSearchDecision,
+  createInitialSearchDecisionRoute,
+  updateSearchDecisionRoute
+} from "../../../src/support-processing-pipeline/search-decision/runSearchDecision";
 
-describe("runSearchingDecision", function () {
-  it("runs all searching-decision steps and returns decisionSearchingSolution", function () {
+describe("runSearchDecision", function () {
+  it("runs all search-decision steps and returns decisionSearchingSolution", function () {
     const input = {
       currentAnalysisOutput: {
         topics: [
@@ -42,13 +42,13 @@ describe("runSearchingDecision", function () {
     const steps = {
       runTopicRouting: function ({
         currentAnalysisOutput,
-        decisionRouteSearchingDecision
+        decisionRouteSearchDecision
       }: any) {
         callOrder.push("topic-routing");
 
         return {
           topicIsPresent: Array.isArray(currentAnalysisOutput.topics),
-          stopReason: decisionRouteSearchingDecision.stopReason
+          stopReason: decisionRouteSearchDecision.stopReason
         };
       },
 
@@ -87,33 +87,33 @@ describe("runSearchingDecision", function () {
         };
       },
 
-      calculateSearchingDecision: function (input: any) {
-        callOrder.push("final-searching-decision");
+      calculateSearchDecision: function (input: any) {
+        callOrder.push("final-search-decision");
 
         finalDecisionInput = input;
 
         return (
-          input.decisionRouteSearchingDecision.topicIsPresent === true &&
-          input.decisionRouteSearchingDecision.shouldEvaluateSolutionLikelihood === true &&
-          input.decisionRouteSearchingDecision.shouldEvaluateTopicQualification === true &&
-          input.decisionRouteSearchingDecision.shouldEvaluateHelpfulness === true
+          input.decisionRouteSearchDecision.topicIsPresent === true &&
+          input.decisionRouteSearchDecision.shouldEvaluateSolutionLikelihood === true &&
+          input.decisionRouteSearchDecision.shouldEvaluateTopicQualification === true &&
+          input.decisionRouteSearchDecision.shouldEvaluateHelpfulness === true
         );
       }
     };
 
-    const output = runSearchingDecision(input, steps);
+    const output = runSearchDecision(input, steps);
 
     expect(callOrder).toEqual([
       "topic-routing",
       "solution-likelihood",
       "topic-qualification",
       "helpfulness-evaluation",
-      "final-searching-decision"
+      "final-search-decision"
     ]);
 
     expect(output).toBe(true);
 
-    expect(finalDecisionInput.decisionRouteSearchingDecision).toEqual({
+    expect(finalDecisionInput.decisionRouteSearchDecision).toEqual({
       topicIsPresent: true,
       shouldEvaluateSolutionLikelihood: true,
       shouldEvaluateTopicQualification: true,
@@ -143,7 +143,7 @@ describe("runSearchingDecision", function () {
     });
   });
 
-  it("returns false when the final searching decision step decides not to search", function () {
+  it("returns false when the final search decision step decides not to search", function () {
     const input = {
       currentAnalysisOutput: {
         topics: []
@@ -193,21 +193,21 @@ describe("runSearchingDecision", function () {
         };
       },
 
-      calculateSearchingDecision: function () {
-        callOrder.push("final-searching-decision");
+      calculateSearchDecision: function () {
+        callOrder.push("final-search-decision");
 
         return false;
       }
     };
 
-    const output = runSearchingDecision(input, steps);
+    const output = runSearchDecision(input, steps);
 
     expect(callOrder).toEqual([
       "topic-routing",
       "solution-likelihood",
       "topic-qualification",
       "helpfulness-evaluation",
-      "final-searching-decision"
+      "final-search-decision"
     ]);
 
     expect(output).toBe(false);
@@ -230,7 +230,7 @@ describe("runSearchingDecision", function () {
     };
 
     expect(function () {
-      runSearchingDecision(input);
+      runSearchDecision(input);
     }).toThrow("runTopicRouting is not implemented yet");
   });
 
@@ -279,18 +279,18 @@ describe("runSearchingDecision", function () {
         };
       },
 
-      calculateSearchingDecision: function () {
+      calculateSearchDecision: function () {
         return "true" as any;
       }
     };
 
     expect(function () {
-      runSearchingDecision(input, steps);
+      runSearchDecision(input, steps);
     }).toThrow("decisionSearchingSolution must be a boolean");
   });
 
-  it("creates the initial searching-decision route", function () {
-    const decisionRoute = createInitialSearchingDecisionRoute();
+  it("creates the initial search-decision route", function () {
+    const decisionRoute = createInitialSearchDecisionRoute();
 
     expect(decisionRoute).toEqual({
       topicIsPresent: null,
@@ -302,10 +302,10 @@ describe("runSearchingDecision", function () {
     });
   });
 
-  it("updates the searching-decision route without mutating the previous object", function () {
-    const initialDecisionRoute = createInitialSearchingDecisionRoute();
+  it("updates the search-decision route without mutating the previous object", function () {
+    const initialDecisionRoute = createInitialSearchDecisionRoute();
 
-    const updatedDecisionRoute = updateSearchingDecisionRoute(initialDecisionRoute, {
+    const updatedDecisionRoute = updateSearchDecisionRoute(initialDecisionRoute, {
       topicIsPresent: false,
       shouldEvaluateSolutionLikelihood: false,
       stopReason: "no_exploitable_topic"

@@ -1,18 +1,22 @@
 /**
- * LLM attachment description
+ * Attachment Analysis Orchestrator
  *
  * This file prepares visual attachments for analysis.
  *
  * It checks whether attachments are present, whether they are analyzable,
- * and calls a visual attachment analysis function.
+ * and calls the appropriate analysis function based on attachment type (image or video).
  *
- * The real API call to an LLM vision model is implemented in
- * requestVisualAttachmentAnalysis.
+ * The real API calls to an LLM vision model are implemented in
+ * requestImageAnalysis and requestVideoAnalysis.
  */
 
 import {
-  requestVisualAttachmentAnalysis
-} from "./requestVisualAttachmentAnalysis";
+  requestImageAnalysis
+} from "./requestImageAnalysis";
+
+import {
+  requestVideoAnalysis
+} from "./requestVideoAnalysis";
 
 type UnknownObject = Record<string, unknown>;
 
@@ -26,7 +30,7 @@ interface Attachment {
   [key: string]: unknown;
 }
 
-interface RunAttachmentDescriptionLLMInput {
+interface RunAttachmentAnalysisInput {
   attachments?: Attachment[];
   latestUserMessage?: string;
   inputClean?: UnknownObject;
@@ -41,7 +45,7 @@ interface VisualAttachmentAnalyzerOutput {
   extractedInformations: UnknownObject;
 }
 
-interface RunAttachmentDescriptionLLMOutput {
+interface RunAttachmentAnalysisOutput {
   status: "not_present" | "not_analyzable" | "analyzed" | "analysis_not_available";
   analyzableAttachments: Attachment[];
   ignoredAttachments: Attachment[];
@@ -87,6 +91,44 @@ function isVisualAttachment(attachment: Attachment): boolean {
   return hasVisualMimeType || hasVisualExtension;
 }
 
+function isImageAttachment(attachment: Attachment): boolean {
+  const name = getAttachmentName(attachment);
+  const mimeType = getAttachmentMimeType(attachment);
+
+  const imageExtensions = [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".gif"
+  ];
+
+  const hasImageMimeType = mimeType.startsWith("image/");
+  const hasImageExtension = imageExtensions.some(function (extension) {
+    return name.endsWith(extension);
+  });
+
+  return hasImageMimeType || hasImageExtension;
+}
+
+function isVideoAttachment(attachment: Attachment): boolean {
+  const name = getAttachmentName(attachment);
+  const mimeType = getAttachmentMimeType(attachment);
+
+  const videoExtensions = [
+    ".mp4",
+    ".mov",
+    ".avi"
+  ];
+
+  const hasVideoMimeType = mimeType.startsWith("video/");
+  const hasVideoExtension = videoExtensions.some(function (extension) {
+    return name.endsWith(extension);
+  });
+
+  return hasVideoMimeType || hasVideoExtension;
+}
+
 function hasUsableLocation(attachment: Attachment): boolean {
   return (
     typeof attachment.url === "string" ||
@@ -96,7 +138,7 @@ function hasUsableLocation(attachment: Attachment): boolean {
 
 function isAttachmentSizeAcceptable(attachment: Attachment): boolean {
   if (typeof attachment.sizeBytes !== "number") {
-    return true;
+    return false;
   }
 
   const maxSizeBytes = 25 * 1024 * 1024;
@@ -130,9 +172,9 @@ function splitAttachmentsByAnalyzability(attachments: Attachment[]) {
   };
 }
 
-async function runAttachmentDescriptionLLM(
-  input: RunAttachmentDescriptionLLMInput
-): Promise<RunAttachmentDescriptionLLMOutput> {
+async function runAttachmentAnalysis(
+  input: RunAttachmentAnalysisInput
+): Promise<RunAttachmentAnalysisOutput> {
   const attachments = input.attachments || [];
 
   if (!hasAttachments(attachments)) {
@@ -160,10 +202,31 @@ async function runAttachmentDescriptionLLM(
     };
   }
 
-  const visualAttachmentAnalysis = await requestVisualAttachmentAnalysis({
-    attachments: analyzableAttachments,
-    latestUserMessage: input.latestUserMessage
-  });
+  // Determine the type of attachments and call the appropriate analysis function
+  const hasVideo = analyzableAttachments.some(isVideoAttachment);
+  const hasImage = analyzableAttachments.some(isImageAttachment);
+
+  let visualAttachmentAnalysis;
+
+  if (hasVideo) {
+    // If there are videos, use video analysis (even if mixed with images)
+    visualAttachmentAnalysis = await requestVideoAnalysis({
+      attachments: analyzableAttachments,
+      latestUserMessage: input.latestUserMessage
+    });
+  } else if (hasImage) {
+    // Only images, use image analysis
+    visualAttachmentAnalysis = await requestImageAnalysis({
+      attachments: analyzableAttachments,
+      latestUserMessage: input.latestUserMessage
+    });
+  } else {
+    // Unknown visual type, fallback to image analysis
+    visualAttachmentAnalysis = await requestImageAnalysis({
+      attachments: analyzableAttachments,
+      latestUserMessage: input.latestUserMessage
+    });
+  }
 
   return {
     status: visualAttachmentAnalysis.status,
@@ -175,9 +238,11 @@ async function runAttachmentDescriptionLLM(
 }
 
 export {
-  runAttachmentDescriptionLLM,
+  runAttachmentAnalysis,
   hasAttachments,
   isVisualAttachment,
+  isImageAttachment,
+  isVideoAttachment,
   hasUsableLocation,
   isAttachmentSizeAcceptable,
   isAnalyzableAttachment,
@@ -186,8 +251,8 @@ export {
 
 export type {
   Attachment,
-  RunAttachmentDescriptionLLMInput,
-  RunAttachmentDescriptionLLMOutput,
+  RunAttachmentAnalysisInput,
+  RunAttachmentAnalysisOutput,
   VisualAttachmentAnalyzerInput,
   VisualAttachmentAnalyzerOutput
 };

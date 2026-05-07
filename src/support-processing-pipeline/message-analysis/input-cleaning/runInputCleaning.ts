@@ -1,5 +1,5 @@
 /**
- * Deterministic input clean
+ * Deterministic input cleaning
  *
  * Detects obvious cases such as empty message, prompt injection,
  * internal information requests, sensitive data requests, suspicious attachments,
@@ -10,22 +10,22 @@
 
 type UnknownObject = Record<string, unknown>;
 
-interface InputCleanInput {
+interface InputCleaningInput {
   latestUserMessage: string;
   attachments?: UnknownObject[];
   userInformations?: UnknownObject | null;
   supportKnowledgeBeforeTurn?: UnknownObject | null;
 }
 
-interface InputCleanCheck {
+interface InputCleaningCheck {
   checkName: string;
   detected: boolean;
   reason: string | null;
 }
 
-interface InputCleanOutput {
+interface InputCleaningOutput {
   inputClean: boolean;
-  failedChecks: InputCleanCheck[];
+  failedChecks: InputCleaningCheck[];
 }
 
 function normalizeText(text: string): string {
@@ -41,7 +41,7 @@ function includesOneExpression(text: string, expressions: string[]): boolean {
   });
 }
 
-function checkEmptyMessage(latestUserMessage: string): InputCleanCheck {
+function checkEmptyMessage(latestUserMessage: string): InputCleaningCheck {
   const detected = latestUserMessage.trim().length === 0;
 
   return {
@@ -51,7 +51,7 @@ function checkEmptyMessage(latestUserMessage: string): InputCleanCheck {
   };
 }
 
-function checkPromptInjectionAttempt(latestUserMessage: string): InputCleanCheck {
+function checkPromptInjectionAttempt(latestUserMessage: string): InputCleaningCheck {
   const normalizedMessage = normalizeText(latestUserMessage);
 
   const promptInjectionExpressionsEnglish = [
@@ -86,7 +86,7 @@ function checkPromptInjectionAttempt(latestUserMessage: string): InputCleanCheck
   };
 }
 
-function checkInternalInformationRequest(latestUserMessage: string): InputCleanCheck {
+function checkInternalInformationRequest(latestUserMessage: string): InputCleaningCheck {
   const normalizedMessage = normalizeText(latestUserMessage);
 
   const internalInformationExpressionsEnglish = [
@@ -125,7 +125,7 @@ function checkInternalInformationRequest(latestUserMessage: string): InputCleanC
   };
 }
 
-function checkSensitiveDataRequest(latestUserMessage: string): InputCleanCheck {
+function checkSensitiveDataRequest(latestUserMessage: string): InputCleaningCheck {
   const normalizedMessage = normalizeText(latestUserMessage);
 
   const sensitiveDataExpressionsEnglish = [
@@ -169,7 +169,7 @@ function checkSensitiveDataRequest(latestUserMessage: string): InputCleanCheck {
   };
 }
 
-function checkSpamLikeMessage(latestUserMessage: string): InputCleanCheck {
+function checkSpamLikeMessage(latestUserMessage: string): InputCleaningCheck {
   const normalizedMessage = normalizeText(latestUserMessage);
 
   const urlMatches = latestUserMessage.match(/https?:\/\/|www\./g) || [];
@@ -207,7 +207,7 @@ function checkSpamLikeMessage(latestUserMessage: string): InputCleanCheck {
   };
 }
 
-function checkSuspiciousAttachments(attachments: UnknownObject[] = []): InputCleanCheck {
+function checkSuspiciousAttachments(attachments: UnknownObject[] = []): InputCleaningCheck {
   const dangerousExtensions = [
     ".exe",
     ".bat",
@@ -254,7 +254,7 @@ function checkSuspiciousAttachments(attachments: UnknownObject[] = []): InputCle
 
 function checkUserSpamHistory(
   userInformations?: UnknownObject | null
-): InputCleanCheck {
+): InputCleaningCheck {
   if (!userInformations) {
     return {
       checkName: "user_spam_history",
@@ -314,13 +314,13 @@ function checkUserSpamHistory(
   };
 }
 
-function getFailedChecks(checks: InputCleanCheck[]): InputCleanCheck[] {
+function getFailedChecks(checks: InputCleaningCheck[]): InputCleaningCheck[] {
   return checks.filter(function (check) {
     return check.detected;
   });
 }
 
-function runInputClean(input: InputCleanInput): InputCleanOutput {
+function runInputCleaning(input: InputCleaningInput): InputCleaningOutput {
   const attachments = input.attachments || [];
 
   const checks = [
@@ -342,11 +342,11 @@ function runInputClean(input: InputCleanInput): InputCleanOutput {
 }
 
 export {
-  runInputClean
+  runInputCleaning
 };
 
 export type {
-  InputCleanInput,
-  InputCleanOutput,
-  InputCleanCheck
+  InputCleaningInput,
+  InputCleaningOutput,
+  InputCleaningCheck
 };

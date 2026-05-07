@@ -4,7 +4,6 @@
  * This file handles API calls to the LLM service.
  * It manages retries, error handling, and response parsing.
  * Supports multiple model presets for different use cases.
- * Supports vision capabilities (image analysis).
  * Supports token usage tracking when the API returns usage data.
  */
 
@@ -133,7 +132,7 @@ function normalizeApiBaseUrl(apiBaseUrl: string): string {
  * Decide if usage should be logged.
  *
  * You can enable it in two ways:
- * 1. Pass { logUsage: true } when calling callLLM / callVisionLLM
+ * 1. Pass { logUsage: true } when calling callLLM
  * 2. Add LLM_LOG_USAGE=true in your .env
  */
 function shouldLogUsage(options: CallLLMOptions): boolean {
@@ -346,97 +345,8 @@ async function callLLM(
   };
 }
 
-/**
- * Call LLM with the vision preset (optimized for image/video analysis)
- * @param messages - The messages to send (can include image URLs)
- * @param options - Optional overrides
- * @returns The result of the API call
- */
-async function callVisionLLM(
-  messages: LLMMessage[],
-  options: Omit<CallLLMOptions, "preset"> = {}
-): Promise<LLMClientResult> {
-  return callLLM(messages, { ...options, preset: "vision" });
-}
-
-/**
- * Call LLM with the fast preset (optimized for quick responses)
- * @param messages - The messages to send
- * @param options - Optional overrides
- * @returns The result of the API call
- */
-async function callFastLLM(
-  messages: LLMMessage[],
-  options: Omit<CallLLMOptions, "preset"> = {}
-): Promise<LLMClientResult> {
-  return callLLM(messages, { ...options, preset: "fast" });
-}
-
-/**
- * Call LLM with the premium preset (optimized for complex reasoning)
- * @param messages - The messages to send
- * @param options - Optional overrides
- * @returns The result of the API call
- */
-async function callPremiumLLM(
-  messages: LLMMessage[],
-  options: Omit<CallLLMOptions, "preset"> = {}
-): Promise<LLMClientResult> {
-  return callLLM(messages, { ...options, preset: "premium" });
-}
-
-/**
- * Build a vision message with text and image URLs
- * @param text - The text prompt
- * @param imageUrls - Array of image URLs to analyze
- * @returns A user message compatible with vision models
- */
-function buildVisionMessage(text: string, imageUrls: string[]): LLMMessage {
-  const content: MessageContent[] = [
-    { type: "text", text }
-  ];
-
-  for (const url of imageUrls) {
-    content.push({
-      type: "image_url",
-      image_url: {
-        url: url,
-        detail: "auto"
-      }
-    });
-  }
-
-  return {
-    role: "user",
-    content
-  };
-}
-
-/**
- * Parse the LLM response content into a structured object
- * @param content - The raw content from the LLM
- * @returns Parsed object or null if parsing failed
- */
-function parseLLMResponse(content: string): Record<string, unknown> | null {
-  try {
-    const cleaned = content
-      .replace(/^```json\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
-
-    return JSON.parse(cleaned) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
 export {
-  callLLM,
-  callVisionLLM,
-  callFastLLM,
-  callPremiumLLM,
-  buildVisionMessage,
-  parseLLMResponse
+  callLLM
 };
 
 export type {
