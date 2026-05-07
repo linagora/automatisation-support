@@ -1,102 +1,194 @@
 # Testing Visual Attachment Analysis
 
-This directory contains scripts to test the visual attachment analysis functionality.
+This directory contains manual scripts to test the visual attachment analysis functionality.
+
+These scripts are not part of the automated test suite. They call a real LLM API, so they may consume tokens and cost money depending on the provider.
 
 ## Prerequisites
 
-1. Make sure your `.env` file is configured with your LLM API credentials:
-   ```env
-   LLM_API_HOST=https://your-api-host.com/api
-   LLM_API_KEY=your-api-key-here
-   LLM_MODEL=mistralai/mistral-small-3.2-24b-instruct
-   ```
+### 1. Install dependencies
 
-2. Install dependencies (if not already done):
-   ```bash
-   npm install
-   ```
+From the project root:
 
-## Running Tests
+```bash
+npm install
+```
+
+Make sure `tsx` and `dotenv` are installed. They are required to run the TypeScript scripts and load the `.env` file.
+
+If needed:
+
+```bash
+npm install -D tsx
+npm install dotenv
+```
+
+### 2. Configure your `.env` file
+
+Create a `.env` file at the root of the project.
+
+Example:
+
+```env
+# General LLM configuration
+LLM_API_HOST=https://your-api-host.com/api
+LLM_API_KEY=your-api-key-here
+LLM_MODEL=mistralai/mistral-small-3.2-24b-instruct
+
+# Vision LLM configuration
+# If these variables are not defined, the vision preset falls back to LLM_API_HOST / LLM_API_KEY / LLM_MODEL.
+LLM_VISION_API_HOST=https://your-api-host.com/api
+LLM_VISION_API_KEY=your-api-key-here
+LLM_VISION_MODEL=mistralai/mistral-small-3.2-24b-instruct
+
+# Optional: show token usage in the terminal
+LLM_LOG_USAGE=true
+```
+
+Important: the API host must include the protocol.
+
+Correct:
+
+```env
+LLM_API_HOST=https://your-api-host.com/api
+```
+
+Incorrect:
+
+```env
+LLM_API_HOST=your-api-host.com/api
+```
+
+## Running Manual Vision Tests
+
+The recommended way to run these scripts is through the npm commands defined in `package.json`.
+
+### Test with a local image
+
+```bash
+npm run test:vision:local -- ./screen_error.png
+```
+
+You can replace `./screen_error.png` with any local image path:
+
+```bash
+npm run test:vision:local -- ./my-image.png
+```
 
 ### Test with a public image URL
 
 ```bash
-# Test with a simple image
-npx tsx scripts/test-vision/test-image-analysis.ts "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png"
-
-# Test with a message for context
-npx tsx scripts/test-vision/test-image-analysis.ts "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png" "What do you see in this image?"
+npm run test:vision:url -- "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png"
 ```
 
-### Test with multiple images
+### Test with a public image URL and a user message
 
 ```bash
-npx tsx scripts/test-vision/test-image-analysis.ts \
+npm run test:vision:url -- "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png" "What do you see in this image?"
+```
+
+### Test with multiple image URLs
+
+```bash
+npm run test:vision:url -- \
   "https://example.com/image1.png" \
   "https://example.com/image2.png" \
   "Compare these two images"
 ```
 
-### Test with a data URL (base64 encoded image)
+## Available npm Commands
 
-If you have a local image, you can convert it to a data URL:
+These commands are defined in `package.json`:
+
+```json
+{
+  "scripts": {
+    "test:vision:local": "tsx -r dotenv/config scripts/test-vision/test-local-image.ts",
+    "test:vision:url": "tsx -r dotenv/config scripts/test-vision/test-image-analysis.ts"
+  }
+}
+```
+
+They use:
+
+- `tsx` to run TypeScript files directly.
+- `-r dotenv/config` to automatically load variables from `.env`.
+
+This means you do not need to manually export environment variables before running the scripts.
+
+## Why these scripts are in `scripts/test-vision` and not in `tests`
+
+The `tests/` directory is used for automated tests, usually run with:
 
 ```bash
-# Convert local image to base64 (macOS/Linux)
-base64 -i your-image.png | awk '{print "data:image/png;base64," $0}' > image-dataurl.txt
+npm test
+```
 
-# Then use it in the test
-npx tsx scripts/test-vision/test-image-analysis.ts "$(cat image-dataurl.txt)"
+or:
+
+```bash
+npm run test:run
+```
+
+Those tests should ideally be fast, deterministic, and free to run.
+
+The vision scripts are different because they:
+
+- call a real external LLM API;
+- depend on internet access;
+- depend on valid API credentials;
+- may consume tokens;
+- may cost money;
+- may fail if the provider is unavailable.
+
+For this reason, they are placed in `scripts/test-vision/` as manual development scripts, not automated unit tests.
+
+## Token Usage Logging
+
+If `LLM_LOG_USAGE=true` is set in `.env`, the script will print token usage when the API returns it.
+
+Example:
+
+```txt
+[LLM usage] preset=vision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=751, completion_tokens=169, total_tokens=920
+```
+
+Meaning:
+
+- `prompt_tokens`: tokens sent to the model, including prompt and image-related input.
+- `completion_tokens`: tokens generated by the model.
+- `total_tokens`: total number of tokens used for the request.
+
+If you do not want to display token usage, remove this line from `.env` or set:
+
+```env
+LLM_LOG_USAGE=false
 ```
 
 ## Example Public Image URLs for Testing
 
-You can use these URLs for testing (replace with actual working URLs):
+You can use these URLs for testing:
 
 - **Test image 1**: `https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png`
 - **Test image 2**: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Red_Kitten_01.jpg/320px-Red_Kitten_01.jpg`
-
-## Troubleshooting
-
-### "Configuration error"
-- Check that your `.env` file exists and contains the correct API credentials
-- Verify that `LLM_API_HOST` and `LLM_API_KEY` are set correctly
-
-### "Failed after 3 attempts"
-- Check your internet connection
-- Verify that your API key is valid and has not expired
-- Check that the API host URL is correct and accessible
-
-### "analysis_not_available"
-- The model might not support vision/image analysis
-- Try configuring a vision-capable model like GPT-4 Vision
-- Update your `.env`:
-  ```env
-  LLM_VISION_MODEL=gpt-4-vision-preview
-  ```
-
-### "Request timeout"
-- The image might be too large
-- Try with a smaller image
-- Increase the timeout in `llm-config.ts` if needed
 
 ## Expected Output
 
 When successful, you should see:
 
-```
+```txt
 ============================================================
-Testing Visual Attachment Analysis
+Testing Visual Attachment Analysis (Local Images)
 ============================================================
 
-Image URLs: 1
-  [1] https://example.com/image.png
-
-User message: "What do you see?"
+Converting 1 image(s) to data URLs...
+  ✓ screen_error.png (24.6 KB)
 
 ------------------------------------------------------------
 Sending request to LLM...
 ------------------------------------------------------------
+
+[LLM usage] preset=vision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=751, completion_tokens=169, total_tokens=920
 
 ============================================================
 RESULT
@@ -109,14 +201,135 @@ Ignored attachments: 0
 
 --- Analysis Output ---
 {
-  "description": "A transparent PNG image showing...",
-  "extractedText": "",
-  "objects": ["cube", "checkered pattern"],
-  "context": "demonstration of PNG transparency",
-  "issues": [],
+  "description": "A dialog box displaying an error message...",
+  "extractedText": "Fabrikam Backup\nCan't complete the current backup\nThe backup cannot complete because it was cancelled.\nClose",
+  "objects": ["window", "error message", "Close button"],
+  "context": "screenshot of an error message",
+  "issues": ["The backup process was cancelled"],
   "confidence": "high"
 }
 
 ============================================================
-✅ SUCCESS: Image was analyzed successfully!
+✅ SUCCESS: Image(s) analyzed successfully!
+```
+
+## Troubleshooting
+
+### `sh: 1: tsx: not found`
+
+`tsx` is not installed locally in the project.
+
+Run:
+
+```bash
+npm install -D tsx
+```
+
+Then retry:
+
+```bash
+npm run test:vision:local -- ./screen_error.png
+```
+
+### `Cannot find module 'dotenv/config'`
+
+`dotenv` is not installed.
+
+Run:
+
+```bash
+npm install dotenv
+```
+
+Then retry.
+
+### `Configuration error`
+
+Check that your `.env` file exists and contains the correct variables:
+
+```env
+LLM_API_HOST=https://your-api-host.com/api
+LLM_API_KEY=your-api-key-here
+LLM_MODEL=your-model-name
+```
+
+If you use a specific vision model, also check:
+
+```env
+LLM_VISION_API_HOST=https://your-api-host.com/api
+LLM_VISION_API_KEY=your-api-key-here
+LLM_VISION_MODEL=your-vision-model-name
+```
+
+### `Failed to parse URL`
+
+Your API host is probably missing `https://`.
+
+Incorrect:
+
+```env
+LLM_API_HOST=ai.example.com/api
+```
+
+Correct:
+
+```env
+LLM_API_HOST=https://ai.example.com/api
+```
+
+### `API returned 400: {"detail":"Model not found"}`
+
+The model name is not recognized by your API provider.
+
+Check that the model name in `.env` exists for your provider:
+
+```env
+LLM_VISION_MODEL=mistralai/mistral-small-3.2-24b-instruct
+```
+
+Some providers require exact model names. For example, OpenRouter-style model names may not work on another API host.
+
+### `analysis_not_available`
+
+Possible causes:
+
+- the model does not support image analysis;
+- the API request failed;
+- the image format is unsupported;
+- the image is too large;
+- the LLM returned an invalid response.
+
+Try with a smaller image and verify that your `LLM_VISION_MODEL` supports vision.
+
+### `Request timeout`
+
+The request took too long.
+
+Possible solutions:
+
+- use a smaller image;
+- check your internet connection;
+- check if the provider is slow;
+- increase the timeout in `llm-config.ts`.
+
+## Notes
+
+These scripts are useful for manually checking that the visual analysis pipeline works before integrating it into the full support-processing pipeline.
+
+The usual flow is:
+
+```txt
+local image or image URL
+  ↓
+test script
+  ↓
+runAttachmentDescriptionLLM
+  ↓
+requestVisualAttachmentAnalysis
+  ↓
+callVisionLLM
+  ↓
+LLM API
+  ↓
+structured visual analysis result
 ```
