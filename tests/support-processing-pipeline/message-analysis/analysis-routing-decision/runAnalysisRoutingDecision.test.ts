@@ -1,7 +1,7 @@
 import {
   runAnalysisRoutingDecision,
   type RunAnalysisRoutingDecisionResult
-} from "../../../../src/support-processing-pipeline/message-analysis/analysis-routing-decision/runAnalysisRoutingDecision";
+} from "../../../../src/support-processing-pipeline/message-analysis/analysis-gate/LLM1/runAnalysisRoutingDecision";
 
 function shouldRunLLM0(output: RunAnalysisRoutingDecisionResult): boolean {
   return output.analysisRoutingDecision.shouldRunLLM0;
