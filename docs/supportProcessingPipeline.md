@@ -9,7 +9,7 @@ The Mermaid diagram gives a high-level view of the pipeline execution flow. The 
 ## Pipeline overview
 
 ```mermaid
-%%{init: {"flowchart": {"nodeSpacing": 14, "rankSpacing": 18}, "themeVariables": {"fontSize": "13px", "lineColor": "#000000"}}}%%
+%%{init: {"flowchart": {"nodeSpacing": 14, "rankSpacing": 22, "subGraphTitleMargin": {"top": 10, "bottom": 25}}, "themeVariables": {"fontSize": "13px", "lineColor": "#000000"}}}%%
 flowchart TB
   %% =====================================================
   %% PREVIOUS STEP DATA
@@ -19,134 +19,140 @@ flowchart TB
     direction TB
 
     PREVIOUS_INPUTS["<b>Inputs provided to runSupportProcessingPipeline</b><br/>
-    1. latestUserMessage<br/>
-    2. latestUserAttachments<br/>
-    3.1 accountTrustStatus<br/>
-    3.2 accountProfile<br/>
-    3.3 accountInteractionTraits<br/>
-    4. supportTopicKnowledge<br/>
-    5. conversationHistory"]
+    1. latestUserMessage, 2. latestUserAttachments, 3.1 accountTrustStatus,<br/>
+    3.2 accountProfile, 3.3 accountInteractionTraits,<br/>
+    4. supportTopicKnowledge, 5. conversationHistory"]
   end
 
   %% =====================================================
   %% SUPPORT PROCESSING PIPELINE
   %% =====================================================
 
-  subgraph PIPELINE["runSupportProcessingPipeline.ts"]
+  subgraph PIPELINE["{ userResponse, patches } = runSupportProcessingPipeline(inputSupportProcessingPipeline)"]
     direction TB
 
-    T0["Processing"]
+    T0["<b>Prepare messageAnalysisInput</b><br/>
+    Destructure pipeline input<br/>
+    messageAnalysisInput = { latestUserMessage, latestUserAttachments,<br/>
+    accountTrustStatus, supportTopicKnowledge, conversationHistory }"]
 
-    subgraph MA_DATA["runMessageAnalysis.ts"]
+    subgraph MA_DATA["turnUnderstandingDelta = runMessageAnalysis(messageAnalysisInput)"]
       direction LR
 
-      MA_INPUTS["<b>Inputs</b><br/>
-      1. latestUserMessage<br/>
-      2. latestUserAttachments<br/>
-      3.1 accountTrustStatus<br/>
-      4. supportTopicKnowledge<br/>
-      5. conversationHistory"]
+      MA_INPUTS["<b>messageAnalysisInput</b><br/>
+      latestUserMessage, latestUserAttachments,<br/>
+      accountTrustStatus, supportTopicKnowledge, conversationHistory"]
 
-      MA_OUTPUTS["<b>Outputs</b><br/>
-      6. TurnUnderstandingDelta<br/>"]
+      MA_OUTPUTS["<b>Output</b><br/>
+      6. turnUnderstandingDelta"]
 
       MA_INPUTS --> MA_OUTPUTS
     end
 
-    T1["Processing"]
+    T1{"<b>if</b><br/>
+    turnUnderstandingDelta.segments_topic.length !== 0"}
 
-    subgraph SD_DATA["runSearchDecision.ts"]
+    T_SD_INPUT["<b>Prepare searchDecisionInput</b><br/>
+    searchDecisionInput = { supportTopicKnowledge, turnUnderstandingDelta }"]
+
+    subgraph SD_DATA["decisionSearchingSolution = runSearchDecision(searchDecisionInput)"]
       direction LR
 
-      SD_INPUTS["<b>Inputs</b><br/>
-      4. supportTopicKnowledge<br/>
-      6. TurnUnderstandingDelta<br/>"]
+      SD_INPUTS["<b>searchDecisionInput</b><br/>
+      supportTopicKnowledge, turnUnderstandingDelta"]
 
-      SD_OUTPUTS["<b>Outputs</b><br/>
+      SD_OUTPUTS["<b>Output</b><br/>
       7. decisionSearchingSolution"]
 
       SD_INPUTS --> SD_OUTPUTS
     end
 
-    T2["Processing"]
+    T2{"<b>if</b><br/>
+    decisionSearchingSolution.shouldSearchSolution === true"}
 
-    subgraph SR_DATA["runSolutionRetrieval.ts"]
+    T_SR_INPUT["<b>Prepare solutionRetrievalInput</b><br/>
+    solutionRetrievalInput = { supportTopicKnowledge, turnUnderstandingDelta }"]
+
+    subgraph SR_DATA["possibleSolutions = runSolutionRetrieval(solutionRetrievalInput)"]
       direction LR
 
-      SR_INPUTS["<b>Inputs</b><br/>
-      4. supportTopicKnowledge<br/>
-      6. TurnUnderstandingDelta<br/>"]
+      SR_INPUTS["<b>solutionRetrievalInput</b><br/>
+      supportTopicKnowledge, turnUnderstandingDelta"]
 
-      SR_OUTPUTS["<b>Outputs</b><br/>
+      SR_OUTPUTS["<b>Output</b><br/>
       8. possibleSolutions"]
 
       SR_INPUTS --> SR_OUTPUTS
     end
 
-    T3["Processing"]
+    T3["<b>Prepare responseDecisionInput</b><br/>
+    responseDecisionInput = { accountTrustStatus, accountProfile,<br/>
+    accountInteractionTraits, supportTopicKnowledge,<br/>
+    turnUnderstandingDelta, possibleSolutions }"]
 
-    subgraph RD_DATA["runResponseDecision.ts"]
+    subgraph RD_DATA["responsePlan = runResponseDecision(responseDecisionInput)"]
       direction LR
 
-      RD_INPUTS["<b>Inputs</b><br/>
-      3.1 accountTrustStatus<br/>
-      3.2 accountProfile<br/>
-      3.3 accountInteractionTraits<br/>
-      4. supportTopicKnowledge<br/>
-      6. TurnUnderstandingDelta<br/>
-      8. possibleSolutions"]
+      RD_INPUTS["<b>responseDecisionInput</b><br/>
+      accountTrustStatus, accountProfile, accountInteractionTraits,<br/>
+      supportTopicKnowledge, turnUnderstandingDelta, possibleSolutions"]
 
-      RD_OUTPUTS["<b>Outputs</b><br/>
+      RD_OUTPUTS["<b>Output</b><br/>
       9. responsePlan"]
 
       RD_INPUTS --> RD_OUTPUTS
     end
 
-    T4["Processing"]
+    T4["<b>Prepare responseProductionInput</b><br/>
+    responseProductionInput = { responsePlan }"]
 
-    subgraph RP_DATA["runResponseProduction.ts"]
+    subgraph RP_DATA["userResponse = runResponseProduction(responseProductionInput)"]
       direction LR
 
-      RP_INPUTS["<b>Inputs</b><br/>
-      9. responsePlan"]
+      RP_INPUTS["<b>responseProductionInput</b><br/>
+      responsePlan"]
 
-      RP_OUTPUTS["<b>Outputs</b><br/>
+      RP_OUTPUTS["<b>Output</b><br/>
       10. userResponse"]
 
       RP_INPUTS --> RP_OUTPUTS
     end
 
-    T5["Processing"]
+    T5["<b>Prepare dataProductionInput</b><br/>
+    dataProductionInput = { turnUnderstandingDelta, responsePlan }"]
 
-    subgraph DP_DATA["runDataProduction.ts"]
+    subgraph DP_DATA["dataProductionOutput = runDataProduction(dataProductionInput)"]
       direction LR
 
-      DP_INPUTS["<b>Inputs</b><br/>
-      6. TurnUnderstandingDelta<br/>
-      9. responsePlan<br/>"]
+      DP_INPUTS["<b>dataProductionInput</b><br/>
+      turnUnderstandingDelta, responsePlan"]
 
-      DP_OUTPUTS["<b>Outputs</b><br/>
-      11.1 supportTopicKnowledgePatch<br/>
-      11.2 conversationHistoryPatch<br/>
-      3.1 accountTrustStatusPatch<br/>
-      3.3 accountInteractionTraitsPatch<br/>"]
+      DP_OUTPUTS["<b>Output</b><br/>
+      11.1 supportTopicKnowledgePatch, 11.2 conversationHistoryPatch,<br/>
+      3.1 accountTrustStatusPatch, 3.3 accountInteractionTraitsPatch"]
 
       DP_INPUTS --> DP_OUTPUTS
     end
 
-    T6["Processing"]
+    T6["<b>Return final pipeline output</b><br/>
+    return { userResponse, patches: {<br/>
+    supportTopicKnowledgePatch, conversationHistoryPatch,<br/>
+    accountTrustStatusPatch, accountInteractionTraitsPatch<br/>
+    } }"]
 
     T0 --> MA_DATA
     MA_DATA --> T1
 
-    T1 -->|support topic detected| SD_DATA
-    T1 -.->|signal / scope only<br/>skip support search| RD_DATA
+    T1 -->|true| T_SD_INPUT
+    T1 -.->|false<br/>signal / scope only| T3
 
+    T_SD_INPUT --> SD_DATA
     SD_DATA --> T2
 
-    T2 -->|search needed| SR_DATA
-    T2 -.->|ask_info / no search needed<br/>skip retrieval| RD_DATA
+    T2 -->|true| T_SR_INPUT
+    T2 -.->|false<br/>no retrieval| T3
 
+    T_SR_INPUT --> SR_DATA
     SR_DATA --> T3
     T3 --> RD_DATA
     RD_DATA --> T4
@@ -164,11 +170,9 @@ flowchart TB
     direction TB
 
     NEXT_OUTPUTS["<b>Outputs produced by runSupportProcessingPipeline</b><br/>
-    10. userResponse<br/>
-    11.1 supportTopicKnowledgePatch<br/>
-    11.2 conversationHistoryPatch<br/>
-    3.1 accountTrustStatusPatch<br/>
-    3.3 accountInteractionTraitsPatch<br/>"]
+    10. userResponse, 11.1 supportTopicKnowledgePatch,<br/>
+    11.2 conversationHistoryPatch, 3.1 accountTrustStatusPatch,<br/>
+    3.3 accountInteractionTraitsPatch"]
   end
 
   PREVIOUS_STEP --> PIPELINE
@@ -189,7 +193,7 @@ flowchart TB
   class MA_INPUTS,SD_INPUTS,SR_INPUTS,RD_INPUTS,RP_INPUTS,DP_INPUTS inputBlock;
   class MA_OUTPUTS,SD_OUTPUTS,SR_OUTPUTS,RD_OUTPUTS,RP_OUTPUTS,DP_OUTPUTS outputBlock;
 
-  class T0,T1,T2,T3,T4,T5,T6 processingBlock;
+  class T0,T1,T_SD_INPUT,T2,T_SR_INPUT,T3,T4,T5,T6 processingBlock;
   class NEXT_OUTPUTS nextOutputBlock;
 
   style PIPELINE fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
@@ -198,8 +202,6 @@ flowchart TB
 
   linkStyle default stroke:#000000,stroke-width:2px;
 ```
-
----
 
 ## Data contracts and examples
 
