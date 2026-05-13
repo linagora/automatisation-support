@@ -15,10 +15,7 @@ import type {
   ResponseDecisionInput,
   ResponseDecisionOutput,
   ResponseProductionInput,
-  ResponseProductionOutput,
-  DataProductionInput,
-  DataProductionOutput,
-  PipelinePatches
+  ResponseProductionOutput
 } from "./typesSupportProcessingPipeline.types";
 
 type MaybePromise<T> = T | Promise<T>;
