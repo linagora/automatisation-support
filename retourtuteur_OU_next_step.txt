@@ -8,3 +8,6 @@ en ticket
 
 prévenir Quentin lorsque j'ai un truc correct pour pouvoir prévoir le
 listener
+
+next step : vérifier que la pipeline de runMessageAnalysis est bien respecté dans le code avec les if etc...
+potentillement check aussi pour la pipepline générale support
