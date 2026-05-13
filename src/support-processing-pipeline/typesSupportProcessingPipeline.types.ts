@@ -8,9 +8,20 @@ type PipelineStep<TInput, TOutput> = (
   input: TInput
 ) => MaybePromise<TOutput>;
 
+type NonEmptyArray<T> = [T, ...T[]];
+
 /* =====================================================
  * Shared internal value types
  * ===================================================== */
+
+export type InputCleaningCheckName =
+  | "empty_message"
+  | "prompt_injection_attempt"
+  | "internal_information_request"
+  | "sensitive_data_request"
+  | "spam_like_message"
+  | "suspicious_attachments"
+  | "account_trust_status";
 
 type TopicCategory =
   | "billing"
@@ -48,15 +59,7 @@ type SignalType =
 type ScopeBoundaryType =
   | "generic_out_of_scope"
   | "non_support_linagora"
-  | "unrelated_request"
-  | "spam_or_commercial";
-
-type ResponseMessageType =
-  | "normal"
-  | "warning"
-  | "support_handover"
-  | "error"
-  | "success";
+  | "unrelated_request";
 
 /* =====================================================
  * 1. latestUserMessage
@@ -165,7 +168,6 @@ type TopicDetails = {
   app_version?: string;
   server_or_instance?: string;
   affected_users?: string;
-  video_available?: "yes" | "no";
   logs_available?: "yes" | "no";
   billing_issue_type?: string;
   billing_provider?: string;
@@ -175,20 +177,23 @@ type TopicDetails = {
   billing_date_or_period?: string;
   gap_observed?: string;
   question_intent?: "how_to" | "is_it_possible" | "future_availability";
+  video_available?: "yes" | "no";
+  image_available?: "yes" | "no";
 };
 
 export type SupportTopicKnowledge = {
   segments_topic: {
-    matched_historical_topic: "yes" | "no";
     id_topic: number;
     topic_category: TopicCategory;
     tool_or_product?: string;
     topic_action?: string;
     topic_object?: string;
-    topic_label?: string;
+    topic_label: string;
     topic_details: TopicDetails;
-    tested_action?: string;
-    outcome_tested_action?: OutcomeTestedAction;
+    tested_actions?: {
+      tested_action: string;
+      outcome_tested_action: OutcomeTestedAction;
+    }[];
     user_goal: string;
     blocking_issue: "yes" | "no";
   }[];
@@ -208,8 +213,8 @@ type ScopeBoundarySegment = {
   scope_boundary_type: ScopeBoundaryType;
 };
 
-type TurnUnderstandingTopicSegment = {
-  matched_historical_topic: "yes" | "no";
+type ExistingTopicDelta = {
+  matched_historical_topic: "yes";
   id_topic: number;
   topic_category?: TopicCategory;
   tool_or_product?: string;
@@ -217,15 +222,40 @@ type TurnUnderstandingTopicSegment = {
   topic_object?: string;
   topic_label?: string;
   topic_details?: Partial<TopicDetails>;
-  tested_action?: string;
-  outcome_tested_action?: OutcomeTestedAction;
+  tested_actions?: {
+    tested_action: string;
+    outcome_tested_action: OutcomeTestedAction;
+  }[];
   user_goal?: string;
   blocking_issue?: "yes" | "no";
 };
 
+type NewTopicDelta = {
+  matched_historical_topic: "no";
+  id_topic: number;
+  topic_category: TopicCategory;
+  tool_or_product?: string;
+  topic_action?: string;
+  topic_object?: string;
+  topic_label: string;
+  topic_details: TopicDetails;
+  tested_actions?: {
+    tested_action: string;
+    outcome_tested_action: OutcomeTestedAction;
+  }[];
+  user_goal: string;
+  blocking_issue: "yes" | "no";
+};
+
+type TurnUnderstandingTopicSegment =
+  | ExistingTopicDelta
+  | NewTopicDelta;
+
 export type TurnUnderstandingDelta = {
   user_language: string;
   warning_comprehension: "yes" | "no";
+  warning_comprehension_verbatim?: string[];
+  input_cleaning_detected?: InputCleaningCheckName[];
   segments_topic: TurnUnderstandingTopicSegment[];
   segments_signal: SignalSegment[];
   segments_scope_boundary: ScopeBoundarySegment[];
@@ -235,14 +265,37 @@ export type TurnUnderstandingDelta = {
  * 5. conversationHistory
  * ===================================================== */
 
-export type ConversationHistory = {
+type BaseConversationHistoryEvent = {
   id: string;
   message_id: string;
-  role: "user" | "bot" | "system";
   created_at: string;
-  turnUnderstandingDelta?: TurnUnderstandingDelta;
-  responsePlan?: ResponsePlan;
-}[];
+};
+
+type UserConversationHistoryEvent = BaseConversationHistoryEvent & {
+  role: "user";
+  turnUnderstandingDelta: TurnUnderstandingDelta;
+  responsePlan?: never;
+};
+
+type BotConversationHistoryEvent = BaseConversationHistoryEvent & {
+  role: "bot";
+  responsePlan: ResponsePlan;
+  turnUnderstandingDelta?: never;
+};
+
+type SystemConversationHistoryEvent = BaseConversationHistoryEvent & {
+  role: "system";
+  note: string;
+  turnUnderstandingDelta?: never;
+  responsePlan?: never;
+};
+
+type ConversationHistoryEvent =
+  | UserConversationHistoryEvent
+  | BotConversationHistoryEvent
+  | SystemConversationHistoryEvent;
+
+export type ConversationHistory = ConversationHistoryEvent[];
 
 /* =====================================================
  * 7. decisionSearchingSolution
@@ -271,67 +324,96 @@ export type PossibleSolution = {
  * 9. responsePlan
  * ===================================================== */
 
-type MainResponse =
-  | {
-      type: "ask_info";
-      fields_requested: string[];
-    }
-  | {
-      type: "direct_answer";
-      solution: {
-        id: string;
-        solution: string;
-      };
-    }
-  | {
-      type: "acknowledgement";
-    };
+type WarningComprehensionPlanMessage = {
+  warning_comprehension: "yes";
+  unclear_segments_verbatim?: string[];
+};
+
+type InputCleaningPlanMessage = {
+  detected_checks: InputCleaningCheckName[];
+};
+
+type ScopeBoundaryPlanMessage = ScopeBoundarySegment;
+
+type SignalPlanMessage = SignalSegment;
+
+type HandoverPlanMessage = {
+  topic_id?: number;
+  reason?: string;
+};
+
+type TopicAskFieldsResponse = {
+  main_response: "ask_fields";
+  fields_requested: NonEmptyArray<string>;
+  next_step: "wait_more_info" | "handover";
+};
+
+type TopicProposeSolutionResponse = {
+  main_response: "propose_solution";
+  solutions: NonEmptyArray<{
+    id: string;
+    solution: string;
+  }>;
+  next_step:
+    | "wait_apply_solution"
+    | "close_if_resolved"
+    | "handover";
+};
+
+type TopicAcknowledgementResponse = {
+  main_response: "acknowledgement";
+  next_step: "wait_more_info" | "close_if_resolved" | "handover";
+};
+
+type TopicMainResponse =
+  | TopicAskFieldsResponse
+  | TopicProposeSolutionResponse
+  | TopicAcknowledgementResponse;
+
+type TopicPlanMessage = {
+  politeness_opening?:
+    | "understanding_1"
+    | "understanding_2"
+    | "salutation_and_understanding_1"
+    | "salutation_and_understanding_2";
+
+  topic_relation_acknowledgement?: {
+    new_topics_count: number;
+    matched_historical_topic_count: number;
+  };
+
+  topic_response: {
+    topic_id: number;
+    topic_category: TopicCategory;
+    topic_label: string;
+    updated_fields_acknowledgement?: Partial<TopicDetails>;
+  } & TopicMainResponse;
+
+  politeness_closure?:
+    | "thanks_for_cooperation"
+    | "available_if_needed"
+    | "wait_for_user"
+    | "handover_announced";
+};
 
 export type ResponsePlan = {
-  userLanguage: "french" | "english";
-  messages: {
-    type: ResponseMessageType;
-    response_structure: {
-      warning_comprehension?: "yes" | "no";
+  responseLanguage: "french" | "english";
 
-      signal_response_alone?: SignalSegment;
-      scope_boundary_response_alone?: ScopeBoundarySegment;
-
-      politeness_opening?:
-        | "understanding_1"
-        | "understanding_2"
-        | "salutation_and_understanding_1"
-        | "none";
-
-      topic_relation_acknowledgement?: {
-        new_topics_count: number;
-        existing_topic_ids: number[];
-      };
-
-      topic_response?: {
-        topic_id: number;
-        topic_category: TopicCategory;
-        topic_label: string;
-        updated_fields_acknowledgement?: Partial<TopicDetails>;
-        main_response: MainResponse;
-        next_step:
-          | "wait_more_info"
-          | "wait_apply_solution"
-          | "handover_to_support"
-          | "close_if_resolved";
-      };
-
-      signal_response?: SignalSegment;
-      scope_boundary_response?: ScopeBoundarySegment;
-
-      politeness_closure?:
-        | "thanks_for_cooperation"
-        | "available_if_needed"
-        | "wait_for_user"
-        | "handover_announced"
-        | "none";
-    };
-  }[];
+  // runResponseProduction must generate messages in this order:
+  // 1. warningComprehensionPlanMessage
+  // 2. inputCleaningPlanMessages
+  // 3. scopeBoundaryPlanMessages
+  // 4. topicPlanMessages
+  // 5. signalPlanMessages
+  // 6. handoverPlanMessages
+  messagesPlan: {
+    warningComprehensionPlanMessage?: WarningComprehensionPlanMessage;
+    inputCleaningPlanMessages: InputCleaningPlanMessage[];
+    scopeBoundaryPlanMessages: ScopeBoundaryPlanMessage[];
+    topicPlanMessages: TopicPlanMessage[];
+    signalPlanMessages: SignalPlanMessage[];
+    handoverPlanMessages: HandoverPlanMessage[];
+  };
 };
 
 /* =====================================================
@@ -340,7 +422,13 @@ export type ResponsePlan = {
 
 export type UserResponse = {
   messages: {
-    type: ResponseMessageType;
+    type:
+      | "warning_comprehension"
+      | "input_cleaning"
+      | "scope_boundary"
+      | "topic_response"
+      | "signal_response"
+      | "handover";
     content: string;
   }[];
 };
@@ -350,10 +438,10 @@ export type UserResponse = {
  * ===================================================== */
 
 type SupportTopicKnowledgePatch = {
-  segments_topic: TurnUnderstandingTopicSegment[];
+  topicSegmentDeltas: TurnUnderstandingTopicSegment[];
 };
 
-type ConversationHistoryPatch = ConversationHistory;
+type ConversationHistoryPatch = ConversationHistoryEvent[];
 
 type AccountTrustStatusPatch = Partial<AccountTrustStatus>;
 
@@ -397,15 +485,21 @@ export type MessageAnalysisInput = {
   conversationHistory: ConversationHistory;
 };
 
+export type MessageAnalysisOutput = TurnUnderstandingDelta;
+
 export type SearchDecisionInput = {
   supportTopicKnowledge: SupportTopicKnowledge;
   turnUnderstandingDelta: TurnUnderstandingDelta;
 };
 
+export type SearchDecisionOutput = DecisionSearchingSolution;
+
 export type SolutionRetrievalInput = {
   supportTopicKnowledge: SupportTopicKnowledge;
   turnUnderstandingDelta: TurnUnderstandingDelta;
 };
+
+export type SolutionRetrievalOutput = PossibleSolution[];
 
 export type ResponseDecisionInput = {
   accountTrustStatus: AccountTrustStatus;
@@ -416,9 +510,13 @@ export type ResponseDecisionInput = {
   possibleSolutions: PossibleSolution[];
 };
 
+export type ResponseDecisionOutput = ResponsePlan;
+
 export type ResponseProductionInput = {
   responsePlan: ResponsePlan;
 };
+
+export type ResponseProductionOutput = UserResponse;
 
 export type DataProductionInput = {
   turnUnderstandingDelta: TurnUnderstandingDelta;
@@ -437,10 +535,16 @@ export type DataProductionOutput = {
  * ===================================================== */
 
 export type SupportProcessingPipelineSteps = {
-  runMessageAnalysis?: PipelineStep<MessageAnalysisInput, TurnUnderstandingDelta>;
-  runSearchDecision?: PipelineStep<SearchDecisionInput, DecisionSearchingSolution>;
-  runSolutionRetrieval?: PipelineStep<SolutionRetrievalInput, PossibleSolution[]>;
-  runResponseDecision?: PipelineStep<ResponseDecisionInput, ResponsePlan>;
-  runResponseProduction?: PipelineStep<ResponseProductionInput, UserResponse>;
+  runMessageAnalysis?: PipelineStep<MessageAnalysisInput, MessageAnalysisOutput>;
+  runSearchDecision?: PipelineStep<SearchDecisionInput, SearchDecisionOutput>;
+  runSolutionRetrieval?: PipelineStep<
+    SolutionRetrievalInput,
+    SolutionRetrievalOutput
+  >;
+  runResponseDecision?: PipelineStep<ResponseDecisionInput, ResponseDecisionOutput>;
+  runResponseProduction?: PipelineStep<
+    ResponseProductionInput,
+    ResponseProductionOutput
+  >;
   runDataProduction?: PipelineStep<DataProductionInput, DataProductionOutput>;
 };
