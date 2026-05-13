@@ -2,6 +2,13 @@
  * Main orchestrator of the support processing pipeline.
  */
 
+import { runMessageAnalysis } from "./message-analysis/runMessageAnalysis";
+import { runSearchDecision } from "./search-decision/runSearchDecision";
+import { runSolutionRetrieval } from "./solution-retrieval/runSolutionRetrieval";
+import { runResponseDecision } from "./response-decision/runResponseDecision";
+import { runResponseProduction } from "./response-production/runResponseProduction";
+import { runPatchesProduction } from "./patches-production/runPatchesProduction";
+
 import type {
   SupportProcessingPipelineInput,
   SupportProcessingPipelineOutput,
@@ -15,7 +22,9 @@ import type {
   ResponseDecisionInput,
   ResponseDecisionOutput,
   ResponseProductionInput,
-  ResponseProductionOutput
+  ResponseProductionOutput,
+  PatchesProductionInput,
+  Patches
 } from "./typesSupportProcessingPipeline.types";
 
 type MaybePromise<T> = T | Promise<T>;
@@ -32,46 +41,63 @@ function createMissingStep<TInput, TOutput>(
   };
 }
 
+function resolveStep<TInput, TOutput>(
+  providedStep: PipelineStep<TInput, TOutput> | undefined,
+  defaultStep: PipelineStep<TInput, TOutput> | undefined,
+  stepName: string
+): PipelineStep<TInput, TOutput> {
+  return providedStep || defaultStep || createMissingStep<TInput, TOutput>(stepName);
+}
+
 async function runSupportProcessingPipeline(
   inputSupportProcessingPipeline: SupportProcessingPipelineInput,
   steps: SupportProcessingPipelineSteps = {}
 ): Promise<SupportProcessingPipelineOutput> {
   const pipelineSteps: Required<SupportProcessingPipelineSteps> = {
-    runMessageAnalysis:
-      steps.runMessageAnalysis ||
-      createMissingStep<MessageAnalysisInput, MessageAnalysisOutput>(
-        "runMessageAnalysis"
-      ),
+    runMessageAnalysis: resolveStep<MessageAnalysisInput, MessageAnalysisOutput>(
+      steps.runMessageAnalysis,
+      runMessageAnalysis,
+      "runMessageAnalysis"
+    ),
 
-    runSearchDecision:
-      steps.runSearchDecision ||
-      createMissingStep<SearchDecisionInput, SearchDecisionOutput>(
-        "runSearchDecision"
-      ),
+    runSearchDecision: resolveStep<SearchDecisionInput, SearchDecisionOutput>(
+      steps.runSearchDecision,
+      runSearchDecision,
+      "runSearchDecision"
+    ),
 
-    runSolutionRetrieval:
-      steps.runSolutionRetrieval ||
-      createMissingStep<SolutionRetrievalInput, SolutionRetrievalOutput>(
-        "runSolutionRetrieval"
-      ),
+    runSolutionRetrieval: resolveStep<
+      SolutionRetrievalInput,
+      SolutionRetrievalOutput
+    >(
+      steps.runSolutionRetrieval,
+      runSolutionRetrieval,
+      "runSolutionRetrieval"
+    ),
 
-    runResponseDecision:
-      steps.runResponseDecision ||
-      createMissingStep<ResponseDecisionInput, ResponseDecisionOutput>(
-        "runResponseDecision"
-      ),
+    runResponseDecision: resolveStep<
+      ResponseDecisionInput,
+      ResponseDecisionOutput
+    >(
+      steps.runResponseDecision,
+      runResponseDecision,
+      "runResponseDecision"
+    ),
 
-    runResponseProduction:
-      steps.runResponseProduction ||
-      createMissingStep<ResponseProductionInput, ResponseProductionOutput>(
-        "runResponseProduction"
-      ),
+    runResponseProduction: resolveStep<
+      ResponseProductionInput,
+      ResponseProductionOutput
+    >(
+      steps.runResponseProduction,
+      runResponseProduction,
+      "runResponseProduction"
+    ),
 
-    runDataProduction:
-      steps.runDataProduction ||
-      createMissingStep<DataProductionInput, DataProductionOutput>(
-        "runDataProduction"
-      )
+    runPatchesProduction: resolveStep<PatchesProductionInput, Patches>(
+      steps.runPatchesProduction,
+      runPatchesProduction,
+      "runPatchesProduction"
+    )
   };
 
   const {
@@ -136,28 +162,13 @@ async function runSupportProcessingPipeline(
   const userResponse =
     await pipelineSteps.runResponseProduction(responseProductionInput);
 
-  const dataProductionInput: DataProductionInput = {
+  const patchesProductionInput: PatchesProductionInput = {
     turnUnderstandingDelta,
     responsePlan
   };
 
-  const dataProductionOutput =
-    await pipelineSteps.runDataProduction(dataProductionInput);
-
-  const patches: PipelinePatches = {
-    supportTopicKnowledgePatch: dataProductionOutput.supportTopicKnowledgePatch,
-    conversationHistoryPatch: dataProductionOutput.conversationHistoryPatch
-  };
-
-  if (dataProductionOutput.accountTrustStatusPatch) {
-    patches.accountTrustStatusPatch =
-      dataProductionOutput.accountTrustStatusPatch;
-  }
-
-  if (dataProductionOutput.accountInteractionTraitsPatch) {
-    patches.accountInteractionTraitsPatch =
-      dataProductionOutput.accountInteractionTraitsPatch;
-  }
+  const patches =
+    await pipelineSteps.runPatchesProduction(patchesProductionInput);
 
   return {
     userResponse,
