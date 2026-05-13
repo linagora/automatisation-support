@@ -7,22 +7,25 @@ import type {
   SupportProcessingPipelineOutput,
   SupportProcessingPipelineSteps,
   MessageAnalysisInput,
+  MessageAnalysisOutput,
   SearchDecisionInput,
+  SearchDecisionOutput,
   SolutionRetrievalInput,
+  SolutionRetrievalOutput,
   ResponseDecisionInput,
+  ResponseDecisionOutput,
   ResponseProductionInput,
+  ResponseProductionOutput,
   DataProductionInput,
-  TurnUnderstandingDelta,
-  DecisionSearchingSolution,
-  PossibleSolution,
-  ResponsePlan,
-  UserResponse,
-  DataProductionOutput
-} from "./typesSupportProcessingPipeline.types.ts";
+  DataProductionOutput,
+  PipelinePatches
+} from "./typesSupportProcessingPipeline.types";
 
 type MaybePromise<T> = T | Promise<T>;
 
-type PipelineStep<TInput, TOutput> = (input: TInput) => MaybePromise<TOutput>;
+type PipelineStep<TInput, TOutput> = (
+  input: TInput
+) => MaybePromise<TOutput>;
 
 function createMissingStep<TInput, TOutput>(
   stepName: string
@@ -39,31 +42,31 @@ async function runSupportProcessingPipeline(
   const pipelineSteps: Required<SupportProcessingPipelineSteps> = {
     runMessageAnalysis:
       steps.runMessageAnalysis ||
-      createMissingStep<MessageAnalysisInput, TurnUnderstandingDelta>(
+      createMissingStep<MessageAnalysisInput, MessageAnalysisOutput>(
         "runMessageAnalysis"
       ),
 
     runSearchDecision:
       steps.runSearchDecision ||
-      createMissingStep<SearchDecisionInput, DecisionSearchingSolution>(
+      createMissingStep<SearchDecisionInput, SearchDecisionOutput>(
         "runSearchDecision"
       ),
 
     runSolutionRetrieval:
       steps.runSolutionRetrieval ||
-      createMissingStep<SolutionRetrievalInput, PossibleSolution[]>(
+      createMissingStep<SolutionRetrievalInput, SolutionRetrievalOutput>(
         "runSolutionRetrieval"
       ),
 
     runResponseDecision:
       steps.runResponseDecision ||
-      createMissingStep<ResponseDecisionInput, ResponsePlan>(
+      createMissingStep<ResponseDecisionInput, ResponseDecisionOutput>(
         "runResponseDecision"
       ),
 
     runResponseProduction:
       steps.runResponseProduction ||
-      createMissingStep<ResponseProductionInput, UserResponse>(
+      createMissingStep<ResponseProductionInput, ResponseProductionOutput>(
         "runResponseProduction"
       ),
 
@@ -95,7 +98,7 @@ async function runSupportProcessingPipeline(
   const turnUnderstandingDelta =
     await pipelineSteps.runMessageAnalysis(messageAnalysisInput);
 
-  let possibleSolutions: PossibleSolution[] = [];
+  let possibleSolutions: SolutionRetrievalOutput = [];
 
   if (turnUnderstandingDelta.segments_topic.length !== 0) {
     const searchDecisionInput: SearchDecisionInput = {
@@ -141,21 +144,27 @@ async function runSupportProcessingPipeline(
     responsePlan
   };
 
-  const {
-    supportTopicKnowledgePatch,
-    conversationHistoryPatch,
-    accountTrustStatusPatch,
-    accountInteractionTraitsPatch
-  } = await pipelineSteps.runDataProduction(dataProductionInput);
+  const dataProductionOutput =
+    await pipelineSteps.runDataProduction(dataProductionInput);
+
+  const patches: PipelinePatches = {
+    supportTopicKnowledgePatch: dataProductionOutput.supportTopicKnowledgePatch,
+    conversationHistoryPatch: dataProductionOutput.conversationHistoryPatch
+  };
+
+  if (dataProductionOutput.accountTrustStatusPatch) {
+    patches.accountTrustStatusPatch =
+      dataProductionOutput.accountTrustStatusPatch;
+  }
+
+  if (dataProductionOutput.accountInteractionTraitsPatch) {
+    patches.accountInteractionTraitsPatch =
+      dataProductionOutput.accountInteractionTraitsPatch;
+  }
 
   return {
     userResponse,
-    patches: {
-      supportTopicKnowledgePatch,
-      conversationHistoryPatch,
-      accountTrustStatusPatch,
-      accountInteractionTraitsPatch
-    }
+    patches
   };
 }
 

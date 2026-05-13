@@ -61,6 +61,7 @@ type ScopeBoundaryType =
   | "non_support_linagora"
   | "unrelated_request";
 
+
 /* =====================================================
  * 1. latestUserMessage
  * ===================================================== */
@@ -203,6 +204,10 @@ export type SupportTopicKnowledge = {
  * 6. TurnUnderstandingDelta
  * ===================================================== */
 
+type LackComprehensionSegment = {
+  segment_verbatim: string;
+};
+
 type SignalSegment = {
   signal_verbatim: string;
   signal_types: SignalType[];
@@ -211,6 +216,11 @@ type SignalSegment = {
 type ScopeBoundarySegment = {
   signal_verbatim: string;
   scope_boundary_type: ScopeBoundaryType;
+};
+
+type SuspiciousSegment = {
+  segment_verbatim?: string;
+  checkName?: InputCleaningCheckName;
 };
 
 type ExistingTopicDelta = {
@@ -253,12 +263,11 @@ type TurnUnderstandingTopicSegment =
 
 export type TurnUnderstandingDelta = {
   user_language: string;
-  warning_comprehension: "yes" | "no";
-  warning_comprehension_verbatim?: string[];
-  input_cleaning_detected?: InputCleaningCheckName[];
+  segments_lack_comprehension: LackComprehensionSegment[];
   segments_topic: TurnUnderstandingTopicSegment[];
   segments_signal: SignalSegment[];
   segments_scope_boundary: ScopeBoundarySegment[];
+  segments_suspicious: SuspiciousSegment[];
 };
 
 /* =====================================================
@@ -434,7 +443,7 @@ export type UserResponse = {
 };
 
 /* =====================================================
- * 11. Patches
+ * 11. patchesProduction
  * ===================================================== */
 
 type SupportTopicKnowledgePatch = {
@@ -447,7 +456,12 @@ type AccountTrustStatusPatch = Partial<AccountTrustStatus>;
 
 type AccountInteractionTraitsPatch = Partial<AccountInteractionTraits>;
 
-export type PipelinePatches = {
+export type PatchesProductionInput = {
+  turnUnderstandingDelta: TurnUnderstandingDelta;
+  responsePlan: ResponsePlan;
+};
+
+export type Patches = {
   supportTopicKnowledgePatch: SupportTopicKnowledgePatch;
   conversationHistoryPatch: ConversationHistoryPatch;
   accountTrustStatusPatch?: AccountTrustStatusPatch;
@@ -470,7 +484,7 @@ export type SupportProcessingPipelineInput = {
 
 export type SupportProcessingPipelineOutput = {
   userResponse: UserResponse;
-  patches: PipelinePatches;
+  patches: Patches;
 };
 
 /* =====================================================
@@ -518,17 +532,7 @@ export type ResponseProductionInput = {
 
 export type ResponseProductionOutput = UserResponse;
 
-export type DataProductionInput = {
-  turnUnderstandingDelta: TurnUnderstandingDelta;
-  responsePlan: ResponsePlan;
-};
-
-export type DataProductionOutput = {
-  supportTopicKnowledgePatch: SupportTopicKnowledgePatch;
-  conversationHistoryPatch: ConversationHistoryPatch;
-  accountTrustStatusPatch?: AccountTrustStatusPatch;
-  accountInteractionTraitsPatch?: AccountInteractionTraitsPatch;
-};
+export type PatchesProductionOutput = Patches;
 
 /* =====================================================
  * Pipeline steps
@@ -546,5 +550,5 @@ export type SupportProcessingPipelineSteps = {
     ResponseProductionInput,
     ResponseProductionOutput
   >;
-  runDataProduction?: PipelineStep<DataProductionInput, DataProductionOutput>;
+  runPatchesProduction?: PipelineStep<PatchesProductionInput, Patches>;
 };
