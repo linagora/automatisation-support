@@ -2,84 +2,54 @@
  * Message Analysis orchestrator.
  */
 
-import { runRawInputSafetyGate } from "./safety-functions/raw-input-safety/runRawInputSafetyGate";
-import { decideRawInputTrustConsistency } from "./safety-functions/raw-input-safety/decideRawInputTrustConsistency";
-import { runRawInputSafetyReviewLlmTruster } from "./safety-functions/raw-input-safety/runRawInputSafetyReviewLlmTruster";
-
-import { runAttachmentAnalysisSafetyGate } from "./safety-functions/attachment-safety/runAttachmentAnalysisSafetyGate";
-import { decideAttachmentTrustConsistency } from "./safety-functions/attachment-safety/decideAttachmentTrustConsistency";
-import { runAttachmentSafetyReviewLlmTruster } from "./safety-functions/attachment-safety/runAttachmentSafetyReviewLlmTruster";
+import { runLatestUserMessageSecurity } from "./safety-functions/message-gate/runLatestUserMessageSecurity";
+import { runAttachmentAnalysisSecurity } from "./safety-functions/attachment-gate/runAttachmentAnalysisSecurity";
 
 import { runAttachmentAnalysis } from "./attachment-analysis/runAttachmentAnalysis";
 import { runAnalysisGate } from "./analysis-gate/runAnalysisGate";
-import { runLightweightMessageAnalysis } from "./lightweight-message-analysis/runLightweightMessageAnalysis";
-import { runFullweightMessageAnalysis } from "./fullweight-message-analysis/runFullweightMessageAnalysis";
+import { runLightWeightMessageAnalysis } from "./lightweight-message-analysis/runLightWeightMessageAnalysis";
+import { runFullWeightMessageAnalysis } from "./fullweight-message-analysis/runFullWeightMessageAnalysis";
 import { assembleTurnUnderstandingDelta } from "./turn-understanding-delta/assembleTurnUnderstandingDelta";
 
 import type {
-  AnalysisGate,
   AnalysisGateInput,
   AttachmentAnalysis,
   AttachmentAnalysisInput,
-  AttachmentAnalysisSafetyGate,
-  AttachmentAnalysisSafetyGateInput,
-  AttachmentSafetyReview,
-  AttachmentSafetyReviewInput,
-  AttachmentTrustConsistencyInput,
-  AttachmentTrustDecision,
-  FullweightMessageAnalysisInput,
-  LightweightMessageAnalysis,
-  LightweightMessageAnalysisInput,
+  AttachmentAnalysisSecurityInput,
+  FullWeightMessageAnalysis,
+  FullWeightMessageAnalysisInput,
+  LatestUserMessageSecurityInput,
+  LightWeightMessageAnalysis,
+  LightWeightMessageAnalysisInput,
   MessageAnalysisInput,
   MessageAnalysisOutput,
   MessageAnalysisSteps,
-  RawFullweightMessageAnalysis,
-  RawInputSafetyGate,
-  RawInputSafetyGateInput,
-  RawInputSafetyReview,
-  RawInputSafetyReviewInput,
-  RawInputTrustConsistencyInput,
-  RawInputTrustDecision,
+  SecurityGateSummary,
   TurnUnderstandingDeltaInput
 } from "./typesMessageAnalysis.types.ts";
-
 
 async function runMessageAnalysis(
   messageAnalysisInput: MessageAnalysisInput,
   steps: MessageAnalysisSteps = {}
 ): Promise<MessageAnalysisOutput> {
   const messageAnalysisSteps: Required<MessageAnalysisSteps> = {
-    runRawInputSafetyGate:
-      steps.runRawInputSafetyGate || runRawInputSafetyGate,
-
-    decideRawInputTrustConsistency:
-      steps.decideRawInputTrustConsistency || decideRawInputTrustConsistency,
-
-    runRawInputSafetyReviewLlmTruster:
-      steps.runRawInputSafetyReviewLlmTruster ||
-      runRawInputSafetyReviewLlmTruster,
+    runLatestUserMessageSecurity:
+      steps.runLatestUserMessageSecurity || runLatestUserMessageSecurity,
 
     runAttachmentAnalysis:
       steps.runAttachmentAnalysis || runAttachmentAnalysis,
 
-    runAttachmentAnalysisSafetyGate:
-      steps.runAttachmentAnalysisSafetyGate || runAttachmentAnalysisSafetyGate,
-
-    decideAttachmentTrustConsistency:
-      steps.decideAttachmentTrustConsistency || decideAttachmentTrustConsistency,
-
-    runAttachmentSafetyReviewLlmTruster:
-      steps.runAttachmentSafetyReviewLlmTruster ||
-      runAttachmentSafetyReviewLlmTruster,
+    runAttachmentAnalysisSecurity:
+      steps.runAttachmentAnalysisSecurity || runAttachmentAnalysisSecurity,
 
     runAnalysisGate:
       steps.runAnalysisGate || runAnalysisGate,
 
-    runLightweightMessageAnalysis:
-      steps.runLightweightMessageAnalysis || runLightweightMessageAnalysis,
+    runLightWeightMessageAnalysis:
+      steps.runLightWeightMessageAnalysis || runLightWeightMessageAnalysis,
 
-    runFullweightMessageAnalysis:
-      steps.runFullweightMessageAnalysis || runFullweightMessageAnalysis,
+    runFullWeightMessageAnalysis:
+      steps.runFullWeightMessageAnalysis || runFullWeightMessageAnalysis,
 
     assembleTurnUnderstandingDelta:
       steps.assembleTurnUnderstandingDelta || assembleTurnUnderstandingDelta
@@ -93,222 +63,174 @@ async function runMessageAnalysis(
     conversationHistory
   } = messageAnalysisInput;
 
-  let rawInputTrustDecision: RawInputTrustDecision = {
-    status: "skipped"
+  const securityGateSummary: SecurityGateSummary = {
+    gateChecked: {},
+    gateFailed: {}
   };
 
-  let rawInputSafetyReview: RawInputSafetyReview = {
-    status: "skipped"
-  };
+  /* =====================================================
+   * 6.1 latestUserMessageSecurityDecision
+   * ===================================================== */
 
-  let attachmentAnalysis: AttachmentAnalysis = {
-    status: "skipped"
-  };
-
-  let attachmentAnalysisSafetyGate: AttachmentAnalysisSafetyGate = {
-    status: "skipped"
-  };
-
-  let attachmentTrustDecision: AttachmentTrustDecision = {
-    status: "skipped"
-  };
-
-  let attachmentSafetyReview: AttachmentSafetyReview = {
-    status: "skipped"
-  };
-
-  let analysisGate: AnalysisGate = {
-    status: "skipped"
-  };
-
-  let lightweightMessageAnalysis: LightweightMessageAnalysis = {
-    status: "skipped",
-    shouldRunSupportMessageAnalysis: false,
-    segments_signal: [],
-    segments_scope_boundary: [],
-    segments_suspicious: []
-  };
-
-  let rawFullweightMessageAnalysis: RawFullweightMessageAnalysis = {
-    status: "skipped",
-    segments_lack_comprehension: [],
-    segments_topic: [],
-    segments_signal: [],
-    segments_scope_boundary: [],
-    segments_suspicious: []
-  };
-
-  const rawInputSafetyGateInput: RawInputSafetyGateInput = {
+  const latestUserMessageSecurityInput: LatestUserMessageSecurityInput = {
     latestUserMessage,
-    latestUserAttachments
+    accountTrustStatus
   };
 
-  const rawInputSafetyGate =
-    await messageAnalysisSteps.runRawInputSafetyGate(rawInputSafetyGateInput);
+  const latestUserMessageSecurityDecision =
+    await messageAnalysisSteps.runLatestUserMessageSecurity(
+      latestUserMessageSecurityInput
+    );
 
-  const hasSuspiciousAttachment =
-    rawInputSafetyGate.failedChecks.includes("suspicious_attachments");
+  switch (latestUserMessageSecurityDecision.decision.route) {
+    case "continue": {
+      securityGateSummary.gateChecked.latestUserMessageSecurityDecision =
+        latestUserMessageSecurityDecision;
 
-  if (!hasSuspiciousAttachment) {
-    const rawInputTrustConsistencyInput: RawInputTrustConsistencyInput = {
-      rawInputSafetyGate,
+      break;
+    }
+
+    case "stop": {
+      securityGateSummary.gateFailed = {
+        latestUserMessageSecurityDecision
+      };
+
+      const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
+        securityGateSummary,
+        supportTopicKnowledge,
+        conversationHistory
+      };
+
+      return messageAnalysisSteps.assembleTurnUnderstandingDelta(
+        turnUnderstandingDeltaInput
+      );
+    }
+  }
+
+  /* =====================================================
+   * 6.2 attachmentAnalysis
+   * ===================================================== */
+
+  let attachmentAnalysis: AttachmentAnalysis | undefined;
+
+  if (latestUserAttachments.length > 0) {
+    const attachmentAnalysisInput: AttachmentAnalysisInput = {
+      latestUserMessage,
+      latestUserAttachments
+    };
+
+    attachmentAnalysis =
+      await messageAnalysisSteps.runAttachmentAnalysis(attachmentAnalysisInput);
+
+    /* =====================================================
+     * 6.3 attachmentAnalysisSecurityDecision
+     * ===================================================== */
+
+    const attachmentAnalysisSecurityInput: AttachmentAnalysisSecurityInput = {
+      attachmentAnalysis,
       accountTrustStatus
     };
 
-    rawInputTrustDecision =
-      await messageAnalysisSteps.decideRawInputTrustConsistency(
-        rawInputTrustConsistencyInput
+    const attachmentAnalysisSecurityDecision =
+      await messageAnalysisSteps.runAttachmentAnalysisSecurity(
+        attachmentAnalysisSecurityInput
       );
 
-    if (
-      rawInputTrustDecision.status === "decided" &&
-      rawInputTrustDecision.route === "review_with_llm_truster"
-    ) {
-      const rawInputSafetyReviewInput: RawInputSafetyReviewInput = {
-        latestUserMessage,
-        rawInputSafetyGate,
-        accountTrustStatus
-      };
+    switch (attachmentAnalysisSecurityDecision.decision.route) {
+      case "continue": {
+        securityGateSummary.gateChecked.attachmentAnalysisSecurityDecision =
+          attachmentAnalysisSecurityDecision;
 
-      rawInputSafetyReview =
-        await messageAnalysisSteps.runRawInputSafetyReviewLlmTruster(
-          rawInputSafetyReviewInput
-        );
-    }
-
-    const finalRawInputRoute =
-      rawInputSafetyReview.status === "reviewed"
-        ? rawInputSafetyReview.route
-        : rawInputTrustDecision.status === "decided" &&
-            rawInputTrustDecision.route !== "review_with_llm_truster"
-          ? rawInputTrustDecision.route
-          : "stop";
-
-    if (finalRawInputRoute === "continue") {
-      let finalAttachmentRoute: "continue" | "stop" = "continue";
-
-      if (latestUserAttachments.length > 0) {
-        const attachmentAnalysisInput: AttachmentAnalysisInput = {
-          latestUserMessage,
-          latestUserAttachments
-        };
-
-        attachmentAnalysis =
-          await messageAnalysisSteps.runAttachmentAnalysis(
-            attachmentAnalysisInput
-          );
-
-        const attachmentAnalysisSafetyGateInput: AttachmentAnalysisSafetyGateInput =
-          {
-            attachmentAnalysis
-          };
-
-        attachmentAnalysisSafetyGate =
-          await messageAnalysisSteps.runAttachmentAnalysisSafetyGate(
-            attachmentAnalysisSafetyGateInput
-          );
-
-        const attachmentTrustConsistencyInput: AttachmentTrustConsistencyInput = {
-          attachmentAnalysisSafetyGate,
-          accountTrustStatus
-        };
-
-        attachmentTrustDecision =
-          await messageAnalysisSteps.decideAttachmentTrustConsistency(
-            attachmentTrustConsistencyInput
-          );
-
-        if (
-          attachmentTrustDecision.status === "decided" &&
-          attachmentTrustDecision.route === "review_with_llm_truster"
-        ) {
-          const attachmentSafetyReviewInput: AttachmentSafetyReviewInput = {
-            attachmentAnalysis,
-            attachmentAnalysisSafetyGate,
-            accountTrustStatus
-          };
-
-          attachmentSafetyReview =
-            await messageAnalysisSteps.runAttachmentSafetyReviewLlmTruster(
-              attachmentSafetyReviewInput
-            );
-        }
-
-        finalAttachmentRoute =
-          attachmentSafetyReview.status === "reviewed"
-            ? attachmentSafetyReview.route
-            : attachmentTrustDecision.status === "decided" &&
-                attachmentTrustDecision.route !== "review_with_llm_truster"
-              ? attachmentTrustDecision.route
-              : "stop";
+        break;
       }
 
-      if (finalAttachmentRoute === "continue") {
-        const analysisGateInput: AnalysisGateInput = {
-          latestUserMessage,
-          supportTopicKnowledge,
-          conversationHistory,
-          attachmentAnalysis
+      case "stop": {
+        securityGateSummary.gateFailed = {
+          attachmentAnalysisSecurityDecision
         };
 
-        analysisGate =
-          await messageAnalysisSteps.runAnalysisGate(analysisGateInput);
+        const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
+          securityGateSummary,
+          supportTopicKnowledge,
+          conversationHistory
+        };
 
-        if (
-          analysisGate.status === "checked" &&
-          analysisGate.shouldRunLightweightMessageAnalysis === true
-        ) {
-          const lightweightMessageAnalysisInput: LightweightMessageAnalysisInput =
-            {
-              latestUserMessage,
-              supportTopicKnowledge,
-              conversationHistory,
-              attachmentAnalysis
-            };
-
-          lightweightMessageAnalysis =
-            await messageAnalysisSteps.runLightweightMessageAnalysis(
-              lightweightMessageAnalysisInput
-            );
-        } else {
-          lightweightMessageAnalysis = {
-            status: "skipped",
-            shouldRunSupportMessageAnalysis: true,
-            segments_signal: [],
-            segments_scope_boundary: [],
-            segments_suspicious: []
-          };
-        }
-
-        if (lightweightMessageAnalysis.shouldRunSupportMessageAnalysis === true) {
-          const fullweightMessageAnalysisInput: FullweightMessageAnalysisInput = {
-            latestUserMessage,
-            supportTopicKnowledge,
-            conversationHistory,
-            attachmentAnalysis,
-            lightweightMessageAnalysis
-          };
-
-          rawFullweightMessageAnalysis =
-            await messageAnalysisSteps.runFullweightMessageAnalysis(
-              fullweightMessageAnalysisInput
-            );
-        }
+        return messageAnalysisSteps.assembleTurnUnderstandingDelta(
+          turnUnderstandingDeltaInput
+        );
       }
     }
   }
 
+  /* =====================================================
+   * 6.4 analysisGate
+   * ===================================================== */
+
+  const analysisGateInput: AnalysisGateInput = {
+    latestUserMessage,
+    supportTopicKnowledge,
+    conversationHistory,
+    ...(attachmentAnalysis ? { attachmentAnalysis } : {})
+  };
+
+  const analysisGate =
+    await messageAnalysisSteps.runAnalysisGate(analysisGateInput);
+
+  /* =====================================================
+   * 6.5 lightWeightMessageAnalysis
+   * ===================================================== */
+
+  let lightWeightMessageAnalysis: LightWeightMessageAnalysis | undefined;
+
+  if (analysisGate.shouldRunLightWeightMessageAnalysis === true) {
+    const lightWeightMessageAnalysisInput: LightWeightMessageAnalysisInput = {
+      latestUserMessage,
+      supportTopicKnowledge,
+      conversationHistory,
+      ...(attachmentAnalysis ? { attachmentAnalysis } : {})
+    };
+
+    lightWeightMessageAnalysis =
+      await messageAnalysisSteps.runLightWeightMessageAnalysis(
+        lightWeightMessageAnalysisInput
+      );
+  }
+
+  /* =====================================================
+   * 6.6 fullWeightMessageAnalysis
+   * ===================================================== */
+
+  let fullWeightMessageAnalysis: FullWeightMessageAnalysis | undefined;
+
+  const shouldRunFullWeightMessageAnalysis =
+    !lightWeightMessageAnalysis ||
+    lightWeightMessageAnalysis.shouldRunSupportMessageAnalysis === true;
+
+  if (shouldRunFullWeightMessageAnalysis) {
+    const fullWeightMessageAnalysisInput: FullWeightMessageAnalysisInput = {
+      latestUserMessage,
+      supportTopicKnowledge,
+      conversationHistory,
+      ...(attachmentAnalysis ? { attachmentAnalysis } : {}),
+      ...(lightWeightMessageAnalysis ? { lightWeightMessageAnalysis } : {})
+    };
+
+    fullWeightMessageAnalysis =
+      await messageAnalysisSteps.runFullWeightMessageAnalysis(
+        fullWeightMessageAnalysisInput
+      );
+  }
+
+  /* =====================================================
+   * 6. turnUnderstandingDelta
+   * ===================================================== */
+
   const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
-    rawInputSafetyGate,
-    rawInputTrustDecision,
-    rawInputSafetyReview,
-    attachmentAnalysis,
-    attachmentAnalysisSafetyGate,
-    attachmentTrustDecision,
-    attachmentSafetyReview,
+    securityGateSummary,
+    ...(attachmentAnalysis ? { attachmentAnalysis } : {}),
     analysisGate,
-    lightweightMessageAnalysis,
-    rawFullweightMessageAnalysis,
+    ...(lightWeightMessageAnalysis ? { lightWeightMessageAnalysis } : {}),
+    ...(fullWeightMessageAnalysis ? { fullWeightMessageAnalysis } : {}),
     supportTopicKnowledge,
     conversationHistory
   };

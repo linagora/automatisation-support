@@ -30,64 +30,47 @@ export type {
 };
 
 /* =====================================================
- * 6.1 rawInputSafetyGate
+ * 6.1 latestUserMessageSecurityDecision
  * ===================================================== */
 
-export type RawInputSafetyGateInput = {
+type SecurityDecisionRoute =
+  | "continue"
+  | "stop";
+
+type ContextAccountDecision =
+  | "continue"
+  | "stop"
+  | "review_with_llm_truster";
+
+type SecurityLlmReviewRoute =
+  | "continue"
+  | "stop"
+  | "failed";
+
+type SecurityDecisionHistory = {
+  checked: InputCleaningCheckName[];
+  failed: InputCleaningCheckName[];
+  contextAccountDecision: ContextAccountDecision;
+  llmReview?: {
+    route: SecurityLlmReviewRoute;
+    reason?: string;
+  };
+};
+
+export type LatestUserMessageSecurityInput = {
   latestUserMessage: LatestUserMessage;
-  latestUserAttachments: LatestUserAttachment[];
-};
-
-export type RawInputSafetyGate = {
-  inputClean: boolean;
-  failedChecks: InputCleaningCheckName[];
-};
-
-/* =====================================================
- * 6.2 rawInputTrustDecision
- * ===================================================== */
-
-export type RawInputTrustConsistencyInput = {
-  rawInputSafetyGate: RawInputSafetyGate;
   accountTrustStatus: AccountTrustStatus;
 };
 
-export type RawInputTrustDecision =
-  | {
-      status: "decided";
-      route:
-        | "continue"
-        | "stop"
-        | "review_with_llm_truster";
-    }
-  | {
-      status: "skipped";
-    };
-
-/* =====================================================
- * 6.3 rawInputSafetyReview
- * ===================================================== */
-
-export type RawInputSafetyReviewInput = {
-  latestUserMessage: LatestUserMessage;
-  rawInputSafetyGate: RawInputSafetyGate;
-  accountTrustStatus: AccountTrustStatus;
+export type LatestUserMessageSecurityDecision = {
+  decision: {
+    route: SecurityDecisionRoute;
+  };
+  history: SecurityDecisionHistory;
 };
 
-export type RawInputSafetyReview =
-  | {
-      status: "reviewed";
-      route:
-        | "continue"
-        | "stop";
-      reason: string;
-    }
-  | {
-      status: "skipped";
-    };
-
 /* =====================================================
- * 6.4 attachmentAnalysis
+ * 6.2 attachmentAnalysis
  * ===================================================== */
 
 export type AttachmentAnalysisInput = {
@@ -95,108 +78,78 @@ export type AttachmentAnalysisInput = {
   latestUserAttachments: LatestUserAttachment[];
 };
 
-export type AttachmentAnalysis = {
-  status: "analyzed" | "failed" | "skipped";
+export type AttachmentAnalysisItem = {
+  filename: string;
+  status:
+    | "analyzed"
+    | "failed"
+    | "refused";
   analysis?: {
     summary: string;
     other?: string;
   };
 };
 
+export type AttachmentAnalysis = AttachmentAnalysisItem[];
+
 /* =====================================================
- * 6.5 attachmentAnalysisSafetyGate
+ * 6.3 attachmentAnalysisSecurityDecision
  * ===================================================== */
 
-export type AttachmentAnalysisSafetyGateInput = {
+export type AttachmentAnalysisSecurityInput = {
   attachmentAnalysis: AttachmentAnalysis;
-};
-
-export type AttachmentAnalysisSafetyGate =
-  | {
-      status: "checked";
-      inputClean: boolean;
-      failedChecks: InputCleaningCheckName[];
-    }
-  | {
-      status: "skipped";
-    };
-
-/* =====================================================
- * 6.6 attachmentTrustDecision
- * ===================================================== */
-
-export type AttachmentTrustConsistencyInput = {
-  attachmentAnalysisSafetyGate: AttachmentAnalysisSafetyGate;
   accountTrustStatus: AccountTrustStatus;
 };
 
-export type AttachmentTrustDecision =
-  | {
-      status: "decided";
-      route:
-        | "continue"
-        | "stop"
-        | "review_with_llm_truster";
-    }
-  | {
-      status: "skipped";
-    };
-
-/* =====================================================
- * 6.7 attachmentSafetyReview
- * ===================================================== */
-
-export type AttachmentSafetyReviewInput = {
-  attachmentAnalysis: AttachmentAnalysis;
-  attachmentAnalysisSafetyGate: AttachmentAnalysisSafetyGate;
-  accountTrustStatus: AccountTrustStatus;
+export type AttachmentAnalysisSecurityDecision = {
+  decision: {
+    route: SecurityDecisionRoute;
+  };
+  history: SecurityDecisionHistory;
 };
 
-export type AttachmentSafetyReview =
-  | {
-      status: "reviewed";
-      route:
-        | "continue"
-        | "stop";
-      reason: string;
-    }
-  | {
-      status: "skipped";
-    };
+/* =====================================================
+ * 6. securityGateSummary
+ * ===================================================== */
+
+export type SecurityGateSummary = {
+  gateChecked: {
+    latestUserMessageSecurityDecision?: LatestUserMessageSecurityDecision;
+    attachmentAnalysisSecurityDecision?: AttachmentAnalysisSecurityDecision;
+  };
+  gateFailed: {
+    latestUserMessageSecurityDecision?: LatestUserMessageSecurityDecision;
+    attachmentAnalysisSecurityDecision?: AttachmentAnalysisSecurityDecision;
+  };
+};
 
 /* =====================================================
- * 6.8 analysisGate
+ * 6.4 analysisGate
  * ===================================================== */
 
 export type AnalysisGateInput = {
   latestUserMessage: LatestUserMessage;
   supportTopicKnowledge: SupportTopicKnowledge;
   conversationHistory: ConversationHistory;
-  attachmentAnalysis: AttachmentAnalysis;
+  attachmentAnalysis?: AttachmentAnalysis;
 };
 
-export type AnalysisGate =
-  | {
-      status: "checked";
-      shouldRunLightweightMessageAnalysis: boolean;
-    }
-  | {
-      status: "skipped";
-    };
+export type AnalysisGate = {
+  shouldRunLightWeightMessageAnalysis: boolean;
+};
 
 /* =====================================================
- * 6.9 lightweightMessageAnalysis
+ * 6.5 lightWeightMessageAnalysis
  * ===================================================== */
 
-export type LightweightMessageAnalysisInput = {
+export type LightWeightMessageAnalysisInput = {
   latestUserMessage: LatestUserMessage;
   supportTopicKnowledge: SupportTopicKnowledge;
   conversationHistory: ConversationHistory;
-  attachmentAnalysis: AttachmentAnalysis;
+  attachmentAnalysis?: AttachmentAnalysis;
 };
 
-export type LightweightMessageAnalysis = {
-  status: "analyzed" | "skipped" | "failed";
+export type LightWeightMessageAnalysis = {
   shouldRunSupportMessageAnalysis: boolean;
   user_language?: string;
   segments_signal: TurnUnderstandingDelta["segments_signal"];
@@ -205,19 +158,18 @@ export type LightweightMessageAnalysis = {
 };
 
 /* =====================================================
- * 6.10 rawFullweightMessageAnalysis
+ * 6.6 fullWeightMessageAnalysis
  * ===================================================== */
 
-export type FullweightMessageAnalysisInput = {
+export type FullWeightMessageAnalysisInput = {
   latestUserMessage: LatestUserMessage;
   supportTopicKnowledge: SupportTopicKnowledge;
   conversationHistory: ConversationHistory;
-  attachmentAnalysis: AttachmentAnalysis;
-  lightweightMessageAnalysis: LightweightMessageAnalysis;
+  attachmentAnalysis?: AttachmentAnalysis;
+  lightWeightMessageAnalysis?: LightWeightMessageAnalysis;
 };
 
-export type RawFullweightMessageAnalysis = {
-  status: "analyzed" | "skipped" | "failed";
+export type FullWeightMessageAnalysis = {
   user_language?: string;
   segments_lack_comprehension: TurnUnderstandingDelta["segments_lack_comprehension"];
   segments_topic: TurnUnderstandingDelta["segments_topic"];
@@ -230,41 +182,34 @@ export type RawFullweightMessageAnalysis = {
  * 6. turnUnderstandingDelta
  * ===================================================== */
 
-export type TurnUnderstandingDeltaInput = {
-  rawInputSafetyGate: RawInputSafetyGate;
-  rawInputTrustDecision: RawInputTrustDecision;
-  rawInputSafetyReview: RawInputSafetyReview;
-
-  attachmentAnalysis: AttachmentAnalysis;
-  attachmentAnalysisSafetyGate: AttachmentAnalysisSafetyGate;
-  attachmentTrustDecision: AttachmentTrustDecision;
-  attachmentSafetyReview: AttachmentSafetyReview;
-
-  analysisGate: AnalysisGate;
-  lightweightMessageAnalysis: LightweightMessageAnalysis;
-  rawFullweightMessageAnalysis: RawFullweightMessageAnalysis;
-
+export type SecurityGateStoppedTurnUnderstandingDeltaInput = {
+  securityGateSummary: SecurityGateSummary;
   supportTopicKnowledge: SupportTopicKnowledge;
   conversationHistory: ConversationHistory;
 };
+
+export type CompletedAnalysisTurnUnderstandingDeltaInput = {
+  securityGateSummary: SecurityGateSummary;
+  attachmentAnalysis?: AttachmentAnalysis;
+  analysisGate: AnalysisGate;
+  lightWeightMessageAnalysis?: LightWeightMessageAnalysis;
+  fullWeightMessageAnalysis?: FullWeightMessageAnalysis;
+  supportTopicKnowledge: SupportTopicKnowledge;
+  conversationHistory: ConversationHistory;
+};
+
+export type TurnUnderstandingDeltaInput =
+  | SecurityGateStoppedTurnUnderstandingDeltaInput
+  | CompletedAnalysisTurnUnderstandingDeltaInput;
+
 /* =====================================================
  * Message analysis steps
  * ===================================================== */
 
 export type MessageAnalysisSteps = {
-  runRawInputSafetyGate?: MessageAnalysisStep<
-    RawInputSafetyGateInput,
-    RawInputSafetyGate
-  >;
-
-  decideRawInputTrustConsistency?: MessageAnalysisStep<
-    RawInputTrustConsistencyInput,
-    RawInputTrustDecision
-  >;
-
-  runRawInputSafetyReviewLlmTruster?: MessageAnalysisStep<
-    RawInputSafetyReviewInput,
-    RawInputSafetyReview
+  runLatestUserMessageSecurity?: MessageAnalysisStep<
+    LatestUserMessageSecurityInput,
+    LatestUserMessageSecurityDecision
   >;
 
   runAttachmentAnalysis?: MessageAnalysisStep<
@@ -272,19 +217,9 @@ export type MessageAnalysisSteps = {
     AttachmentAnalysis
   >;
 
-  runAttachmentAnalysisSafetyGate?: MessageAnalysisStep<
-    AttachmentAnalysisSafetyGateInput,
-    AttachmentAnalysisSafetyGate
-  >;
-
-  decideAttachmentTrustConsistency?: MessageAnalysisStep<
-    AttachmentTrustConsistencyInput,
-    AttachmentTrustDecision
-  >;
-
-  runAttachmentSafetyReviewLlmTruster?: MessageAnalysisStep<
-    AttachmentSafetyReviewInput,
-    AttachmentSafetyReview
+  runAttachmentAnalysisSecurity?: MessageAnalysisStep<
+    AttachmentAnalysisSecurityInput,
+    AttachmentAnalysisSecurityDecision
   >;
 
   runAnalysisGate?: MessageAnalysisStep<
@@ -292,14 +227,14 @@ export type MessageAnalysisSteps = {
     AnalysisGate
   >;
 
-  runLightweightMessageAnalysis?: MessageAnalysisStep<
-    LightweightMessageAnalysisInput,
-    LightweightMessageAnalysis
+  runLightWeightMessageAnalysis?: MessageAnalysisStep<
+    LightWeightMessageAnalysisInput,
+    LightWeightMessageAnalysis
   >;
 
-  runFullweightMessageAnalysis?: MessageAnalysisStep<
-    FullweightMessageAnalysisInput,
-    RawFullweightMessageAnalysis
+  runFullWeightMessageAnalysis?: MessageAnalysisStep<
+    FullWeightMessageAnalysisInput,
+    FullWeightMessageAnalysis
   >;
 
   assembleTurnUnderstandingDelta?: MessageAnalysisStep<

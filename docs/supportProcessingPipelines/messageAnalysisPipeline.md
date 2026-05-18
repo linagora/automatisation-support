@@ -15,88 +15,49 @@ flowchart TB
   subgraph PIPELINE["6. turnUnderstandingDelta = runMessageAnalysis(messageAnalysisInput)"]
     direction TB
 
-    T0["<b>Prepare rawInputSafetyGateInput</b><br/>
-    rawInputSafetyGateInput = {<br/>
-    latestUserMessage<br/>
-    latestUserAttachments<br/>
+    T_SECURITY_INIT["<b>Initialize security gate summary</b><br/>
+    securityGateSummary = {<br/>
+    gateChecked: {}<br/>
+    gateFailed: {}<br/>
     }"]
 
-    subgraph RAW_SAFETY_DATA["rawInputSafetyGate = runRawInputSafetyGate(rawInputSafetyGateInput)"]
+    T_MESSAGE_SECURITY_INPUT["<b>Prepare latestUserMessageSecurityInput</b><br/>
+    latestUserMessageSecurityInput = {<br/>
+    latestUserMessage<br/>
+    accountTrustStatus<br/>
+    }"]
+
+    subgraph MESSAGE_SECURITY_DATA["latestUserMessageSecurityDecision = runLatestUserMessageSecurity(latestUserMessageSecurityInput)"]
       direction LR
-      RAW_INPUTS["<b>rawInputSafetyGateInput</b><br/>
+      MESSAGE_SECURITY_INPUTS["<b>latestUserMessageSecurityInput</b><br/>
       latestUserMessage<br/>
-      latestUserAttachments"]
-      RAW_OUTPUTS["<b>Output</b><br/>
-      6.1 rawInputSafetyGate = {<br/>
-      inputClean<br/>
-      failedChecks<br/>
+      accountTrustStatus"]
+      MESSAGE_SECURITY_OUTPUTS["<b>Output</b><br/>
+      6.1 latestUserMessageSecurityDecision = {<br/>
+      decision: {<br/>
+      route: continue / stop<br/>
+      }<br/>
+      history: {<br/>
+      checked: InputCleaningCheckName[]<br/>
+      failed: InputCleaningCheckName[]<br/>
+      contextAccountDecision: continue / stop / review_with_llm_truster<br/>
+      llmReview?: {<br/>
+      route: continue / stop / failed<br/>
+      reason?<br/>
+      }<br/>
+      }<br/>
       }"]
-      RAW_INPUTS --> RAW_OUTPUTS
+      MESSAGE_SECURITY_INPUTS --> MESSAGE_SECURITY_OUTPUTS
     end
 
-    T1{"<b>if</b><br/>
-    rawInputSafetyGate.failedChecks includes suspicious_attachments"}
+    T_MESSAGE_SECURITY_ROUTE{"<b>route ?</b><br/>
+    latestUserMessageSecurityDecision.decision.route"}
 
-    T_STOP_ATTACHMENT["<b>Stop message analysis</b><br/>
-    No model call<br/>
-    Message and unauthorized attachment are ignored<br/>
-    Remaining step outputs are set to status: skipped"]
+    T_ADD_MESSAGE_SECURITY["<b>Add checked security gate</b><br/>
+    securityGateSummary.gateChecked.latestUserMessageSecurityDecision = latestUserMessageSecurityDecision"]
 
-    T_TRUST_INPUT["<b>Prepare rawInputTrustConsistencyInput</b><br/>
-    rawInputTrustConsistencyInput = {<br/>
-    rawInputSafetyGate<br/>
-    accountTrustStatus<br/>
-    }"]
-
-    subgraph TRUST_DATA["rawInputTrustDecision = decideRawInputTrustConsistency(rawInputTrustConsistencyInput)"]
-      direction LR
-      TRUST_INPUTS["<b>rawInputTrustConsistencyInput</b><br/>
-      rawInputSafetyGate<br/>
-      accountTrustStatus"]
-      TRUST_OUTPUTS["<b>Output</b><br/>
-      6.2 rawInputTrustDecision = {<br/>
-      status<br/>
-      route<br/>
-      }<br/>
-      status: decided<br/>
-      route: continue / stop / review_with_llm_truster"]
-      TRUST_INPUTS --> TRUST_OUTPUTS
-    end
-
-    T2{"<b>if</b><br/>
-    rawInputTrustDecision.route === review_with_llm_truster"}
-
-    T_REVIEW_INPUT["<b>Prepare rawInputSafetyReviewInput</b><br/>
-    rawInputSafetyReviewInput = {<br/>
-    latestUserMessage<br/>
-    rawInputSafetyGate<br/>
-    accountTrustStatus<br/>
-    }"]
-
-    subgraph REVIEW_DATA["rawInputSafetyReview = runRawInputSafetyReviewLlmTruster(rawInputSafetyReviewInput)"]
-      direction LR
-      REVIEW_INPUTS["<b>rawInputSafetyReviewInput</b><br/>
-      latestUserMessage<br/>
-      rawInputSafetyGate<br/>
-      accountTrustStatus"]
-      REVIEW_OUTPUTS["<b>Output</b><br/>
-      6.3 rawInputSafetyReview = {<br/>
-      status<br/>
-      route<br/>
-      reason<br/>
-      }<br/>
-      status: reviewed<br/>
-      route: continue / stop"]
-      REVIEW_INPUTS --> REVIEW_OUTPUTS
-    end
-
-    T_REVIEW_SKIPPED["<b>No raw input safety review</b><br/>
-    6.3 rawInputSafetyReview = {<br/>
-    status: skipped<br/>
-    }"]
-
-    T3{"<b>if</b><br/>
-    final raw input route === continue"}
+    T_FAIL_MESSAGE_SECURITY["<b>Add failed security gate</b><br/>
+    securityGateSummary.gateFailed = { latestUserMessageSecurityDecision }"]
 
     T_ATTACHMENT_CHECK{"<b>if</b><br/>
     latestUserAttachments.length > 0"}
@@ -113,109 +74,61 @@ flowchart TB
       latestUserMessage<br/>
       latestUserAttachments"]
       ATTACHMENT_OUTPUTS["<b>Output</b><br/>
-      6.4 attachmentAnalysis = {<br/>
-      status<br/>
-      analysis<br/>
+      6.2 attachmentAnalysis = [{<br/>
+      filename<br/>
+      status: analyzed / failed / refused<br/>
+      analysis?: {<br/>
+      summary<br/>
+      other?<br/>
       }<br/>
-      status: analyzed / failed"]
+      }]"]
       ATTACHMENT_INPUTS --> ATTACHMENT_OUTPUTS
     end
 
-    T_ATTACHMENT_EMPTY["<b>No attachment analysis</b><br/>
-    6.4 attachmentAnalysis = {<br/>
-    status: skipped<br/>
-    }<br/>
-    6.5 attachmentAnalysisSafetyGate = { status: skipped }<br/>
-    6.6 attachmentTrustDecision = { status: skipped }<br/>
-    6.7 attachmentSafetyReview = { status: skipped }"]
-
-    T_ATTACHMENT_SAFETY_INPUT["<b>Prepare attachmentAnalysisSafetyGateInput</b><br/>
-    attachmentAnalysisSafetyGateInput = {<br/>
+    T_ATTACHMENT_SECURITY_INPUT["<b>Prepare attachmentAnalysisSecurityInput</b><br/>
+    attachmentAnalysisSecurityInput = {<br/>
     attachmentAnalysis<br/>
-    }"]
-
-    subgraph ATTACHMENT_SAFETY_DATA["attachmentAnalysisSafetyGate = runAttachmentAnalysisSafetyGate(attachmentAnalysisSafetyGateInput)"]
-      direction LR
-      ATTACHMENT_SAFETY_INPUTS["<b>attachmentAnalysisSafetyGateInput</b><br/>
-      attachmentAnalysis"]
-      ATTACHMENT_SAFETY_OUTPUTS["<b>Output</b><br/>
-      6.5 attachmentAnalysisSafetyGate = {<br/>
-      status<br/>
-      inputClean<br/>
-      failedChecks<br/>
-      }<br/>
-      status: checked"]
-      ATTACHMENT_SAFETY_INPUTS --> ATTACHMENT_SAFETY_OUTPUTS
-    end
-
-    T_ATTACHMENT_TRUST_INPUT["<b>Prepare attachmentTrustConsistencyInput</b><br/>
-    attachmentTrustConsistencyInput = {<br/>
-    attachmentAnalysisSafetyGate<br/>
     accountTrustStatus<br/>
     }"]
 
-    subgraph ATTACHMENT_TRUST_DATA["attachmentTrustDecision = decideAttachmentTrustConsistency(attachmentTrustConsistencyInput)"]
+    subgraph ATTACHMENT_SECURITY_DATA["attachmentAnalysisSecurityDecision = runAttachmentAnalysisSecurity(attachmentAnalysisSecurityInput)"]
       direction LR
-      ATTACHMENT_TRUST_INPUTS["<b>attachmentTrustConsistencyInput</b><br/>
-      attachmentAnalysisSafetyGate<br/>
-      accountTrustStatus"]
-      ATTACHMENT_TRUST_OUTPUTS["<b>Output</b><br/>
-      6.6 attachmentTrustDecision = {<br/>
-      status<br/>
-      route<br/>
-      }<br/>
-      status: decided<br/>
-      route: continue / stop / review_with_llm_truster"]
-      ATTACHMENT_TRUST_INPUTS --> ATTACHMENT_TRUST_OUTPUTS
-    end
-
-    T4{"<b>if</b><br/>
-    attachmentTrustDecision.route === review_with_llm_truster"}
-
-    T_ATTACHMENT_REVIEW_INPUT["<b>Prepare attachmentSafetyReviewInput</b><br/>
-    attachmentSafetyReviewInput = {<br/>
-    attachmentAnalysis<br/>
-    attachmentAnalysisSafetyGate<br/>
-    accountTrustStatus<br/>
-    }"]
-
-    subgraph ATTACHMENT_REVIEW_DATA["attachmentSafetyReview = runAttachmentSafetyReviewLlmTruster(attachmentSafetyReviewInput)"]
-      direction LR
-      ATTACHMENT_REVIEW_INPUTS["<b>attachmentSafetyReviewInput</b><br/>
+      ATTACHMENT_SECURITY_INPUTS["<b>attachmentAnalysisSecurityInput</b><br/>
       attachmentAnalysis<br/>
-      attachmentAnalysisSafetyGate<br/>
       accountTrustStatus"]
-      ATTACHMENT_REVIEW_OUTPUTS["<b>Output</b><br/>
-      6.7 attachmentSafetyReview = {<br/>
-      status<br/>
-      route<br/>
-      reason<br/>
+      ATTACHMENT_SECURITY_OUTPUTS["<b>Output</b><br/>
+      6.3 attachmentAnalysisSecurityDecision = {<br/>
+      decision: {<br/>
+      route: continue / stop<br/>
       }<br/>
-      status: reviewed<br/>
-      route: continue / stop"]
-      ATTACHMENT_REVIEW_INPUTS --> ATTACHMENT_REVIEW_OUTPUTS
+      history: {<br/>
+      checked: InputCleaningCheckName[]<br/>
+      failed: InputCleaningCheckName[]<br/>
+      contextAccountDecision: continue / stop / review_with_llm_truster<br/>
+      llmReview?: {<br/>
+      route: continue / stop / failed<br/>
+      reason?<br/>
+      }<br/>
+      }<br/>
+      }"]
+      ATTACHMENT_SECURITY_INPUTS --> ATTACHMENT_SECURITY_OUTPUTS
     end
 
-    T_ATTACHMENT_REVIEW_SKIPPED["<b>No attachment safety review</b><br/>
-    6.7 attachmentSafetyReview = {<br/>
-    status: skipped<br/>
-    }"]
+    T_ATTACHMENT_SECURITY_ROUTE{"<b>route ?</b><br/>
+    attachmentAnalysisSecurityDecision.decision.route"}
 
-    T5{"<b>if</b><br/>
-    final attachment route === continue"}
+    T_ADD_ATTACHMENT_SECURITY["<b>Add checked security gate</b><br/>
+    securityGateSummary.gateChecked.attachmentAnalysisSecurityDecision = attachmentAnalysisSecurityDecision"]
 
-    T_STOP_ATTACHMENT_RAIL["<b>Stop after attachment safety rail</b><br/>
-    No message analysis model call<br/>
-    6.8 analysisGate = { status: skipped }<br/>
-    6.9 lightweightMessageAnalysis = { status: skipped }<br/>
-    6.10 rawFullweightMessageAnalysis = { status: skipped }"]
+    T_FAIL_ATTACHMENT_SECURITY["<b>Add failed security gate</b><br/>
+    securityGateSummary.gateFailed = { attachmentAnalysisSecurityDecision }"]
 
     T_ANALYSIS_GATE_INPUT["<b>Prepare analysisGateInput</b><br/>
     analysisGateInput = {<br/>
     latestUserMessage<br/>
     supportTopicKnowledge<br/>
     conversationHistory<br/>
-    attachmentAnalysis<br/>
+    attachmentAnalysis?<br/>
     }"]
 
     subgraph ANALYSIS_GATE_DATA["analysisGate = runAnalysisGate(analysisGateInput)"]
@@ -224,206 +137,179 @@ flowchart TB
       latestUserMessage<br/>
       supportTopicKnowledge<br/>
       conversationHistory<br/>
-      attachmentAnalysis"]
+      attachmentAnalysis?"]
       ANALYSIS_GATE_OUTPUTS["<b>Output</b><br/>
-      6.8 analysisGate = {<br/>
-      status<br/>
-      shouldRunLightweightMessageAnalysis<br/>
-      }<br/>
-      status: checked"]
+      6.4 analysisGate = {<br/>
+      shouldRunLightWeightMessageAnalysis<br/>
+      }"]
       ANALYSIS_GATE_INPUTS --> ANALYSIS_GATE_OUTPUTS
     end
 
-    T6{"<b>if</b><br/>
-    analysisGate.shouldRunLightweightMessageAnalysis === true"}
+    T_LIGHTWEIGHT_ROUTE{"<b>if</b><br/>
+    analysisGate.shouldRunLightWeightMessageAnalysis === true"}
 
-    T_LIGHTWEIGHT_INPUT["<b>Prepare lightweightMessageAnalysisInput</b><br/>
-    lightweightMessageAnalysisInput = {<br/>
+    T_LIGHTWEIGHT_INPUT["<b>Prepare lightWeightMessageAnalysisInput</b><br/>
+    lightWeightMessageAnalysisInput = {<br/>
     latestUserMessage<br/>
     supportTopicKnowledge<br/>
     conversationHistory<br/>
-    attachmentAnalysis<br/>
+    attachmentAnalysis?<br/>
     }"]
 
-    subgraph LIGHTWEIGHT_DATA["lightweightMessageAnalysis = runLightweightMessageAnalysis(lightweightMessageAnalysisInput)"]
+    subgraph LIGHTWEIGHT_DATA["lightWeightMessageAnalysis = runLightWeightMessageAnalysis(lightWeightMessageAnalysisInput)"]
       direction LR
-      LIGHTWEIGHT_INPUTS["<b>lightweightMessageAnalysisInput</b><br/>
+      LIGHTWEIGHT_INPUTS["<b>lightWeightMessageAnalysisInput</b><br/>
       latestUserMessage<br/>
       supportTopicKnowledge<br/>
       conversationHistory<br/>
-      attachmentAnalysis"]
+      attachmentAnalysis?"]
       LIGHTWEIGHT_OUTPUTS["<b>Output</b><br/>
-      6.9 lightweightMessageAnalysis = {<br/>
-      status<br/>
+      6.5 lightWeightMessageAnalysis = {<br/>
       shouldRunSupportMessageAnalysis<br/>
-      user_language<br/>
+      user_language?<br/>
       segments_signal<br/>
       segments_scope_boundary<br/>
       segments_suspicious<br/>
-      }<br/>
-      status: analyzed / failed"]
+      }"]
       LIGHTWEIGHT_INPUTS --> LIGHTWEIGHT_OUTPUTS
     end
 
-    T_LIGHTWEIGHT_EMPTY["<b>No lightweightMessageAnalysis</b><br/>
-    6.9 lightweightMessageAnalysis = {<br/>
-    status: skipped<br/>
-    shouldRunSupportMessageAnalysis: true<br/>
-    segments_signal: []<br/>
-    segments_scope_boundary: []<br/>
-    segments_suspicious: []<br/>
-    }"]
+    T_FULLWEIGHT_ROUTE{"<b>if</b><br/>
+    lightWeightMessageAnalysis.shouldRunSupportMessageAnalysis === true"}
 
-    T7{"<b>if</b><br/>
-    lightweightMessageAnalysis.shouldRunSupportMessageAnalysis === true"}
-
-    T_FULLWEIGHT_INPUT["<b>Prepare fullweightMessageAnalysisInput</b><br/>
-    fullweightMessageAnalysisInput = {<br/>
+    T_FULLWEIGHT_INPUT["<b>Prepare fullWeightMessageAnalysisInput</b><br/>
+    fullWeightMessageAnalysisInput = {<br/>
     latestUserMessage<br/>
     supportTopicKnowledge<br/>
     conversationHistory<br/>
-    attachmentAnalysis<br/>
-    lightweightMessageAnalysis<br/>
+    attachmentAnalysis?<br/>
+    lightWeightMessageAnalysis?<br/>
     }"]
 
-    subgraph FULLWEIGHT_DATA["rawFullweightMessageAnalysis = runFullweightMessageAnalysis(fullweightMessageAnalysisInput)"]
+    subgraph FULLWEIGHT_DATA["fullWeightMessageAnalysis = runFullWeightMessageAnalysis(fullWeightMessageAnalysisInput)"]
       direction LR
-      FULLWEIGHT_INPUTS["<b>fullweightMessageAnalysisInput</b><br/>
+      FULLWEIGHT_INPUTS["<b>fullWeightMessageAnalysisInput</b><br/>
       latestUserMessage<br/>
       supportTopicKnowledge<br/>
       conversationHistory<br/>
-      attachmentAnalysis<br/>
-      lightweightMessageAnalysis"]
+      attachmentAnalysis?<br/>
+      lightWeightMessageAnalysis?"]
       FULLWEIGHT_OUTPUTS["<b>Output</b><br/>
-      6.10 rawFullweightMessageAnalysis = {<br/>
-      status<br/>
-      user_language<br/>
+      6.6 fullWeightMessageAnalysis = {<br/>
+      user_language?<br/>
       segments_lack_comprehension<br/>
       segments_topic<br/>
       segments_signal<br/>
       segments_scope_boundary<br/>
       segments_suspicious<br/>
-      }<br/>
-      status: analyzed / failed"]
+      }"]
       FULLWEIGHT_INPUTS --> FULLWEIGHT_OUTPUTS
     end
 
-    T_FULLWEIGHT_EMPTY["<b>No fullweightMessageAnalysis</b><br/>
-    6.10 rawFullweightMessageAnalysis = {<br/>
-    status: skipped<br/>
-    segments_lack_comprehension: []<br/>
-    segments_topic: []<br/>
-    segments_signal: []<br/>
-    segments_scope_boundary: []<br/>
-    segments_suspicious: []<br/>
-    }"]
-
-    T_DELTA_INPUT["<b>Prepare turnUnderstandingDeltaInput</b><br/>
-    turnUnderstandingDeltaInput = {<br/>
-    rawInputSafetyGate<br/>
-    rawInputTrustDecision<br/>
-    rawInputSafetyReview<br/>
-    attachmentAnalysis<br/>
-    attachmentAnalysisSafetyGate<br/>
-    attachmentTrustDecision<br/>
-    attachmentSafetyReview<br/>
-    analysisGate<br/>
-    lightweightMessageAnalysis<br/>
-    rawFullweightMessageAnalysis<br/>
-    supportTopicKnowledge<br/>
-    conversationHistory<br/>
-    }"]
-
-    subgraph DELTA_DATA["turnUnderstandingDelta = assembleTurnUnderstandingDelta(turnUnderstandingDeltaInput)"]
+    subgraph FINAL_ASSEMBLY["Final assembly"]
       direction LR
-      DELTA_INPUTS["<b>turnUnderstandingDeltaInput</b><br/>
-      rawInputSafetyGate<br/>
-      rawInputTrustDecision<br/>
-      rawInputSafetyReview<br/>
-      attachmentAnalysis<br/>
-      attachmentAnalysisSafetyGate<br/>
-      attachmentTrustDecision<br/>
-      attachmentSafetyReview<br/>
-      analysisGate<br/>
-      lightweightMessageAnalysis<br/>
-      rawFullweightMessageAnalysis<br/>
-      supportTopicKnowledge<br/>
-      conversationHistory"]
-      DELTA_OUTPUTS["<b>Output</b><br/>
-      6. turnUnderstandingDelta"]
-      DELTA_INPUTS --> DELTA_OUTPUTS
+
+      subgraph STOP_FINAL_BRANCH["Security gate stopped branch"]
+        direction TB
+        T_STOP_DELTA_INPUT["<b>Prepare turnUnderstandingDeltaInput</b><br/>
+        turnUnderstandingDeltaInput = {<br/>
+        securityGateSummary<br/>
+        supportTopicKnowledge<br/>
+        conversationHistory<br/>
+        }"]
+
+        subgraph STOP_DELTA_DATA["turnUnderstandingDelta = assembleTurnUnderstandingDelta(turnUnderstandingDeltaInput)"]
+          direction LR
+          STOP_DELTA_INPUTS["<b>turnUnderstandingDeltaInput</b><br/>
+          securityGateSummary<br/>
+          supportTopicKnowledge<br/>
+          conversationHistory"]
+          STOP_DELTA_OUTPUTS["<b>Output</b><br/>
+          6. turnUnderstandingDelta"]
+          STOP_DELTA_INPUTS --> STOP_DELTA_OUTPUTS
+        end
+      end
+
+      subgraph COMPLETED_FINAL_BRANCH["Completed analysis branch"]
+        direction TB
+        T_COMPLETED_DELTA_INPUT["<b>Prepare turnUnderstandingDeltaInput</b><br/>
+        turnUnderstandingDeltaInput = {<br/>
+        securityGateSummary<br/>
+        attachmentAnalysis?<br/>
+        analysisGate<br/>
+        lightWeightMessageAnalysis?<br/>
+        fullWeightMessageAnalysis?<br/>
+        supportTopicKnowledge<br/>
+        conversationHistory<br/>
+        }"]
+
+        subgraph COMPLETED_DELTA_DATA["turnUnderstandingDelta = assembleTurnUnderstandingDelta(turnUnderstandingDeltaInput)"]
+          direction LR
+          COMPLETED_DELTA_INPUTS["<b>turnUnderstandingDeltaInput</b><br/>
+          securityGateSummary<br/>
+          attachmentAnalysis?<br/>
+          analysisGate<br/>
+          lightWeightMessageAnalysis?<br/>
+          fullWeightMessageAnalysis?<br/>
+          supportTopicKnowledge<br/>
+          conversationHistory"]
+          COMPLETED_DELTA_OUTPUTS["<b>Output</b><br/>
+          6. turnUnderstandingDelta"]
+          COMPLETED_DELTA_INPUTS --> COMPLETED_DELTA_OUTPUTS
+        end
+      end
     end
 
-    T8["<b>Return message analysis output</b><br/>
+    T_RETURN["<b>Return message analysis output</b><br/>
     return 6. turnUnderstandingDelta"]
 
-    T0 --> RAW_SAFETY_DATA
-    RAW_SAFETY_DATA --> T1
+    T_SECURITY_INIT --> T_MESSAGE_SECURITY_INPUT
+    T_MESSAGE_SECURITY_INPUT --> MESSAGE_SECURITY_DATA
+    MESSAGE_SECURITY_DATA --> T_MESSAGE_SECURITY_ROUTE
 
-    T1 -->|true| T_STOP_ATTACHMENT
-    T1 -->|false| T_TRUST_INPUT
+    T_MESSAGE_SECURITY_ROUTE -->|continue| T_ADD_MESSAGE_SECURITY
+    T_MESSAGE_SECURITY_ROUTE -->|stop| T_FAIL_MESSAGE_SECURITY
 
-    T_STOP_ATTACHMENT --> T_DELTA_INPUT
+    T_FAIL_MESSAGE_SECURITY --> T_STOP_DELTA_INPUT
 
-    T_TRUST_INPUT --> TRUST_DATA
-    TRUST_DATA --> T2
-
-    T2 -->|true| T_REVIEW_INPUT
-    T2 -.->|false| T_REVIEW_SKIPPED
-
-    T_REVIEW_INPUT --> REVIEW_DATA
-    REVIEW_DATA --> T3
-    T_REVIEW_SKIPPED --> T3
-
-    T3 -->|true| T_ATTACHMENT_CHECK
-    T3 -.->|false<br/>stop raw input rail| T_DELTA_INPUT
+    T_ADD_MESSAGE_SECURITY --> T_ATTACHMENT_CHECK
 
     T_ATTACHMENT_CHECK -->|true| T_ATTACHMENT_INPUT
-    T_ATTACHMENT_CHECK -.->|false<br/>no attachment| T_ATTACHMENT_EMPTY
+    T_ATTACHMENT_CHECK -.->|false<br/>no attachment| T_ANALYSIS_GATE_INPUT
 
     T_ATTACHMENT_INPUT --> ATTACHMENT_DATA
-    ATTACHMENT_DATA --> T_ATTACHMENT_SAFETY_INPUT
+    ATTACHMENT_DATA --> T_ATTACHMENT_SECURITY_INPUT
 
-    T_ATTACHMENT_EMPTY --> T_ANALYSIS_GATE_INPUT
+    T_ATTACHMENT_SECURITY_INPUT --> ATTACHMENT_SECURITY_DATA
+    ATTACHMENT_SECURITY_DATA --> T_ATTACHMENT_SECURITY_ROUTE
 
-    T_ATTACHMENT_SAFETY_INPUT --> ATTACHMENT_SAFETY_DATA
-    ATTACHMENT_SAFETY_DATA --> T_ATTACHMENT_TRUST_INPUT
+    T_ATTACHMENT_SECURITY_ROUTE -->|continue| T_ADD_ATTACHMENT_SECURITY
+    T_ATTACHMENT_SECURITY_ROUTE -->|stop| T_FAIL_ATTACHMENT_SECURITY
 
-    T_ATTACHMENT_TRUST_INPUT --> ATTACHMENT_TRUST_DATA
-    ATTACHMENT_TRUST_DATA --> T4
+    T_FAIL_ATTACHMENT_SECURITY --> T_STOP_DELTA_INPUT
 
-    T4 -->|true| T_ATTACHMENT_REVIEW_INPUT
-    T4 -.->|false| T_ATTACHMENT_REVIEW_SKIPPED
-
-    T_ATTACHMENT_REVIEW_INPUT --> ATTACHMENT_REVIEW_DATA
-    ATTACHMENT_REVIEW_DATA --> T5
-    T_ATTACHMENT_REVIEW_SKIPPED --> T5
-
-    T5 -->|true| T_ANALYSIS_GATE_INPUT
-    T5 -.->|false<br/>stop attachment rail| T_STOP_ATTACHMENT_RAIL
-    T_STOP_ATTACHMENT_RAIL --> T_DELTA_INPUT
+    T_ADD_ATTACHMENT_SECURITY --> T_ANALYSIS_GATE_INPUT
 
     T_ANALYSIS_GATE_INPUT --> ANALYSIS_GATE_DATA
-    ANALYSIS_GATE_DATA --> T6
+    ANALYSIS_GATE_DATA --> T_LIGHTWEIGHT_ROUTE
 
-    T6 -->|true| T_LIGHTWEIGHT_INPUT
-    T6 -.->|false<br/>run fullweight analysis directly| T_LIGHTWEIGHT_EMPTY
+    T_LIGHTWEIGHT_ROUTE -->|true| T_LIGHTWEIGHT_INPUT
+    T_LIGHTWEIGHT_ROUTE -.->|false<br/>run fullweight analysis directly| T_FULLWEIGHT_INPUT
 
     T_LIGHTWEIGHT_INPUT --> LIGHTWEIGHT_DATA
-    LIGHTWEIGHT_DATA --> T7
+    LIGHTWEIGHT_DATA --> T_FULLWEIGHT_ROUTE
 
-    T_LIGHTWEIGHT_EMPTY --> T_FULLWEIGHT_INPUT
-
-    T7 -->|true| T_FULLWEIGHT_INPUT
-    T7 -.->|false<br/>no support topic detected| T_FULLWEIGHT_EMPTY
+    T_FULLWEIGHT_ROUTE -->|true| T_FULLWEIGHT_INPUT
+    T_FULLWEIGHT_ROUTE -.->|false<br/>no support topic detected| T_COMPLETED_DELTA_INPUT
 
     T_FULLWEIGHT_INPUT --> FULLWEIGHT_DATA
-    FULLWEIGHT_DATA --> T_DELTA_INPUT
+    FULLWEIGHT_DATA --> T_COMPLETED_DELTA_INPUT
 
-    T_FULLWEIGHT_EMPTY --> T_DELTA_INPUT
+    T_STOP_DELTA_INPUT --> STOP_DELTA_DATA
+    STOP_DELTA_DATA --> T_RETURN
 
-    T_DELTA_INPUT --> DELTA_DATA
-    DELTA_DATA --> T8
+    T_COMPLETED_DELTA_INPUT --> COMPLETED_DELTA_DATA
+    COMPLETED_DELTA_DATA --> T_RETURN
   end
 
   subgraph NEXT_STEP["Next step"]
@@ -443,10 +329,10 @@ flowchart TB
 
   class PREVIOUS_INPUTS previousBlock;
 
-  class RAW_INPUTS,TRUST_INPUTS,REVIEW_INPUTS,ATTACHMENT_INPUTS,ATTACHMENT_SAFETY_INPUTS,ATTACHMENT_TRUST_INPUTS,ATTACHMENT_REVIEW_INPUTS,ANALYSIS_GATE_INPUTS,LIGHTWEIGHT_INPUTS,FULLWEIGHT_INPUTS,DELTA_INPUTS inputBlock;
-  class RAW_OUTPUTS,TRUST_OUTPUTS,REVIEW_OUTPUTS,ATTACHMENT_OUTPUTS,ATTACHMENT_SAFETY_OUTPUTS,ATTACHMENT_TRUST_OUTPUTS,ATTACHMENT_REVIEW_OUTPUTS,ANALYSIS_GATE_OUTPUTS,LIGHTWEIGHT_OUTPUTS,FULLWEIGHT_OUTPUTS,DELTA_OUTPUTS outputBlock;
+  class MESSAGE_SECURITY_INPUTS,ATTACHMENT_INPUTS,ATTACHMENT_SECURITY_INPUTS,ANALYSIS_GATE_INPUTS,LIGHTWEIGHT_INPUTS,FULLWEIGHT_INPUTS,STOP_DELTA_INPUTS,COMPLETED_DELTA_INPUTS inputBlock;
+  class MESSAGE_SECURITY_OUTPUTS,ATTACHMENT_OUTPUTS,ATTACHMENT_SECURITY_OUTPUTS,ANALYSIS_GATE_OUTPUTS,LIGHTWEIGHT_OUTPUTS,FULLWEIGHT_OUTPUTS,STOP_DELTA_OUTPUTS,COMPLETED_DELTA_OUTPUTS outputBlock;
 
-  class T0,T1,T_STOP_ATTACHMENT,T_TRUST_INPUT,T2,T_REVIEW_INPUT,T_REVIEW_SKIPPED,T3,T_ATTACHMENT_CHECK,T_ATTACHMENT_INPUT,T_ATTACHMENT_EMPTY,T_ATTACHMENT_SAFETY_INPUT,T_ATTACHMENT_TRUST_INPUT,T4,T_ATTACHMENT_REVIEW_INPUT,T_ATTACHMENT_REVIEW_SKIPPED,T5,T_STOP_ATTACHMENT_RAIL,T_ANALYSIS_GATE_INPUT,T6,T_LIGHTWEIGHT_INPUT,T_LIGHTWEIGHT_EMPTY,T7,T_FULLWEIGHT_INPUT,T_FULLWEIGHT_EMPTY,T_DELTA_INPUT,T8 processingBlock;
+  class T_SECURITY_INIT,T_MESSAGE_SECURITY_INPUT,T_MESSAGE_SECURITY_ROUTE,T_ADD_MESSAGE_SECURITY,T_FAIL_MESSAGE_SECURITY,T_ATTACHMENT_CHECK,T_ATTACHMENT_INPUT,T_ATTACHMENT_SECURITY_INPUT,T_ATTACHMENT_SECURITY_ROUTE,T_ADD_ATTACHMENT_SECURITY,T_FAIL_ATTACHMENT_SECURITY,T_ANALYSIS_GATE_INPUT,T_LIGHTWEIGHT_ROUTE,T_LIGHTWEIGHT_INPUT,T_FULLWEIGHT_ROUTE,T_FULLWEIGHT_INPUT,T_STOP_DELTA_INPUT,T_COMPLETED_DELTA_INPUT,T_RETURN processingBlock;
 
   class NEXT_OUTPUTS nextOutputBlock;
 
@@ -455,19 +341,21 @@ flowchart TB
   style NEXT_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
 
   %% Safety subgraphs: light grey
-  style RAW_SAFETY_DATA fill:#f7f7f7,stroke:#bdbdbd,stroke-width:1px,color:#000000;
-  style TRUST_DATA fill:#f7f7f7,stroke:#bdbdbd,stroke-width:1px,color:#000000;
-  style REVIEW_DATA fill:#f7f7f7,stroke:#bdbdbd,stroke-width:1px,color:#000000;
-  style ATTACHMENT_SAFETY_DATA fill:#f7f7f7,stroke:#bdbdbd,stroke-width:1px,color:#000000;
-  style ATTACHMENT_TRUST_DATA fill:#f7f7f7,stroke:#bdbdbd,stroke-width:1px,color:#000000;
-  style ATTACHMENT_REVIEW_DATA fill:#f7f7f7,stroke:#bdbdbd,stroke-width:1px,color:#000000;
+  style MESSAGE_SECURITY_DATA fill:#f7f7f7,stroke:#bdbdbd,stroke-width:1px,color:#000000;
+  style ATTACHMENT_SECURITY_DATA fill:#f7f7f7,stroke:#bdbdbd,stroke-width:1px,color:#000000;
+
+  %% Final assembly branches
+  style FINAL_ASSEMBLY fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
+  style STOP_FINAL_BRANCH fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
+  style COMPLETED_FINAL_BRANCH fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
 
   %% Non-safety functional subgraphs: dark grey
   style ATTACHMENT_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
   style ANALYSIS_GATE_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
   style LIGHTWEIGHT_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
   style FULLWEIGHT_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
-  style DELTA_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
+  style STOP_DELTA_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
+  style COMPLETED_DELTA_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
 
   linkStyle default stroke:#000000,stroke-width:2px;
-  ```
+```
