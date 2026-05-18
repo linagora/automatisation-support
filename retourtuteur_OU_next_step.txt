@@ -11,3 +11,5 @@ listener
 
 next step : vérifier que la pipeline de runMessageAnalysis est bien respecté dans le code avec les if etc...
 potentillement check aussi pour la pipepline générale support
+
+next step 2 : attachment analysis modified. Mermaid is valid. run and types need to be checked et corrected.

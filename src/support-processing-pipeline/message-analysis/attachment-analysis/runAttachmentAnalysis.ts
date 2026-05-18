@@ -3,12 +3,18 @@
  *
  * This file prepares visual attachments for analysis.
  *
- * It checks whether attachments are present, whether they are analyzable,
- * and calls the appropriate analysis function based on attachment type (image or video).
+ * It runs a local readiness decision for each attachment, then calls the
+ * appropriate vision analysis function depending on the detected visual format.
  *
- * The real API calls to an LLM vision model are implemented in
- * requestImageAnalysis and requestVideoAnalysis.
+ * The output is a per-attachment analysis array.
+ *
+ * This orchestrator does not perform support-topic interpretation.
+ * That responsibility remains in fullWeightMessageAnalysis.
  */
+
+import {
+  decideAttachmentReadiness
+} from "./decideAttachmentReadiness";
 
 import {
   requestImageAnalysis
@@ -18,241 +24,239 @@ import {
   requestVideoAnalysis
 } from "./requestVideoAnalysis";
 
-type UnknownObject = Record<string, unknown>;
+import type {
+  AttachmentAnalysis,
+  AttachmentAnalysisInput,
+  AttachmentAnalysisSteps
+} from "./typesAttachmentAnalysis.types";
 
-interface Attachment {
-  name?: string;
-  type?: string;
-  mimeType?: string;
-  sizeBytes?: number;
-  url?: string;
-  path?: string;
-  [key: string]: unknown;
-}
+type AttachmentLike = AttachmentAnalysisInput["latestUserAttachments"][number];
 
-interface RunAttachmentAnalysisInput {
-  attachments?: Attachment[];
-  latestUserMessage?: string;
-  inputClean?: UnknownObject;
-}
+function getAttachmentFilename(
+  attachment: AttachmentLike,
+  index: number
+): string {
+  const attachmentRecord = attachment as Record<string, unknown>;
 
-interface VisualAttachmentAnalyzerInput {
-  attachments: Attachment[];
-  latestUserMessage?: string;
-}
-
-interface VisualAttachmentAnalyzerOutput {
-  extractedInformations: UnknownObject;
-}
-
-interface RunAttachmentAnalysisOutput {
-  status: "not_present" | "not_analyzable" | "analyzed" | "analysis_not_available";
-  analyzableAttachments: Attachment[];
-  ignoredAttachments: Attachment[];
-  reason: string | null;
-  analysis: VisualAttachmentAnalyzerOutput | null;
-}
-
-function hasAttachments(attachments?: Attachment[]): boolean {
-  return Array.isArray(attachments) && attachments.length > 0;
-}
-
-function getAttachmentName(attachment: Attachment): string {
-  return typeof attachment.name === "string" ? attachment.name.toLowerCase() : "";
-}
-
-function getAttachmentMimeType(attachment: Attachment): string {
-  return typeof attachment.mimeType === "string" ? attachment.mimeType.toLowerCase() : "";
-}
-
-function isVisualAttachment(attachment: Attachment): boolean {
-  const name = getAttachmentName(attachment);
-  const mimeType = getAttachmentMimeType(attachment);
-
-  const visualExtensions = [
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".webp",
-    ".gif",
-    ".mp4",
-    ".mov",
-    ".avi"
-  ];
-
-  const hasVisualMimeType =
-    mimeType.startsWith("image/") ||
-    mimeType.startsWith("video/");
-
-  const hasVisualExtension = visualExtensions.some(function (extension) {
-    return name.endsWith(extension);
-  });
-
-  return hasVisualMimeType || hasVisualExtension;
-}
-
-function isImageAttachment(attachment: Attachment): boolean {
-  const name = getAttachmentName(attachment);
-  const mimeType = getAttachmentMimeType(attachment);
-
-  const imageExtensions = [
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".webp",
-    ".gif"
-  ];
-
-  const hasImageMimeType = mimeType.startsWith("image/");
-  const hasImageExtension = imageExtensions.some(function (extension) {
-    return name.endsWith(extension);
-  });
-
-  return hasImageMimeType || hasImageExtension;
-}
-
-function isVideoAttachment(attachment: Attachment): boolean {
-  const name = getAttachmentName(attachment);
-  const mimeType = getAttachmentMimeType(attachment);
-
-  const videoExtensions = [
-    ".mp4",
-    ".mov",
-    ".avi"
-  ];
-
-  const hasVideoMimeType = mimeType.startsWith("video/");
-  const hasVideoExtension = videoExtensions.some(function (extension) {
-    return name.endsWith(extension);
-  });
-
-  return hasVideoMimeType || hasVideoExtension;
-}
-
-function hasUsableLocation(attachment: Attachment): boolean {
-  return (
-    typeof attachment.url === "string" ||
-    typeof attachment.path === "string"
-  );
-}
-
-function isAttachmentSizeAcceptable(attachment: Attachment): boolean {
-  if (typeof attachment.sizeBytes !== "number") {
-    return false;
+  if (typeof attachmentRecord.name === "string" && attachmentRecord.name.length > 0) {
+    return attachmentRecord.name;
   }
 
-  const maxSizeBytes = 25 * 1024 * 1024;
-
-  return attachment.sizeBytes <= maxSizeBytes;
+  return `attachment-${index + 1}`;
 }
 
-function isAnalyzableAttachment(attachment: Attachment): boolean {
-  return (
-    isVisualAttachment(attachment) &&
-    hasUsableLocation(attachment) &&
-    isAttachmentSizeAcceptable(attachment)
-  );
+function getStringField(
+  attachment: AttachmentLike,
+  fieldName: string
+): string | undefined {
+  const attachmentRecord = attachment as Record<string, unknown>;
+  const value = attachmentRecord[fieldName];
+
+  return typeof value === "string" ? value : undefined;
 }
 
-function splitAttachmentsByAnalyzability(attachments: Attachment[]) {
-  const analyzableAttachments: Attachment[] = [];
-  const ignoredAttachments: Attachment[] = [];
+function getNumberField(
+  attachment: AttachmentLike,
+  fieldName: string
+): number | undefined {
+  const attachmentRecord = attachment as Record<string, unknown>;
+  const value = attachmentRecord[fieldName];
 
-  for (const attachment of attachments) {
-    if (isAnalyzableAttachment(attachment)) {
-      analyzableAttachments.push(attachment);
-    } else {
-      ignoredAttachments.push(attachment);
-    }
-  }
+  return typeof value === "number" ? value : undefined;
+}
+
+function buildAttachmentMetadata(
+  attachment: AttachmentLike,
+  index: number
+) {
+  const type = getStringField(attachment, "type");
+  const mimeType = getStringField(attachment, "mimeType");
+  const sizeBytes = getNumberField(attachment, "sizeBytes");
 
   return {
-    analyzableAttachments,
-    ignoredAttachments
+    index,
+    filename: getAttachmentFilename(attachment, index),
+    ...(type ? { type } : {}),
+    ...(mimeType ? { mimeType } : {}),
+    ...(typeof sizeBytes === "number" ? { sizeBytes } : {})
   };
+}
+
+function buildRemainingAttachmentsMetadata(
+  attachments: AttachmentLike[],
+  currentIndex: number
+) {
+  return attachments
+    .slice(currentIndex + 1)
+    .map(function (attachment, offset) {
+      const index = currentIndex + 1 + offset;
+
+      return buildAttachmentMetadata(attachment, index);
+    });
 }
 
 async function runAttachmentAnalysis(
-  input: RunAttachmentAnalysisInput
-): Promise<RunAttachmentAnalysisOutput> {
-  const attachments = input.attachments || [];
+  input: AttachmentAnalysisInput,
+  steps: AttachmentAnalysisSteps = {}
+): Promise<AttachmentAnalysis> {
+  const attachmentAnalysisSteps: Required<AttachmentAnalysisSteps> = {
+    decideAttachmentReadiness:
+      steps.decideAttachmentReadiness || decideAttachmentReadiness,
 
-  if (!hasAttachments(attachments)) {
-    return {
-      status: "not_present",
-      analyzableAttachments: [],
-      ignoredAttachments: [],
-      reason: "no_attachment_provided",
-      analysis: null
-    };
-  }
+    requestImageAnalysis:
+      steps.requestImageAnalysis || requestImageAnalysis,
+
+    requestVideoAnalysis:
+      steps.requestVideoAnalysis || requestVideoAnalysis
+  };
 
   const {
-    analyzableAttachments,
-    ignoredAttachments
-  } = splitAttachmentsByAnalyzability(attachments);
+    latestUserMessage,
+    latestUserAttachments
+  } = input;
 
-  if (analyzableAttachments.length === 0) {
-    return {
-      status: "not_analyzable",
-      analyzableAttachments: [],
-      ignoredAttachments,
-      reason: "no_analyzable_visual_attachment",
-      analysis: null
+  const attachmentAnalysis: AttachmentAnalysis = [];
+
+  for (let index = 0; index < latestUserAttachments.length; index++) {
+    const attachment = latestUserAttachments[index];
+    const filename = getAttachmentFilename(attachment, index);
+
+    /* =====================================================
+     * Prepare attachmentReadinessDecisionInput
+     * ===================================================== */
+
+    const attachmentReadinessDecisionInput = {
+      attachment
     };
+
+    const attachmentReadinessDecision =
+      await attachmentAnalysisSteps.decideAttachmentReadiness(
+        attachmentReadinessDecisionInput
+      );
+
+    /* =====================================================
+     * route ?
+     * attachmentReadinessDecision.decision.route
+     * ===================================================== */
+
+    switch (attachmentReadinessDecision.decision.route) {
+      case "stop": {
+        attachmentAnalysis.push({
+          filename,
+          status: "refused",
+          reason: attachmentReadinessDecision.history.refusalReason,
+          readinessDecision: attachmentReadinessDecision
+        });
+
+        continue;
+      }
+
+      case "continue": {
+        break;
+      }
+    }
+
+    /* =====================================================
+     * Prepare attachmentSequenceContext
+     * ===================================================== */
+
+    const attachmentSequenceContext = {
+      alreadyAnalyzedAttachments: attachmentAnalysis,
+      remainingAttachmentsToAnalyze: buildRemainingAttachmentsMetadata(
+        latestUserAttachments,
+        index
+      )
+    };
+
+    /* =====================================================
+     * visual format ?
+     * Only image or video can reach this point
+     * ===================================================== */
+
+    switch (attachmentReadinessDecision.history.detectedFormat) {
+      case "image": {
+        const imageAnalysisInput = {
+          attachment,
+          latestUserMessage,
+          attachmentSequenceContext
+        };
+
+        const imageAnalysisResult =
+          await attachmentAnalysisSteps.requestImageAnalysis(
+            imageAnalysisInput
+          );
+
+        switch (imageAnalysisResult.status) {
+          case "analyzed": {
+            attachmentAnalysis.push({
+              filename,
+              status: "analyzed",
+              readinessDecision: attachmentReadinessDecision,
+              analysis: imageAnalysisResult.analysis
+            });
+
+            break;
+          }
+
+          case "failed": {
+            attachmentAnalysis.push({
+              filename,
+              status: "failed",
+              reason: imageAnalysisResult.reason,
+              readinessDecision: attachmentReadinessDecision
+            });
+
+            break;
+          }
+        }
+
+        break;
+      }
+
+      case "video": {
+        const videoAnalysisInput = {
+          attachment,
+          latestUserMessage,
+          attachmentSequenceContext
+        };
+
+        const videoAnalysisResult =
+          await attachmentAnalysisSteps.requestVideoAnalysis(
+            videoAnalysisInput
+          );
+
+        switch (videoAnalysisResult.status) {
+          case "analyzed": {
+            attachmentAnalysis.push({
+              filename,
+              status: "analyzed",
+              readinessDecision: attachmentReadinessDecision,
+              analysis: videoAnalysisResult.analysis
+            });
+
+            break;
+          }
+
+          case "failed": {
+            attachmentAnalysis.push({
+              filename,
+              status: "failed",
+              reason: videoAnalysisResult.reason,
+              readinessDecision: attachmentReadinessDecision
+            });
+
+            break;
+          }
+        }
+
+        break;
+      }
+    }
   }
 
-  // Determine the type of attachments and call the appropriate analysis function
-  const hasVideo = analyzableAttachments.some(isVideoAttachment);
-  const hasImage = analyzableAttachments.some(isImageAttachment);
-
-  let visualAttachmentAnalysis;
-
-  if (hasVideo) {
-    // If there are videos, use video analysis (even if mixed with images)
-    visualAttachmentAnalysis = await requestVideoAnalysis({
-      attachments: analyzableAttachments,
-      latestUserMessage: input.latestUserMessage
-    });
-  } else if (hasImage) {
-    // Only images, use image analysis
-    visualAttachmentAnalysis = await requestImageAnalysis({
-      attachments: analyzableAttachments,
-      latestUserMessage: input.latestUserMessage
-    });
-  } else {
-    // Unknown visual type, fallback to image analysis
-    visualAttachmentAnalysis = await requestImageAnalysis({
-      attachments: analyzableAttachments,
-      latestUserMessage: input.latestUserMessage
-    });
-  }
-
-  return {
-    status: visualAttachmentAnalysis.status,
-    analyzableAttachments,
-    ignoredAttachments,
-    reason: visualAttachmentAnalysis.reason,
-    analysis: visualAttachmentAnalysis.analysis
-  };
+  return attachmentAnalysis;
 }
 
 export {
-  runAttachmentAnalysis,
-  hasAttachments,
-  isVisualAttachment,
-  isImageAttachment,
-  isVideoAttachment,
-  hasUsableLocation,
-  isAttachmentSizeAcceptable,
-  isAnalyzableAttachment,
-  splitAttachmentsByAnalyzability
-};
-
-export type {
-  Attachment,
-  RunAttachmentAnalysisInput,
-  RunAttachmentAnalysisOutput,
-  VisualAttachmentAnalyzerInput,
-  VisualAttachmentAnalyzerOutput
+  runAttachmentAnalysis
 };
