@@ -140,6 +140,10 @@ function safe_url(
   url: string | undefined
 ): boolean {
   if (url === undefined) {
+    return false;
+  }
+
+  if (url.startsWith("data:image/")) {
     return true;
   }
 
@@ -159,7 +163,7 @@ function safe_path(
   path: string | undefined
 ): boolean {
   if (path === undefined) {
-    return true;
+    return false;
   }
 
   return (
@@ -172,7 +176,10 @@ function safe_path(
 function safe_location(
   attachment: AttachmentAnalysisItem
 ): boolean {
-  return safe_url(attachment.url) && safe_path(attachment.path);
+  return (
+    safe_url(attachment.url) ||
+    safe_path(attachment.path)
+  );
 }
 
 function present_size(
