@@ -18,18 +18,6 @@ import type {
 } from "../../typesSupportProcessingPipeline.types";
 
 /* =====================================================
- * Generic helpers
- * ===================================================== */
-
-type MaybePromise<T> = T | Promise<T>;
-
-type AttachmentAnalysisStep<TInput, TOutput> = (
-  input: TInput
-) => MaybePromise<TOutput>;
-
-type NonEmptyArray<T> = [T, ...T[]];
-
-/* =====================================================
  * Attachment analysis input
  * ===================================================== */
 
@@ -42,126 +30,109 @@ export type AttachmentAnalysisInput = {
  * Attachment readiness decision
  * ===================================================== */
 
-type AttachmentReadinessDecisionRoute =
+type AttachmentReadinessRoute =
   | "continue"
   | "stop";
 
 type AttachmentDetectedFormat =
   | "image"
   | "video"
-  | "unknown";
-
-type AttachmentVisualFormat = Exclude<
-  AttachmentDetectedFormat,
-  "unknown"
->;
+  | "other";
 
 export type AttachmentReadinessCheckName =
-  | "filename_safe"
-  | "supported_visual_format"
-  | "mime_extension_consistent"
+  | "safe_filename"
+  | "accepted_format"
+  | "consistent_mime_extension"
   | "usable_location"
   | "safe_location"
-  | "size_present"
-  | "size_positive"
+  | "present_size"
+  | "positive_size"
   | "size_under_limit";
 
-export type AttachmentRefusalReason =
-  | "unsafe_filename"
-  | "unsupported_visual_format"
-  | "mime_extension_mismatch"
-  | "missing_location"
-  | "unsafe_location"
-  | "missing_size"
-  | "invalid_size"
-  | "size_too_large";
-
 export type AttachmentReadinessDecisionInput = {
-  attachment: LatestUserAttachment;
+  attachmentIndex: number;
+  attachmentAnalysis: AttachmentAnalysis;
 };
 
-type AttachmentReadinessContinueDecision = {
+export type AttachmentReadinessDecision = {
   decision: {
-    route: Extract<AttachmentReadinessDecisionRoute, "continue">;
+    route: AttachmentReadinessRoute;
   };
   history: {
     checked: AttachmentReadinessCheckName[];
-    failed: [];
-    detectedFormat: AttachmentVisualFormat;
-  };
-};
-
-type AttachmentReadinessStopDecision = {
-  decision: {
-    route: Extract<AttachmentReadinessDecisionRoute, "stop">;
-  };
-  history: {
-    checked: AttachmentReadinessCheckName[];
-    failed: NonEmptyArray<AttachmentReadinessCheckName>;
+    failed: AttachmentReadinessCheckName[];
     detectedFormat: AttachmentDetectedFormat;
-    refusalReason: AttachmentRefusalReason;
   };
 };
 
-export type AttachmentReadinessDecision =
-  | AttachmentReadinessContinueDecision
-  | AttachmentReadinessStopDecision;
-
 /* =====================================================
- * Attachment sequence context
+ * Attachment vision analysis
  * ===================================================== */
 
-type AttachmentMetadata = {
-  index: number;
-  filename: string;
-  type?: string;
-  mimeType?: string;
-  sizeBytes?: number;
+type AttachmentVisionObservations = {
+  other?: unknown;
 };
 
-type AttachmentSequenceContext = {
-  alreadyAnalyzedAttachments: AttachmentAnalysis;
-  remainingAttachmentsToAnalyze: AttachmentMetadata[];
-};
-
-/* =====================================================
- * Vision analysis shared types
- * ===================================================== */
-
-type AttachmentStructuredObservations = unknown;
-
-type AttachmentLlmAnalysis = {
-  llmDescription: string;
-  structuredObservations?: AttachmentStructuredObservations;
+type AttachmentVisionAnalysis = {
+  visionDescription: string;
+  visionObservations?: AttachmentVisionObservations;
   relationToPreviousAttachment?: string;
 };
 
-type AttachmentVisionAnalysisFailureReason =
-  | "vision_model_unavailable"
-  | "vision_model_timeout"
-  | "vision_model_refused"
-  | "empty_analysis"
-  | "invalid_analysis_output"
-  | "unknown_analysis_failure";
+/* =====================================================
+ * Attachment vision analysis result
+ * ===================================================== */
 
 type AttachmentVisionAnalysisResult =
   | {
       status: "analyzed";
-      analysis: AttachmentLlmAnalysis;
+      reason?: undefined;
+      analysis: AttachmentVisionAnalysis;
     }
   | {
       status: "failed";
-      reason: AttachmentVisionAnalysisFailureReason;
+      reason: string;
+      analysis?: undefined;
+    }
+  | {
+      status: "suspicious";
+      reason: string;
+      analysis: AttachmentVisionAnalysis;
     };
+
+/* =====================================================
+ * Attachment analysis item
+ * ===================================================== */
+
+export type AttachmentAnalysisItem = {
+  attachmentIndex: number;
+  filename: string | undefined;
+  url: string | undefined;
+  path: string | undefined;
+  type: string | undefined;
+  mimeType: string | undefined;
+  sizeBytes: number | undefined;
+  status:
+    | "analysis_pending"
+    | "analyzed"
+    | "failed"
+    | "refused"
+    | "suspicious";
+  reason: string | undefined;
+  readinessDecision: AttachmentReadinessDecision | undefined;
+  analysis: AttachmentVisionAnalysis | undefined;
+};
+
+export type AttachmentAnalysis = AttachmentAnalysisItem[];
 
 /* =====================================================
  * Image analysis
  * ===================================================== */
 
 export type ImageAnalysisInput = {
-  attachment: LatestUserAttachment;
+  attachmentIndex: number;
   latestUserMessage: LatestUserMessage;
-  attachmentSequenceContext: AttachmentSequenceContext;
+  attachmentAnalysis: AttachmentAnalysis;
 };
 
 export type ImageAnalysisResult = AttachmentVisionAnalysisResult;
@@ -171,62 +142,27 @@ export type ImageAnalysisResult = AttachmentVisionAnalysisResult;
  * ===================================================== */
 
 export type VideoAnalysisInput = {
-  attachment: LatestUserAttachment;
+  attachmentIndex: number;
   latestUserMessage: LatestUserMessage;
-  attachmentSequenceContext: AttachmentSequenceContext;
+  attachmentAnalysis: AttachmentAnalysis;
 };
 
 export type VideoAnalysisResult = AttachmentVisionAnalysisResult;
-
-/* =====================================================
- * Attachment analysis item
- * ===================================================== */
-
-type AttachmentAnalyzedItem = {
-  filename: string;
-  status: "analyzed";
-  readinessDecision: AttachmentReadinessContinueDecision;
-  analysis: AttachmentLlmAnalysis;
-};
-
-type AttachmentFailedItem = {
-  filename: string;
-  status: "failed";
-  reason: AttachmentVisionAnalysisFailureReason;
-  readinessDecision: AttachmentReadinessContinueDecision;
-};
-
-type AttachmentRefusedItem = {
-  filename: string;
-  status: "refused";
-  reason: AttachmentRefusalReason;
-  readinessDecision: AttachmentReadinessStopDecision;
-};
-
-type AttachmentAnalysisItem =
-  | AttachmentAnalyzedItem
-  | AttachmentFailedItem
-  | AttachmentRefusedItem;
-
-export type AttachmentAnalysis = AttachmentAnalysisItem[];
 
 /* =====================================================
  * Attachment analysis steps
  * ===================================================== */
 
 export type AttachmentAnalysisSteps = {
-  decideAttachmentReadiness?: AttachmentAnalysisStep<
-    AttachmentReadinessDecisionInput,
-    AttachmentReadinessDecision
-  >;
+  decideAttachmentReadiness?: (
+    input: AttachmentReadinessDecisionInput
+  ) => AttachmentReadinessDecision | Promise<AttachmentReadinessDecision>;
 
-  requestImageAnalysis?: AttachmentAnalysisStep<
-    ImageAnalysisInput,
-    ImageAnalysisResult
-  >;
+  requestImageAnalysis?: (
+    input: ImageAnalysisInput
+  ) => ImageAnalysisResult | Promise<ImageAnalysisResult>;
 
-  requestVideoAnalysis?: AttachmentAnalysisStep<
-    VideoAnalysisInput,
-    VideoAnalysisResult
-  >;
+  requestVideoAnalysis?: (
+    input: VideoAnalysisInput
+  ) => VideoAnalysisResult | Promise<VideoAnalysisResult>;
 };
