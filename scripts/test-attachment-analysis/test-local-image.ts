@@ -2,15 +2,25 @@
  * Test local image analysis
  *
  * Usage:
- *   npm run test:vision:local:image -- ./screen_error.png
- *   npm run test:vision:local:image -- ./image1.png ./image2.jpg "Optional user message"
+ *   npm run test:local:image -- ./screen_error.png
+ *   npm run test:local:image -- ./image1.png ./image2.jpg "Optional user message"
  */
 
 import * as fs from "fs";
 import * as path from "path";
-import { runAttachmentAnalysis } from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/runAttachmentAnalysis";
 
-const SUPPORTED_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"];
+import {
+  runAttachmentAnalysis
+} from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/runAttachmentAnalysis";
+
+const SUPPORTED_IMAGE_EXTENSIONS = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".bmp"
+];
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
@@ -23,6 +33,7 @@ const MIME_TYPES: Record<string, string> = {
 
 function isSupportedImagePath(filePath: string): boolean {
   const extension = path.extname(filePath).toLowerCase();
+
   return SUPPORTED_IMAGE_EXTENSIONS.includes(extension);
 }
 
@@ -35,6 +46,7 @@ function fileToDataUrl(filePath: string): string {
   }
 
   const buffer = fs.readFileSync(filePath);
+
   return `data:${mimeType};base64,${buffer.toString("base64")}`;
 }
 
@@ -58,7 +70,10 @@ function parseArguments(args: string[]): {
 
   return {
     imagePaths,
-    latestUserMessage: messageParts.length > 0 ? messageParts.join(" ") : undefined
+    latestUserMessage:
+      messageParts.length > 0
+        ? messageParts.join(" ")
+        : undefined
   };
 }
 
@@ -71,12 +86,15 @@ async function main(): Promise<void> {
 
   if (args.length === 0) {
     console.error("Usage:");
-    console.error("  npm run test:vision:local:image -- ./screen_error.png");
-    console.error("  npm run test:vision:local:image -- ./image1.png ./image2.jpg \"Optional user message\"");
+    console.error("  npm run test:local:image -- ./screen_error.png");
+    console.error("  npm run test:local:image -- ./image1.png ./image2.jpg \"Optional user message\"");
     process.exit(1);
   }
 
-  const { imagePaths, latestUserMessage } = parseArguments(args);
+  const {
+    imagePaths,
+    latestUserMessage
+  } = parseArguments(args);
 
   if (imagePaths.length === 0) {
     console.error("Error: No supported local image provided.");
@@ -84,7 +102,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const attachments = [];
+  const latestUserAttachments = [];
 
   console.log(`Preparing ${imagePaths.length} local image(s)...`);
 
@@ -108,7 +126,7 @@ async function main(): Promise<void> {
 
     const dataUrl = fileToDataUrl(resolvedPath);
 
-    attachments.push({
+    latestUserAttachments.push({
       name: path.basename(resolvedPath),
       mimeType,
       path: resolvedPath,
@@ -129,9 +147,9 @@ async function main(): Promise<void> {
 
   const startTime = Date.now();
 
-  const result = await runAttachmentAnalysis({
-    attachments,
-    latestUserMessage
+  const attachmentAnalysis = await runAttachmentAnalysis({
+    latestUserMessage,
+    latestUserAttachments
   });
 
   const durationMs = Date.now() - startTime;
@@ -139,27 +157,38 @@ async function main(): Promise<void> {
   console.log("\n============================================================");
   console.log("RESULT");
   console.log("============================================================");
-  console.log(`Status: ${result.status}`);
   console.log(`Duration: ${durationMs}ms`);
+  console.log(`Attachments: ${attachmentAnalysis.length}`);
 
-  if (result.reason) {
-    console.log(`Reason: ${result.reason}`);
-  }
+  for (const attachmentAnalysisItem of attachmentAnalysis) {
+    console.log("\n------------------------------------------------------------");
+    console.log(`Attachment #${attachmentAnalysisItem.attachmentIndex}`);
+    console.log(`Filename: ${attachmentAnalysisItem.filename}`);
+    console.log(`Status: ${attachmentAnalysisItem.status}`);
 
-  console.log(`\nAnalyzable attachments: ${result.analyzableAttachments.length}`);
-  console.log(`Ignored attachments: ${result.ignoredAttachments.length}`);
+    if (attachmentAnalysisItem.reason) {
+      console.log(`Reason: ${attachmentAnalysisItem.reason}`);
+    }
 
-  if (result.analysis) {
-    console.log("\n--- Analysis Output ---");
-    console.log(JSON.stringify(result.analysis.extractedInformations, null, 2));
+    if (attachmentAnalysisItem.analysis) {
+      console.log("\n--- Analysis Output ---");
+      console.log(JSON.stringify(attachmentAnalysisItem.analysis, null, 2));
+    }
   }
 
   console.log("\n============================================================");
 
-  if (result.status === "analyzed") {
+  const hasFailure = attachmentAnalysis.some(function (attachmentAnalysisItem) {
+    return (
+      attachmentAnalysisItem.status === "failed" ||
+      attachmentAnalysisItem.status === "refused"
+    );
+  });
+
+  if (!hasFailure) {
     console.log("✅ SUCCESS: Local image(s) analyzed successfully!");
   } else {
-    console.log("❌ Analysis not available");
+    console.log("❌ Some image attachment(s) were not analyzed");
   }
 }
 

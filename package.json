@@ -11,7 +11,8 @@
     "test:local:image": "tsx -r dotenv/config scripts/test-attachment-analysis/test-local-image.ts",
     "test:online:image": "tsx -r dotenv/config scripts/test-attachment-analysis/test-online-image.ts",
     "test:local:video": "tsx -r dotenv/config scripts/test-attachment-analysis/test-local-video.ts",
-    "test:online:video": "tsx -r dotenv/config scripts/test-attachment-analysis/test-online-video.ts"
+    "test:online:video": "tsx -r dotenv/config scripts/test-attachment-analysis/test-online-video.ts",
+    "test:llm:guard": "tsx -r dotenv/config scripts/test-attachment-analysis/test-token-budget-guard.ts"
   },
   "repository": {
     "type": "git",

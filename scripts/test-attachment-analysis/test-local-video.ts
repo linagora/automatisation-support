@@ -2,15 +2,28 @@
  * Test local video analysis
  *
  * Usage:
- *   npm run test:vision:local:video -- ./video.webm
- *   npm run test:vision:local:video -- ./video.mp4 "Optional user message"
+ *   npm run test:local:video -- ./video.webm
+ *   npm run test:local:video -- ./video.mp4 "Optional user message"
  */
 
 import * as fs from "fs";
 import * as path from "path";
-import { requestVideoAnalysis } from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/requestVideoAnalysis";
 
-const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".webm", ".mkv"];
+import {
+  requestVideoAnalysis
+} from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/requestVideoAnalysis";
+
+import type {
+  AttachmentAnalysis
+} from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/typesAttachmentAnalysis.types";
+
+const SUPPORTED_VIDEO_EXTENSIONS = [
+  ".mp4",
+  ".mov",
+  ".avi",
+  ".webm",
+  ".mkv"
+];
 
 const MIME_TYPES: Record<string, string> = {
   ".mp4": "video/mp4",
@@ -22,6 +35,7 @@ const MIME_TYPES: Record<string, string> = {
 
 function isSupportedVideoPath(filePath: string): boolean {
   const extension = path.extname(filePath).toLowerCase();
+
   return SUPPORTED_VIDEO_EXTENSIONS.includes(extension);
 }
 
@@ -33,7 +47,10 @@ function parseArguments(args: string[]): {
 
   return {
     videoPath,
-    latestUserMessage: messageParts.length > 0 ? messageParts.join(" ") : undefined
+    latestUserMessage:
+      messageParts.length > 0
+        ? messageParts.join(" ")
+        : undefined
   };
 }
 
@@ -46,16 +63,20 @@ async function main(): Promise<void> {
 
   if (args.length === 0) {
     console.error("Usage:");
-    console.error("  npm run test:vision:local:video -- ./video.webm");
-    console.error("  npm run test:vision:local:video -- ./video.mp4 \"Optional user message\"");
+    console.error("  npm run test:local:video -- ./video.webm");
+    console.error("  npm run test:local:video -- ./video.mp4 \"Optional user message\"");
     process.exit(1);
   }
 
-  const { videoPath, latestUserMessage } = parseArguments(args);
+  const {
+    videoPath,
+    latestUserMessage
+  } = parseArguments(args);
+
   const resolvedPath = path.resolve(videoPath);
 
   if (!isSupportedVideoPath(videoPath)) {
-    console.error(`Error: Unsupported video extension.`);
+    console.error("Error: Unsupported video extension.");
     console.error(`Supported extensions: ${SUPPORTED_VIDEO_EXTENSIONS.join(", ")}`);
     process.exit(1);
   }
@@ -75,15 +96,26 @@ async function main(): Promise<void> {
   const extension = path.extname(resolvedPath).toLowerCase();
   const mimeType = MIME_TYPES[extension] || "video/mp4";
 
-  const attachment = {
-    name: path.basename(resolvedPath),
-    mimeType,
-    path: resolvedPath,
-    sizeBytes: stats.size
-  };
+  const attachmentIndex = 1;
+
+  const attachmentAnalysis: AttachmentAnalysis = [
+    {
+      attachmentIndex,
+      filename: path.basename(resolvedPath),
+      url: undefined,
+      path: resolvedPath,
+      type: undefined,
+      mimeType,
+      sizeBytes: stats.size,
+      status: "analysis_pending",
+      reason: undefined,
+      readinessDecision: undefined,
+      analysis: undefined
+    }
+  ];
 
   console.log("Preparing local video...");
-  console.log(`  ✓ ${attachment.name} (${(stats.size / 1024).toFixed(1)} KB)`);
+  console.log(`  ✓ ${path.basename(resolvedPath)} (${(stats.size / 1024).toFixed(1)} KB)`);
   console.log(`  MIME type: ${mimeType}`);
 
   if (latestUserMessage) {
@@ -97,8 +129,9 @@ async function main(): Promise<void> {
   const startTime = Date.now();
 
   const result = await requestVideoAnalysis({
-    attachments: [attachment],
-    latestUserMessage
+    attachmentIndex,
+    latestUserMessage,
+    attachmentAnalysis
   });
 
   const durationMs = Date.now() - startTime;
@@ -115,15 +148,15 @@ async function main(): Promise<void> {
 
   if (result.analysis) {
     console.log("\n--- Analysis Output ---");
-    console.log(JSON.stringify(result.analysis.extractedInformations, null, 2));
+    console.log(JSON.stringify(result.analysis, null, 2));
   }
 
   console.log("\n============================================================");
 
-  if (result.status === "analyzed") {
+  if (result.status === "analyzed" || result.status === "suspicious") {
     console.log("✅ SUCCESS: Local video analyzed successfully!");
   } else {
-    console.log("❌ Video analysis not available");
+    console.log("❌ Video analysis failed");
   }
 }
 
