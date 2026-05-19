@@ -43,6 +43,16 @@ function parseArguments(args: string[]): {
   videoPath: string;
   latestUserMessage?: string;
 } {
+  const messageFlagIndex = args.indexOf("--message");
+
+  if (messageFlagIndex !== -1) {
+    return {
+      videoPath: args[0],
+      latestUserMessage:
+        args.slice(messageFlagIndex + 1).join(" ") || undefined
+    };
+  }
+
   const [videoPath, ...messageParts] = args;
 
   return {
@@ -64,7 +74,7 @@ async function main(): Promise<void> {
   if (args.length === 0) {
     console.error("Usage:");
     console.error("  npm run test:local:video -- ./video.webm");
-    console.error("  npm run test:local:video -- ./video.mp4 \"Optional user message\"");
+    console.error("  npm run test:local:video -- ./video.webm --message \"User message\"");
     process.exit(1);
   }
 

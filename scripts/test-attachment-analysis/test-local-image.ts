@@ -54,6 +54,18 @@ function parseArguments(args: string[]): {
   imagePaths: string[];
   latestUserMessage?: string;
 } {
+  const messageFlagIndex = args.indexOf("--message");
+
+  if (messageFlagIndex !== -1) {
+    return {
+      imagePaths: args
+        .slice(0, messageFlagIndex)
+        .filter(isSupportedImagePath),
+      latestUserMessage:
+        args.slice(messageFlagIndex + 1).join(" ") || undefined
+    };
+  }
+
   const imagePaths: string[] = [];
   const messageParts: string[] = [];
   let isReadingMessage = false;
@@ -76,7 +88,6 @@ function parseArguments(args: string[]): {
         : undefined
   };
 }
-
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
@@ -87,7 +98,8 @@ async function main(): Promise<void> {
   if (args.length === 0) {
     console.error("Usage:");
     console.error("  npm run test:local:image -- ./screen_error.png");
-    console.error("  npm run test:local:image -- ./image1.png ./image2.jpg \"Optional user message\"");
+    console.error("  npm run test:local:image -- ./screen_error.png --message \"User message\"");
+    console.error("  npm run test:local:image -- ./image1.png ./image2.jpg --message \"User message\"");
     process.exit(1);
   }
 

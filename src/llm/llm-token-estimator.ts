@@ -1,13 +1,10 @@
 /**
  * LLM Token Estimator
  *
- * This file estimates the number of tokens that will be sent to the LLM.
+ * Estimates token usage before sending a request to the LLM.
  *
- * It is intentionally called at the last moment by llm-client, once the final
- * messages and final attachments have been built.
- *
- * If an input cannot be estimated safely, it throws and the LLM call must not
- * be sent.
+ * If an input cannot be estimated safely, this file throws.
+ * The LLM client must then block the API call.
  */
 
 import type {
@@ -15,15 +12,18 @@ import type {
   LLMTokenEstimate
 } from "./types.llm-types";
 
-export type LLMTokenEstimate = {
-  textTokens: number;
-  imageTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-};
+const TEXT_CHARS_PER_TOKEN = 4;
+
+const IMAGE_TOKEN_ESTIMATE_BY_DETAIL = {
+  low: 85,
+  auto: 500,
+  high: 1000
+} as const;
+
+const MIN_DATA_IMAGE_TOKEN_ESTIMATE = 500;
 
 function estimateTextTokens(text: string): number {
-  return Math.ceil(text.length / 4);
+  return Math.ceil(text.length / TEXT_CHARS_PER_TOKEN);
 }
 
 function assertNoBase64InText(text: string): void {
@@ -52,7 +52,10 @@ function estimateBytesFromBase64(base64Payload: string): number {
   return Math.floor((base64Payload.length * 3) / 4) - padding;
 }
 
-function estimateImageTokensFromDataUrl(url: string): number {
+function estimateImageTokensFromDataUrl(
+  url: string,
+  detail: "low" | "high" | "auto"
+): number {
   const base64Payload = getBase64PayloadFromDataUrl(url);
 
   if (!base64Payload) {
@@ -60,17 +63,40 @@ function estimateImageTokensFromDataUrl(url: string): number {
   }
 
   const sizeBytes = estimateBytesFromBase64(base64Payload);
-  const sizeKilobytes = sizeBytes / 1024;
 
-  return Math.max(85, Math.ceil(sizeKilobytes));
-}
-
-function estimateImageTokensFromUrl(url: string): number {
-  if (url.startsWith("data:image/")) {
-    return estimateImageTokensFromDataUrl(url);
+  if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
+    throw new Error("invalid_data_url_image_size");
   }
 
-  throw new Error("cannot_estimate_remote_image_tokens_without_size");
+  const detailEstimate = IMAGE_TOKEN_ESTIMATE_BY_DETAIL[detail];
+
+  return Math.max(
+    MIN_DATA_IMAGE_TOKEN_ESTIMATE,
+    detailEstimate
+  );
+}
+
+function estimateImageTokens(
+  url: string,
+  detail?: "low" | "high" | "auto"
+): number {
+  const resolvedDetail = detail ?? "auto";
+
+  if (url.startsWith("data:image/")) {
+    return estimateImageTokensFromDataUrl(
+      url,
+      resolvedDetail
+    );
+  }
+
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://")
+  ) {
+    return IMAGE_TOKEN_ESTIMATE_BY_DETAIL[resolvedDetail];
+  }
+
+  throw new Error("cannot_estimate_image_tokens_for_unknown_url_type");
 }
 
 function estimateLLMTokenUsage(
@@ -96,8 +122,9 @@ function estimateLLMTokenUsage(
         }
 
         case "image_url": {
-          imageTokens += estimateImageTokensFromUrl(
-            contentItem.image_url.url
+          imageTokens += estimateImageTokens(
+            contentItem.image_url.url,
+            contentItem.image_url.detail
           );
           break;
         }
