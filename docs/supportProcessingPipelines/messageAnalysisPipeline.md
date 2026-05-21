@@ -34,17 +34,12 @@ flowchart TB
       accountTrustStatus"]
       MESSAGE_SECURITY_OUTPUTS["<b>Output</b><br/>
       6.1 latestUserMessageSecurityDecision = {<br/>
-      decision: {<br/>
-      route: continue / stop<br/>
-      }<br/>
+      decision: { route: continue / stop }<br/>
       history: {<br/>
       checked: InputCleaningCheckName[]<br/>
       failed: InputCleaningCheckName[]<br/>
       contextAccountDecision: continue / stop / review_with_llm_truster<br/>
-      llmReview?: {<br/>
-      route: continue / stop / failed<br/>
-      reason?<br/>
-      }<br/>
+      llmReview?: { route: continue / stop / failed, reason? }<br/>
       }<br/>
       }"]
       MESSAGE_SECURITY_INPUTS --> MESSAGE_SECURITY_OUTPUTS
@@ -77,10 +72,7 @@ flowchart TB
       6.2 attachmentAnalysis = [{<br/>
       filename<br/>
       status: analyzed / failed / refused<br/>
-      analysis?: {<br/>
-      summary<br/>
-      other?<br/>
-      }<br/>
+      analysis?<br/>
       }]"]
       ATTACHMENT_INPUTS --> ATTACHMENT_OUTPUTS
     end
@@ -98,17 +90,12 @@ flowchart TB
       accountTrustStatus"]
       ATTACHMENT_SECURITY_OUTPUTS["<b>Output</b><br/>
       6.3 attachmentAnalysisSecurityDecision = {<br/>
-      decision: {<br/>
-      route: continue / stop<br/>
-      }<br/>
+      decision: { route: continue / stop }<br/>
       history: {<br/>
       checked: InputCleaningCheckName[]<br/>
       failed: InputCleaningCheckName[]<br/>
       contextAccountDecision: continue / stop / review_with_llm_truster<br/>
-      llmReview?: {<br/>
-      route: continue / stop / failed<br/>
-      reason?<br/>
-      }<br/>
+      llmReview?: { route: continue / stop / failed, reason? }<br/>
       }<br/>
       }"]
       ATTACHMENT_SECURITY_INPUTS --> ATTACHMENT_SECURITY_OUTPUTS
@@ -126,34 +113,33 @@ flowchart TB
     T_ANALYSIS_GATE_INPUT["<b>Prepare analysisGateInput</b><br/>
     analysisGateInput = {<br/>
     latestUserMessage<br/>
-    supportTopicKnowledge<br/>
-    conversationHistory<br/>
-    attachmentAnalysis?<br/>
     }"]
 
     subgraph ANALYSIS_GATE_DATA["analysisGate = runAnalysisGate(analysisGateInput)"]
       direction LR
       ANALYSIS_GATE_INPUTS["<b>analysisGateInput</b><br/>
-      latestUserMessage<br/>
-      supportTopicKnowledge<br/>
-      conversationHistory<br/>
-      attachmentAnalysis?"]
+      latestUserMessage"]
       ANALYSIS_GATE_OUTPUTS["<b>Output</b><br/>
       6.4 analysisGate = {<br/>
-      shouldRunLightWeightMessageAnalysis<br/>
+      decision: {<br/>
+      route: light_weight_first / full_weight_direct<br/>
+      }<br/>
+      history: {<br/>
+      prefer_light_first: AnalysisGateCheckName[]<br/>
+      prefer_full_direct: AnalysisGateCheckName[]<br/>
+      }<br/>
       }"]
       ANALYSIS_GATE_INPUTS --> ANALYSIS_GATE_OUTPUTS
     end
 
-    T_LIGHTWEIGHT_ROUTE{"<b>if</b><br/>
-    analysisGate.shouldRunLightWeightMessageAnalysis === true"}
+    T_ANALYSIS_ROUTE{"<b>route ?</b><br/>
+    analysisGate.decision.route"}
 
     T_LIGHTWEIGHT_INPUT["<b>Prepare lightWeightMessageAnalysisInput</b><br/>
     lightWeightMessageAnalysisInput = {<br/>
     latestUserMessage<br/>
     supportTopicKnowledge<br/>
     conversationHistory<br/>
-    attachmentAnalysis?<br/>
     }"]
 
     subgraph LIGHTWEIGHT_DATA["lightWeightMessageAnalysis = runLightWeightMessageAnalysis(lightWeightMessageAnalysisInput)"]
@@ -161,8 +147,7 @@ flowchart TB
       LIGHTWEIGHT_INPUTS["<b>lightWeightMessageAnalysisInput</b><br/>
       latestUserMessage<br/>
       supportTopicKnowledge<br/>
-      conversationHistory<br/>
-      attachmentAnalysis?"]
+      conversationHistory"]
       LIGHTWEIGHT_OUTPUTS["<b>Output</b><br/>
       6.5 lightWeightMessageAnalysis = {<br/>
       shouldRunSupportMessageAnalysis<br/>
@@ -186,7 +171,7 @@ flowchart TB
     lightWeightMessageAnalysis?<br/>
     }"]
 
-    subgraph FULLWEIGHT_DATA["fullWeightMessageAnalysis = runFullWeightMessageAnalysis(fullWeightMessageAnalysisInput)"]
+    subgraph FULLWEIGHT_DATA["fullWeightMessageAnalysisOutput = runFullWeightMessageAnalysis(fullWeightMessageAnalysisInput)"]
       direction LR
       FULLWEIGHT_INPUTS["<b>fullWeightMessageAnalysisInput</b><br/>
       latestUserMessage<br/>
@@ -195,13 +180,22 @@ flowchart TB
       attachmentAnalysis?<br/>
       lightWeightMessageAnalysis?"]
       FULLWEIGHT_OUTPUTS["<b>Output</b><br/>
-      6.6 fullWeightMessageAnalysis = {<br/>
+      6.6 fullWeightMessageAnalysisOutput = {<br/>
+      decision: { route: continue / stop }<br/>
+      history: {<br/>
+      checked: FullWeightOutputCheckName[]<br/>
+      failed: FullWeightOutputCheckName[]<br/>
+      refusalReason?<br/>
+      }<br/>
+      analysis?: {<br/>
       user_language?<br/>
       segments_lack_comprehension<br/>
       segments_topic<br/>
       segments_signal<br/>
       segments_scope_boundary<br/>
       segments_suspicious<br/>
+      }<br/>
+      error?: { message, rawResponse? }<br/>
       }"]
       FULLWEIGHT_INPUTS --> FULLWEIGHT_OUTPUTS
     end
@@ -236,9 +230,9 @@ flowchart TB
         turnUnderstandingDeltaInput = {<br/>
         securityGateSummary<br/>
         attachmentAnalysis?<br/>
-        analysisGate<br/>
+        analysisGate?<br/>
         lightWeightMessageAnalysis?<br/>
-        fullWeightMessageAnalysis?<br/>
+        fullWeightMessageAnalysisOutput?<br/>
         supportTopicKnowledge<br/>
         conversationHistory<br/>
         }"]
@@ -248,9 +242,9 @@ flowchart TB
           COMPLETED_DELTA_INPUTS["<b>turnUnderstandingDeltaInput</b><br/>
           securityGateSummary<br/>
           attachmentAnalysis?<br/>
-          analysisGate<br/>
+          analysisGate?<br/>
           lightWeightMessageAnalysis?<br/>
-          fullWeightMessageAnalysis?<br/>
+          fullWeightMessageAnalysisOutput?<br/>
           supportTopicKnowledge<br/>
           conversationHistory"]
           COMPLETED_DELTA_OUTPUTS["<b>Output</b><br/>
@@ -288,13 +282,13 @@ flowchart TB
 
     T_FAIL_ATTACHMENT_SECURITY --> T_STOP_DELTA_INPUT
 
-    T_ADD_ATTACHMENT_SECURITY --> T_ANALYSIS_GATE_INPUT
+    T_ADD_ATTACHMENT_SECURITY -->|attachment analyzed<br/>skip analysis gate| T_FULLWEIGHT_INPUT
 
     T_ANALYSIS_GATE_INPUT --> ANALYSIS_GATE_DATA
-    ANALYSIS_GATE_DATA --> T_LIGHTWEIGHT_ROUTE
+    ANALYSIS_GATE_DATA --> T_ANALYSIS_ROUTE
 
-    T_LIGHTWEIGHT_ROUTE -->|true| T_LIGHTWEIGHT_INPUT
-    T_LIGHTWEIGHT_ROUTE -.->|false<br/>run fullweight analysis directly| T_FULLWEIGHT_INPUT
+    T_ANALYSIS_ROUTE -->|light_weight_first| T_LIGHTWEIGHT_INPUT
+    T_ANALYSIS_ROUTE -->|full_weight_direct| T_FULLWEIGHT_INPUT
 
     T_LIGHTWEIGHT_INPUT --> LIGHTWEIGHT_DATA
     LIGHTWEIGHT_DATA --> T_FULLWEIGHT_ROUTE
@@ -332,7 +326,7 @@ flowchart TB
   class MESSAGE_SECURITY_INPUTS,ATTACHMENT_INPUTS,ATTACHMENT_SECURITY_INPUTS,ANALYSIS_GATE_INPUTS,LIGHTWEIGHT_INPUTS,FULLWEIGHT_INPUTS,STOP_DELTA_INPUTS,COMPLETED_DELTA_INPUTS inputBlock;
   class MESSAGE_SECURITY_OUTPUTS,ATTACHMENT_OUTPUTS,ATTACHMENT_SECURITY_OUTPUTS,ANALYSIS_GATE_OUTPUTS,LIGHTWEIGHT_OUTPUTS,FULLWEIGHT_OUTPUTS,STOP_DELTA_OUTPUTS,COMPLETED_DELTA_OUTPUTS outputBlock;
 
-  class T_SECURITY_INIT,T_MESSAGE_SECURITY_INPUT,T_MESSAGE_SECURITY_ROUTE,T_ADD_MESSAGE_SECURITY,T_FAIL_MESSAGE_SECURITY,T_ATTACHMENT_CHECK,T_ATTACHMENT_INPUT,T_ATTACHMENT_SECURITY_INPUT,T_ATTACHMENT_SECURITY_ROUTE,T_ADD_ATTACHMENT_SECURITY,T_FAIL_ATTACHMENT_SECURITY,T_ANALYSIS_GATE_INPUT,T_LIGHTWEIGHT_ROUTE,T_LIGHTWEIGHT_INPUT,T_FULLWEIGHT_ROUTE,T_FULLWEIGHT_INPUT,T_STOP_DELTA_INPUT,T_COMPLETED_DELTA_INPUT,T_RETURN processingBlock;
+  class T_SECURITY_INIT,T_MESSAGE_SECURITY_INPUT,T_MESSAGE_SECURITY_ROUTE,T_ADD_MESSAGE_SECURITY,T_FAIL_MESSAGE_SECURITY,T_ATTACHMENT_CHECK,T_ATTACHMENT_INPUT,T_ATTACHMENT_SECURITY_INPUT,T_ATTACHMENT_SECURITY_ROUTE,T_ADD_ATTACHMENT_SECURITY,T_FAIL_ATTACHMENT_SECURITY,T_ANALYSIS_GATE_INPUT,T_ANALYSIS_ROUTE,T_LIGHTWEIGHT_INPUT,T_FULLWEIGHT_ROUTE,T_FULLWEIGHT_INPUT,T_STOP_DELTA_INPUT,T_COMPLETED_DELTA_INPUT,T_RETURN processingBlock;
 
   class NEXT_OUTPUTS nextOutputBlock;
 

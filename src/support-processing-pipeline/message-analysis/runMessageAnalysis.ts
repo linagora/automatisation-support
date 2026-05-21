@@ -9,15 +9,16 @@ import { runAttachmentAnalysis } from "./attachment-analysis/runAttachmentAnalys
 import { runAnalysisGate } from "./analysis-gate/runAnalysisGate";
 import { runLightWeightMessageAnalysis } from "./lightweight-message-analysis/runLightWeightMessageAnalysis";
 import { runFullWeightMessageAnalysis } from "./fullweight-message-analysis/runFullWeightMessageAnalysis";
-import { assembleTurnUnderstandingDelta } from "./turn-understanding-delta/assembleTurnUnderstandingDelta";
+import { assembleTurnUnderstandingDelta } from "./turn-understanding-delta/runTurnUnderstandingDelta";
 
 import type {
+  AnalysisGate,
   AnalysisGateInput,
   AttachmentAnalysis,
   AttachmentAnalysisInput,
   AttachmentAnalysisSecurityInput,
-  FullWeightMessageAnalysis,
   FullWeightMessageAnalysisInput,
+  FullWeightMessageAnalysisOutput,
   LatestUserMessageSecurityInput,
   LightWeightMessageAnalysis,
   LightWeightMessageAnalysisInput,
@@ -82,30 +83,24 @@ async function runMessageAnalysis(
       latestUserMessageSecurityInput
     );
 
-  switch (latestUserMessageSecurityDecision.decision.route) {
-    case "continue": {
-      securityGateSummary.gateChecked.latestUserMessageSecurityDecision =
-        latestUserMessageSecurityDecision;
+  if (latestUserMessageSecurityDecision.decision.route === "stop") {
+    securityGateSummary.gateFailed = {
+      latestUserMessageSecurityDecision
+    };
 
-      break;
-    }
+    const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
+      securityGateSummary,
+      supportTopicKnowledge,
+      conversationHistory
+    };
 
-    case "stop": {
-      securityGateSummary.gateFailed = {
-        latestUserMessageSecurityDecision
-      };
-
-      const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
-        securityGateSummary,
-        supportTopicKnowledge,
-        conversationHistory
-      };
-
-      return messageAnalysisSteps.assembleTurnUnderstandingDelta(
-        turnUnderstandingDeltaInput
-      );
-    }
+    return messageAnalysisSteps.assembleTurnUnderstandingDelta(
+      turnUnderstandingDeltaInput
+    );
   }
+
+  securityGateSummary.gateChecked.latestUserMessageSecurityDecision =
+    latestUserMessageSecurityDecision;
 
   /* =====================================================
    * 6.2 attachmentAnalysis
@@ -136,73 +131,74 @@ async function runMessageAnalysis(
         attachmentAnalysisSecurityInput
       );
 
-    switch (attachmentAnalysisSecurityDecision.decision.route) {
-      case "continue": {
-        securityGateSummary.gateChecked.attachmentAnalysisSecurityDecision =
-          attachmentAnalysisSecurityDecision;
+    if (attachmentAnalysisSecurityDecision.decision.route === "stop") {
+      securityGateSummary.gateFailed = {
+        attachmentAnalysisSecurityDecision
+      };
 
-        break;
-      }
+      const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
+        securityGateSummary,
+        supportTopicKnowledge,
+        conversationHistory
+      };
 
-      case "stop": {
-        securityGateSummary.gateFailed = {
-          attachmentAnalysisSecurityDecision
-        };
-
-        const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
-          securityGateSummary,
-          supportTopicKnowledge,
-          conversationHistory
-        };
-
-        return messageAnalysisSteps.assembleTurnUnderstandingDelta(
-          turnUnderstandingDeltaInput
-        );
-      }
+      return messageAnalysisSteps.assembleTurnUnderstandingDelta(
+        turnUnderstandingDeltaInput
+      );
     }
+
+    securityGateSummary.gateChecked.attachmentAnalysisSecurityDecision =
+      attachmentAnalysisSecurityDecision;
   }
 
   /* =====================================================
    * 6.4 analysisGate
+   *
+   * Important:
+   * If there is an attachmentAnalysis, skip analysisGate and go
+   * directly to full-weight analysis.
    * ===================================================== */
 
-  const analysisGateInput: AnalysisGateInput = {
-    latestUserMessage,
-    supportTopicKnowledge,
-    conversationHistory,
-    ...(attachmentAnalysis ? { attachmentAnalysis } : {})
-  };
-
-  const analysisGate =
-    await messageAnalysisSteps.runAnalysisGate(analysisGateInput);
-
-  /* =====================================================
-   * 6.5 lightWeightMessageAnalysis
-   * ===================================================== */
-
+  let analysisGate: AnalysisGate | undefined;
   let lightWeightMessageAnalysis: LightWeightMessageAnalysis | undefined;
+  let fullWeightMessageAnalysisOutput:
+    FullWeightMessageAnalysisOutput | undefined;
 
-  if (analysisGate.shouldRunLightWeightMessageAnalysis === true) {
-    const lightWeightMessageAnalysisInput: LightWeightMessageAnalysisInput = {
-      latestUserMessage,
-      supportTopicKnowledge,
-      conversationHistory,
-      ...(attachmentAnalysis ? { attachmentAnalysis } : {})
+  if (!attachmentAnalysis) {
+    const analysisGateInput: AnalysisGateInput = {
+      latestUserMessage
     };
 
-    lightWeightMessageAnalysis =
-      await messageAnalysisSteps.runLightWeightMessageAnalysis(
-        lightWeightMessageAnalysisInput
-      );
+    analysisGate = await messageAnalysisSteps.runAnalysisGate(
+      analysisGateInput
+    );
+
+    /* =====================================================
+     * 6.5 lightWeightMessageAnalysis
+     * ===================================================== */
+
+    if (analysisGate.decision.route === "light_weight_first") {
+      const lightWeightMessageAnalysisInput: LightWeightMessageAnalysisInput = {
+        latestUserMessage,
+        supportTopicKnowledge,
+        conversationHistory
+      };
+
+      lightWeightMessageAnalysis =
+        await messageAnalysisSteps.runLightWeightMessageAnalysis(
+          lightWeightMessageAnalysisInput
+        );
+    }
   }
 
   /* =====================================================
-   * 6.6 fullWeightMessageAnalysis
+   * 6.6 fullWeightMessageAnalysisOutput
    * ===================================================== */
 
-  let fullWeightMessageAnalysis: FullWeightMessageAnalysis | undefined;
-
   const shouldRunFullWeightMessageAnalysis =
+    Boolean(attachmentAnalysis) ||
+    !analysisGate ||
+    analysisGate.decision.route === "full_weight_direct" ||
     !lightWeightMessageAnalysis ||
     lightWeightMessageAnalysis.shouldRunSupportMessageAnalysis === true;
 
@@ -215,7 +211,7 @@ async function runMessageAnalysis(
       ...(lightWeightMessageAnalysis ? { lightWeightMessageAnalysis } : {})
     };
 
-    fullWeightMessageAnalysis =
+    fullWeightMessageAnalysisOutput =
       await messageAnalysisSteps.runFullWeightMessageAnalysis(
         fullWeightMessageAnalysisInput
       );
@@ -228,9 +224,11 @@ async function runMessageAnalysis(
   const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
     securityGateSummary,
     ...(attachmentAnalysis ? { attachmentAnalysis } : {}),
-    analysisGate,
+    ...(analysisGate ? { analysisGate } : {}),
     ...(lightWeightMessageAnalysis ? { lightWeightMessageAnalysis } : {}),
-    ...(fullWeightMessageAnalysis ? { fullWeightMessageAnalysis } : {}),
+    ...(fullWeightMessageAnalysisOutput
+      ? { fullWeightMessageAnalysisOutput }
+      : {}),
     supportTopicKnowledge,
     conversationHistory
   };

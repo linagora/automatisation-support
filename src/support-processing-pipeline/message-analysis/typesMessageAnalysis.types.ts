@@ -127,15 +127,38 @@ export type SecurityGateSummary = {
  * 6.4 analysisGate
  * ===================================================== */
 
+export type AnalysisGateRoute =
+  | "light_weight_first"
+  | "full_weight_direct";
+
+export type AnalysisGateCheckName =
+  | "empty_message"
+  | "short_message"
+  | "pure_signal_message"
+  | "closure_or_confirmation_message"
+  | "scope_boundary_candidate"
+  | "vague_complaint_without_actionable_detail"
+  | "ambiguous_message_without_actionable_detail"
+  | "explicit_bug_or_error"
+  | "explicit_access_security_issue"
+  | "explicit_billing_issue"
+  | "explicit_question_or_request"
+  | "actionable_trigger_context"
+  | "error_code_detected"
+  | "detailed_actionable_message";
+
 export type AnalysisGateInput = {
   latestUserMessage: LatestUserMessage;
-  supportTopicKnowledge: SupportTopicKnowledge;
-  conversationHistory: ConversationHistory;
-  attachmentAnalysis?: AttachmentAnalysis;
 };
 
 export type AnalysisGate = {
-  shouldRunLightWeightMessageAnalysis: boolean;
+  decision: {
+    route: AnalysisGateRoute;
+  };
+  history: {
+    prefer_light_first: AnalysisGateCheckName[];
+    prefer_full_direct: AnalysisGateCheckName[];
+  };
 };
 
 /* =====================================================
@@ -146,7 +169,6 @@ export type LightWeightMessageAnalysisInput = {
   latestUserMessage: LatestUserMessage;
   supportTopicKnowledge: SupportTopicKnowledge;
   conversationHistory: ConversationHistory;
-  attachmentAnalysis?: AttachmentAnalysis;
 };
 
 export type LightWeightMessageAnalysis = {

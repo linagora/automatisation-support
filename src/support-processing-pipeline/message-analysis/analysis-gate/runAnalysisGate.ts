@@ -1,67 +1,58 @@
-type UnknownObject = Record<string, unknown>;
+// src/support-processing-pipeline/message-analysis/analysis-gate/runAnalysisGate.ts
 
-interface SupportKnowledge extends UnknownObject {}
+/**
+ * Analysis Gate
+ *
+ * Decides whether the latest user message should go:
+ * - first through lightweight analysis
+ * - directly through full-weight analysis
+ *
+ * This gate is deterministic.
+ * It only reads latestUserMessage.
+ */
 
-interface SupportKnowledgeDelta extends UnknownObject {}
+import type {
+  LatestUserMessage
+} from "../../typesSupportProcessingPipeline.types";
 
-interface RunPreanalysisDecisionInput {
-  latestUserMessage?: string;
-  lastUserMessage?: string;
-  userMessage?: string;
-  message?: string;
-  text?: string;
+type AnalysisGateRoute =
+  | "light_weight_first"
+  | "full_weight_direct";
 
-  supportKnowledge?: SupportKnowledge;
-  lastSupportKnowledgeDelta?: SupportKnowledgeDelta | null;
-  supportKnowledgeDeltaHistory?: SupportKnowledgeDelta[];
-  conversationLogs?: UnknownObject[];
-  userInformations?: UnknownObject | null;
-  visibility?: UnknownObject;
-  metadata?: UnknownObject;
+type AnalysisGateCheckName =
+  | "empty_message"
+  | "short_message"
+  | "pure_signal_message"
+  | "closure_or_confirmation_message"
+  | "scope_boundary_candidate"
+  | "vague_complaint_without_actionable_detail"
+  | "ambiguous_message_without_actionable_detail"
+  | "explicit_bug_or_error"
+  | "explicit_access_security_issue"
+  | "explicit_billing_issue"
+  | "explicit_question_or_request"
+  | "actionable_trigger_context"
+  | "error_code_detected"
+  | "detailed_actionable_message";
 
-  [key: string]: unknown;
-}
+export type AnalysisGateInput = {
+  latestUserMessage: LatestUserMessage;
+};
 
-interface RunDecisionPreAnalysis {
-  /**
-   * True means: run LLM0 first because the message is ambiguous,
-   * contextual, non-actionable, potentially out-of-scope, or needs lightweight classification.
-   *
-   * False means: do not run LLM0 first. The pipeline can continue with its normal next step.
-   */
-  shouldRunLLM0: boolean;
-
-  /**
-   * Main reason for the decision.
-   */
-  reason: string;
-
-  /**
-   * All deterministic reasons that contributed to the decision.
-   */
-  reasons: string[];
-
-  /**
-   * Deterministically detected signal candidates.
-   * LLM0 may later refine or reject these.
-   */
-  detectedSignals: string[];
-
-  /**
-   * Deterministically detected scope-boundary candidates.
-   * LLM0 may later refine or reject these.
-   */
-  detectedScopeBoundaries: string[];
-}
-
-interface RunPreanalysisDecisionOutput {
-  runDecisionPreAnalysis: RunDecisionPreAnalysis;
-}
+export type AnalysisGateOutput = {
+  decision: {
+    route: AnalysisGateRoute;
+  };
+  history: {
+    prefer_light_first: AnalysisGateCheckName[];
+    prefer_full_direct: AnalysisGateCheckName[];
+  };
+};
 
 const SHORT_MESSAGE_MAX_WORDS = 5;
-const MIN_ACTIONABLE_DETAIL_LENGTH = 40;
+const DETAILED_MESSAGE_MIN_LENGTH = 40;
 
-const ACTIONABLE_SUPPORT_PATTERNS = [
+const BUG_OR_ERROR_PATTERNS = [
   /\berreur\b/i,
   /\berror\b/i,
   /\bbug\b/i,
@@ -69,9 +60,19 @@ const ACTIONABLE_SUPPORT_PATTERNS = [
   /\bproblem\b/i,
   /\bincident\b/i,
   /\bimpossible\b/i,
-  /\bbloque\b/i,
-  /\bblocked\b/i,
   /\bcrash\b/i,
+  /\bne fonctionne pas\b/i,
+  /\bne marche pas\b/i,
+  /\bca ne marche pas\b/i,
+  /\bca marche pas\b/i,
+  /\brien ne se passe\b/i,
+  /\bnot working\b/i,
+  /\bdoes not work\b/i,
+  /\bi cannot\b/i,
+  /\bi can't\b/i
+];
+
+const ACCESS_SECURITY_PATTERNS = [
   /\bconnexion\b/i,
   /\blogin\b/i,
   /\bconnecter\b/i,
@@ -80,28 +81,48 @@ const ACTIONABLE_SUPPORT_PATTERNS = [
   /\bpassword\b/i,
   /\bcompte\b/i,
   /\baccount\b/i,
-  /\bmail\b/i,
-  /\bemail\b/i,
-  /\bmessage\b/i,
-  /\bcalendrier\b/i,
-  /\bcalendar\b/i,
-  /\bsynchronisation\b/i,
-  /\bsync\b/i,
-  /\bpiece jointe\b/i,
-  /\battachment\b/i,
-  /\bpage\b/i,
-  /\bformulaire\b/i,
-  /\bne fonctionne pas\b/i,
-  /\bne marche pas\b/i,
-  /\bca ne marche pas\b/i,
-  /\bca marche pas\b/i,
-  /\bje n'arrive pas\b/i,
-  /\bje narrive pas\b/i,
-  /\bje ne peux pas\b/i,
-  /\bi cannot\b/i,
-  /\bi can't\b/i,
-  /\bdoes not work\b/i,
-  /\bnot working\b/i,
+  /\bmfa\b/i,
+  /\bpermission\b/i,
+  /\binvitation\b/i
+];
+
+const BILLING_PATTERNS = [
+  /\bfacture\b/i,
+  /\bfacturation\b/i,
+  /\bpaiement\b/i,
+  /\babonnement\b/i,
+  /\bprelevement\b/i,
+  /\bprélèvement\b/i,
+  /\bdebite\b/i,
+  /\bdébité\b/i,
+  /\brefund\b/i,
+  /\bbilling\b/i,
+  /\bpayment\b/i,
+  /\bsubscription\b/i,
+  /\binvoice\b/i
+];
+
+const QUESTION_OR_REQUEST_PATTERNS = [
+  /\bcomment\b/i,
+  /\bhow to\b/i,
+  /\best-ce possible\b/i,
+  /\bis it possible\b/i,
+  /\bje voudrais\b/i,
+  /\bj'aimerais\b/i,
+  /\bi would like\b/i,
+  /\bcan you\b/i,
+  /\bpouvez-vous\b/i
+];
+
+const TRIGGER_CONTEXT_PATTERNS = [
+  /\bquand je\b/i,
+  /\blorsque je\b/i,
+  /\bdes que je\b/i,
+  /\bdès que je\b/i,
+  /\bwhen i\b/i,
+  /\bwhenever i\b/i,
+  /\bafter i\b/i,
+  /\ben cliquant\b/i,
   /\bquand je clique\b/i,
   /\bwhen i click\b/i
 ];
@@ -112,145 +133,51 @@ const ERROR_CODE_PATTERNS = [
   /\berror\s*[0-9]{3,5}\b/i
 ];
 
-const THANKS_PATTERNS = [
+const SIGNAL_PATTERNS = [
   /\bmerci\b/i,
-  /\bmerci beaucoup\b/i,
   /\bthanks\b/i,
   /\bthank you\b/i,
-  /\bthx\b/i
-];
-
-const POSITIVE_PATTERNS = [
   /\bparfait\b/i,
   /\bsuper\b/i,
   /\btop\b/i,
-  /\bexcellent\b/i,
-  /\bgenial\b/i,
-  /\bgreat\b/i,
-  /\bperfect\b/i
+  /\bdesole\b/i,
+  /\bdésolé\b/i,
+  /\bsorry\b/i,
+  /\bj'attends\b/i,
+  /\bany update\b/i,
+  /\bpas satisfait\b/i,
+  /\bdéçu\b/i,
+  /\bdisappointed\b/i,
+  /\brésilier\b/i,
+  /\bcancel my subscription\b/i
 ];
 
-const CLOSURE_PATTERNS = [
-  /\bresolu\b/i,
-  /\bresolue\b/i,
-  /\bregle\b/i,
-  /\breglee\b/i,
-  /\bc'est bon\b/i,
+const CLOSURE_OR_CONFIRMATION_PATTERNS = [
+  /\bok\b/i,
+  /\boui\b/i,
+  /\bnon\b/i,
+  /\bd'accord\b/i,
+  /\bbien recu\b/i,
+  /\bbien reçu\b/i,
   /\bca marche\b/i,
   /\bça marche\b/i,
-  /\bsolved\b/i,
+  /\bc'est bon\b/i,
+  /\bresolu\b/i,
+  /\brésolu\b/i,
   /\bfixed\b/i,
+  /\bsolved\b/i,
   /\bdone\b/i
 ];
 
-const WAITING_PATTERNS = [
-  /\bj'attends\b/i,
-  /\bje suis en attente\b/i,
-  /\btoujours pas de retour\b/i,
-  /\bdes nouvelles\b/i,
-  /\bany update\b/i,
-  /\bwaiting\b/i
-];
-
-const APOLOGY_PATTERNS = [
-  /\bdesole\b/i,
-  /\bdésolé\b/i,
-  /\bpardon\b/i,
-  /\bsorry\b/i
-];
-
-const TIME_SENSITIVE_PATTERNS = [
-  /\burgent\b/i,
-  /\bcritique\b/i,
-  /\basap\b/i,
-  /\bimmediatement\b/i,
-  /\bimmédiatement\b/i,
-  /\bau plus vite\b/i,
-  /\bdes que possible\b/i,
-  /\bdès que possible\b/i,
-  /\bprod\b/i,
-  /\bproduction\b/i,
-  /\bbloquant\b/i
-];
-
-const IMPOLITE_PATTERNS = [
-  /\binacceptable\b/i,
-  /\bhonteux\b/i,
-  /\bnul\b/i,
-  /\bcatastrophique\b/i,
-  /\bscandaleux\b/i,
-  /\bmerde\b/i,
-  /\bfoutage\b/i,
-  /\bshame\b/i,
-  /\bterrible service\b/i
-];
-
-const NEGATIVE_FEEDBACK_PATTERNS = [
-  /\bpas satisfait\b/i,
-  /\binsatisfait\b/i,
-  /\bdecu\b/i,
-  /\bdéçu\b/i,
-  /\bdisappointed\b/i,
-  /\bmauvaise experience\b/i,
-  /\bbad experience\b/i
-];
-
-const CHURN_PATTERNS = [
-  /\bresilier\b/i,
-  /\brésilier\b/i,
-  /\bchanger de fournisseur\b/i,
-  /\bpartir chez\b/i,
-  /\bquitter\b/i,
-  /\bcancel my subscription\b/i,
-  /\bunsubscribe\b/i
-];
-
-const PRICING_PATTERNS = [
-  /\btrop cher\b/i,
-  /\bprix\b/i,
-  /\btarif\b/i,
-  /\bfacturation\b/i,
-  /\bbilling\b/i,
-  /\bexpensive\b/i,
-  /\bprice\b/i,
-  /\bpricing\b/i
-];
-
-const COMMUNICATION_FEEDBACK_PATTERNS = [
-  /\bpas de reponse\b/i,
-  /\bpas de réponse\b/i,
-  /\bmauvaise communication\b/i,
-  /\bcommunication\b/i,
-  /\bpersonne ne repond\b/i,
-  /\bno answer\b/i,
-  /\bno response\b/i
-];
-
-const FEATURE_LOSS_PATTERNS = [
-  /\bfonctionnalite perdue\b/i,
-  /\bfonctionnalité perdue\b/i,
-  /\boption disparue\b/i,
-  /\bavant je pouvais\b/i,
-  /\bfeature removed\b/i,
-  /\bmissing feature\b/i
-];
-
-const SPAM_OR_COMMERCIAL_PATTERNS = [
+const SCOPE_BOUNDARY_PATTERNS = [
   /\bseo\b/i,
   /\bbacklink\b/i,
   /\bcasino\b/i,
   /\bcrypto\b/i,
-  /\binvestment\b/i,
   /\bviagra\b/i,
   /\boffre commerciale\b/i,
   /\bprospection\b/i,
   /\bagence marketing\b/i,
-  /\bpartenariat commercial\b/i,
-  /\bwe can improve your\b/i,
-  /\bgrow your business\b/i
-];
-
-const UNRELATED_REQUEST_PATTERNS = [
   /\becris-moi un poeme\b/i,
   /\bécris-moi un poème\b/i,
   /\braconte une blague\b/i,
@@ -258,16 +185,12 @@ const UNRELATED_REQUEST_PATTERNS = [
   /\brecette de cuisine\b/i,
   /\bgenerate an image\b/i,
   /\bwrite me a poem\b/i,
-  /\btell me a joke\b/i
-];
-
-const NON_SUPPORT_LINAGORA_PATTERNS = [
-  /\bopenai\b/i,
+  /\btell me a joke\b/i,
   /\bchatgpt\b/i,
+  /\bopenai\b/i,
   /\bfacebook\b/i,
   /\binstagram\b/i,
-  /\btiktok\b/i,
-  /\bgoogle ads\b/i
+  /\btiktok\b/i
 ];
 
 function normalizeText(value: string): string {
@@ -290,430 +213,174 @@ function countWords(value: string): number {
 }
 
 function matchesAny(value: string, patterns: RegExp[]): boolean {
-  return patterns.some(function (pattern) {
-    return pattern.test(value);
-  });
+  return patterns.some((pattern) => pattern.test(value));
 }
 
-function addIfMatch(
-  output: string[],
-  value: string,
-  patterns: RegExp[],
-  signal: string
+function addCheck(
+  checks: AnalysisGateCheckName[],
+  check: AnalysisGateCheckName
 ): void {
-  if (matchesAny(value, patterns) && !output.includes(signal)) {
-    output.push(signal);
+  if (!checks.includes(check)) {
+    checks.push(check);
   }
 }
 
-function getStringField(object: UnknownObject, key: string): string {
-  const value = object[key];
-  return typeof value === "string" ? value : "";
-}
-
-function getNestedString(object: UnknownObject, path: string[]): string | null {
-  let current: unknown = object;
-
-  for (const key of path) {
-    if (!current || typeof current !== "object") {
-      return null;
-    }
-
-    current = (current as UnknownObject)[key];
-  }
-
-  return typeof current === "string" ? current : null;
-}
-
-function extractLatestUserMessage(input: RunPreanalysisDecisionInput): string {
-  const directCandidates = [
-    input.latestUserMessage,
-    input.lastUserMessage,
-    input.userMessage,
-    input.message,
-    input.text
-  ];
-
-  for (const candidate of directCandidates) {
-    if (typeof candidate === "string" && candidate.trim().length > 0) {
-      return candidate.trim();
-    }
-  }
-
-  const nestedCandidates = [
-    getNestedString(input, ["inputClean", "latestUserMessage"]),
-    getNestedString(input, ["inputCleaning", "latestUserMessage"]),
-    getNestedString(input, ["messageAnalysis", "latestUserMessage"]),
-    getNestedString(input, ["supportKnowledge", "latestUserMessage"])
-  ];
-
-  for (const candidate of nestedCandidates) {
-    if (candidate && candidate.trim().length > 0) {
-      return candidate.trim();
-    }
-  }
-
-  return extractLatestUserMessageFromLogs(input.conversationLogs);
-}
-
-function extractLatestUserMessageFromLogs(
-  conversationLogs?: UnknownObject[]
-): string {
-  if (!Array.isArray(conversationLogs)) {
-    return "";
-  }
-
-  for (let index = conversationLogs.length - 1; index >= 0; index--) {
-    const log = conversationLogs[index];
-    const role = String(log.role || log.sender || "").toLowerCase();
-
-    const isUser =
-      role === "user" ||
-      role === "customer" ||
-      role === "client" ||
-      role === "end_user";
-
-    if (!isUser) {
-      continue;
-    }
-
-    const content =
-      getStringField(log, "content") ||
-      getStringField(log, "message") ||
-      getStringField(log, "text") ||
-      getStringField(log, "body");
-
-    if (content.trim().length > 0) {
-      return content.trim();
-    }
-  }
-
-  return "";
-}
-
-function detectSignals(message: string): string[] {
+function hasActionableDetail(message: string): boolean {
   const normalized = normalizeText(message);
-  const signals: string[] = [];
-
-  addIfMatch(signals, normalized, THANKS_PATTERNS, "thanks_neutral");
-  addIfMatch(signals, normalized, POSITIVE_PATTERNS, "positive_feedback");
-  addIfMatch(signals, normalized, NEGATIVE_FEEDBACK_PATTERNS, "negative_feedback");
-  addIfMatch(signals, normalized, NEGATIVE_FEEDBACK_PATTERNS, "disappointment");
-  addIfMatch(signals, normalized, CHURN_PATTERNS, "churn_intent");
-  addIfMatch(signals, normalized, WAITING_PATTERNS, "waiting");
-  addIfMatch(signals, normalized, APOLOGY_PATTERNS, "apology");
-  addIfMatch(signals, normalized, CLOSURE_PATTERNS, "closure");
-  addIfMatch(signals, normalized, TIME_SENSITIVE_PATTERNS, "time_sensitive");
-  addIfMatch(signals, normalized, IMPOLITE_PATTERNS, "impolite");
-  addIfMatch(signals, normalized, COMMUNICATION_FEEDBACK_PATTERNS, "communication_feedback");
-  addIfMatch(signals, normalized, PRICING_PATTERNS, "pricing_feedback");
-  addIfMatch(signals, normalized, FEATURE_LOSS_PATTERNS, "feature_loss_feedback");
-
-  if (isShortConfirmation(normalized)) {
-    signals.push("confirmation_without_new_field");
-  }
-
-  if (isComplaintWithoutActionableDetail(message)) {
-    signals.push("complaint_without_actionable_detail");
-  }
-
-  return Array.from(new Set(signals));
-}
-
-function detectScopeBoundaries(
-  message: string,
-  input: RunPreanalysisDecisionInput
-): string[] {
-  const normalized = normalizeText(message);
-  const scopeBoundaries: string[] = [];
-
-  if (
-    matchesAny(normalized, SPAM_OR_COMMERCIAL_PATTERNS) ||
-    hasPotentialSpamMetadata(input.metadata)
-  ) {
-    scopeBoundaries.push("spam_or_commercial");
-  }
-
-  if (matchesAny(normalized, UNRELATED_REQUEST_PATTERNS)) {
-    scopeBoundaries.push("unrelated_request");
-  }
-
-  if (matchesAny(normalized, NON_SUPPORT_LINAGORA_PATTERNS)) {
-    scopeBoundaries.push("non_support_linagora");
-  }
-
-  return Array.from(new Set(scopeBoundaries));
-}
-
-function hasPotentialSpamMetadata(metadata?: UnknownObject): boolean {
-  if (!metadata) {
-    return false;
-  }
-
-  const spamKeys = [
-    "potentialSpammer",
-    "potential_spammer",
-    "isSpam",
-    "is_spam",
-    "spam",
-    "commercial"
-  ];
-
-  return spamKeys.some(function (key) {
-    return metadata[key] === true;
-  });
-}
-
-function isShortConfirmation(normalizedMessage: string): boolean {
-  const confirmations = [
-    "ok",
-    "okay",
-    "daccord",
-    "d'accord",
-    "oui",
-    "yes",
-    "non",
-    "no",
-    "bien recu",
-    "bien reçu",
-    "recu",
-    "reçu"
-  ];
-
-  return confirmations.includes(normalizedMessage);
-}
-
-function isComplaintWithoutActionableDetail(message: string): boolean {
-  const normalized = normalizeText(message);
-
-  const vagueComplaint =
-    normalized.includes("ca ne marche pas") ||
-    normalized.includes("ça ne marche pas") ||
-    normalized.includes("ca marche pas") ||
-    normalized.includes("ne fonctionne pas") ||
-    normalized.includes("probleme") ||
-    normalized.includes("bug");
-
-  if (!vagueComplaint) {
-    return false;
-  }
-
-  return !hasActionableDetails(message);
-}
-
-function hasStrongActionableSupportContent(message: string): boolean {
-  const normalized = normalizeText(message);
-
-  const hasActionablePattern =
-    matchesAny(normalized, ACTIONABLE_SUPPORT_PATTERNS) ||
-    matchesAny(normalized, ERROR_CODE_PATTERNS);
-
-  if (!hasActionablePattern) {
-    return false;
-  }
-
-  return hasActionableDetails(message);
-}
-
-function hasActionableDetails(message: string): boolean {
-  const normalized = normalizeText(message);
-
-  if (message.length >= MIN_ACTIONABLE_DETAIL_LENGTH) {
-    return true;
-  }
-
-  if (matchesAny(normalized, ERROR_CODE_PATTERNS)) {
-    return true;
-  }
-
-  if (normalized.includes("quand je") || normalized.includes("when i")) {
-    return true;
-  }
-
-  if (normalized.includes("depuis")) {
-    return true;
-  }
-
-  if (normalized.includes("capture") || normalized.includes("screenshot")) {
-    return true;
-  }
-
-  if (/https?:\/\//i.test(message)) {
-    return true;
-  }
-
-  if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(message)) {
-    return true;
-  }
-
-  return false;
-}
-
-function previousContextSuggestsResolutionOrClosure(
-  input: RunPreanalysisDecisionInput
-): boolean {
-  const objectsToInspect = [
-    input.lastSupportKnowledgeDelta,
-    input.supportKnowledge,
-    ...(Array.isArray(input.supportKnowledgeDeltaHistory)
-      ? input.supportKnowledgeDeltaHistory.slice(-3)
-      : [])
-  ];
-
-  const text = objectsToInspect
-    .filter(Boolean)
-    .map(function (value) {
-      return JSON.stringify(value);
-    })
-    .join(" ");
-
-  const normalized = normalizeText(text);
 
   return (
-    normalized.includes("resolved") ||
-    normalized.includes("resolu") ||
-    normalized.includes("closed") ||
-    normalized.includes("closure") ||
-    normalized.includes("solved") ||
-    normalized.includes("fixed")
+    message.length >= DETAILED_MESSAGE_MIN_LENGTH ||
+    matchesAny(normalized, ERROR_CODE_PATTERNS) ||
+    matchesAny(normalized, TRIGGER_CONTEXT_PATTERNS) ||
+    /https?:\/\//i.test(message)
   );
 }
 
-function createDecision(params: {
-  shouldRunLLM0: boolean;
-  reason: string;
-  reasons?: string[];
-  detectedSignals: string[];
-  detectedScopeBoundaries: string[];
-}): RunDecisionPreAnalysis {
-  const reasons = params.reasons && params.reasons.length > 0
-    ? params.reasons
-    : [params.reason];
+function collectFullDirectChecks(
+  message: string
+): AnalysisGateCheckName[] {
+  const normalized = normalizeText(message);
+  const checks: AnalysisGateCheckName[] = [];
 
-  return {
-    shouldRunLLM0: params.shouldRunLLM0,
-    reason: params.reason,
-    reasons: Array.from(new Set(reasons)),
-    detectedSignals: params.detectedSignals,
-    detectedScopeBoundaries: params.detectedScopeBoundaries
-  };
+  if (matchesAny(normalized, ERROR_CODE_PATTERNS)) {
+    addCheck(checks, "error_code_detected");
+  }
+
+  if (matchesAny(normalized, BUG_OR_ERROR_PATTERNS)) {
+    addCheck(checks, "explicit_bug_or_error");
+  }
+
+  if (matchesAny(normalized, ACCESS_SECURITY_PATTERNS)) {
+    addCheck(checks, "explicit_access_security_issue");
+  }
+
+  if (matchesAny(normalized, BILLING_PATTERNS)) {
+    addCheck(checks, "explicit_billing_issue");
+  }
+
+  if (matchesAny(normalized, QUESTION_OR_REQUEST_PATTERNS)) {
+    addCheck(checks, "explicit_question_or_request");
+  }
+
+  if (matchesAny(normalized, TRIGGER_CONTEXT_PATTERNS)) {
+    addCheck(checks, "actionable_trigger_context");
+  }
+
+  if (hasActionableDetail(message)) {
+    addCheck(checks, "detailed_actionable_message");
+  }
+
+  return checks;
 }
 
-function decideShouldRunLLM0(params: {
-  message: string;
-  signals: string[];
-  scopeBoundaries: string[];
-  hasStrongActionableSupportContent: boolean;
-  previousContextSuggestsResolution: boolean;
-}): RunDecisionPreAnalysis {
-  const {
-    message,
-    signals,
-    scopeBoundaries,
-    hasStrongActionableSupportContent,
-    previousContextSuggestsResolution
-  } = params;
+function collectLightFirstChecks(
+  message: string,
+  fullDirectChecks: AnalysisGateCheckName[]
+): AnalysisGateCheckName[] {
+  const normalized = normalizeText(message);
+  const checks: AnalysisGateCheckName[] = [];
 
-  if (!message.trim()) {
-    return createDecision({
-      shouldRunLLM0: false,
-      reason: "no_latest_user_message_found",
-      detectedSignals: [],
-      detectedScopeBoundaries: []
-    });
+  if (!normalized) {
+    addCheck(checks, "empty_message");
+    return checks;
   }
-
-  const reasons: string[] = [];
 
   const isShort = countWords(message) <= SHORT_MESSAGE_MAX_WORDS;
-
-  if (previousContextSuggestsResolution) {
-    reasons.push("previous_context_suggests_resolution_or_closure");
-  }
-
-  if (scopeBoundaries.length > 0) {
-    reasons.push("scope_boundary_detected");
-  }
-
-  if (signals.length > 0) {
-    reasons.push("non_actionable_or_contextual_signal_detected");
-  }
+  const hasFullDirectSignal = fullDirectChecks.length > 0;
 
   if (isShort) {
-    reasons.push("short_message");
-  }
-
-  /**
-   * Strong actionable support content means LLM0 is not needed.
-   * This function does not decide to run LLM1.
-   * It only decides whether LLM0 is needed before the rest of the pipeline.
-   */
-  if (hasStrongActionableSupportContent) {
-    return createDecision({
-      shouldRunLLM0: false,
-      reason: "strong_actionable_support_content_detected",
-      reasons: ["strong_actionable_support_content_detected", ...reasons],
-      detectedSignals: signals,
-      detectedScopeBoundaries: scopeBoundaries
-    });
+    addCheck(checks, "short_message");
   }
 
   if (
-    scopeBoundaries.length > 0 ||
-    signals.length > 0 ||
-    isShort ||
-    previousContextSuggestsResolution
+    matchesAny(normalized, SIGNAL_PATTERNS) &&
+    !hasFullDirectSignal
   ) {
-    return createDecision({
-      shouldRunLLM0: true,
-      reason: reasons[0] || "preanalysis_needed",
-      reasons,
-      detectedSignals: signals,
-      detectedScopeBoundaries: scopeBoundaries
-    });
+    addCheck(checks, "pure_signal_message");
   }
 
-  return createDecision({
-    shouldRunLLM0: true,
-    reason: "ambiguous_message_without_enough_actionable_support_detail",
-    detectedSignals: signals,
-    detectedScopeBoundaries: scopeBoundaries
-  });
+  if (
+    matchesAny(normalized, CLOSURE_OR_CONFIRMATION_PATTERNS) &&
+    !hasFullDirectSignal
+  ) {
+    addCheck(checks, "closure_or_confirmation_message");
+  }
+
+  if (matchesAny(normalized, SCOPE_BOUNDARY_PATTERNS)) {
+    addCheck(checks, "scope_boundary_candidate");
+  }
+
+  if (
+    matchesAny(normalized, BUG_OR_ERROR_PATTERNS) &&
+    !hasActionableDetail(message)
+  ) {
+    addCheck(checks, "vague_complaint_without_actionable_detail");
+  }
+
+  if (
+    !hasFullDirectSignal &&
+    checks.length === 0
+  ) {
+    addCheck(checks, "ambiguous_message_without_actionable_detail");
+  }
+
+  return checks;
 }
 
-function runPreanalysisDecision(
-  input: RunPreanalysisDecisionInput
-): RunPreanalysisDecisionOutput {
-  const latestUserMessage = extractLatestUserMessage(input);
+function decideRoute(params: {
+  preferLightFirst: AnalysisGateCheckName[];
+  preferFullDirect: AnalysisGateCheckName[];
+}): AnalysisGateRoute {
+  const hasFullDirectEvidence = params.preferFullDirect.length > 0;
+  const hasOnlyLightEvidence =
+    params.preferLightFirst.length > 0 &&
+    params.preferFullDirect.length === 0;
 
-  const signals = detectSignals(latestUserMessage);
-  const scopeBoundaries = detectScopeBoundaries(latestUserMessage, input);
+  if (hasFullDirectEvidence) {
+    return "full_weight_direct";
+  }
 
-  const decision = decideShouldRunLLM0({
-    message: latestUserMessage,
-    signals,
-    scopeBoundaries,
-    hasStrongActionableSupportContent: hasStrongActionableSupportContent(latestUserMessage),
-    previousContextSuggestsResolution: previousContextSuggestsResolutionOrClosure(input)
-  });
+  if (hasOnlyLightEvidence) {
+    return "light_weight_first";
+  }
+
+  return "light_weight_first";
+}
+
+function runAnalysisGate(
+  input: AnalysisGateInput
+): AnalysisGateOutput {
+  const latestUserMessageContent =
+    input.latestUserMessage.content.trim();
+
+  const preferFullDirect = collectFullDirectChecks(
+    latestUserMessageContent
+  );
+
+  const preferLightFirst = collectLightFirstChecks(
+    latestUserMessageContent,
+    preferFullDirect
+  );
 
   return {
-    runDecisionPreAnalysis: decision
+    decision: {
+      route: decideRoute({
+        preferLightFirst,
+        preferFullDirect
+      })
+    },
+    history: {
+      prefer_light_first: preferLightFirst,
+      prefer_full_direct: preferFullDirect
+    }
   };
 }
 
 export {
-  runPreanalysisDecision,
-  hasStrongActionableSupportContent,
-  isComplaintWithoutActionableDetail,
-  detectSignals,
-  detectScopeBoundaries,
-  extractLatestUserMessage,
-  decideShouldRunLLM0
+  runAnalysisGate
 };
 
 export type {
-  RunDecisionPreAnalysis,
-  RunPreanalysisDecisionInput,
-  RunPreanalysisDecisionOutput
+  AnalysisGateRoute,
+  AnalysisGateCheckName
 };
