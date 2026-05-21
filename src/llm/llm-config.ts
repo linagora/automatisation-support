@@ -36,7 +36,7 @@ const MODEL_DEFINITIONS: Record<string, LLMModelDefinition> = {
     defaultMaxEstimatedTotalTokens: 5000
   },
 
-  fullAnalysis: {
+  fullWeightMessageAnalysis: {
     envPrefix: "LLM_FULL",
     defaultModel: "gpt-4",
     defaultProvider: "openai",

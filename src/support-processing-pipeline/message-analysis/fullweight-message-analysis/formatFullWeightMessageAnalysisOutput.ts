@@ -212,22 +212,26 @@ function formatFullWeightMessageAnalysisOutput(
     "segments_suspicious_valid"
   );
 
-  const analysis: FullWeightCleanAnalysis = {
-    segments_lack_comprehension:
-      segmentsLackComprehension as FullWeightCleanAnalysis["segments_lack_comprehension"],
-    segments_topic:
-      segmentsTopic as FullWeightCleanAnalysis["segments_topic"],
-    segments_signal:
-      segmentsSignal as FullWeightCleanAnalysis["segments_signal"],
-    segments_scope_boundary:
-      segmentsScopeBoundary as FullWeightCleanAnalysis["segments_scope_boundary"],
-    segments_suspicious:
-      segmentsSuspicious as FullWeightCleanAnalysis["segments_suspicious"],
-  };
+  const analysis: FullWeightCleanAnalysis = {};
 
-  if (isNonEmptyString(cleanedResponse.user_language)) {
-    analysis.user_language = cleanedResponse.user_language;
-  }
+if (isNonEmptyString(cleanedResponse.user_language)) {
+  analysis.user_language = cleanedResponse.user_language;
+}
+
+analysis.segments_lack_comprehension =
+  segmentsLackComprehension as FullWeightCleanAnalysis["segments_lack_comprehension"];
+
+analysis.segments_topic =
+  segmentsTopic as FullWeightCleanAnalysis["segments_topic"];
+
+analysis.segments_signal =
+  segmentsSignal as FullWeightCleanAnalysis["segments_signal"];
+
+analysis.segments_scope_boundary =
+  segmentsScopeBoundary as FullWeightCleanAnalysis["segments_scope_boundary"];
+
+analysis.segments_suspicious =
+  segmentsSuspicious as FullWeightCleanAnalysis["segments_suspicious"];
 
   return {
     decision: {
