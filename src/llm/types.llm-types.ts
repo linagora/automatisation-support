@@ -33,6 +33,7 @@ export interface LLMRequestBody {
   messages: LLMMessage[];
   temperature?: number;
   max_tokens?: number;
+  response_format?: LLMResponseFormat;
 }
 
 export interface LLMUsage {
@@ -85,6 +86,7 @@ export interface CallLLMOptions {
    * Normal token budgets should come from llm-config presets.
    */
   maxEstimatedTotalTokens?: number;
+  responseFormat?: LLMResponseFormat;
 }
 
 /**
@@ -136,12 +138,13 @@ export interface LLMMessage {
   content: string | MessageContent[];
 }
 
-export interface LLMRequestBody {
+export type LLMRequestBody = {
   model: string;
   messages: LLMMessage[];
-  temperature?: number;
-  max_tokens?: number;
-}
+  temperature: number;
+  max_tokens: number;
+  response_format?: CallLLMOptions["responseFormat"];
+};
 
 export interface LLMUsage {
   prompt_tokens?: number;
@@ -201,3 +204,20 @@ export interface LLMTokenEstimate {
   outputTokens: number;
   totalTokens: number;
 }
+
+export type LLMJsonSchemaResponseFormat = {
+  type: "json_schema";
+  json_schema: {
+    name: string;
+    strict: boolean;
+    schema: Record<string, unknown>;
+  };
+};
+
+export type LLMJsonObjectResponseFormat = {
+  type: "json_object";
+};
+
+export type LLMResponseFormat =
+  | LLMJsonSchemaResponseFormat
+  | LLMJsonObjectResponseFormat;

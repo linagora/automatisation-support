@@ -30,25 +30,31 @@ import type {
   RawFullWeightMessageAnalysis
 } from "./typesFullWeightMessageAnalysis.types";
 
+import {
+  fullWeightMessageAnalysisResponseFormat
+} from "./fullWeightMessageAnalysis.schema";
+
 async function requestFullWeightAnalysis(
   input: RequestFullWeightAnalysisInput
 ): Promise<RawFullWeightMessageAnalysis> {
   try {
     const result = await callLLM(
-      [
-        {
-          role: "system",
-          content: input.fullWeightPrompt.systemPrompt
-        },
-        {
-          role: "user",
-          content: input.fullWeightPrompt.userPrompt
-        }
-      ],
-      {
-        preset: "fullWeightMessageAnalysis"
-      }
-    );
+  [
+    {
+      role: "system",
+      content: input.fullWeightPrompt.systemPrompt
+    },
+    {
+      role: "user",
+      content: input.fullWeightPrompt.userPrompt
+    }
+  ],
+  {
+    preset: "fullWeightMessageAnalysis",
+    responseFormat: fullWeightMessageAnalysisResponseFormat
+  }
+);
+
 
     if (!result.success || !result.content) {
       return {

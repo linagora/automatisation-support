@@ -2,8 +2,8 @@
  * Message Analysis orchestrator.
  */
 
-import { runLatestUserMessageSecurity } from "./seurity-functions/latest-user-messsage/runLatestUserMessageSecurity";
-import { runAttachmentAnalysisSecurity } from "./seurity-functions/attachment-analysis/runAttachmentAnalysisSecurity";
+import { runLatestUserMessageSecurity } from "./security-functions/latest-user-messsage/runLatestUserMessageSecurity";
+import { runAttachmentAnalysisSecurity } from "./security-functions/attachment-analysis/runAttachmentAnalysisSecurity";
 
 import { runAttachmentAnalysis } from "./attachment-analysis/runAttachmentAnalysis";
 import { runAnalysisGate } from "./analysis-gate/runAnalysisGate";

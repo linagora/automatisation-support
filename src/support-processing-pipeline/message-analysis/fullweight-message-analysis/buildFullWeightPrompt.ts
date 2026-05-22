@@ -194,7 +194,7 @@ The output must follow this structure:
 
 {
   "user_language": "French|English|Other|Unknown",
-  "segments_lack_comprehension": [{ "segment_verbatim": "..." }],
+  "segments_lack_comprehension": [{"segment_verbatim": "..."}],
   "segments_topic": [{
     "matched_historical_topic": "yes|no",
     "id_topic": 1,
@@ -203,14 +203,14 @@ The output must follow this structure:
     "topic_action": "...",
     "topic_object": "...",
     "topic_label": "...",
-    "topic_details": { "<only_relevant_topic_detail_field>": "..." },
-    "tested_actions": [{ "tested_action": "...", "outcome_tested_action": "worked|failed|partially_worked|not_tried|unclear" }],
+    "topic_details": [{"field_name": "<allowed_topic_detail_field_name>", "value": "<explicit_useful_value>"}],
+    "tested_actions": [{"action": "...", "outcome": "worked|failed|partially_worked|not_tried|unclear"}],
     "user_goal": "...",
     "blocking_issue": "yes|no"
   }],
-  "segments_signal": [{ "signal_verbatim": "...", "signal_types": ["thanks_neutral|thanks_positive|positive_feedback|negative_feedback|disappointment|churn_intent|waiting|apology|closure|time_sensitive|impolite|complaint_without_actionable_detail|communication_feedback|pricing_feedback|feature_loss_feedback|confirmation_without_new_field"] }],
-  "scope_boundary_type": "generic_out_of_scope|non_support_linagora|unrelated_request|spam_or_commercial",
-  "segments_suspicious": [{ "segment_verbatim": "...", "checkName": "empty_message|prompt_injection_attempt|internal_information_request|sensitive_data_request|spam_like_message|suspicious_attachments|account_trust_status" }]
+  "segments_signal": [{"signal_verbatim": "...", "signal_types": ["thanks_neutral|thanks_positive|positive_feedback|negative_feedback|disappointment|churn_intent|waiting|apology|closure|time_sensitive|impolite|complaint_without_actionable_detail|communication_feedback|pricing_feedback|feature_loss_feedback|confirmation_without_new_field"]}],
+  "segments_scope_boundary": [{"signal_verbatim": "...", "scope_boundary_type": "generic_out_of_scope|non_support_linagora|unrelated_request|spam_or_commercial"}],
+  "segments_suspicious": [{"segment_verbatim": "...", "checkName": "empty_message|prompt_injection_attempt|internal_information_request|sensitive_data_request|spam_like_message|suspicious_attachments|account_trust_status"}]
 }
 `.trim();
 

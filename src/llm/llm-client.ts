@@ -163,13 +163,15 @@ async function makeAPICall(
   config: LLMModelConfig,
   messages: LLMMessage[],
   temperature: number,
-  maxTokens: number
+  maxTokens: number,
+  responseFormat?: CallLLMOptions["responseFormat"]
 ): Promise<LLMResponse> {
   const requestBody: LLMRequestBody = {
     model: config.model,
     messages,
     temperature,
-    max_tokens: maxTokens
+    max_tokens: maxTokens,
+    ...(responseFormat ? { response_format: responseFormat } : {})
   };
 
   const controller = new AbortController();
@@ -328,9 +330,9 @@ async function callLLM(
         config,
         messages,
         temperature,
-        maxTokens
-      );
-
+        maxTokens,
+        options.responseFormat
+);
       const content = extractContentFromResponse(response);
 
       const result = buildSuccessResult(

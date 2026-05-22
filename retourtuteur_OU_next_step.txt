@@ -13,3 +13,11 @@ next step : vérifier que la pipeline de runMessageAnalysis est bien respecté d
 potentillement check aussi pour la pipepline générale support
 
 next step 2 : attachment analysis modified. Mermaid is valid. run and types need to be checked et corrected.
+
+
+
+* **Réduire et spécialiser `conversationHistory` avant fullweight** : ne pas envoyer les objets complets (`responsePlan`, anciens signaux, scope boundaries, etc.) si le fullweight n’en a pas besoin. Ça réduit les tokens et évite que le modèle recopie des signaux anciens comme s’ils venaient du dernier message.
+
+* **Envoyer une version “topic memory” propre plutôt que des logs bruts** : pour matcher les topics, le modèle a surtout besoin de `id_topic`, `topic_label`, `topic_details`, `user_goal`, `blocking_issue`, `tested_actions`. Le reste peut perturber la décision et favoriser les mélanges.
+
+* **Ajouter un garde-fou post-LLM dans `turnUnderstandingDelta`** : si un nouveau topic est couvert par un `scope_boundary`, le supprimer du delta. Même avec un bon prompt, le LLM peut encore créer un topic Canva/imprimante en plus du scope boundary.
