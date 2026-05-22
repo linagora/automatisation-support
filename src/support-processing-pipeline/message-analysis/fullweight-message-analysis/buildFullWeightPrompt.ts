@@ -47,7 +47,9 @@ Do NOT create a signal for:
 - "I cannot provide a screenshot/video/logs" → put in topic_details.screenshot_available / video_available / logs_available
 - any statement that fills a topic field (os, platform, frequency, error_message, etc.)
 
-segment_type = "scope_boundary" — use when the segment is outside Linagora support scope.
+segment_type = "scope_boundary" — use when the segment is outside Linagora support scope. 
+If a user request is classified as scope_boundary, do not also create a topic segment for it. 
+Scope-boundary content must appear only in segments_scope_boundary, never in segments_topic.
 
 A message may contain topic + signal + scope_boundary segments together. Never classify the whole message as scope_boundary if any segment is topic or signal.
 

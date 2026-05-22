@@ -2,8 +2,8 @@
  * Message Analysis orchestrator.
  */
 
-import { runLatestUserMessageSecurity } from "./safety-functions/message-gate/runLatestUserMessageSecurity";
-import { runAttachmentAnalysisSecurity } from "./safety-functions/attachment-gate/runAttachmentAnalysisSecurity";
+import { runLatestUserMessageSecurity } from "./seurity-functions/latest-user-messsage/runLatestUserMessageSecurity";
+import { runAttachmentAnalysisSecurity } from "./seurity-functions/attachment-analysis/runAttachmentAnalysisSecurity";
 
 import { runAttachmentAnalysis } from "./attachment-analysis/runAttachmentAnalysis";
 import { runAnalysisGate } from "./analysis-gate/runAnalysisGate";
@@ -116,7 +116,6 @@ async function runMessageAnalysis(
 
     attachmentAnalysis =
       await messageAnalysisSteps.runAttachmentAnalysis(attachmentAnalysisInput);
-
     /* =====================================================
      * 6.3 attachmentAnalysisSecurityDecision
      * ===================================================== */
