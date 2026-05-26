@@ -49,6 +49,15 @@ function emptyTurnUnderstandingDelta(): TurnUnderstandingDelta {
   };
 }
 
+function normalizeSecurityGateSummary(
+  securityGateSummary: TurnUnderstandingDeltaInput["securityGateSummary"]
+): NonNullable<TurnUnderstandingDelta["securityGateSummary"]> {
+  return {
+    gateChecked: securityGateSummary.gateChecked,
+    gateFailed: Object.values(securityGateSummary.gateFailed)
+  };
+}
+
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -479,6 +488,9 @@ function assembleTurnUnderstandingDelta(
   input: TurnUnderstandingDeltaInput
 ): MessageAnalysisOutput {
   const turnUnderstandingDelta = emptyTurnUnderstandingDelta();
+  turnUnderstandingDelta.securityGateSummary = normalizeSecurityGateSummary(
+    input.securityGateSummary
+  );
 
   let analysisSource: AnalysisSource = undefined;
 

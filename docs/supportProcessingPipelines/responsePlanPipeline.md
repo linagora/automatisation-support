@@ -4,25 +4,26 @@ flowchart TB
   subgraph PREVIOUS_STEP["Previous step"]
     direction TB
     PREVIOUS_INPUTS["<b>Input prepared by runSupportProcessingPipeline</b><br/>
-    responseDecisionInput = {<br/>
+    responsePlanInput = {<br/>
+    securityGateSummary = { gateChecked: {}, gateFailed: {} }<br/>
     accountTrustStatus<br/>
     accountProfile<br/>
     accountInteractionTraits<br/>
-    supportTopicKnowledge<br/>
     turnUnderstandingDelta<br/>
     possibleSolutions<br/>
     }"]
   end
 
-  subgraph PIPELINE["9. responsePlan = runResponseDecision(responseDecisionInput)"]
+  subgraph PIPELINE["9. responsePlan = runResponsePlan(responsePlanInput)"]
     direction TB
 
     T_INIT["<b>Initialize responsePlan</b><br/>
     responsePlan = {<br/>
     responseLanguage: resolveResponseLanguage(turnUnderstandingDelta.user_language)<br/>
     messagesPlan: {<br/>
-    warningComprehensionPlanMessage: undefined<br/>
-    inputCleaningPlanMessages: []<br/>
+    securityGatePlanMessage: undefined<br/>
+    suspiciousPlanMessage: undefined<br/>
+    lackComprehensionPlanMessage: undefined<br/>
     scopeBoundaryPlanMessages: []<br/>
     topicPlanMessages: []<br/>
     signalPlanMessages: []<br/>
@@ -30,174 +31,106 @@ flowchart TB
     }<br/>
     }"]
 
+    T_SECURITY_ROUTE{"<b>Security gate failed?</b><br/>
+    securityGateSummary.gateFailed.length > 0"}
+
+    T_ADD_SECURITY["<b>Add security gate plan message</b><br/>
+    Copy securityGateSummary.gateFailed into:<br/>
+    responsePlan.messagesPlan.securityGatePlanMessage"]
+
     T_SUSPICIOUS_ROUTE{"<b>Suspicious segments?</b><br/>
     turnUnderstandingDelta.segments_suspicious.length > 0"}
 
-    T_ADD_SUSPICIOUS["<b>Add input-cleaning plan messages</b><br/>
-    Copy suspicious checkName values into:<br/>
-    responsePlan.messagesPlan.inputCleaningPlanMessages<br/><br/>
-    Response production can render this as:<br/>
-    inform_suspicious<br/>
-    inform_suspicious_attachment<br/>
-    inform_security_stop"]
+    T_ADD_SUSPICIOUS["<b>Add suspicious plan message</b><br/>
+    Copy turnUnderstandingDelta.segments_suspicious into:<br/>
+    responsePlan.messagesPlan.suspiciousPlanMessage"]
 
-    T_RETURN_SUSPICIOUS["<b>Return responsePlan</b><br/>
-    Suspicious / security branch stops here<br/>
-    No topic answer is produced"]
+    T_ADD_LACK["<b>Add lack-comprehension plan message if needed</b><br/>
+    If turnUnderstandingDelta.segments_lack_comprehension.length > 0,<br/>
+    copy the segments into:<br/>
+    responsePlan.messagesPlan.lackComprehensionPlanMessage"]
 
-    T_LACK_COMPREHENSION_ROUTE{"<b>Lack comprehension segments?</b><br/>
-    turnUnderstandingDelta.segments_lack_comprehension.length > 0"}
+    T_ADD_SCOPE["<b>Add scope-boundary plan messages</b><br/>
+    Copy turnUnderstandingDelta.segments_scope_boundary into:<br/>
+    responsePlan.messagesPlan.scopeBoundaryPlanMessages"]
 
-    T_ADD_WARNING["<b>Add warning comprehension plan</b><br/>
-    responsePlan.messagesPlan.warningComprehensionPlanMessage = {<br/>
-    warning_comprehension: yes<br/>
-    unclear_segments_verbatim<br/>
+    T_TOPIC_INPUT["<b>Prepare topicPlanInput</b><br/>
+    topicPlanInput = {<br/>
+    turnUnderstandingDelta<br/>
+    possibleSolutions<br/>
+    decisionSearchingSolution<br/>
     }"]
 
-    T_TOPIC_ROUTE{"<b>Topic segments?</b><br/>
-    turnUnderstandingDelta.segments_topic.length > 0"}
-
-    subgraph NO_TOPIC_FLOW["No topic flow"]
-      direction TB
-
-      T_COPY_SCOPE["<b>Add scope-boundary plan messages</b><br/>
-      Copy turnUnderstandingDelta.segments_scope_boundary<br/>
-      into responsePlan.messagesPlan.scopeBoundaryPlanMessages<br/><br/>
-      Keep the labels produced by message analysis:<br/>
-      generic_out_of_scope<br/>
-      non_support_linagora<br/>
-      unrelated_request"]
-
-      T_COPY_SIGNAL["<b>Add signal plan messages</b><br/>
-      Copy turnUnderstandingDelta.segments_signal<br/>
-      into responsePlan.messagesPlan.signalPlanMessages<br/><br/>
-      Keep the labels produced by message analysis:<br/>
-      thanks / feedback / closure / waiting / complaint / etc."]
-
-      T_RETURN_NO_TOPIC["<b>Return responsePlan</b><br/>
-      No topic-oriented response is produced"]
-
-      T_COPY_SCOPE --> T_COPY_SIGNAL
-      T_COPY_SIGNAL --> T_RETURN_NO_TOPIC
-    end
-
-    subgraph TOPIC_FLOW["Topic flow"]
-      direction TB
-
-      T_POLITENESS["<b>Choose politeness opening</b><br/>
-      politenessOpening = choosePolitenessOpening({<br/>
-      accountProfile<br/>
-      accountInteractionTraits<br/>
-      turnUnderstandingDelta<br/>
-      })"]
-
-      T_RELATION_ACK["<b>Count topic relation acknowledgement</b><br/>
-      topicRelationAcknowledgement = {<br/>
-      new_topics_count<br/>
-      matched_historical_topic_count<br/>
-      }<br/><br/>
-      Count from:<br/>
-      turnUnderstandingDelta.segments_topic[*].matched_historical_topic"]
-
-      subgraph TOPIC_LOOP["For each turnUnderstandingDelta.segments_topic item"]
-        direction TB
-
-        T_TOPIC_IDENTITY["<b>Resolve topic identity</b><br/>
-        topic_id = segment.id_topic<br/>
-        topic_category = segment.topic_category<br/>
-        topic_label = segment.topic_label<br/><br/>
-        If matched historical topic lacks fields,<br/>
-        read missing title/category from supportTopicKnowledge"]
-
-        T_TOPIC_FIELDS["<b>Collect updated fields acknowledgement</b><br/>
-        updated_fields_acknowledgement = segment.topic_details<br/><br/>
-        Keep only fields brought by this turn delta"]
-
-        T_MAIN_RESPONSE["<b>Choose main topic response</b><br/>
-        topic_response = chooseTopicMainResponse({<br/>
-        topicSegment<br/>
-        supportTopicKnowledge<br/>
-        possibleSolutions<br/>
-        accountTrustStatus<br/>
-        })<br/><br/>
-        Details of ask_fields / propose_solution / acknowledgement<br/>
-        are decided in this function"]
-
-        T_APPEND_TOPIC["<b>Append topic plan message</b><br/>
-        responsePlan.messagesPlan.topicPlanMessages.push({<br/>
-        politeness_opening?<br/>
-        topic_relation_acknowledgement?<br/>
-        topic_response<br/>
-        politeness_closure?<br/>
-        })"]
-
-        T_TOPIC_IDENTITY --> T_TOPIC_FIELDS
-        T_TOPIC_FIELDS --> T_MAIN_RESPONSE
-        T_MAIN_RESPONSE --> T_APPEND_TOPIC
-      end
-
-      T_CLOSURE["<b>Choose politeness closure</b><br/>
-      Add closure to the last topicPlanMessage<br/>
-      or to each topicPlanMessage if needed"]
-
-      T_COPY_EXTRA_SCOPE["<b>Add remaining scope-boundary messages</b><br/>
-      Copy turnUnderstandingDelta.segments_scope_boundary<br/>
-      into responsePlan.messagesPlan.scopeBoundaryPlanMessages"]
-
-      T_COPY_EXTRA_SIGNAL["<b>Add remaining signal messages</b><br/>
-      Copy turnUnderstandingDelta.segments_signal<br/>
-      into responsePlan.messagesPlan.signalPlanMessages"]
-
-      T_HANDOVER["<b>Add handover plan messages when needed</b><br/>
-      If topic_response.next_step = handover:<br/>
-      responsePlan.messagesPlan.handoverPlanMessages.push({<br/>
-      topic_id<br/>
-      reason<br/>
-      })"]
-
-      T_POLITENESS --> T_RELATION_ACK
-      T_RELATION_ACK --> TOPIC_LOOP
-      TOPIC_LOOP --> T_CLOSURE
-      T_CLOSURE --> T_COPY_EXTRA_SCOPE
-      T_COPY_EXTRA_SCOPE --> T_COPY_EXTRA_SIGNAL
-      T_COPY_EXTRA_SIGNAL --> T_HANDOVER
-    end
-
-    subgraph FINAL_RESPONSE_PLAN["Final responsePlan shape"]
+    subgraph TOPIC_PLAN_DATA["topicPlanMessages = addTopicPlanMessage(topicPlanInput)"]
       direction LR
-      FINAL_INPUTS["<b>responsePlan</b><br/>
-      responseLanguage<br/>
-      messagesPlan.warningComprehensionPlanMessage?<br/>
-      messagesPlan.inputCleaningPlanMessages<br/>
-      messagesPlan.scopeBoundaryPlanMessages<br/>
-      messagesPlan.topicPlanMessages<br/>
-      messagesPlan.signalPlanMessages<br/>
-      messagesPlan.handoverPlanMessages"]
-      FINAL_OUTPUTS["<b>Output</b><br/>
-      9. responsePlan"]
-      FINAL_INPUTS --> FINAL_OUTPUTS
+      TOPIC_PLAN_INPUTS["<b>topicPlanInput</b><br/>
+      turnUnderstandingDelta<br/>
+      possibleSolutions<br/>
+      decisionSearchingSolution"]
+      TOPIC_PLAN_OUTPUTS["<b>Output</b><br/>
+      topicPlanMessages"]
+      TOPIC_PLAN_INPUTS --> TOPIC_PLAN_OUTPUTS
     end
 
-    T_RETURN_TOPIC["<b>Return responsePlan</b><br/>
-    Topic-oriented response plan is complete"]
+    T_ADD_TOPIC["<b>Add topic plan messages</b><br/>
+    Copy topicPlanMessages into:<br/>
+    responsePlan.messagesPlan.topicPlanMessages"]
 
-    T_INIT --> T_SUSPICIOUS_ROUTE
+    T_ADD_SIGNAL["<b>Add signal plan messages</b><br/>
+    Copy turnUnderstandingDelta.segments_signal into:<br/>
+    responsePlan.messagesPlan.signalPlanMessages"]
+
+    T_HANDOVER_INPUT["<b>Prepare handoverPlanInput</b><br/>
+    handoverPlanInput = {<br/>
+    turnUnderstandingDelta<br/>
+    responsePlan<br/>
+    securityGateSummary<br/>
+    accountTrustStatus<br/>
+    accountProfile<br/>
+    accountInteractionTraits<br/>
+    }"]
+
+    subgraph HANDOVER_PLAN_DATA["handoverPlanMessages = addHandoverPlanMessage(handoverPlanInput)"]
+      direction LR
+      HANDOVER_PLAN_INPUTS["<b>handoverPlanInput</b><br/>
+      turnUnderstandingDelta<br/>
+      responsePlan<br/>
+      securityGateSummary<br/>
+      accountTrustStatus<br/>
+      accountProfile<br/>
+      accountInteractionTraits"]
+      HANDOVER_PLAN_OUTPUTS["<b>Output</b><br/>
+      handoverPlanMessages"]
+      HANDOVER_PLAN_INPUTS --> HANDOVER_PLAN_OUTPUTS
+    end
+
+    T_ADD_HANDOVER["<b>Add handover plan messages</b><br/>
+    Copy handoverPlanMessages into:<br/>
+    responsePlan.messagesPlan.handoverPlanMessages"]
+
+    T_RETURN_FINAL["<b>Return responsePlan</b><br/>
+    Response plan is complete"]
+
+    T_INIT --> T_SECURITY_ROUTE
+
+    T_SECURITY_ROUTE -->|yes| T_ADD_SECURITY
+    T_ADD_SECURITY --> T_HANDOVER_INPUT
+
+    T_SECURITY_ROUTE -->|no| T_SUSPICIOUS_ROUTE
 
     T_SUSPICIOUS_ROUTE -->|yes| T_ADD_SUSPICIOUS
-    T_ADD_SUSPICIOUS --> T_RETURN_SUSPICIOUS
+    T_ADD_SUSPICIOUS --> T_HANDOVER_INPUT
 
-    T_SUSPICIOUS_ROUTE -->|no| T_LACK_COMPREHENSION_ROUTE
-
-    T_LACK_COMPREHENSION_ROUTE -->|yes| T_ADD_WARNING
-    T_LACK_COMPREHENSION_ROUTE -.->|no| T_TOPIC_ROUTE
-    T_ADD_WARNING --> T_TOPIC_ROUTE
-
-    T_TOPIC_ROUTE -->|no| NO_TOPIC_FLOW
-    T_TOPIC_ROUTE -->|yes| TOPIC_FLOW
-
-    NO_TOPIC_FLOW --> FINAL_RESPONSE_PLAN
-    TOPIC_FLOW --> FINAL_RESPONSE_PLAN
-    FINAL_RESPONSE_PLAN --> T_RETURN_TOPIC
+    T_SUSPICIOUS_ROUTE -->|no| T_ADD_LACK
+    T_ADD_LACK --> T_ADD_SCOPE
+    T_ADD_SCOPE --> T_TOPIC_INPUT
+    T_TOPIC_INPUT --> TOPIC_PLAN_DATA
+    TOPIC_PLAN_DATA --> T_ADD_TOPIC
+    T_ADD_TOPIC --> T_ADD_SIGNAL
+    T_ADD_SIGNAL --> T_HANDOVER_INPUT
+    T_HANDOVER_INPUT --> HANDOVER_PLAN_DATA
+    HANDOVER_PLAN_DATA --> T_ADD_HANDOVER
+    T_ADD_HANDOVER --> T_RETURN_FINAL
   end
 
   subgraph NEXT_STEP["Next step"]
@@ -212,6 +145,7 @@ flowchart TB
   PIPELINE --> NEXT_STEP
 
   classDef previousBlock fill:#0b6b3a,stroke:#064a28,color:#ffffff,stroke-width:1px;
+  classDef inputBlock fill:#d5e8d4,stroke:#82b366,color:#000000,stroke-width:1px;
   classDef routeBlock fill:#fff2cc,stroke:#d6b656,color:#000000,stroke-width:1px;
   classDef processingBlock fill:#d9e8f5,stroke:#4f93d2,color:#000000,stroke-width:1px;
   classDef outputBlock fill:#f8cecc,stroke:#b85450,color:#000000,stroke-width:1px;
@@ -219,21 +153,272 @@ flowchart TB
 
   class PREVIOUS_INPUTS previousBlock;
 
-  class T_SUSPICIOUS_ROUTE,T_LACK_COMPREHENSION_ROUTE,T_TOPIC_ROUTE routeBlock;
+  class T_SECURITY_ROUTE,T_SUSPICIOUS_ROUTE routeBlock;
 
-  class T_INIT,T_ADD_SUSPICIOUS,T_RETURN_SUSPICIOUS,T_ADD_WARNING,T_COPY_SCOPE,T_COPY_SIGNAL,T_RETURN_NO_TOPIC,T_POLITENESS,T_RELATION_ACK,T_TOPIC_IDENTITY,T_TOPIC_FIELDS,T_MAIN_RESPONSE,T_APPEND_TOPIC,T_CLOSURE,T_COPY_EXTRA_SCOPE,T_COPY_EXTRA_SIGNAL,T_HANDOVER,T_RETURN_TOPIC processingBlock;
+  class TOPIC_PLAN_INPUTS,HANDOVER_PLAN_INPUTS inputBlock;
+  class TOPIC_PLAN_OUTPUTS,HANDOVER_PLAN_OUTPUTS outputBlock;
 
-  class FINAL_INPUTS,FINAL_OUTPUTS outputBlock;
+  class T_INIT,T_ADD_SECURITY,T_ADD_SUSPICIOUS,T_ADD_LACK,T_ADD_SCOPE,T_TOPIC_INPUT,T_ADD_TOPIC,T_ADD_SIGNAL,T_HANDOVER_INPUT,T_ADD_HANDOVER,T_RETURN_FINAL processingBlock;
+
   class NEXT_OUTPUTS nextOutputBlock;
 
   style PIPELINE fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
   style PREVIOUS_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
   style NEXT_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
 
-  style NO_TOPIC_FLOW fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
-  style TOPIC_FLOW fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
+  style TOPIC_PLAN_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
+  style HANDOVER_PLAN_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
+
+  linkStyle default stroke:#000000,stroke-width:2px;
+```
+
+---
+
+## addTopicMainResponsePipeline
+
+```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 14, "rankSpacing": 22, "subGraphTitleMargin": {"top": 10, "bottom": 25}}, "themeVariables": {"fontSize": "13px", "lineColor": "#000000"}}}%%
+flowchart TB
+  subgraph PREVIOUS_STEP["Previous step"]
+    direction TB
+    PREVIOUS_INPUTS["<b>Input prepared by addTopicPlanMessage</b><br/>
+    topicMainResponseInput = {<br/>
+    topicSegment<br/>
+    possibleSolutions<br/>
+    decisionSearchingSolution<br/>
+    }"]
+  end
+
+  subgraph PIPELINE["main_response = addTopicMainResponse(topicMainResponseInput)"]
+    direction TB
+
+    T_READ_DECISION["<b>Read search decision</b><br/>
+    decisionSearchingSolution"]
+
+    T_ASK_MORE_INFO_ROUTE{"<b>Ask more info?</b><br/>
+    decisionSearchingSolution.type === &quot;ask_more_info&quot;"}
+
+    T_RETURN_ASK_FIELDS["<b>Return ask_fields main response</b><br/>
+    main_response = {<br/>
+    type: &quot;ask_fields&quot;<br/>
+    fields: decisionSearchingSolution.missing_fields<br/>
+    }"]
+
+    T_ACK_ROUTE{"<b>Acknowledgement?</b><br/>
+    decisionSearchingSolution.type === &quot;acknowledgement&quot;"}
+
+    T_RETURN_ACK["<b>Return acknowledgement main response</b><br/>
+    main_response = {<br/>
+    type: &quot;acknowledgement&quot;<br/>
+    }"]
+
+    T_SEARCH_ROUTE{"<b>Solution searching?</b><br/>
+    decisionSearchingSolution.type === &quot;solution_searching&quot;"}
+
+    T_SOLUTION_ROUTE{"<b>Solution available?</b><br/>
+    possibleSolutions.length > 0"}
+
+    T_RETURN_SOLUTION["<b>Return propose_solution main response</b><br/>
+    main_response = {<br/>
+    type: &quot;propose_solution&quot;<br/>
+    solutions: possibleSolutions<br/>
+    }"]
+
+    T_FALLBACK_ACK["<b>Fallback to acknowledgement</b><br/>
+    main_response = {<br/>
+    type: &quot;acknowledgement&quot;<br/>
+    }"]
+
+    T_RETURN_MAIN_RESPONSE["<b>Return main_response</b><br/>
+    Output is consumed by addTopicPlanMessage"]
+
+    T_READ_DECISION --> T_ASK_MORE_INFO_ROUTE
+    T_ASK_MORE_INFO_ROUTE -->|yes| T_RETURN_ASK_FIELDS
+    T_ASK_MORE_INFO_ROUTE -->|no| T_ACK_ROUTE
+
+    T_ACK_ROUTE -->|yes| T_RETURN_ACK
+    T_ACK_ROUTE -->|no| T_SEARCH_ROUTE
+
+    T_SEARCH_ROUTE -->|yes| T_SOLUTION_ROUTE
+    T_SEARCH_ROUTE -->|no| T_FALLBACK_ACK
+
+    T_SOLUTION_ROUTE -->|yes| T_RETURN_SOLUTION
+    T_SOLUTION_ROUTE -->|no| T_FALLBACK_ACK
+
+    T_RETURN_ASK_FIELDS --> T_RETURN_MAIN_RESPONSE
+    T_RETURN_ACK --> T_RETURN_MAIN_RESPONSE
+    T_RETURN_SOLUTION --> T_RETURN_MAIN_RESPONSE
+    T_FALLBACK_ACK --> T_RETURN_MAIN_RESPONSE
+  end
+
+  subgraph NEXT_STEP["Next step"]
+    direction TB
+    NEXT_OUTPUTS["<b>Output provided to addTopicPlanMessage</b><br/>
+    main_response"]
+  end
+
+  PREVIOUS_STEP --> PIPELINE
+  PIPELINE --> NEXT_STEP
+
+  classDef previousBlock fill:#0b6b3a,stroke:#064a28,color:#ffffff,stroke-width:1px;
+  classDef routeBlock fill:#fff2cc,stroke:#d6b656,color:#000000,stroke-width:1px;
+  classDef processingBlock fill:#d9e8f5,stroke:#4f93d2,color:#000000,stroke-width:1px;
+  classDef nextOutputBlock fill:#8b0000,stroke:#5c0000,color:#ffffff,stroke-width:1px;
+
+  class PREVIOUS_INPUTS previousBlock;
+
+  class T_ASK_MORE_INFO_ROUTE,T_ACK_ROUTE,T_SEARCH_ROUTE,T_SOLUTION_ROUTE routeBlock;
+
+  class T_READ_DECISION,T_RETURN_ASK_FIELDS,T_RETURN_ACK,T_RETURN_SOLUTION,T_FALLBACK_ACK,T_RETURN_MAIN_RESPONSE processingBlock;
+
+  class NEXT_OUTPUTS nextOutputBlock;
+
+  style PIPELINE fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
+  style PREVIOUS_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
+  style NEXT_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
+
+  linkStyle default stroke:#000000,stroke-width:2px;
+```
+
+---
+
+## addTopicPlanMessagePipeline
+
+```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 14, "rankSpacing": 22, "subGraphTitleMargin": {"top": 10, "bottom": 25}}, "themeVariables": {"fontSize": "13px", "lineColor": "#000000"}}}%%
+flowchart TB
+  subgraph PREVIOUS_STEP["Previous step"]
+    direction TB
+    PREVIOUS_INPUTS["<b>Input prepared by runResponsePlan</b><br/>
+    topicPlanInput = {<br/>
+    turnUnderstandingDelta<br/>
+    possibleSolutions<br/>
+    decisionSearchingSolution<br/>
+    }"]
+  end
+
+  subgraph PIPELINE["topicPlanMessages = addTopicPlanMessage(topicPlanInput)"]
+    direction TB
+
+    T_TOPIC_ROUTE{"<b>Topic segments?</b><br/>
+    turnUnderstandingDelta.segments_topic.length === 0"}
+
+    T_RETURN_EMPTY["<b>Return empty topic plan</b><br/>
+    return []"]
+
+    T_INIT_GLOBAL["<b>Initialize global TopicPlanMessage</b><br/>
+    topicPlanMessage = {<br/>
+    politeness_opening<br/>
+    topic_relation_acknowledgement<br/>
+    topics_responses: []<br/>
+    politeness_closure: undefined<br/>
+    }"]
+
+    T_RELATION_ACK["<b>Fill topic relation acknowledgement</b><br/>
+    topic_relation_acknowledgement = {<br/>
+    no_matched_historical_topic_count<br/>
+    matched_historical_topic_count<br/>
+    }"]
+
+    subgraph TOPIC_LOOP["For each turnUnderstandingDelta.segments_topic item"]
+      direction TB
+
+      T_TOPIC_TITLE["<b>Create topic_response.title</b><br/>
+      title = {<br/>
+      topic_id<br/>
+      topic_category<br/>
+      topic_label<br/>
+      matched_historical_topic<br/>
+      }"]
+
+      T_UPDATED_FIELDS["<b>Add updated fields acknowledgement</b><br/>
+      updated_fields_acknowledgement = {<br/>
+      topic_details<br/>
+      tested_solutions<br/>
+      }"]
+
+      T_MAIN_RESPONSE_INPUT["<b>Prepare topicMainResponseInput</b><br/>
+      topicMainResponseInput = {<br/>
+      topicSegment<br/>
+      possibleSolutions<br/>
+      decisionSearchingSolution<br/>
+      }"]
+
+      subgraph MAIN_RESPONSE_DATA["mainResponse = addTopicMainResponse(topicMainResponseInput)"]
+        direction LR
+        MAIN_RESPONSE_INPUTS["<b>topicMainResponseInput</b><br/>
+        topicSegment<br/>
+        possibleSolutions<br/>
+        decisionSearchingSolution"]
+        MAIN_RESPONSE_OUTPUTS["<b>Output</b><br/>
+        main_response"]
+        MAIN_RESPONSE_INPUTS --> MAIN_RESPONSE_OUTPUTS
+      end
+
+      T_NEXT_STEP["<b>Add next step</b><br/>
+      next_step is coherent with main_response"]
+
+      T_ADD_TOPIC_RESPONSE["<b>Add topic response</b><br/>
+      Add into topicPlanMessage.topics_responses:<br/>
+      title<br/>
+      updated_fields_acknowledgement<br/>
+      main_response<br/>
+      next_step"]
+
+      T_TOPIC_TITLE --> T_UPDATED_FIELDS
+      T_UPDATED_FIELDS --> T_MAIN_RESPONSE_INPUT
+      T_MAIN_RESPONSE_INPUT --> MAIN_RESPONSE_DATA
+      MAIN_RESPONSE_DATA --> T_NEXT_STEP
+      T_NEXT_STEP --> T_ADD_TOPIC_RESPONSE
+    end
+
+    T_ADD_CLOSURE["<b>Add global politeness closure</b><br/>
+    topicPlanMessage.politeness_closure"]
+
+    T_RETURN_TOPIC_MESSAGES["<b>Return topicPlanMessages</b><br/>
+    topicPlanMessages: TopicPlanMessage[]"]
+
+    T_TOPIC_ROUTE -->|yes| T_RETURN_EMPTY
+    T_TOPIC_ROUTE -->|no| T_INIT_GLOBAL
+    T_INIT_GLOBAL --> T_RELATION_ACK
+    T_RELATION_ACK --> TOPIC_LOOP
+    TOPIC_LOOP --> T_ADD_CLOSURE
+    T_ADD_CLOSURE --> T_RETURN_TOPIC_MESSAGES
+  end
+
+  subgraph NEXT_STEP["Next step"]
+    direction TB
+    NEXT_OUTPUTS["<b>Output provided to runResponsePlan</b><br/>
+    responsePlan.messagesPlan.topicPlanMessages"]
+  end
+
+  PREVIOUS_STEP --> PIPELINE
+  PIPELINE --> NEXT_STEP
+
+  classDef previousBlock fill:#0b6b3a,stroke:#064a28,color:#ffffff,stroke-width:1px;
+  classDef inputBlock fill:#d5e8d4,stroke:#82b366,color:#000000,stroke-width:1px;
+  classDef routeBlock fill:#fff2cc,stroke:#d6b656,color:#000000,stroke-width:1px;
+  classDef processingBlock fill:#d9e8f5,stroke:#4f93d2,color:#000000,stroke-width:1px;
+  classDef outputBlock fill:#f8cecc,stroke:#b85450,color:#000000,stroke-width:1px;
+  classDef nextOutputBlock fill:#8b0000,stroke:#5c0000,color:#ffffff,stroke-width:1px;
+
+  class PREVIOUS_INPUTS previousBlock;
+
+  class T_TOPIC_ROUTE routeBlock;
+
+  class MAIN_RESPONSE_INPUTS inputBlock;
+  class MAIN_RESPONSE_OUTPUTS outputBlock;
+
+  class T_RETURN_EMPTY,T_INIT_GLOBAL,T_RELATION_ACK,T_TOPIC_TITLE,T_UPDATED_FIELDS,T_MAIN_RESPONSE_INPUT,T_NEXT_STEP,T_ADD_TOPIC_RESPONSE,T_ADD_CLOSURE,T_RETURN_TOPIC_MESSAGES processingBlock;
+
+  class NEXT_OUTPUTS nextOutputBlock;
+
+  style PIPELINE fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
+  style PREVIOUS_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
+  style NEXT_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
+
+  style MAIN_RESPONSE_DATA fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
   style TOPIC_LOOP fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
-  style FINAL_RESPONSE_PLAN fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
 
   linkStyle default stroke:#000000,stroke-width:2px;
 ```

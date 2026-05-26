@@ -85,22 +85,22 @@ flowchart TB
       SR_INPUTS --> SR_OUTPUTS
     end
 
-    T3["<b>Prepare responseDecisionInput</b><br/>
-    responseDecisionInput = { accountTrustStatus, accountProfile,<br/>
-    accountInteractionTraits, supportTopicKnowledge,<br/>
+    T3["<b>Prepare responsePlanInput</b><br/>
+    responsePlanInput = {<br/>
+    securityGateSummary = { gateChecked: {}, gateFailed: {} }<br/>
     turnUnderstandingDelta, possibleSolutions }"]
 
-    subgraph RD_DATA["responsePlan = runResponseDecision(responseDecisionInput)"]
+    subgraph RP_PLAN_DATA["responsePlan = runResponsePlan(responsePlanInput)"]
       direction LR
 
-      RD_INPUTS["<b>responseDecisionInput</b><br/>
-      accountTrustStatus, accountProfile, accountInteractionTraits,<br/>
-      supportTopicKnowledge, turnUnderstandingDelta, possibleSolutions"]
+      RP_PLAN_INPUTS["<b>responsePlanInput</b><br/>
+      securityGateSummary = { gateChecked: {}, gateFailed: {} },<br/>
+      turnUnderstandingDelta, possibleSolutions"]
 
-      RD_OUTPUTS["<b>Output</b><br/>
+      RP_PLAN_OUTPUTS["<b>Output</b><br/>
       9. responsePlan"]
 
-      RD_INPUTS --> RD_OUTPUTS
+      RP_PLAN_INPUTS --> RP_PLAN_OUTPUTS
     end
 
     T4["<b>Prepare responseProductionInput</b><br/>
@@ -154,8 +154,8 @@ flowchart TB
 
     T_SR_INPUT --> SR_DATA
     SR_DATA --> T3
-    T3 --> RD_DATA
-    RD_DATA --> T4
+    T3 --> RP_PLAN_DATA
+    RP_PLAN_DATA --> T4
     T4 --> RP_DATA
     RP_DATA --> T5
     T5 --> DP_DATA
@@ -190,8 +190,8 @@ flowchart TB
 
   class PREVIOUS_INPUTS previousBlock;
 
-  class MA_INPUTS,SD_INPUTS,SR_INPUTS,RD_INPUTS,RP_INPUTS,DP_INPUTS inputBlock;
-  class MA_OUTPUTS,SD_OUTPUTS,SR_OUTPUTS,RD_OUTPUTS,RP_OUTPUTS,DP_OUTPUTS outputBlock;
+  class MA_INPUTS,SD_INPUTS,SR_INPUTS,RP_PLAN_INPUTS,RP_INPUTS,DP_INPUTS inputBlock;
+  class MA_OUTPUTS,SD_OUTPUTS,SR_OUTPUTS,RP_PLAN_OUTPUTS,RP_OUTPUTS,DP_OUTPUTS outputBlock;
 
   class T0,T1,T_SD_INPUT,T2,T_SR_INPUT,T3,T4,T5,T6 processingBlock;
   class NEXT_OUTPUTS nextOutputBlock;
@@ -382,14 +382,16 @@ const possibleSolutions = [];
 
 ## 9. `responsePlan`
 
-Produced by `runResponseDecision(responseDecisionInput)`.
+Produced by `runResponsePlan(responsePlanInput)`.
 
 The bot asks for missing technical information.
 ```ts
 const responsePlan = {
   responseLanguage: "english",
   messagesPlan: {
-    inputCleaningPlanMessages: [],
+    securityGatePlanMessage: undefined,
+    suspiciousPlanMessage: undefined,
+    lackComprehensionPlanMessage: undefined,
     scopeBoundaryPlanMessages: [],
     topicPlanMessages: [
       {
@@ -644,7 +646,7 @@ const decisionSearchingSolutionSecondRun = {
 ---
 ## 9. `responsePlan`
 
-Produced by `runResponseDecision(responseDecisionInput)`.
+Produced by `runResponsePlan(responsePlanInput)`.
 
 The bot acknowledges the updated information and prepares a handover because no reliable immediate solution was found.
 
@@ -652,7 +654,9 @@ The bot acknowledges the updated information and prepares a handover because no 
 const responsePlanSecondRun = {
   responseLanguage: "english",
   messagesPlan: {
-    inputCleaningPlanMessages: [],
+    securityGatePlanMessage: undefined,
+    suspiciousPlanMessage: undefined,
+    lackComprehensionPlanMessage: undefined,
     scopeBoundaryPlanMessages: [],
     topicPlanMessages: [
       {

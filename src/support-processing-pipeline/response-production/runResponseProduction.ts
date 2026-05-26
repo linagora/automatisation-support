@@ -25,21 +25,27 @@
  *    OUTPUTS - userResponse
  */
 
+import type { ResponsePlan } from "../response-plan/typesResponsePlan.types";
+
 type UnknownObject = Record<string, unknown>;
 
 type ResponseProductionStep<TInput, TOutput> = (input: TInput) => TOutput;
-
-interface ResponsePlan {
-  userLanguage: string | null;
-  messages: UnknownObject[];
-}
 
 interface ResponseProductionInput {
   responsePlan: ResponsePlan;
 }
 
 interface UserResponse {
-  messages: string[];
+  messages: {
+    type:
+      | "warning_comprehension"
+      | "input_cleaning"
+      | "scope_boundary"
+      | "topic_response"
+      | "signal_response"
+      | "handover";
+    content: string;
+  }[];
 }
 
 interface ResponseProductionSteps {

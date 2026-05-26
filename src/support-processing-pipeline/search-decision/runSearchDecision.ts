@@ -1,15 +1,3 @@
-/**
- * Search Decision
- *
- * Temporary deterministic implementation.
- *
- * Purpose:
- * Decide whether the pipeline should search for external / documented solutions.
- *
- * Current behavior:
- * Always continues the pipeline without searching.
- */
-
 import type {
   SearchDecisionInput,
   SearchDecisionOutput
@@ -24,9 +12,9 @@ async function runSearchDecision(
 
   return {
     decision: {
-      route: "continue"
+      route: "continue",
+      type: "acknowledgement"
     },
-    shouldSearchSolution: false,
     detected: {
       topicsQualificationResult: hasTopic ? "not_evaluated" : "no_topic",
       solutionLikelihoodResult: "not_evaluated"
@@ -35,7 +23,7 @@ async function runSearchDecision(
       checked: [
         "turn_understanding_delta_received",
         "topics_presence_checked",
-        "forced_no_search_mode"
+        "forced_acknowledgement_mode"
       ],
       failed: []
     }

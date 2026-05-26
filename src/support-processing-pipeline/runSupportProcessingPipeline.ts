@@ -5,7 +5,7 @@
 import { runMessageAnalysis } from "./message-analysis/runMessageAnalysis";
 import { runSearchDecision } from "./search-decision/runSearchDecision";
 import { runSolutionRetrieval } from "./solution-retrieval/runSolutionRetrieval";
-import { runResponseDecision } from "./response-decision/runResponseDecision";
+import { runResponsePlan } from "./response-plan/runResponsePlan";
 import { runResponseProduction } from "./response-production/runResponseProduction";
 import { runPatchesProduction } from "./patches-production/runPatchesProduction";
 
@@ -19,8 +19,8 @@ import type {
   SearchDecisionOutput,
   SolutionRetrievalInput,
   SolutionRetrievalOutput,
-  ResponseDecisionInput,
-  ResponseDecisionOutput,
+  ResponsePlanInput,
+  ResponsePlanOutput,
   ResponseProductionInput,
   ResponseProductionOutput,
   PatchesProductionInput,
@@ -75,13 +75,13 @@ async function runSupportProcessingPipeline(
       "runSolutionRetrieval"
     ),
 
-    runResponseDecision: resolveStep<
-      ResponseDecisionInput,
-      ResponseDecisionOutput
+    runResponsePlan: resolveStep<
+      ResponsePlanInput,
+      ResponsePlanOutput
     >(
-      steps.runResponseDecision,
-      runResponseDecision,
-      "runResponseDecision"
+      steps.runResponsePlan,
+      runResponsePlan,
+      "runResponsePlan"
     ),
 
     runResponseProduction: resolveStep<
@@ -122,6 +122,9 @@ async function runSupportProcessingPipeline(
     await pipelineSteps.runMessageAnalysis(messageAnalysisInput);
 
   let possibleSolutions: SolutionRetrievalOutput = [];
+  let decisionSearchingSolutionForResponsePlan: ResponsePlanInput["decisionSearchingSolution"] = {
+    type: "acknowledgement"
+  };
 
   if (turnUnderstandingDelta.segments_topic.length !== 0) {
     const searchDecisionInput: SearchDecisionInput = {
@@ -133,6 +136,10 @@ async function runSupportProcessingPipeline(
       await pipelineSteps.runSearchDecision(searchDecisionInput);
 
     if (decisionSearchingSolution.shouldSearchSolution === true) {
+      decisionSearchingSolutionForResponsePlan = {
+        type: "solution_searching"
+      };
+
       const solutionRetrievalInput: SolutionRetrievalInput = {
         supportTopicKnowledge,
         turnUnderstandingDelta
@@ -143,17 +150,21 @@ async function runSupportProcessingPipeline(
     }
   }
 
-  const responseDecisionInput: ResponseDecisionInput = {
+  const responsePlanInput: ResponsePlanInput = {
+    securityGateSummary: turnUnderstandingDelta.securityGateSummary ?? {
+      gateChecked: {},
+      gateFailed: []
+    },
     accountTrustStatus,
     accountProfile,
     accountInteractionTraits,
-    supportTopicKnowledge,
     turnUnderstandingDelta,
-    possibleSolutions
+    possibleSolutions,
+    decisionSearchingSolution: decisionSearchingSolutionForResponsePlan
   };
 
   const responsePlan =
-    await pipelineSteps.runResponseDecision(responseDecisionInput);
+    await pipelineSteps.runResponsePlan(responsePlanInput);
 
   const responseProductionInput: ResponseProductionInput = {
     responsePlan

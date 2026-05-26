@@ -2,6 +2,16 @@
  * Shared types for the support processing pipeline.
  */
 
+import type {
+  ResponsePlanInput,
+  ResponsePlan
+} from "./response-plan/typesResponsePlan.types";
+
+export type {
+  ResponsePlanInput,
+  ResponsePlan
+};
+
 type MaybePromise<T> = T | Promise<T>;
 
 type PipelineStep<TInput, TOutput> = (
@@ -263,6 +273,10 @@ type TurnUnderstandingTopicSegment =
 
 export type TurnUnderstandingDelta = {
   user_language: string;
+  securityGateSummary?: {
+    gateChecked: Record<string, unknown>;
+    gateFailed: unknown[];
+  };
   segments_lack_comprehension: LackComprehensionSegment[];
   segments_topic: TurnUnderstandingTopicSegment[];
   segments_signal: SignalSegment[];
@@ -333,51 +347,31 @@ export type PossibleSolution = {
  * 9. responsePlan
  * ===================================================== */
 
-type WarningComprehensionPlanMessage = {
-  warning_comprehension: "yes";
-  unclear_segments_verbatim?: string[];
-};
-
-type InputCleaningPlanMessage = {
-  detected_checks: InputCleaningCheckName[];
-};
-
-type ScopeBoundaryPlanMessage = ScopeBoundarySegment;
-
-type SignalPlanMessage = SignalSegment;
-
-type HandoverPlanMessage = {
-  topic_id?: number;
-  reason?: string;
-};
-
-type TopicAskFieldsResponse = {
-  main_response: "ask_fields";
-  fields_requested: NonEmptyArray<string>;
-  next_step: "wait_more_info" | "handover";
-};
-
-type TopicProposeSolutionResponse = {
-  main_response: "propose_solution";
-  solutions: NonEmptyArray<{
-    id: string;
-    solution: string;
-  }>;
-  next_step:
-    | "wait_apply_solution"
-    | "close_if_resolved"
-    | "handover";
-};
-
-type TopicAcknowledgementResponse = {
-  main_response: "acknowledgement";
-  next_step: "wait_more_info" | "close_if_resolved" | "handover";
-};
-
 type TopicMainResponse =
-  | TopicAskFieldsResponse
-  | TopicProposeSolutionResponse
-  | TopicAcknowledgementResponse;
+  | {
+      type: "ask_fields";
+      details: {
+        fields_requested: NonEmptyArray<string>;
+      };
+    }
+  | {
+      type: "propose_solution";
+      details: {
+        solutions: NonEmptyArray<{
+          id: string;
+          solution: string;
+        }>;
+      };
+    }
+  | {
+      type: "acknowledgement";
+    };
+
+type TopicNextStep =
+  | "wait_more_info"
+  | "wait_apply_solution"
+  | "close_if_resolved"
+  | "handover";
 
 type TopicPlanMessage = {
   politeness_opening?:
@@ -386,43 +380,33 @@ type TopicPlanMessage = {
     | "salutation_and_understanding_1"
     | "salutation_and_understanding_2";
 
-  topic_relation_acknowledgement?: {
-    new_topics_count: number;
+  topic_relation_acknowledgement: {
+    no_matched_historical_topic_count: number;
     matched_historical_topic_count: number;
   };
 
-  topic_response: {
-    topic_id: number;
-    topic_category: TopicCategory;
-    topic_label: string;
-    updated_fields_acknowledgement?: Partial<TopicDetails>;
-  } & TopicMainResponse;
+  topics_responses: {
+    topic_response: {
+      title: {
+        topic_id: number;
+        topic_category?: TopicCategory;
+        topic_label?: string;
+        matched_historical_topic: boolean;
+      };
+      updated_fields_acknowledgement: {
+        topic_details?: Partial<TopicDetails>;
+        tested_solutions?: Record<string, unknown>[];
+      };
+      main_response: TopicMainResponse;
+      next_step: TopicNextStep;
+    };
+  }[];
 
   politeness_closure?:
     | "thanks_for_cooperation"
     | "available_if_needed"
     | "wait_for_user"
     | "handover_announced";
-};
-
-export type ResponsePlan = {
-  responseLanguage: "french" | "english";
-
-  // runResponseProduction must generate messages in this order:
-  // 1. warningComprehensionPlanMessage
-  // 2. inputCleaningPlanMessages
-  // 3. scopeBoundaryPlanMessages
-  // 4. topicPlanMessages
-  // 5. signalPlanMessages
-  // 6. handoverPlanMessages
-  messagesPlan: {
-    warningComprehensionPlanMessage?: WarningComprehensionPlanMessage;
-    inputCleaningPlanMessages: InputCleaningPlanMessage[];
-    scopeBoundaryPlanMessages: ScopeBoundaryPlanMessage[];
-    topicPlanMessages: TopicPlanMessage[];
-    signalPlanMessages: SignalPlanMessage[];
-    handoverPlanMessages: HandoverPlanMessage[];
-  };
 };
 
 /* =====================================================
@@ -515,16 +499,7 @@ export type SolutionRetrievalInput = {
 
 export type SolutionRetrievalOutput = PossibleSolution[];
 
-export type ResponseDecisionInput = {
-  accountTrustStatus: AccountTrustStatus;
-  accountProfile: AccountProfile;
-  accountInteractionTraits: AccountInteractionTraits;
-  supportTopicKnowledge: SupportTopicKnowledge;
-  turnUnderstandingDelta: TurnUnderstandingDelta;
-  possibleSolutions: PossibleSolution[];
-};
-
-export type ResponseDecisionOutput = ResponsePlan;
+export type ResponsePlanOutput = ResponsePlan;
 
 export type ResponseProductionInput = {
   responsePlan: ResponsePlan;
@@ -545,7 +520,7 @@ export type SupportProcessingPipelineSteps = {
     SolutionRetrievalInput,
     SolutionRetrievalOutput
   >;
-  runResponseDecision?: PipelineStep<ResponseDecisionInput, ResponseDecisionOutput>;
+  runResponsePlan?: PipelineStep<ResponsePlanInput, ResponsePlanOutput>;
   runResponseProduction?: PipelineStep<
     ResponseProductionInput,
     ResponseProductionOutput

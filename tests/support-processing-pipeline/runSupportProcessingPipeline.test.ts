@@ -121,8 +121,8 @@ describe("runSupportProcessingPipeline", function () {
         return possibleSolutions;
       },
 
-      runResponseDecision: function (stepInput: any) {
-        callOrder.push("response-decision");
+      runResponsePlan: function (stepInput: any) {
+        callOrder.push("response-plan");
 
         expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
         expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
@@ -160,7 +160,7 @@ describe("runSupportProcessingPipeline", function () {
       "message-analysis",
       "search-decision",
       "solution-retrieval",
-      "response-decision",
+      "response-plan",
       "response-production",
       "data-production"
     ]);
