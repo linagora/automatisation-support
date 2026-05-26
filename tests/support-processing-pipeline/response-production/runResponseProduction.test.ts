@@ -7,7 +7,7 @@ import type {
 } from "../../../src/support-processing-pipeline/response-production/runResponseProduction";
 
 describe("runResponseProduction", function () {
-  it("runs all response-production steps and returns userResponse", function () {
+  it("transforms the response plan into final user messages", function () {
     const input: ResponseProductionInput = {
       responsePlan: {
         responseLanguage: "french",
@@ -28,7 +28,7 @@ describe("runResponseProduction", function () {
                   topic_response: {
                     title: {
                       topic_id: 1,
-                      topic_label: "Problème de connexion",
+                      topic_label: "Probleme de connexion",
                       matched_historical_topic: false
                     },
                     updated_fields_acknowledgement: {},
@@ -48,109 +48,49 @@ describe("runResponseProduction", function () {
       }
     };
 
-    const callOrder: string[] = [];
-
-    const steps = {
-      applyResponseTemplates: function ({ responsePlan }: any) {
-        callOrder.push("apply-response-templates");
-
-        expect(responsePlan).toEqual(input.responsePlan);
-
-        return [
-          "Bonjour, je vais vous aider.",
-          "Pour votre problème de connexion, vous pouvez réinitialiser votre mot de passe."
-        ];
-      },
-
-      assembleUserResponse: function ({ responsePlan, responseStrings }: any) {
-        callOrder.push("assemble-user-response");
-
-        expect(responsePlan).toEqual(input.responsePlan);
-        expect(responseStrings).toEqual([
-          "Bonjour, je vais vous aider.",
-          "Pour votre problème de connexion, vous pouvez réinitialiser votre mot de passe."
-        ]);
-
-        return {
-          messages: responseStrings.map((responseString: string) => {
-            return {
-              type: "topic_response",
-              content: responseString
-            };
-          })
-        };
-      }
-    };
-
-    const output = runResponseProduction(input, steps);
-
-    expect(callOrder).toEqual([
-      "apply-response-templates",
-      "assemble-user-response"
-    ]);
+    const output = runResponseProduction(input);
 
     expect(output).toEqual({
       messages: [
         {
           type: "topic_response",
-          content: "Bonjour, je vais vous aider."
-        },
-        {
-          type: "topic_response",
-          content:
-            "Pour votre problème de connexion, vous pouvez réinitialiser votre mot de passe."
+          content: "J'ai bien pris en compte votre demande."
         }
       ]
     });
   });
 
-  it("throws an explicit error when applyResponseTemplates is missing", function () {
-    const input = {
+  it("keeps security and handover messages in pipeline order", function () {
+    const input: ResponseProductionInput = {
       responsePlan: {
-        responseLanguage: "french",
+        responseLanguage: "english",
         messagesPlan: {
-          securityGatePlanMessage: undefined,
+          securityGatePlanMessage: {
+            gateFailed: ["blocked"]
+          },
           suspiciousPlanMessage: undefined,
           lackComprehensionPlanMessage: undefined,
           scopeBoundaryPlanMessages: [],
           topicPlanMessages: [],
           signalPlanMessages: [],
-          handoverPlanMessages: []
+          handoverPlanMessages: [{}]
         }
       }
     };
 
-    expect(function () {
-      runResponseProduction(input);
-    }).toThrow("applyResponseTemplates is not implemented yet");
-  });
+    const output = runResponseProduction(input);
 
-  it("throws an explicit error when assembleUserResponse is missing", function () {
-    const input = {
-      responsePlan: {
-        responseLanguage: "french",
-        messagesPlan: {
-          securityGatePlanMessage: undefined,
-          suspiciousPlanMessage: undefined,
-          lackComprehensionPlanMessage: undefined,
-          scopeBoundaryPlanMessages: [],
-          topicPlanMessages: [],
-          signalPlanMessages: [],
-          handoverPlanMessages: []
+    expect(output).toEqual({
+      messages: [
+        {
+          type: "security_gate",
+          content: "I cannot process this request for security reasons."
+        },
+        {
+          type: "handover",
+          content: "I will pass your request to the support team."
         }
-      }
-    };
-
-    const steps = {
-      applyResponseTemplates: function () {
-        return [
-          "Bonjour"
-        ];
-      }
-    };
-
-    expect(function () {
-      runResponseProduction(input, steps);
-    }).toThrow("assembleUserResponse is not implemented yet");
+      ]
+    });
   });
 });

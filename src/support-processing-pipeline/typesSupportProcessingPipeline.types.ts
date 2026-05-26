@@ -416,6 +416,9 @@ type TopicPlanMessage = {
 export type UserResponse = {
   messages: {
     type:
+      | "security_gate"
+      | "suspicious"
+      | "lack_comprehension"
       | "warning_comprehension"
       | "input_cleaning"
       | "scope_boundary"
