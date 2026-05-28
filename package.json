@@ -14,7 +14,9 @@
     "test:online:video": "tsx -r dotenv/config scripts/test-attachment-analysis/test-online-video.ts",
     "test:llm:guard": "tsx -r dotenv/config scripts/test-attachment-analysis/test-token-budget-guard.ts",
     "test:fullweight": "tsx scripts/test-attachment-analysis/test-full-weight-analysis.ts",
-    "test:message-analysis": "tsx scripts/test-attachment-analysis/test-message-analysis.ts"
+    "test:message-analysis": "tsx scripts/test-attachment-analysis/test-message-analysis.ts",
+    "test:support-processing-pipeline": "tsx tests/support-processing-pipeline/test-support-processing-pipeline.ts",
+    "test:support-processing": "tsx scripts/test-support-processing.ts"
   },
   "repository": {
     "type": "git",

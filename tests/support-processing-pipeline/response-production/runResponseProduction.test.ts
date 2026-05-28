@@ -54,7 +54,8 @@ describe("runResponseProduction", function () {
       messages: [
         {
           type: "topic_response",
-          content: "J'ai bien pris en compte votre demande."
+          content:
+            "Bonjour, merci pour votre message.\nJ’ai identifié 1 nouveau(x) sujet(s) et 0 sujet(s) faisant référence à un sujet en cours.\nSujet 1 - undefined - Probleme de connexion - (Nouveau sujet) undefined Nous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux. Nous attendons votre retour pour obtenir plus d’informations.\nundefined"
         }
       ]
     });
@@ -66,7 +67,7 @@ describe("runResponseProduction", function () {
         responseLanguage: "english",
         messagesPlan: {
           securityGatePlanMessage: {
-            gateFailed: ["blocked"]
+            gateFailed: ["latestUserMessageSecurityDecision"]
           },
           suspiciousPlanMessage: undefined,
           lackComprehensionPlanMessage: undefined,
@@ -84,11 +85,12 @@ describe("runResponseProduction", function () {
       messages: [
         {
           type: "security_gate",
-          content: "I cannot process this request for security reasons."
+          content:
+            "Our security system identified your message as potentially problematic and automatic analysis was stopped. Support will take over to confirm or dismiss this decision."
         },
         {
           type: "handover",
-          content: "I will pass your request to the support team."
+          content: "Support will soon review and respond to your request."
         }
       ]
     });

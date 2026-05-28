@@ -1,0 +1,240 @@
+import type {
+  AccountInteractionTraits,
+  AccountProfile,
+  AccountTrustStatus,
+  ConversationHistory,
+  LatestUserAttachment,
+  ResponsePlan,
+  SupportProcessingPipelineInput,
+  SupportTopicKnowledge,
+  TurnUnderstandingDelta
+} from "../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+
+export type SupportProcessingTestCase = {
+  id: string;
+  label: string;
+  description: string;
+  input: SupportProcessingPipelineInput;
+  mockedTurnUnderstandingDelta?: TurnUnderstandingDelta;
+  needsAttachment?: boolean;
+};
+
+const accountTrustStatus: AccountTrustStatus = {
+  status: "trusted",
+  reasons: [
+    "longHistory",
+    "legitimateSupportInteractions",
+    "verifiedEmailDomain"
+  ]
+};
+
+const accountProfile: AccountProfile = {
+  accountType: "company",
+  actualPlan: "paid",
+  paymentStatus: "up_to_date",
+  planHistory: [
+    {
+      plan: "paid",
+      startedAt: "2025-01-01T00:00:00.000Z",
+      endedAt: null
+    }
+  ],
+  createdAt: "2025-01-01T00:00:00.000Z",
+  daysSinceCreation: 512
+};
+
+const accountInteractionTraits: AccountInteractionTraits = {
+  labels: ["technical", "needsGuidance"],
+  lastUpdatedAt: "2026-05-21T08:00:00.000Z"
+};
+
+const emptyBotResponsePlan: ResponsePlan = {
+  responseLanguage: "french",
+  messagesPlan: {
+    securityGatePlanMessage: undefined,
+    suspiciousPlanMessage: undefined,
+    lackComprehensionPlanMessage: undefined,
+    scopeBoundaryPlanMessages: [],
+    topicPlanMessages: [],
+    signalPlanMessages: [],
+    handoverPlanMessages: []
+  }
+};
+
+const turn1Delta: TurnUnderstandingDelta = {
+  user_language: "french",
+  securityGateSummary: {
+    gateChecked: {},
+    gateFailed: []
+  },
+  segments_lack_comprehension: [],
+  segments_topic: [
+    {
+      matched_historical_topic: "no",
+      id_topic: 1,
+      topic_category: "bug",
+      tool_or_product: "Twake Drive",
+      topic_action: "create",
+      topic_object: "folder",
+      topic_label: "Twake Drive : create : folder",
+      topic_details: {
+        platform: "mobile app",
+        os: "Android",
+        trigger_action: "click on create folder",
+        observed_result: "nothing happens",
+        expected_result: "folder should be created"
+      },
+      user_goal:
+        "Create a folder in Twake Drive on Android mobile app but nothing happens when clicking the create folder button",
+      blocking_issue: "no"
+    },
+    {
+      matched_historical_topic: "no",
+      id_topic: 2,
+      topic_category: "access_security",
+      tool_or_product: "Twake",
+      topic_action: "reset",
+      topic_object: "password",
+      topic_label: "Twake : reset : password",
+      topic_details: {
+        access_action: "reset password",
+        auth_method: "email",
+        observed_result: "no email received",
+        expected_result: "receive password reset email"
+      },
+      user_goal:
+        "Reset Twake account password but no password reset email is received",
+      blocking_issue: "yes"
+    }
+  ],
+  segments_signal: [
+    {
+      signal_verbatim: "Merci d'avance pour votre aide.",
+      signal_types: ["thanks_neutral"]
+    },
+    {
+      signal_verbatim: "c'est assez urgent pour moi",
+      signal_types: ["time_sensitive"]
+    }
+  ],
+  segments_scope_boundary: [
+    {
+      signal_verbatim:
+        "au passage, est-ce que vous pouvez aussi m'aider à récupérer mon compte Instagram ?",
+      scope_boundary_type: "non_support_linagora"
+    }
+  ],
+  segments_suspicious: []
+};
+
+const supportTopicKnowledgeAfterTurn1: SupportTopicKnowledge = {
+  segments_topic: turn1Delta.segments_topic.map((topicSegment) => {
+    return {
+      id_topic: topicSegment.id_topic,
+      topic_category: topicSegment.topic_category || "other",
+      tool_or_product: topicSegment.tool_or_product,
+      topic_action: topicSegment.topic_action,
+      topic_object: topicSegment.topic_object,
+      topic_label: topicSegment.topic_label || "undefined",
+      topic_details: topicSegment.topic_details || {},
+      user_goal: topicSegment.user_goal || "undefined",
+      blocking_issue: topicSegment.blocking_issue || "no"
+    };
+  })
+};
+
+const conversationHistoryAfterTurn1: ConversationHistory = [
+  {
+    id: "history_turn_1_user",
+    message_id: "msg_turn_1",
+    role: "user",
+    created_at: "2026-05-21T09:00:00.000Z",
+    turnUnderstandingDelta: turn1Delta
+  },
+  {
+    id: "history_turn_1_bot",
+    message_id: "bot_turn_1",
+    role: "bot",
+    created_at: "2026-05-21T09:01:00.000Z",
+    responsePlan: emptyBotResponsePlan
+  }
+];
+
+function buildInput(params: {
+  id: string;
+  content: string;
+  supportTopicKnowledge?: SupportTopicKnowledge;
+  conversationHistory?: ConversationHistory;
+}): SupportProcessingPipelineInput {
+  return {
+    latestUserMessage: {
+      id: params.id,
+      channel: "email",
+      sentAt: "2026-05-21T09:00:00.000Z",
+      content: params.content
+    },
+    latestUserAttachments: [],
+    accountTrustStatus,
+    accountProfile,
+    accountInteractionTraits,
+    supportTopicKnowledge: params.supportTopicKnowledge || {
+      segments_topic: []
+    },
+    conversationHistory: params.conversationHistory || []
+  };
+}
+
+export const supportProcessingTestCases: SupportProcessingTestCase[] = [
+  {
+    id: "1",
+    label: "End-to-end - two support topics with signal and scope boundary",
+    description:
+      "Runs the full pipeline on a rich support message with two topics, one thank-you signal, urgency, and one unrelated Instagram request.",
+    input: buildInput({
+      id: "support_pipeline_turn_1",
+      content:
+        "Bonjour, j’ai deux soucis. D’abord, dans Twake Drive, quand je clique sur créer un dossier sur l’application mobile Android, rien ne se passe. Ensuite, je n’arrive plus à me connecter à mon compte Twake : j’ai demandé une réinitialisation de mot de passe mais je ne reçois aucun email. Merci d'avance pour votre aide, c'est assez urgent pour moi. Et au passage, est-ce que vous pouvez aussi m'aider à récupérer mon compte Instagram ?"
+    }),
+    mockedTurnUnderstandingDelta: turn1Delta
+  },
+  {
+    id: "2",
+    label: "End-to-end - historical topic precision",
+    description:
+      "Runs the full pipeline with existing topic knowledge and a user adding details to a previous access issue.",
+    input: buildInput({
+      id: "support_pipeline_turn_2",
+      content:
+        "Désolé d'insister, mais pour la connexion, j’ai essayé de renvoyer l’email de réinitialisation trois fois. Je ne reçois toujours rien, même dans les spams. Je commence à être bloqué.",
+      supportTopicKnowledge: supportTopicKnowledgeAfterTurn1,
+      conversationHistory: conversationHistoryAfterTurn1
+    })
+  },
+  {
+    id: "3",
+    label: "End-to-end - attachment support case",
+    description:
+      "Runs the full pipeline with an attachment added to a support message.",
+    needsAttachment: true,
+    input: buildInput({
+      id: "support_pipeline_turn_3",
+      content:
+        "Merci pour le suivi. Pour le problème de création de dossier, voici une capture. Je clique sur Nouveau dossier, la fenêtre reste bloquée et le bouton de validation est grisé.",
+      supportTopicKnowledge: supportTopicKnowledgeAfterTurn1,
+      conversationHistory: conversationHistoryAfterTurn1
+    })
+  }
+];
+
+export function withAttachment(
+  testCase: SupportProcessingTestCase,
+  attachment: LatestUserAttachment
+): SupportProcessingTestCase {
+  return {
+    ...testCase,
+    input: {
+      ...testCase.input,
+      latestUserAttachments: [attachment]
+    }
+  };
+}
