@@ -98,7 +98,6 @@ const turn1Delta: TurnUnderstandingDelta = {
       topic_label: "Twake : reset : password",
       topic_details: {
         access_action: "reset password",
-        auth_method: "email",
         observed_result: "no email received",
         expected_result: "receive password reset email"
       },
@@ -193,7 +192,7 @@ export const supportProcessingTestCases: SupportProcessingTestCase[] = [
     input: buildInput({
       id: "support_pipeline_turn_1",
       content:
-        "Bonjour, j’ai deux soucis. D’abord, dans Twake Drive, quand je clique sur créer un dossier sur l’application mobile Android, rien ne se passe. Ensuite, je n’arrive plus à me connecter à mon compte Twake : j’ai demandé une réinitialisation de mot de passe mais je ne reçois aucun email. Merci d'avance pour votre aide, c'est assez urgent pour moi. Et au passage, est-ce que vous pouvez aussi m'aider à récupérer mon compte Instagram ?"
+        "Bonjour, j’ai deux soucis. D’abord, dans Twake Drive, sur l’application mobile Android, quand je clique sur créer un dossier, rien ne se passe alors que le dossier devrait être créé. Ensuite, je n’arrive plus à accéder à mon compte Twake. Merci d'avance pour votre aide, c'est assez urgent pour moi. Et au passage, est-ce que vous pouvez aussi m'aider à récupérer mon compte Instagram ?"
     }),
     mockedTurnUnderstandingDelta: turn1Delta
   },
