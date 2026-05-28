@@ -207,13 +207,13 @@ function transformTopicMainResponse(
   const templates = dataBaseResponse[userLanguage].topic;
 
   if (mainResponse.type === "ask_fields") {
-    return interpolate(templates.askFields, {
-      fields_requested: mainResponse.details.fields_requested
-        .map((field) => {
-          return valueFromLabels(templates.topicDetailsLabels, field);
-        })
-        .join(", ")
-    });
+    const requestedFieldMessages = mainResponse.details.fields_requested.map(
+      (field) => {
+        return formatRequestedField(userLanguage, field);
+      }
+    );
+
+    return [templates.askFields, ...requestedFieldMessages].join("\n");
   }
 
   if (mainResponse.type === "propose_solution") {
@@ -227,6 +227,34 @@ function transformTopicMainResponse(
   }
 
   return templates.acknowledgement;
+}
+
+function formatRequestedField(
+  userLanguage: ResponseLanguage,
+  field: string
+): string {
+  const templates = dataBaseResponse[userLanguage].topic;
+  const label = capitalizeFirst(
+    templates.topicDetailsLabels[field] || field || templates.topicDetailsLabels.default
+  );
+  const description =
+    templates.topicDetailsDescriptions[field] ||
+    templates.topicDetailsDescriptions.default;
+  const separator = userLanguage === "french" ? " : " : ": ";
+
+  return `- ${label}${separator}${ensureFinalPeriod(description)}`;
+}
+
+function capitalizeFirst(value: string): string {
+  if (value.length === 0) {
+    return value;
+  }
+
+  return `${value[0].toUpperCase()}${value.slice(1)}`;
+}
+
+function ensureFinalPeriod(value: string): string {
+  return /[.!?]$/.test(value) ? value : `${value}.`;
 }
 
 function transformTopicRelationAcknowledgement(

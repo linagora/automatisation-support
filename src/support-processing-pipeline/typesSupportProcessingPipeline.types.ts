@@ -442,26 +442,28 @@ export type UserResponse = {
  * 11. patchesProduction
  * ===================================================== */
 
-type SupportTopicKnowledgePatch = {
-  topicSegmentDeltas: TurnUnderstandingTopicSegment[];
-};
-
-type ConversationHistoryPatch = ConversationHistoryEvent[];
-
-type AccountTrustStatusPatch = Partial<AccountTrustStatus>;
-
-type AccountInteractionTraitsPatch = Partial<AccountInteractionTraits>;
-
 export type PatchesProductionInput = {
   turnUnderstandingDelta: TurnUnderstandingDelta;
   responsePlan: ResponsePlan;
 };
 
 export type Patches = {
-  supportTopicKnowledgePatch: SupportTopicKnowledgePatch;
-  conversationHistoryPatch: ConversationHistoryPatch;
-  accountTrustStatusPatch?: AccountTrustStatusPatch;
-  accountInteractionTraitsPatch?: AccountInteractionTraitsPatch;
+  analysisPatch: {
+    turnUnderstandingDelta: TurnUnderstandingDelta;
+  };
+  securityPatch: {
+    securityGateSummary: {
+      gateChecked: Record<string, unknown>;
+      gateFailed: unknown[];
+    };
+  };
+  responsePatch: {
+    responsePlan: ResponsePlan;
+  };
+  metadataPatch: {
+    generatedAt: string;
+    source: "support-processing-pipeline";
+  };
 };
 
 /* =====================================================

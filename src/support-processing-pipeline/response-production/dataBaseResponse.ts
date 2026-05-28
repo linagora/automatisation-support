@@ -40,6 +40,7 @@ type DataBaseResponse = {
       updatedFieldsAcknowledgement: string;
       testedSolution: string;
       topicDetailsLabels: LabelDatabase;
+      topicDetailsDescriptions: LabelDatabase;
       topicDetailValueTranslations: Record<string, string>;
       testedSolutionOutcomeLabels: LabelDatabase;
       askFields: string;
@@ -174,6 +175,49 @@ const dataBaseResponse: DataBaseResponse = {
         video_available: "vidéo disponible",
         image_available: "image disponible"
       },
+      topicDetailsDescriptions: {
+        default: "information complémentaire utile pour traiter la demande",
+        feature_or_page: "fonctionnalité ou page concernée",
+        provided_url: "URL concernée, par exemple un domaine ou une page précise",
+        pre_problem_state:
+          "contexte avant le problème, différent du résultat observé",
+        observed_result: "ce qui se produit réellement",
+        expected_result: "ce qui devrait normalement se produire",
+        error_message: "message d’erreur exact affiché",
+        platform:
+          "canal d’exécution concerné, par exemple application mobile, web ou application desktop",
+        account_context:
+          "contexte du compte, par exemple compte premium ou mode d’inscription",
+        frequency: "fréquence du problème, uniquement si elle est connue",
+        affected_scope:
+          "périmètre affecté, par exemple un dossier, tous les connecteurs ou certains utilisateurs",
+        additional_context: "autre contexte utile",
+        trigger_action: "action normale du produit qui déclenche le problème",
+        access_action:
+          "action d’accès concernée, par exemple connexion ou réinitialisation du mot de passe",
+        auth_method:
+          "méthode d’authentification utilisée, par exemple mot de passe, numéro de téléphone ou e-mail",
+        os: "système d’exploitation concerné",
+        device: "modèle précis de l’appareil",
+        browser: "navigateur utilisé",
+        app_version: "version précise de l’application",
+        server_or_instance: "serveur ou instance concerné",
+        affected_users: "utilisateurs affectés",
+        video_available:
+          "présence éventuelle d’une vidéo montrant le problème",
+        logs_available: "présence éventuelle de journaux/logs disponibles",
+        billing_issue_type: "type de problème de facturation",
+        billing_provider: "prestataire ou moyen de paiement concerné",
+        offer_or_plan: "offre, forfait ou abonnement concerné",
+        amount: "montant concerné",
+        currency: "devise concernée",
+        billing_date_or_period:
+          "date ou période de facturation concernée",
+        gap_observed:
+          "écart entre le besoin utilisateur et la fonctionnalité disponible",
+        question_intent:
+          "intention de la question, par exemple savoir comment faire, si c’est possible ou si c’est prévu"
+      },
       topicDetailValueTranslations: {
         "nothing happens": "rien ne se passe",
         "click create folder": "cliquer sur créer un dossier",
@@ -194,7 +238,7 @@ const dataBaseResponse: DataBaseResponse = {
         unclear: "un résultat incertain"
       },
       askFields:
-        "Pour mieux vous aider et comprendre votre demande, pourriez-vous m’indiquer : {fields_requested} ?",
+        "Pour mieux vous aider, pourriez-vous préciser les éléments suivants :",
       proposeSolution:
         "Une solution trouvée automatiquement pourrait vous aider : pourriez-vous essayer de {solutions} ?",
       acknowledgement:
@@ -357,6 +401,47 @@ const dataBaseResponse: DataBaseResponse = {
         video_available: "video available",
         image_available: "image available"
       },
+      topicDetailsDescriptions: {
+        default: "additional useful information to handle the request",
+        feature_or_page: "feature or page concerned",
+        provided_url: "relevant URL, for example a domain or specific page",
+        pre_problem_state:
+          "context before the problem, different from the observed result",
+        observed_result: "what actually happens",
+        expected_result: "what should normally happen",
+        error_message: "exact error message displayed",
+        platform:
+          "execution channel concerned, for example mobile app, web, or desktop app",
+        account_context:
+          "account context, for example premium account or signup method",
+        frequency: "frequency of the problem, only if known",
+        affected_scope:
+          "affected scope, for example one folder, all connectors, or some users",
+        additional_context: "any other useful context",
+        trigger_action: "normal product action that triggers the problem",
+        access_action:
+          "access action concerned, for example login or password reset",
+        auth_method:
+          "authentication method used, for example password, phone number, or email",
+        os: "operating system concerned",
+        device: "precise device model",
+        browser: "browser used",
+        app_version: "precise application version",
+        server_or_instance: "server or instance concerned",
+        affected_users: "affected users",
+        video_available: "whether a video showing the problem is available",
+        logs_available: "whether logs are available",
+        billing_issue_type: "type of billing issue",
+        billing_provider: "billing provider or payment method concerned",
+        offer_or_plan: "offer, plan, or subscription concerned",
+        amount: "amount concerned",
+        currency: "currency concerned",
+        billing_date_or_period: "billing date or period concerned",
+        gap_observed:
+          "gap between the user need and the available feature",
+        question_intent:
+          "question intent, for example how to do something, whether it is possible, or whether it is planned"
+      },
       topicDetailValueTranslations: {},
       testedSolutionOutcomeLabels: {
         default: "had an unspecified outcome",
@@ -367,7 +452,7 @@ const dataBaseResponse: DataBaseResponse = {
         unclear: "had an unclear outcome"
       },
       askFields:
-        "To better help you and understand your request, could you tell me: {fields_requested}?",
+        "To better help you, could you clarify the following details:",
       proposeSolution:
         "An automatically found solution might help: could you try {solutions}?",
       acknowledgement:
