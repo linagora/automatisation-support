@@ -123,7 +123,7 @@ async function runSupportProcessingPipeline(
 
   let possibleSolutions: SolutionRetrievalOutput = [];
   let decisionSearchingSolutionForResponsePlan: ResponsePlanInput["decisionSearchingSolution"] = {
-    type: "acknowledgement"
+    topics: []
   };
 
   if (turnUnderstandingDelta.segments_topic.length !== 0) {
@@ -135,11 +135,16 @@ async function runSupportProcessingPipeline(
     const decisionSearchingSolution =
       await pipelineSteps.runSearchDecision(searchDecisionInput);
 
-    if (decisionSearchingSolution.shouldSearchSolution === true) {
-      decisionSearchingSolutionForResponsePlan = {
-        type: "solution_searching"
-      };
+    decisionSearchingSolutionForResponsePlan = {
+      topics: decisionSearchingSolution.decision.topics
+    };
 
+    const shouldSearchSolution =
+      decisionSearchingSolution.decision.topics.some((topicDecision) => {
+        return topicDecision.type === "solution_searching";
+      });
+
+    if (shouldSearchSolution) {
       const solutionRetrievalInput: SolutionRetrievalInput = {
         supportTopicKnowledge,
         turnUnderstandingDelta

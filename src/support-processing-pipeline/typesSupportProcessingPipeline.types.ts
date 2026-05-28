@@ -325,10 +325,21 @@ export type ConversationHistory = ConversationHistoryEvent[];
  * ===================================================== */
 
 export type DecisionSearchingSolution = {
-  shouldSearchSolution: boolean;
+  decision: {
+    route: "continue";
+    topics: {
+      topic_id: number;
+      type: "ask_more_info" | "acknowledgement" | "solution_searching";
+      missing_fields: string[];
+    }[];
+  };
   detected: {
-    topicsQualificationResult: "qualified" | "unqualified" | "partial";
-    solutionLikelihoodResult: "likely" | "unlikely" | "unknown";
+    topicsQualificationResult: "not_evaluated" | "no_topic";
+    solutionLikelihoodResult: "not_evaluated";
+  };
+  history: {
+    checked: string[];
+    failed: string[];
   };
 };
 

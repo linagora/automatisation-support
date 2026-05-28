@@ -77,17 +77,13 @@ export type TopicNextStep =
   | "close_if_resolved"
   | "handover";
 
-export type DecisionSearchingSolutionForResponsePlan =
-  | {
-      type: "ask_more_info";
-      missing_fields: [string, ...string[]];
-    }
-  | {
-      type: "acknowledgement";
-    }
-  | {
-      type: "solution_searching";
-    };
+export type DecisionSearchingSolutionForResponsePlan = {
+  topics: {
+    topic_id: number;
+    type: "ask_more_info" | "acknowledgement" | "solution_searching";
+    missing_fields?: string[];
+  }[];
+};
 
 export type TopicPlanMessage = {
   politeness_opening:

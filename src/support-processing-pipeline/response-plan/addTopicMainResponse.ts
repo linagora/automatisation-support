@@ -5,27 +5,45 @@ import type {
 } from "./typesResponsePlan.types";
 
 type TopicMainResponseInput = {
-  topicSegment: unknown;
+  topicSegment: {
+    id_topic?: unknown;
+  };
   possibleSolutions: TopicSolution[];
   decisionSearchingSolution: DecisionSearchingSolutionForResponsePlan;
 };
 
+function isNonEmptyStringArray(value: unknown): value is [string, ...string[]] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((item) => {
+      return typeof item === "string";
+    })
+  );
+}
+
 function addTopicMainResponse(
   topicMainResponseInput: TopicMainResponseInput
 ): TopicMainResponse {
-  const { decisionSearchingSolution, possibleSolutions } =
+  const { topicSegment, decisionSearchingSolution, possibleSolutions } =
     topicMainResponseInput;
+  const topicDecision = decisionSearchingSolution.topics.find((decision) => {
+    return decision.topic_id === topicSegment.id_topic;
+  });
 
-  if (decisionSearchingSolution.type === "ask_more_info") {
+  if (
+    topicDecision?.type === "ask_more_info" &&
+    isNonEmptyStringArray(topicDecision.missing_fields)
+  ) {
     return {
       type: "ask_fields",
       details: {
-        fields_requested: decisionSearchingSolution.missing_fields
+        fields_requested: topicDecision.missing_fields
       }
     };
   }
 
-  if (decisionSearchingSolution.type === "acknowledgement") {
+  if (topicDecision?.type === "acknowledgement" || topicDecision === undefined) {
     return {
       type: "acknowledgement"
     };
