@@ -1,12 +1,15 @@
-import { dataBaseResponse } from "./dataBaseResponse";
 import { transformPlanToStringPlan } from "./transformPlanToStringPlan";
 import { transformStringPlanToMessages } from "./transformStringPlanToMessages";
 
 import type { ResponsePlan } from "../response-plan/typesResponsePlan.types";
-import type { UserResponse } from "./transformStringPlanToMessages";
+import type { UserResponseMessage } from "./transformStringPlanToMessages";
 
 type ResponseProductionInput = {
   responsePlan: ResponsePlan;
+};
+
+type UserResponse = {
+  messages: UserResponseMessage[];
 };
 
 function runResponseProduction(
@@ -14,12 +17,25 @@ function runResponseProduction(
 ): UserResponse {
   const { responsePlan } = responseProductionInput;
 
-  const stringResponsePlan = transformPlanToStringPlan(
-    responsePlan,
-    dataBaseResponse
-  );
+  const userResponse: UserResponse = {
+    messages: []
+  };
 
-  return transformStringPlanToMessages(stringResponsePlan);
+  const planToStringPlanInput = {
+    responsePlan
+  };
+
+  const stringResponsePlan = transformPlanToStringPlan(planToStringPlanInput);
+
+  const stringPlanToMessagesInput = {
+    stringResponsePlan
+  };
+
+  const messages = transformStringPlanToMessages(stringPlanToMessagesInput);
+
+  userResponse.messages = messages;
+
+  return userResponse;
 }
 
 export { runResponseProduction };

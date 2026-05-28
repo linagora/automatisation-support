@@ -116,10 +116,8 @@ export type TopicPlanMessage = {
     };
   }[];
   politeness_closure:
-    | "thanks_for_cooperation"
-    | "available_if_needed"
-    | "wait_for_user"
-    | "handover_announced";
+    | "thanks_for_cooperation1"
+    | "thanks_for_cooperation2";
 };
 
 export type HandoverPlanMessage = UnknownRecord;

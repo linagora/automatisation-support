@@ -44,7 +44,7 @@ function addTopicPlanMessage(
       }).length
     },
     topics_responses: [],
-    politeness_closure: "thanks_for_cooperation"
+    politeness_closure: "thanks_for_cooperation1"
   };
 
   for (const topicSegment of topicSegments) {

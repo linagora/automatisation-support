@@ -26,16 +26,14 @@ flowchart TB
 
     T_PLAN_TO_STRING_INPUT["<b>Prepare planToStringPlanInput</b><br/>
     planToStringPlanInput = {<br/>
-    responsePlan,<br/>
-    dataBaseResponse<br/>
+    responsePlan<br/>
     }"]
 
     subgraph PLAN_TO_STRING_DATA["stringResponsePlan = transformPlanToStringPlan(planToStringPlanInput)"]
       direction LR
 
       PLAN_TO_STRING_INPUTS["<b>planToStringPlanInput</b><br/>
-      responsePlan<br/>
-      dataBaseResponse"]
+      responsePlan"]
 
       PLAN_TO_STRING_OUTPUTS["<b>Output</b><br/>
       stringResponsePlan<br/><br/>
@@ -123,8 +121,7 @@ flowchart TB
 
     PREVIOUS_INPUTS["<b>Input prepared by runResponseProduction</b><br/>
     planToStringPlanInput = {<br/>
-    responsePlan,<br/>
-    dataBaseResponse<br/>
+    responsePlan<br/>
     }"]
   end
 
@@ -132,41 +129,42 @@ flowchart TB
     direction TB
 
     T_INIT["<b>Initialize stringResponsePlan</b><br/>
-    Keep the same mirror categories as<br/>
-    responsePlan.messagesPlan"]
+    stringResponsePlan = responsePlan<br/><br/>
+    Start from a mirror copy,<br/>
+    then replace structured fields with strings"]
 
     T_SELECT_LANGUAGE["<b>Select response templates</b><br/>
     Use responsePlan.responseLanguage<br/>
     to select french / english templates<br/>
-    from dataBaseResponse"]
+    from imported dataBaseResponse"]
 
     T_SECURITY["<b>Transform security gate</b><br/>
-    securityGatePlanMessage<br/>
-    -> stringResponsePlan.securityGate"]
+    stringField = transformStringFields(userLanguage, securityGatePlanMessage)<br/>
+    stringResponsePlan.messagesPlan.securityGatePlanMessage = stringField"]
 
     T_SUSPICIOUS["<b>Transform suspicious</b><br/>
-    suspiciousPlanMessage<br/>
-    -> stringResponsePlan.suspicious"]
+    stringField = transformStringFields(userLanguage, suspiciousPlanMessage)<br/>
+    stringResponsePlan.messagesPlan.suspiciousPlanMessage = stringField"]
 
     T_LACK["<b>Transform lack comprehension</b><br/>
-    lackComprehensionPlanMessage<br/>
-    -> stringResponsePlan.lackComprehension"]
+    stringField = transformStringFields(userLanguage, lackComprehensionPlanMessage)<br/>
+    stringResponsePlan.messagesPlan.lackComprehensionPlanMessage = stringField"]
 
     T_SCOPE["<b>Transform scope boundary</b><br/>
-    scopeBoundaryPlanMessages<br/>
-    -> stringResponsePlan.scopeBoundary"]
+    stringField = transformStringFields(userLanguage, scopeBoundaryPlanMessages)<br/>
+    stringResponsePlan.messagesPlan.scopeBoundaryPlanMessages = stringField"]
 
     T_TOPIC["<b>Transform topic</b><br/>
-    topicPlanMessages<br/>
-    -> stringResponsePlan.topic"]
+    stringField = transformStringFields(userLanguage, topicPlanMessages)<br/>
+    stringResponsePlan.messagesPlan.topicPlanMessages = stringField"]
 
     T_SIGNAL["<b>Transform signal</b><br/>
-    signalPlanMessages<br/>
-    -> stringResponsePlan.signal"]
+    stringField = transformStringFields(userLanguage, signalPlanMessages)<br/>
+    stringResponsePlan.messagesPlan.signalPlanMessages = stringField"]
 
     T_HANDOVER["<b>Transform handover</b><br/>
-    handoverPlanMessages<br/>
-    -> stringResponsePlan.handover"]
+    stringField = transformStringFields(userLanguage, handoverPlanMessages)<br/>
+    stringResponsePlan.messagesPlan.handoverPlanMessages = stringField"]
 
     T_RETURN["<b>Return stringResponsePlan</b>"]
 
@@ -229,31 +227,34 @@ flowchart TB
     messages = []"]
 
     T_SECURITY["<b>Add security gate messages</b><br/>
-    stringResponsePlan.securityGate<br/>
+    stringResponsePlan.messagesPlan.securityGatePlanMessage<br/>
     only non-empty text"]
 
     T_SUSPICIOUS["<b>Add suspicious messages</b><br/>
-    stringResponsePlan.suspicious<br/>
+    stringResponsePlan.messagesPlan.suspiciousPlanMessage<br/>
     only non-empty text"]
 
     T_LACK["<b>Add lack comprehension messages</b><br/>
-    stringResponsePlan.lackComprehension<br/>
+    stringResponsePlan.messagesPlan.lackComprehensionPlanMessage<br/>
     only non-empty text"]
 
     T_SCOPE["<b>Add scope boundary messages</b><br/>
-    stringResponsePlan.scopeBoundary<br/>
+    stringResponsePlan.messagesPlan.scopeBoundaryPlanMessages<br/>
     only non-empty text"]
 
     T_TOPIC["<b>Add topic messages</b><br/>
-    stringResponsePlan.topic<br/>
+    stringResponsePlan.messagesPlan.topicPlanMessages<br/>
+    include politeness_opening,<br/>
+    topic responses,<br/>
+    politeness_closure<br/>
     only non-empty text"]
 
     T_SIGNAL["<b>Add signal messages</b><br/>
-    stringResponsePlan.signal<br/>
+    stringResponsePlan.messagesPlan.signalPlanMessages<br/>
     only non-empty text"]
 
     T_HANDOVER["<b>Add handover messages</b><br/>
-    stringResponsePlan.handover<br/>
+    stringResponsePlan.messagesPlan.handoverPlanMessages<br/>
     only non-empty text"]
 
     T_RETURN["<b>Return messages</b>"]

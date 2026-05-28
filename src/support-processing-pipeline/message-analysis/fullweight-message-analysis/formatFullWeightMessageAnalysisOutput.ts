@@ -52,6 +52,19 @@ const TOPIC_DETAIL_FIELDS = [
   "amount", "currency", "billing_date_or_period", "gap_observed", "question_intent",
 ];
 
+function shouldDebugFullWeightAnalysis(): boolean {
+  return process.env.SUPPORT_PROCESSING_DEBUG === "true";
+}
+
+function logDebugStep(title: string, value: unknown): void {
+  if (!shouldDebugFullWeightAnalysis()) {
+    return;
+  }
+
+  console.log(`\n--- DEBUG ${title} ---`);
+  console.log(JSON.stringify(value, null, 2));
+}
+
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -329,6 +342,8 @@ function formatFullWeightMessageAnalysisOutput(
 
   const cleanedResponse = clean(raw.parsedResponse);
 
+  logDebugStep("fullWeight cleaned parsed JSON", cleanedResponse);
+
   if (!isRecord(cleanedResponse)) {
     failed.push("llm_response_parsed");
 
@@ -386,7 +401,7 @@ function formatFullWeightMessageAnalysisOutput(
 
   const analysis: FullWeightCleanAnalysis = {
     user_language: oneOf(cleanedResponse.user_language, USER_LANGUAGES)
-      ? cleanedResponse.user_language
+      ? cleanedResponse.user_language.toLowerCase()
       : undefined,
     segments_lack_comprehension: normalizeLackComprehension(segmentsLackComprehension),
     segments_topic: normalizeTopics(segmentsTopic),
@@ -394,6 +409,8 @@ function formatFullWeightMessageAnalysisOutput(
     segments_scope_boundary: normalizeScopeBoundaries(segmentsScopeBoundary),
     segments_suspicious: normalizeSuspicious(segmentsSuspicious),
   };
+
+  logDebugStep("fullWeight normalized analysis", analysis);
 
   return {
     decision: { route: "continue" },

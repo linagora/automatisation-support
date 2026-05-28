@@ -34,6 +34,23 @@ import {
   fullWeightMessageAnalysisResponseFormat
 } from "./fullWeightMessageAnalysis.schema";
 
+function shouldDebugFullWeightAnalysis(): boolean {
+  return process.env.SUPPORT_PROCESSING_DEBUG === "true";
+}
+
+function logDebugStep(title: string, value: unknown): void {
+  if (!shouldDebugFullWeightAnalysis()) {
+    return;
+  }
+
+  console.log(`\n--- DEBUG ${title} ---`);
+  console.log(
+    typeof value === "string"
+      ? value
+      : JSON.stringify(value, null, 2)
+  );
+}
+
 async function requestFullWeightAnalysis(
   input: RequestFullWeightAnalysisInput
 ): Promise<RawFullWeightMessageAnalysis> {
@@ -57,6 +74,11 @@ async function requestFullWeightAnalysis(
 
 
     if (!result.success || !result.content) {
+      logDebugStep("fullWeight raw LLM failure", {
+        error: result.error,
+        rawResponse: result.content
+      });
+
       return {
         status: "failed",
         rawResponse: result.content,
@@ -66,7 +88,11 @@ async function requestFullWeightAnalysis(
       };
     }
 
+    logDebugStep("fullWeight raw LLM output", result.content);
+
     const parsedResponse = parseLLMResponse(result.content);
+
+    logDebugStep("fullWeight parsed JSON", parsedResponse);
 
     return {
       status: "completed",
