@@ -21,3 +21,5 @@ next step 2 : attachment analysis modified. Mermaid is valid. run and types need
 * **Envoyer une version “topic memory” propre plutôt que des logs bruts** : pour matcher les topics, le modèle a surtout besoin de `id_topic`, `topic_label`, `topic_details`, `user_goal`, `blocking_issue`, `tested_actions`. Le reste peut perturber la décision et favoriser les mélanges.
 
 * **Ajouter un garde-fou post-LLM dans `turnUnderstandingDelta`** : si un nouveau topic est couvert par un `scope_boundary`, le supprimer du delta. Même avec un bon prompt, le LLM peut encore créer un topic Canva/imprimante en plus du scope boundary.
+
+next step : runsearch decsion integrer la decision de faire recherceh vers vers le rag 

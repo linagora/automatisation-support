@@ -129,7 +129,11 @@ async function runSupportProcessingPipeline(
   if (turnUnderstandingDelta.segments_topic.length !== 0) {
     const searchDecisionInput: SearchDecisionInput = {
       supportTopicKnowledge,
-      turnUnderstandingDelta
+      turnUnderstandingDelta,
+      accountTrustStatus,
+      accountProfile,
+      accountInteractionTraits,
+      conversationHistory
     };
 
     const decisionSearchingSolution =
@@ -139,12 +143,12 @@ async function runSupportProcessingPipeline(
       topics: decisionSearchingSolution.decision.topics
     };
 
-    const shouldSearchSolution =
+    const shouldRunSolutionRetrieval =
       decisionSearchingSolution.decision.topics.some((topicDecision) => {
         return topicDecision.type === "solution_searching";
       });
 
-    if (shouldSearchSolution) {
+    if (shouldRunSolutionRetrieval) {
       const solutionRetrievalInput: SolutionRetrievalInput = {
         supportTopicKnowledge,
         turnUnderstandingDelta

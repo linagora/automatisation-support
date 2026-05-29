@@ -5,6 +5,23 @@ import type {
 
 const SEARCH_DECISION_STRICTNESS = 2;
 
+const RAG_ELIGIBLE_TOPIC_CATEGORIES = [
+  "bug",
+  "question_faq",
+  "access_security"
+] as const;
+
+const MAX_FAILED_RAG_SOLUTION_ATTEMPTS_BEFORE_HANDOVER = 2;
+
+const HANDOVER_SIGNAL_TYPES = [
+  "handover_request"
+] as const;
+
+const FAILED_RAG_OUTCOMES = [
+  "failed",
+  "partially_worked"
+] as const;
+
 type TopicCategory =
   | "billing"
   | "access_security"
@@ -14,6 +31,8 @@ type TopicCategory =
   | "other";
 
 type RequiredFieldsByCategory = Record<TopicCategory, string[]>;
+
+type TopicDecision = SearchDecisionOutput["decision"]["topics"][number];
 
 const REQUIRED_FIELDS_BY_STRICTNESS: Record<
   1 | 2 | 3,
@@ -127,11 +146,214 @@ function getMissingFields(params: {
   });
 }
 
+function isRagEligibleTopicCategory(topicCategory: TopicCategory): boolean {
+  return RAG_ELIGIBLE_TOPIC_CATEGORIES.includes(
+    topicCategory as (typeof RAG_ELIGIBLE_TOPIC_CATEGORIES)[number]
+  );
+}
+
+function hasStringInList(value: unknown, expectedValues: string[]): boolean {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+
+  return value.some((item) => {
+    return typeof item === "string" && expectedValues.includes(item);
+  });
+}
+
+function hasExplicitHandoverRequest(input: SearchDecisionInput): boolean {
+  return input.turnUnderstandingDelta.segments_signal.some((signalSegment) => {
+    return hasStringInList(signalSegment.signal_types, [
+      ...HANDOVER_SIGNAL_TYPES
+    ]);
+  });
+}
+
+function hasProposedSolutionForTopic(
+  responsePlan: unknown,
+  topicId: number
+): boolean {
+  if (typeof responsePlan !== "object" || responsePlan === null) {
+    return false;
+  }
+
+  const messagesPlan = (responsePlan as Record<string, unknown>).messagesPlan;
+
+  if (typeof messagesPlan !== "object" || messagesPlan === null) {
+    return false;
+  }
+
+  const topicPlanMessages = (messagesPlan as Record<string, unknown>)
+    .topicPlanMessages;
+
+  if (!Array.isArray(topicPlanMessages)) {
+    return false;
+  }
+
+  return topicPlanMessages.some((topicPlanMessage) => {
+    if (typeof topicPlanMessage !== "object" || topicPlanMessage === null) {
+      return false;
+    }
+
+    const topicsResponses = (topicPlanMessage as Record<string, unknown>)
+      .topics_responses;
+
+    if (!Array.isArray(topicsResponses)) {
+      return false;
+    }
+
+    return topicsResponses.some((topicResponseWrapper) => {
+      if (
+        typeof topicResponseWrapper !== "object" ||
+        topicResponseWrapper === null
+      ) {
+        return false;
+      }
+
+      const topicResponse = (
+        topicResponseWrapper as Record<string, unknown>
+      ).topic_response;
+
+      if (typeof topicResponse !== "object" || topicResponse === null) {
+        return false;
+      }
+
+      const topicResponseRecord = topicResponse as Record<string, unknown>;
+      const title = topicResponseRecord.title;
+      const mainResponse = topicResponseRecord.main_response;
+
+      return (
+        typeof title === "object" &&
+        title !== null &&
+        (title as Record<string, unknown>).topic_id === topicId &&
+        typeof mainResponse === "object" &&
+        mainResponse !== null &&
+        (mainResponse as Record<string, unknown>).type === "propose_solution"
+      );
+    });
+  });
+}
+
+function hasFailedTestedSolutionForTopic(
+  turnUnderstandingDelta: unknown,
+  topicId: number
+): boolean {
+  if (
+    typeof turnUnderstandingDelta !== "object" ||
+    turnUnderstandingDelta === null
+  ) {
+    return false;
+  }
+
+  const segmentsTopic = (turnUnderstandingDelta as Record<string, unknown>)
+    .segments_topic;
+
+  if (!Array.isArray(segmentsTopic)) {
+    return false;
+  }
+
+  return segmentsTopic.some((topicSegment) => {
+    if (typeof topicSegment !== "object" || topicSegment === null) {
+      return false;
+    }
+
+    const topicSegmentRecord = topicSegment as Record<string, unknown>;
+
+    if (topicSegmentRecord.id_topic !== topicId) {
+      return false;
+    }
+
+    const testedSolutions = topicSegmentRecord.tested_solutions;
+
+    if (!Array.isArray(testedSolutions)) {
+      return false;
+    }
+
+    return testedSolutions.some((testedSolution) => {
+      if (typeof testedSolution !== "object" || testedSolution === null) {
+        return false;
+      }
+
+      return hasStringInList(
+        [(testedSolution as Record<string, unknown>).outcome],
+        [...FAILED_RAG_OUTCOMES]
+      );
+    });
+  });
+}
+
+function hasTooManyFailedRagAttemptsForTopic(
+  input: SearchDecisionInput,
+  topicId: number
+): boolean {
+  const conversationHistory = input.conversationHistory ?? [];
+  let proposedSolutionCount = 0;
+  let failedRagAttemptCount = 0;
+
+  for (const conversationEvent of conversationHistory) {
+    if (
+      conversationEvent.role === "bot" &&
+      hasProposedSolutionForTopic(conversationEvent.responsePlan, topicId)
+    ) {
+      proposedSolutionCount += 1;
+      continue;
+    }
+
+    // Expected shape: a user event after a bot propose_solution can contain
+    // turnUnderstandingDelta.segments_topic[].tested_solutions[].outcome.
+    if (
+      proposedSolutionCount > failedRagAttemptCount &&
+      conversationEvent.role === "user" &&
+      hasFailedTestedSolutionForTopic(
+        conversationEvent.turnUnderstandingDelta,
+        topicId
+      )
+    ) {
+      failedRagAttemptCount += 1;
+    }
+  }
+
+  return (
+    failedRagAttemptCount >= MAX_FAILED_RAG_SOLUTION_ATTEMPTS_BEFORE_HANDOVER
+  );
+}
+
+function isUserLikelyNotHelpedByBot(input: SearchDecisionInput): boolean {
+  return input.accountInteractionTraits?.likelyToBeHelpedByBot === false;
+}
+
+function shouldAvoidRagBecauseOfHumanSupportContext(params: {
+  input: SearchDecisionInput;
+  topicId: number;
+}): boolean {
+  return (
+    hasExplicitHandoverRequest(params.input) ||
+    hasTooManyFailedRagAttemptsForTopic(params.input, params.topicId) ||
+    isUserLikelyNotHelpedByBot(params.input)
+  );
+}
+
+function shouldSearchSolution(params: {
+  input: SearchDecisionInput;
+  topicId: number;
+  topicCategory: TopicCategory;
+}): boolean {
+  if (!isRagEligibleTopicCategory(params.topicCategory)) {
+    return false;
+  }
+
+  return !shouldAvoidRagBecauseOfHumanSupportContext({
+    input: params.input,
+    topicId: params.topicId
+  });
+}
+
 async function runSearchDecision(
   input: SearchDecisionInput
 ): Promise<SearchDecisionOutput> {
   const topicDecisions = input.turnUnderstandingDelta.segments_topic.map(
-    (topic) => {
+    (topic): TopicDecision => {
       const topicCategory = isTopicCategory(topic.topic_category)
         ? topic.topic_category
         : "other";
@@ -145,16 +367,30 @@ async function runSearchDecision(
         topicDetails
       });
 
+      if (missingFields.length > 0) {
+        return {
+          topic_id: topic.id_topic,
+          type: "ask_more_info",
+          missing_fields: missingFields
+        };
+      }
+
       return {
         topic_id: topic.id_topic,
-        type:
-          missingFields.length > 0
-            ? "ask_more_info"
-            : "acknowledgement",
-        missing_fields: missingFields
-      } as const;
+        type: shouldSearchSolution({
+          input,
+          topicId: topic.id_topic,
+          topicCategory
+        })
+          ? "solution_searching"
+          : "acknowledgement",
+        missing_fields: []
+      };
     }
   );
+  const hasSolutionSearchingTopic = topicDecisions.some((topicDecision) => {
+    return topicDecision.type === "solution_searching";
+  });
 
   return {
     decision: {
@@ -163,18 +399,25 @@ async function runSearchDecision(
     },
     detected: {
       topicsQualificationResult:
-        topicDecisions.length > 0 ? "not_evaluated" : "no_topic",
-      solutionLikelihoodResult: "not_evaluated"
+        topicDecisions.length > 0 ? "evaluated" : "no_topic",
+      solutionLikelihoodResult:
+        topicDecisions.length === 0
+          ? "no_topic"
+          : hasSolutionSearchingTopic
+            ? "rag_relevant"
+            : "rag_not_relevant"
     },
     history: {
       checked: [
         "turn_understanding_delta_received",
         "topics_presence_checked",
-        "forced_acknowledgement_mode"
+        "topic_required_fields_checked",
+        "rag_eligible_categories_checked",
+        "rag_helpfulness_context_checked"
       ],
       failed: []
     }
-  } as SearchDecisionOutput;
+  };
 }
 
 export {

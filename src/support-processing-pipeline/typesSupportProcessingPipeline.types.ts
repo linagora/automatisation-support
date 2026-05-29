@@ -64,7 +64,8 @@ type SignalType =
   | "communication_feedback"
   | "pricing_feedback"
   | "feature_loss_feedback"
-  | "confirmation_without_new_field";
+  | "confirmation_without_new_field"
+  | "handover_request";
 
 type ScopeBoundaryType =
   | "generic_out_of_scope"
@@ -139,7 +140,7 @@ export type AccountProfile = {
  * ===================================================== */
 
 export type AccountInteractionTraits = {
-  labels: (
+  labels?: (
     | "autonomous"
     | "needsGuidance"
     | "complicated"
@@ -151,7 +152,9 @@ export type AccountInteractionTraits = {
     | "recurrentRequester"
     | "atRisk"
   )[];
+  likelyToBeHelpedByBot?: boolean;
   lastUpdatedAt: string;
+  [key: string]: unknown;
 };
 
 /* =====================================================
@@ -334,8 +337,11 @@ export type DecisionSearchingSolution = {
     }[];
   };
   detected: {
-    topicsQualificationResult: "not_evaluated" | "no_topic";
-    solutionLikelihoodResult: "not_evaluated";
+    topicsQualificationResult: "evaluated" | "no_topic";
+    solutionLikelihoodResult:
+      | "rag_relevant"
+      | "rag_not_relevant"
+      | "no_topic";
   };
   history: {
     checked: string[];
@@ -502,6 +508,10 @@ export type MessageAnalysisOutput = TurnUnderstandingDelta;
 export type SearchDecisionInput = {
   supportTopicKnowledge: SupportTopicKnowledge;
   turnUnderstandingDelta: TurnUnderstandingDelta;
+  accountTrustStatus?: AccountTrustStatus;
+  accountProfile?: AccountProfile;
+  accountInteractionTraits?: AccountInteractionTraits;
+  conversationHistory?: ConversationHistory;
 };
 
 export type SearchDecisionOutput = DecisionSearchingSolution;
