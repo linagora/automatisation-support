@@ -25,7 +25,8 @@ import {
 } from "./dataset-message-analysis-test";
 
 import type {
-  LatestUserAttachment
+  LatestUserAttachment,
+  MessageAnalysisInput
 } from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const MIME_TYPES: Record<string, string> = {
@@ -168,6 +169,32 @@ function sanitizeForLog(value: unknown): unknown {
 
   return value;
 }
+
+function serializeConversationHistoryForLog(
+  conversationHistory: MessageAnalysisInput["conversationHistory"]
+): {
+  contextLLM: string | undefined;
+  events: unknown;
+} {
+  return {
+    contextLLM: conversationHistory.contextLLM,
+    events: sanitizeForLog([...conversationHistory])
+  };
+}
+
+function serializeMessageAnalysisInputForLog(
+  input: MessageAnalysisInput
+): Record<string, unknown> {
+  const sanitizedInput = sanitizeForLog(input) as Record<string, unknown>;
+
+  return {
+    ...sanitizedInput,
+    conversationHistory: serializeConversationHistoryForLog(
+      input.conversationHistory
+    )
+  };
+}
+
 async function runCase(
   testCase: MessageAnalysisTestCase,
   attachmentPath?: string
@@ -194,7 +221,9 @@ async function runCase(
   console.log(`Description: ${finalTestCase.description}`);
 
   console.log("\n--- Input ---");
-  console.log(JSON.stringify(sanitizeForLog(finalTestCase.input), null, 2));
+  console.log(
+    JSON.stringify(serializeMessageAnalysisInputForLog(finalTestCase.input), null, 2)
+  );
 
   console.log("\n------------------------------------------------------------");
   console.log("Calling runMessageAnalysis...");

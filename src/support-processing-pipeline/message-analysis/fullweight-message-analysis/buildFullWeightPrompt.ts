@@ -220,7 +220,9 @@ type AttachmentAnalysisItem = {
   reason?: string;
   analysis?: {
     llmDescription?: string;
+    visionDescription?: string;
     structuredObservations?: unknown;
+    visionObservations?: unknown;
     relationToPreviousAttachment?: string;
   };
 };
@@ -258,10 +260,8 @@ function toPrettyJson(value: unknown): string {
 
 function buildLatestUserMessageContext(
   latestUserMessage: LatestUserMessage
-): Record<string, unknown> {
-  return {
-    content: latestUserMessage.content,
-  };
+): string {
+  return latestUserMessage.content;
 }
 
 function buildSupportTopicKnowledgeContext(
@@ -285,42 +285,32 @@ function buildSupportTopicKnowledgeContext(
 
 function buildConversationHistoryContext(
   conversationHistory: ConversationHistory
-): Record<string, unknown>[] {
-  return conversationHistory.map((event) => {
-    if (event.role === "user") {
-      return {
-        role: "user",
-        created_at: event.created_at,
-        previous_turn_understanding: {
-          user_language: event.turnUnderstandingDelta.user_language,
-          segments_lack_comprehension:
-            event.turnUnderstandingDelta.segments_lack_comprehension,
-          segments_topic: event.turnUnderstandingDelta.segments_topic,
-          segments_signal: event.turnUnderstandingDelta.segments_signal,
-          segments_scope_boundary:
-            event.turnUnderstandingDelta.segments_scope_boundary,
-          segments_suspicious: event.turnUnderstandingDelta.segments_suspicious,
-        },
-      };
+): string {
+  const conversationHistoryWithContext = conversationHistory as ConversationHistory & {
+    contextLLM?: unknown;
+  };
+
+  if (
+    typeof conversationHistoryWithContext.contextLLM === "string" &&
+    conversationHistoryWithContext.contextLLM.trim() !== ""
+  ) {
+    if (process.env.SUPPORT_PROCESSING_DEBUG === "true") {
+      console.log("\n--- DEBUG fullWeightPrompt.conversationHistory ---");
+      console.log("Full-weight prompt conversation history source: contextLLM");
+      console.log(conversationHistoryWithContext.contextLLM);
     }
 
-    if (event.role === "bot") {
-      return {
-        role: "bot",
-        created_at: event.created_at,
-        previous_response_plan: {
-          responseLanguage: event.responsePlan.responseLanguage,
-          messagesPlan: event.responsePlan.messagesPlan,
-        },
-      };
-    }
+    return conversationHistoryWithContext.contextLLM;
+  }
 
-    return {
-      role: "system",
-      created_at: event.created_at,
-      note: event.note,
-    };
-  });
+  if (process.env.SUPPORT_PROCESSING_DEBUG === "true") {
+    console.log("\n--- DEBUG fullWeightPrompt.conversationHistory ---");
+    console.log(
+      "Full-weight prompt conversation history source: fallback_empty_context"
+    );
+  }
+
+  return "No compact conversation history provided.";
 }
 
 function buildAttachmentAnalysisContext(
@@ -332,12 +322,12 @@ function buildAttachmentAnalysisContext(
 
   return attachmentAnalysis.map((attachment) => ({
     filename: attachment.filename,
-    status: attachment.status,
-    reason: attachment.reason,
-    llmDescription: attachment.analysis?.llmDescription,
-    structuredObservations: attachment.analysis?.structuredObservations,
-    relationToPreviousAttachment:
-      attachment.analysis?.relationToPreviousAttachment,
+    llmDescription:
+      attachment.analysis?.llmDescription ||
+      attachment.analysis?.visionDescription,
+    structuredObservations:
+      attachment.analysis?.structuredObservations ||
+      attachment.analysis?.visionObservations,
   }));
 }
 
@@ -386,8 +376,8 @@ Analyze the latest user message using the following contexts.
 
 # Latest user message
 
-\`\`\`json
-${toPrettyJson(latestUserMessageContext)}
+\`\`\`text
+${latestUserMessageContext}
 \`\`\`
 
 # Existing support topic knowledge
@@ -398,8 +388,8 @@ ${toPrettyJson(supportTopicKnowledgeContext)}
 
 # Conversation history
 
-\`\`\`json
-${toPrettyJson(conversationHistoryContext)}
+\`\`\`text
+${conversationHistoryContext}
 \`\`\`
 
 # Attachment analysis

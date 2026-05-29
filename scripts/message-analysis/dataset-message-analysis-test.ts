@@ -138,22 +138,39 @@ const supportTopicKnowledgeAfterTurn1: SupportTopicKnowledge = {
   ]
 };
 
-const conversationHistoryAfterTurn1: ConversationHistory = [
+const conversationHistoryAfterTurn1: ConversationHistory = Object.assign(
+  [
+    {
+      id: "history_turn_1_user",
+      message_id: "msg_turn_1",
+      role: "user" as const,
+      created_at: "2026-05-21T09:00:00.000Z",
+      turnUnderstandingDelta: turn1Delta
+    },
+    {
+      id: "history_turn_1_bot",
+      message_id: "bot_turn_1",
+      role: "bot" as const,
+      created_at: "2026-05-21T09:01:00.000Z",
+      responsePlan: emptyBotResponsePlan
+    }
+  ],
   {
-    id: "history_turn_1_user",
-    message_id: "msg_turn_1",
-    role: "user",
-    created_at: "2026-05-21T09:00:00.000Z",
-    turnUnderstandingDelta: turn1Delta
-  },
-  {
-    id: "history_turn_1_bot",
-    message_id: "bot_turn_1",
-    role: "bot",
-    created_at: "2026-05-21T09:01:00.000Z",
-    responsePlan: emptyBotResponsePlan
+    contextLLM: [
+      'User(topic): add_topic topic_id=1 label="Twake Drive : create : folder" category=bug',
+      "User(topic): update_topic topic_id=1 fields=[platform, os, trigger_action, observed_result, expected_result]",
+      'User(topic): add_topic topic_id=2 label="Twake : reset : password" category=access_security',
+      "User(topic): update_topic topic_id=2 fields=[access_action, auth_method, observed_result, expected_result]",
+      'User(signal): signal types=[thanks_neutral] verbatim="Merci d\'avance pour votre aide."',
+      'User(signal): signal types=[time_sensitive] verbatim="C\'est assez urgent pour moi"',
+      'User(scope_boundary): scope_boundary type=non_support_linagora verbatim="au passage, est-ce que vous pouvez aussi m\'aider à récupérer mon compte Instagram ?"',
+      "Bot(topic): acknowledge topic_id=1 next_step=wait_for_support",
+      "Bot(topic): ask_more_info topic_id=2 fields=[auth_method, expected_result]",
+      "Bot(signal): respond_signal types=[thanks_neutral, time_sensitive]",
+      "Bot(scope_boundary): decline_scope_boundary type=non_support_linagora"
+    ].join("\n")
   }
-];
+);
 
 const turn2Delta: TurnUnderstandingDelta = {
   user_language: "French",
@@ -223,23 +240,41 @@ const supportTopicKnowledgeAfterTurn2: SupportTopicKnowledge = {
   ]
 };
 
-const conversationHistoryAfterTurn2: ConversationHistory = [
-  ...conversationHistoryAfterTurn1,
+const conversationHistoryAfterTurn2: ConversationHistory = Object.assign(
+  [
+    ...conversationHistoryAfterTurn1,
+    {
+      id: "history_turn_2_user",
+      message_id: "msg_turn_2",
+      role: "user" as const,
+      created_at: "2026-05-21T09:15:00.000Z",
+      turnUnderstandingDelta: turn2Delta
+    },
+    {
+      id: "history_turn_2_bot",
+      message_id: "bot_turn_2",
+      role: "bot" as const,
+      created_at: "2026-05-21T09:16:00.000Z",
+      responsePlan: emptyBotResponsePlan
+    }
+  ],
   {
-    id: "history_turn_2_user",
-    message_id: "msg_turn_2",
-    role: "user",
-    created_at: "2026-05-21T09:15:00.000Z",
-    turnUnderstandingDelta: turn2Delta
-  },
-  {
-    id: "history_turn_2_bot",
-    message_id: "bot_turn_2",
-    role: "bot",
-    created_at: "2026-05-21T09:16:00.000Z",
-    responsePlan: emptyBotResponsePlan
+    contextLLM: [
+      conversationHistoryAfterTurn1.contextLLM,
+      "User(topic): continue_topic topic_id=2",
+      "User(topic): update_topic topic_id=2 fields=[affected_scope, additional_context]",
+      'User(topic): tested_solution topic_id=2 action="send password reset email three times" outcome=failed',
+      "User(topic): mark_blocking topic_id=2",
+      'User(signal): signal types=[apology] verbatim="Désolé d\'insister"',
+      'User(signal): signal types=[disappointment] verbatim="je commence à être un peu bloqué"',
+      'User(scope_boundary): scope_boundary type=unrelated_request verbatim="rien à voir, mais est-ce que vous pouvez aussi m\'aider à configurer mon imprimante ?"',
+      "Bot(topic): ask_more_info topic_id=2 fields=[auth_method]",
+      "Bot(scope_boundary): decline_scope_boundary type=unrelated_request"
+    ]
+      .filter(Boolean)
+      .join("\n")
   }
-];
+);
 
 export const messageAnalysisTestCases: MessageAnalysisTestCase[] = [
   {

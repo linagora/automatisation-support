@@ -130,28 +130,27 @@ OUTPUT FORMAT:
  * Helpers
  * ===================================================== */
 
-// Builds a compact text representation of the attachmentAnalysis document.
-// Important: do not include url or path here, because local tests may contain huge data URLs.
+// Builds a compact text representation of the target attachment only.
+// Important: do not include url, path, or readiness internals in the text prompt.
 function buildAttachmentAnalysisContext(
   attachmentAnalysis: AttachmentAnalysis,
   targetAttachmentIndex: number
 ): string {
+  const targetAttachment = attachmentAnalysis.find((attachmentAnalysisItem) => {
+    return attachmentAnalysisItem.attachmentIndex === targetAttachmentIndex;
+  });
+
   return JSON.stringify(
-    attachmentAnalysis.map(function (attachmentAnalysisItem) {
-      return {
-        attachmentIndex: attachmentAnalysisItem.attachmentIndex,
-        isTarget:
-          attachmentAnalysisItem.attachmentIndex === targetAttachmentIndex,
-        filename: attachmentAnalysisItem.filename,
-        type: attachmentAnalysisItem.type,
-        mimeType: attachmentAnalysisItem.mimeType,
-        sizeBytes: attachmentAnalysisItem.sizeBytes,
-        status: attachmentAnalysisItem.status,
-        reason: attachmentAnalysisItem.reason,
-        readinessDecision: attachmentAnalysisItem.readinessDecision,
-        analysis: attachmentAnalysisItem.analysis
-      };
-    }),
+    targetAttachment === undefined
+      ? {
+          attachmentIndex: targetAttachmentIndex
+        }
+      : {
+          attachmentIndex: targetAttachment.attachmentIndex,
+          filename: targetAttachment.filename,
+          mimeType: targetAttachment.mimeType,
+          sizeBytes: targetAttachment.sizeBytes
+        },
     null,
     2
   );
@@ -166,7 +165,7 @@ function buildLatestUserMessageSection(
   }
 
   return `USER MESSAGE:
-${JSON.stringify(latestUserMessage)}
+${JSON.stringify({ content: latestUserMessage.content })}
 
 Use this message only to orient the visual analysis.
 

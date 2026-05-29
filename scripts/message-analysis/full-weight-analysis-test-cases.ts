@@ -1,12 +1,17 @@
+/**
+ * Fixtures for the full-weight message analysis runner. Not production code.
+ */
+
 import type {
+  ConversationHistory,
   MessageAnalysisInput,
   TurnUnderstandingDelta
-} from "./src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 import type {
   AttachmentAnalysis,
   LightWeightMessageAnalysis
-} from "./src/support-processing-pipeline/message-analysis/fullweight-message-analysis/typesFullWeightMessageAnalysis.types";
+} from "../../src/support-processing-pipeline/message-analysis/fullweight-message-analysis/typesFullWeightMessageAnalysis.types";
 
 export type FullWeightAnalysisTestCase = {
   id: string;
@@ -41,6 +46,69 @@ const previousAccessIssueDelta: TurnUnderstandingDelta = {
   segments_scope_boundary: [],
   segments_suspicious: []
 };
+
+const previousAccessIssueHistory: ConversationHistory = Object.assign(
+  [
+    {
+      id: "history_case_2_user_1",
+      message_id: "msg_case_2_previous_user",
+      role: "user" as const,
+      created_at: "2026-05-20T15:00:00.000Z",
+      turnUnderstandingDelta: previousAccessIssueDelta
+    },
+    {
+      id: "history_case_2_bot_1",
+      message_id: "msg_case_2_previous_bot",
+      role: "bot" as const,
+      created_at: "2026-05-20T15:05:00.000Z",
+      responsePlan: {
+        responseLanguage: "french",
+        messagesPlan: {
+          inputCleaningPlanMessages: [],
+          scopeBoundaryPlanMessages: [],
+          topicPlanMessages: [
+            {
+              topic_response: {
+                topic_id: 1,
+                topic_category: "access_security",
+                topic_label: "Twake : log in : account",
+                main_response: "ask_fields",
+                fields_requested: ["error_message"],
+                next_step: "wait_more_info"
+              }
+            }
+          ],
+          signalPlanMessages: [],
+          handoverPlanMessages: []
+        }
+      }
+    }
+  ],
+  {
+    contextLLM: [
+      'User(topic): add_topic topic_id=1 label="Twake : log in : account" category=access_security',
+      "User(topic): update_topic topic_id=1 fields=[access_action, observed_result]",
+      "User(topic): mark_blocking topic_id=1",
+      "Bot(topic): ask_more_info topic_id=1 fields=[error_message]",
+      "Bot(topic): wait_more_info topic_id=1"
+    ].join("\n")
+  }
+);
+
+const premiumPlanHistory: ConversationHistory = Object.assign(
+  [
+    {
+      id: "history_case_3_system_1",
+      message_id: "system_case_3_note",
+      role: "system" as const,
+      created_at: "2026-05-21T10:55:00.000Z",
+      note: "Customer is on a premium plan."
+    }
+  ],
+  {
+    contextLLM: "System(note): Customer is on a premium plan."
+  }
+);
 
 export const fullWeightAnalysisTestCases: FullWeightAnalysisTestCase[] = [
   {
@@ -108,42 +176,7 @@ export const fullWeightAnalysisTestCases: FullWeightAnalysisTestCase[] = [
           }
         ]
       },
-      conversationHistory: [
-        {
-          id: "history_case_2_user_1",
-          message_id: "msg_case_2_previous_user",
-          role: "user",
-          created_at: "2026-05-20T15:00:00.000Z",
-          turnUnderstandingDelta: previousAccessIssueDelta
-        },
-        {
-          id: "history_case_2_bot_1",
-          message_id: "msg_case_2_previous_bot",
-          role: "bot",
-          created_at: "2026-05-20T15:05:00.000Z",
-          responsePlan: {
-            responseLanguage: "french",
-            messagesPlan: {
-              inputCleaningPlanMessages: [],
-              scopeBoundaryPlanMessages: [],
-              topicPlanMessages: [
-                {
-                  topic_response: {
-                    topic_id: 1,
-                    topic_category: "access_security",
-                    topic_label: "Twake : log in : account",
-                    main_response: "ask_fields",
-                    fields_requested: ["error_message"],
-                    next_step: "wait_more_info"
-                  }
-                }
-              ],
-              signalPlanMessages: [],
-              handoverPlanMessages: []
-            }
-          }
-        }
-      ]
+      conversationHistory: previousAccessIssueHistory
     },
     lightWeightMessageAnalysis: {
       shouldRunSupportMessageAnalysis: true,
@@ -173,15 +206,7 @@ export const fullWeightAnalysisTestCases: FullWeightAnalysisTestCase[] = [
       supportTopicKnowledge: {
         segments_topic: []
       },
-      conversationHistory: [
-        {
-          id: "history_case_3_system_1",
-          message_id: "system_case_3_note",
-          role: "system",
-          created_at: "2026-05-21T10:55:00.000Z",
-          note: "Customer is on a premium plan."
-        }
-      ]
+      conversationHistory: premiumPlanHistory
     },
     lightWeightMessageAnalysis: {
       shouldRunSupportMessageAnalysis: true,

@@ -321,7 +321,9 @@ type ConversationHistoryEvent =
   | BotConversationHistoryEvent
   | SystemConversationHistoryEvent;
 
-export type ConversationHistory = ConversationHistoryEvent[];
+export type ConversationHistory = ConversationHistoryEvent[] & {
+  contextLLM?: string;
+};
 
 /* =====================================================
  * 7. decisionSearchingSolution

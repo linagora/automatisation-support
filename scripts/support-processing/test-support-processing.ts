@@ -43,6 +43,7 @@ import {
 
 import type {
   LatestUserAttachment,
+  SupportProcessingPipelineInput,
   SupportProcessingPipelineSteps
 } from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
@@ -187,9 +188,52 @@ function sanitizeForLog(value: unknown): unknown {
   return value;
 }
 
+function serializeConversationHistoryForLog(
+  conversationHistory: SupportProcessingPipelineInput["conversationHistory"]
+): {
+  contextLLM: string | undefined;
+  events: unknown;
+} {
+  return {
+    contextLLM: conversationHistory.contextLLM,
+    events: sanitizeForLog([...conversationHistory])
+  };
+}
+
+function serializeSupportProcessingInputForLog(
+  input: SupportProcessingPipelineInput
+): Record<string, unknown> {
+  const sanitizedInput = sanitizeForLog(input) as Record<string, unknown>;
+
+  return {
+    ...sanitizedInput,
+    conversationHistory: serializeConversationHistoryForLog(
+      input.conversationHistory
+    )
+  };
+}
+
 function logDebugStep(title: string, value: unknown): void {
   console.log(`\n--- DEBUG ${title} ---`);
   console.log(JSON.stringify(sanitizeForLog(value), null, 2));
+}
+
+function logConversationHistoryContextLLM(
+  conversationHistory: unknown
+): void {
+  const contextLLM =
+    typeof conversationHistory === "object" &&
+    conversationHistory !== null &&
+    "contextLLM" in conversationHistory
+      ? (conversationHistory as { contextLLM?: unknown }).contextLLM
+      : undefined;
+
+  console.log("\n--- DEBUG conversationHistory.contextLLM ---");
+  console.log(
+    typeof contextLLM === "string" && contextLLM.trim() !== ""
+      ? contextLLM
+      : "No compact conversation history provided."
+  );
 }
 
 function buildDebugSteps(enabled: boolean): SupportProcessingPipelineSteps {
@@ -300,7 +344,17 @@ async function runCase(
   );
 
   console.log("\n--- Input ---");
-  console.log(JSON.stringify(sanitizeForLog(finalTestCase.input), null, 2));
+  console.log(
+    JSON.stringify(
+      serializeSupportProcessingInputForLog(finalTestCase.input),
+      null,
+      2
+    )
+  );
+
+  if (debug) {
+    logConversationHistoryContextLLM(finalTestCase.input.conversationHistory);
+  }
 
   console.log("\n------------------------------------------------------------");
   console.log("Calling runSupportProcessingPipeline...");

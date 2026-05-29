@@ -142,22 +142,39 @@ const supportTopicKnowledgeAfterTurn1: SupportTopicKnowledge = {
   })
 };
 
-const conversationHistoryAfterTurn1: ConversationHistory = [
+const conversationHistoryAfterTurn1: ConversationHistory = Object.assign(
+  [
+    {
+      id: "history_turn_1_user",
+      message_id: "msg_turn_1",
+      role: "user" as const,
+      created_at: "2026-05-21T09:00:00.000Z",
+      turnUnderstandingDelta: turn1Delta
+    },
+    {
+      id: "history_turn_1_bot",
+      message_id: "bot_turn_1",
+      role: "bot" as const,
+      created_at: "2026-05-21T09:01:00.000Z",
+      responsePlan: emptyBotResponsePlan
+    }
+  ],
   {
-    id: "history_turn_1_user",
-    message_id: "msg_turn_1",
-    role: "user",
-    created_at: "2026-05-21T09:00:00.000Z",
-    turnUnderstandingDelta: turn1Delta
-  },
-  {
-    id: "history_turn_1_bot",
-    message_id: "bot_turn_1",
-    role: "bot",
-    created_at: "2026-05-21T09:01:00.000Z",
-    responsePlan: emptyBotResponsePlan
+    contextLLM: [
+      'User(topic): add_topic topic_id=1 label="Twake Drive : create : folder" category=bug',
+      "User(topic): update_topic topic_id=1 fields=[platform, os, trigger_action, observed_result, expected_result]",
+      'User(topic): add_topic topic_id=2 label="Twake : reset : password" category=access_security',
+      "User(topic): update_topic topic_id=2 fields=[access_action, observed_result, expected_result]",
+      'User(signal): signal types=[thanks_neutral] verbatim="Merci d\'avance pour votre aide."',
+      'User(signal): signal types=[time_sensitive] verbatim="c\'est assez urgent pour moi"',
+      'User(scope_boundary): scope_boundary type=non_support_linagora verbatim="au passage, est-ce que vous pouvez aussi m\'aider à récupérer mon compte Instagram ?"',
+      "Bot(topic): acknowledge topic_id=1 next_step=wait_for_support",
+      "Bot(topic): ask_more_info topic_id=2 fields=[auth_method, expected_result]",
+      "Bot(signal): respond_signal types=[thanks_neutral, time_sensitive]",
+      "Bot(scope_boundary): decline_scope_boundary type=non_support_linagora"
+    ].join("\n")
   }
-];
+);
 
 function buildInput(params: {
   id: string;

@@ -15,7 +15,7 @@ import {
 import {
   fullWeightAnalysisTestCases,
   type FullWeightAnalysisTestCase
-} from "../../fixtures/message-analysis-cases/fake-full-weight-analysis-cases";
+} from "./full-weight-analysis-test-cases";
 
 function printUsage(): void {
   console.log("Usage:");
@@ -75,6 +75,33 @@ function findTestCasesByIds(
   });
 }
 
+function serializeConversationHistoryForLog(
+  conversationHistory: FullWeightAnalysisTestCase["messageAnalysisInput"]["conversationHistory"]
+): {
+  contextLLM: string | undefined;
+  events: unknown[];
+} {
+  return {
+    contextLLM: conversationHistory.contextLLM,
+    events: [...conversationHistory]
+  };
+}
+
+function serializeFullWeightInputForLog(
+  testCase: FullWeightAnalysisTestCase
+): Record<string, unknown> {
+  return {
+    messageAnalysisInput: {
+      ...testCase.messageAnalysisInput,
+      conversationHistory: serializeConversationHistoryForLog(
+        testCase.messageAnalysisInput.conversationHistory
+      )
+    },
+    attachmentAnalysis: testCase.attachmentAnalysis,
+    lightWeightMessageAnalysis: testCase.lightWeightMessageAnalysis
+  };
+}
+
 async function runCase(
   testCase: FullWeightAnalysisTestCase
 ): Promise<boolean> {
@@ -87,6 +114,9 @@ async function runCase(
   console.log("");
   console.log("Latest user message:");
   console.log(`"${testCase.messageAnalysisInput.latestUserMessage.content}"`);
+
+  console.log("\n--- Input ---");
+  console.log(JSON.stringify(serializeFullWeightInputForLog(testCase), null, 2));
 
   console.log("\n------------------------------------------------------------");
   console.log("Sending request to LLM...");
