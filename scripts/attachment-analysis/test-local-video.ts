@@ -2,8 +2,8 @@
  * Test local video analysis
  *
  * Usage:
- *   npm run test:local:video -- ./video.webm
- *   npm run test:local:video -- ./video.mp4 "Optional user message"
+ *   npm run test:local:video -- ./fixtures/videos/video1.webm
+ *   npm run test:local:video -- ./fixtures/videos/video2.webm "Optional user message"
  */
 
 import * as fs from "fs";
@@ -73,8 +73,8 @@ async function main(): Promise<void> {
 
   if (args.length === 0) {
     console.error("Usage:");
-    console.error("  npm run test:local:video -- ./video.webm");
-    console.error("  npm run test:local:video -- ./video.webm --message \"User message\"");
+    console.error("  npm run test:local:video -- ./fixtures/videos/video1.webm");
+    console.error("  npm run test:local:video -- ./fixtures/videos/video1.webm --message \"User message\"");
     process.exit(1);
   }
 

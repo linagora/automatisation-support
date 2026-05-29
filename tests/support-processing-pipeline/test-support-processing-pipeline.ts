@@ -6,7 +6,7 @@
  *   npm run test:support-processing-pipeline -- --case 1
  *   npm run test:support-processing-pipeline -- --case 1,2
  *   npm run test:support-processing-pipeline -- --all
- *   npm run test:support-processing-pipeline -- --case 1 --attachment ./image.png
+ *   npm run test:support-processing-pipeline -- --case 1 --attachment ./fixtures/images/image.png
  */
 
 import "dotenv/config";
@@ -174,7 +174,7 @@ async function runCase(
 
   if (testCase.needsAttachment && !attachmentPath) {
     throw new Error(
-      `Case ${testCase.id} needs an attachment. Use --attachment ./image.png`
+      `Case ${testCase.id} needs an attachment. Use --attachment ./fixtures/images/image.png`
     );
   }
 
@@ -238,7 +238,7 @@ async function main(): Promise<void> {
     console.log("  npm run test:support-processing-pipeline -- --case 1,2");
     console.log("  npm run test:support-processing-pipeline -- --all");
     console.log(
-      "  npm run test:support-processing-pipeline -- --case 1 --attachment ./image.png"
+      "  npm run test:support-processing-pipeline -- --case 1 --attachment ./fixtures/images/image.png"
     );
     process.exit(1);
   }

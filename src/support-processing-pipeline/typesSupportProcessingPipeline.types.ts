@@ -388,7 +388,8 @@ type TopicNextStep =
   | "wait_more_info"
   | "wait_apply_solution"
   | "close_if_resolved"
-  | "handover";
+  | "handover"
+  | "wait_for_support";
 
 type TopicPlanMessage = {
   politeness_opening?:

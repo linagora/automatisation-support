@@ -6,7 +6,7 @@
  *   npm run test:support-processing -- --case 1
  *   npm run test:support-processing -- --case 1,2
  *   npm run test:support-processing -- --all
- *   npm run test:support-processing -- --case 3 --attachment ./image.png
+ *   npm run test:support-processing -- --case 3 --attachment ./fixtures/images/image.png
  *   npm run test:support-processing -- --case 1 --debug
  *   npm run test:support-processing -- --case 1 --mock-message-analysis --debug
  */
@@ -18,22 +18,22 @@ import * as path from "path";
 
 import {
   runSupportProcessingPipeline
-} from "../src/support-processing-pipeline/runSupportProcessingPipeline";
+} from "../../src/support-processing-pipeline/runSupportProcessingPipeline";
 import {
   runMessageAnalysis
-} from "../src/support-processing-pipeline/message-analysis/runMessageAnalysis";
+} from "../../src/support-processing-pipeline/message-analysis/runMessageAnalysis";
 import {
   runSearchDecision
-} from "../src/support-processing-pipeline/search-decision/runSearchDecision";
+} from "../../src/support-processing-pipeline/search-decision/runSearchDecision";
 import {
   runSolutionRetrieval
-} from "../src/support-processing-pipeline/solution-retrieval/runSolutionRetrieval";
+} from "../../src/support-processing-pipeline/solution-retrieval/runSolutionRetrieval";
 import {
   runResponsePlan
-} from "../src/support-processing-pipeline/response-plan/runResponsePlan";
+} from "../../src/support-processing-pipeline/response-plan/runResponsePlan";
 import {
   runResponseProduction
-} from "../src/support-processing-pipeline/response-production/runResponseProduction";
+} from "../../src/support-processing-pipeline/response-production/runResponseProduction";
 
 import {
   supportProcessingTestCases,
@@ -44,7 +44,7 @@ import {
 import type {
   LatestUserAttachment,
   SupportProcessingPipelineSteps
-} from "../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
@@ -278,7 +278,7 @@ async function runCase(
   if (testCase.needsAttachment) {
     if (!attachmentPath) {
       throw new Error(
-        `Case ${testCase.id} needs an attachment. Use --attachment ./image.png`
+        `Case ${testCase.id} needs an attachment. Use --attachment ./fixtures/images/image.png`
       );
     }
   }
@@ -374,7 +374,7 @@ async function main(): Promise<void> {
     console.log("  npm run test:support-processing -- --case 1");
     console.log("  npm run test:support-processing -- --case 1,2");
     console.log("  npm run test:support-processing -- --all");
-    console.log("  npm run test:support-processing -- --case 3 --attachment ./image.png");
+    console.log("  npm run test:support-processing -- --case 3 --attachment ./fixtures/images/image.png");
     console.log("  npm run test:support-processing -- --case 1 --debug");
     console.log(
       "  npm run test:support-processing -- --case 1 --mock-message-analysis --debug"

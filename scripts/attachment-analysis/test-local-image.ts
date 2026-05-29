@@ -2,8 +2,8 @@
  * Test local image analysis
  *
  * Usage:
- *   npm run test:local:image -- ./screen_error.png
- *   npm run test:local:image -- ./image1.png ./image2.jpg "Optional user message"
+ *   npm run test:local:image -- ./fixtures/images/imagetest.png
+ *   npm run test:local:image -- ./fixtures/images/image.png ./fixtures/images/image2.jpg "Optional user message"
  */
 
 import * as fs from "fs";
@@ -99,7 +99,7 @@ async function main(): Promise<void> {
     console.error("Usage:");
     console.error("  npm run test:local:image -- ./screen_error.png");
     console.error("  npm run test:local:image -- ./screen_error.png --message \"User message\"");
-    console.error("  npm run test:local:image -- ./image1.png ./image2.jpg --message \"User message\"");
+    console.error("  npm run test:local:image -- ./fixtures/images/image.png ./fixtures/images/image2.jpg --message \"User message\"");
     process.exit(1);
   }
 

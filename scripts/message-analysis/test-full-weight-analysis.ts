@@ -15,7 +15,7 @@ import {
 import {
   fullWeightAnalysisTestCases,
   type FullWeightAnalysisTestCase
-} from "../../fake-full-weight-analysis-cases";
+} from "../../fixtures/message-analysis-cases/fake-full-weight-analysis-cases";
 
 function printUsage(): void {
   console.log("Usage:");
