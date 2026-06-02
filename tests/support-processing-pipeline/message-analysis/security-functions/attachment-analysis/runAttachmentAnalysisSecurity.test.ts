@@ -1,4 +1,25 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("../../../../../src/llm/llm-client", function () {
+  return {
+    callLLM: vi.fn(async function (messages: { content: string }[]) {
+      const prompt = messages
+        .map((message) => message.content)
+        .join("\n");
+      const isTrustedAccount = prompt.includes('"status": "trusted"');
+
+      return {
+        success: true,
+        content: JSON.stringify({
+          route: isTrustedAccount ? "continue" : "stop",
+          reason: isTrustedAccount
+            ? "trusted_account_review_mock"
+            : "non_trusted_account_review_mock"
+        })
+      };
+    })
+  };
+});
 
 import {
   runAttachmentAnalysisSecurity

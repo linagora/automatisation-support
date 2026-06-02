@@ -9,6 +9,12 @@
  *   npm run test:support-processing -- --case 3 --attachment ./fixtures/images/image.png
  *   npm run test:support-processing -- --case 1 --debug
  *   npm run test:support-processing -- --case 1 --mock-message-analysis --debug
+ *   npm run test:support-processing -- --case 4
+ *   npm run test:support-processing -- --case 4 --debug
+ *
+ * Note:
+ *   Case 4 makes a real LLM truster call.
+ *   Do not use --mock-message-analysis to test the LLM truster integration.
  */
 
 import "dotenv/config";
@@ -236,17 +242,199 @@ function logConversationHistoryContextLLM(
   );
 }
 
-function buildDebugSteps(enabled: boolean): SupportProcessingPipelineSteps {
-  if (!enabled) {
-    return {};
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
+}
+
+function findLlmReview(
+  value: unknown
+): { route?: string; reason?: string } | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const llmReview = value.llmReview;
+
+  if (isRecord(llmReview)) {
+    const route =
+      typeof llmReview.route === "string" ? llmReview.route : undefined;
+    const reason =
+      typeof llmReview.reason === "string" ? llmReview.reason : undefined;
+
+    if (route) {
+      return {
+        route,
+        ...(reason ? { reason } : {})
+      };
+    }
+  }
+
+  for (const item of Object.values(value)) {
+    if (Array.isArray(item)) {
+      for (const arrayItem of item) {
+        const found = findLlmReview(arrayItem);
+
+        if (found) {
+          return found;
+        }
+      }
+    } else {
+      const found = findLlmReview(item);
+
+      if (found) {
+        return found;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function findSecurityDecisionRoute(
+  value: unknown
+): "continue" | "stop" | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const decision = value.decision;
+
+  if (isRecord(decision)) {
+    const route = decision.route;
+
+    if (route === "continue" || route === "stop") {
+      return route;
+    }
+  }
+
+  for (const item of Object.values(value)) {
+    if (Array.isArray(item)) {
+      for (const arrayItem of item) {
+        const found = findSecurityDecisionRoute(arrayItem);
+
+        if (found) {
+          return found;
+        }
+      }
+    } else {
+      const found = findSecurityDecisionRoute(item);
+
+      if (found) {
+        return found;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function runExpectationAssertions(params: {
+  testCase: SupportProcessingTestCase;
+  capturedTurnUnderstandingDelta: unknown;
+  output: Awaited<ReturnType<typeof runSupportProcessingPipeline>>;
+}): boolean {
+  const expected = params.testCase.expected;
+
+  if (!expected) {
+    return true;
+  }
+
+  let succeeded = true;
+
+  console.log("\n--- Assertions ---");
+
+  if (params.capturedTurnUnderstandingDelta === undefined) {
+    console.log("❌ Captured turnUnderstandingDelta is missing");
+    succeeded = false;
+  } else {
+    console.log("✅ Captured turnUnderstandingDelta found");
+  }
+
+  const llmReview = findLlmReview(params.capturedTurnUnderstandingDelta);
+
+  if (expected.shouldUseLlmTruster) {
+    if (llmReview) {
+      console.log("✅ LLM truster review found");
+    } else {
+      console.log("❌ LLM truster review missing");
+      succeeded = false;
+    }
+  }
+
+  if (expected.expectedLlmReviewRoute) {
+    if (llmReview?.route === expected.expectedLlmReviewRoute) {
+      console.log(`✅ LLM truster route = ${expected.expectedLlmReviewRoute}`);
+    } else {
+      console.log(
+        `❌ LLM truster route expected ${expected.expectedLlmReviewRoute}, got ${llmReview?.route ?? "missing"}`
+      );
+      succeeded = false;
+    }
+  }
+
+  if (expected.expectedFinalSecurityRoute) {
+    const finalSecurityRoute = findSecurityDecisionRoute(
+      params.capturedTurnUnderstandingDelta
+    );
+
+    if (finalSecurityRoute === expected.expectedFinalSecurityRoute) {
+      console.log(`✅ Final security route = ${expected.expectedFinalSecurityRoute}`);
+    } else {
+      console.log(
+        `❌ Final security route expected ${expected.expectedFinalSecurityRoute}, got ${finalSecurityRoute ?? "missing"}`
+      );
+      succeeded = false;
+    }
+  }
+
+  if (expected.minUserResponseMessages !== undefined) {
+    const messageCount = params.output.userResponse.messages.length;
+
+    if (messageCount >= expected.minUserResponseMessages) {
+      console.log(
+        `✅ userResponse.messages length >= ${expected.minUserResponseMessages}`
+      );
+    } else {
+      console.log(
+        `❌ userResponse.messages length expected >= ${expected.minUserResponseMessages}, got ${messageCount}`
+      );
+      succeeded = false;
+    }
+  }
+
+  if (!succeeded) {
+    process.exitCode = 1;
+  }
+
+  return succeeded;
+}
+
+function buildDebugSteps(params: {
+  enabled: boolean;
+  captureMessageAnalysisOutput?: (output: unknown) => void;
+}): SupportProcessingPipelineSteps {
+  const steps: SupportProcessingPipelineSteps = {};
+
+  if (params.enabled || params.captureMessageAnalysisOutput) {
+    steps.runMessageAnalysis = async (input) => {
+      const output = await runMessageAnalysis(input);
+
+      params.captureMessageAnalysisOutput?.(output);
+
+      if (params.enabled) {
+        logDebugStep("runMessageAnalysis output / turnUnderstandingDelta", output);
+      }
+
+      return output;
+    };
+  }
+
+  if (!params.enabled) {
+    return steps;
   }
 
   return {
-    runMessageAnalysis: async (input) => {
-      const output = await runMessageAnalysis(input);
-      logDebugStep("runMessageAnalysis output / turnUnderstandingDelta", output);
-      return output;
-    },
+    ...steps,
 
     runSearchDecision: async (input) => {
       logDebugStep("runSearchDecision input", input);
@@ -281,8 +469,16 @@ function buildPipelineSteps(params: {
   testCase: SupportProcessingTestCase;
   debug: boolean;
   mockMessageAnalysis: boolean;
+  captureMessageAnalysisOutput?: (output: unknown) => void;
 }): SupportProcessingPipelineSteps {
-  const steps = buildDebugSteps(params.debug);
+  const shouldCaptureMessageAnalysisOutput =
+    params.debug || params.testCase.expected !== undefined;
+  const steps = buildDebugSteps({
+    enabled: params.debug,
+    captureMessageAnalysisOutput: shouldCaptureMessageAnalysisOutput
+      ? params.captureMessageAnalysisOutput
+      : undefined
+  });
 
   if (!params.mockMessageAnalysis) {
     return steps;
@@ -298,6 +494,8 @@ function buildPipelineSteps(params: {
     ...steps,
     runMessageAnalysis: async () => {
       const output = params.testCase.mockedTurnUnderstandingDelta;
+
+      params.captureMessageAnalysisOutput?.(output);
 
       if (params.debug) {
         logDebugStep(
@@ -343,6 +541,15 @@ async function runCase(
     `Message analysis: ${mockMessageAnalysis ? "mocked" : "real LLM"}`
   );
 
+  if (
+    mockMessageAnalysis &&
+    finalTestCase.expected?.shouldUseLlmTruster === true
+  ) {
+    console.log(
+      "⚠️  Warning: --mock-message-analysis bypasses real security checks and does not test the LLM truster."
+    );
+  }
+
   console.log("\n--- Input ---");
   console.log(
     JSON.stringify(
@@ -362,6 +569,7 @@ async function runCase(
 
   const startTime = Date.now();
   const previousDebugValue = process.env.SUPPORT_PROCESSING_DEBUG;
+  let capturedTurnUnderstandingDelta: unknown;
 
   if (debug) {
     process.env.SUPPORT_PROCESSING_DEBUG = "true";
@@ -373,7 +581,10 @@ async function runCase(
       buildPipelineSteps({
         testCase: finalTestCase,
         debug,
-        mockMessageAnalysis
+        mockMessageAnalysis,
+        captureMessageAnalysisOutput: (output) => {
+          capturedTurnUnderstandingDelta = output;
+        }
       })
     );
 
@@ -389,6 +600,12 @@ async function runCase(
 
     console.log("\n--- Output ---");
     console.log(JSON.stringify(sanitizeForLog(output), null, 2));
+
+    runExpectationAssertions({
+      testCase: finalTestCase,
+      capturedTurnUnderstandingDelta,
+      output
+    });
 
     console.log(`\nDuration: ${durationMs}ms`);
   } finally {
@@ -430,9 +647,14 @@ async function main(): Promise<void> {
     console.log("  npm run test:support-processing -- --all");
     console.log("  npm run test:support-processing -- --case 3 --attachment ./fixtures/images/image.png");
     console.log("  npm run test:support-processing -- --case 1 --debug");
+    console.log("  npm run test:support-processing -- --case 4");
+    console.log("  npm run test:support-processing -- --case 4 --debug");
     console.log(
       "  npm run test:support-processing -- --case 1 --mock-message-analysis --debug"
     );
+    console.log("");
+    console.log("Note: case 4 makes a real LLM truster call.");
+    console.log("Do not use --mock-message-analysis to test LLM truster integration.");
     process.exit(1);
   }
 

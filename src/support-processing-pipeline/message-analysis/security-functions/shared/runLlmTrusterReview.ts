@@ -5,6 +5,10 @@ import type {
   TextSecurityCheckOutput
 } from "./runTextSecurityChecks";
 
+import {
+  requestLlmTrusterReview
+} from "./llm-truster/requestLlmTrusterReview";
+
 type LlmTrusterReviewInput =
   | {
       reviewKind: "attachment_analysis_suspicious";
@@ -46,19 +50,7 @@ type LlmTrusterReviewOutput = {
 async function runLlmTrusterReview(
   input: LlmTrusterReviewInput
 ): Promise<LlmTrusterReviewOutput> {
-  void input.reviewKind;
-
-  if (input.accountTrustStatus.status === "trusted") {
-    return {
-      route: "continue",
-      reason: "trusted_account_review_mock"
-    };
-  }
-
-  return {
-    route: "stop",
-    reason: "non_trusted_account_review_mock"
-  };
+  return requestLlmTrusterReview(input);
 }
 
 export {

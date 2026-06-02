@@ -17,6 +17,12 @@ export type SupportProcessingTestCase = {
   input: SupportProcessingPipelineInput;
   mockedTurnUnderstandingDelta?: TurnUnderstandingDelta;
   needsAttachment?: boolean;
+  expected?: {
+    shouldUseLlmTruster?: boolean;
+    expectedLlmReviewRoute?: "continue" | "stop" | "failed";
+    expectedFinalSecurityRoute?: "continue" | "stop";
+    minUserResponseMessages?: number;
+  };
 };
 
 const accountTrustStatus: AccountTrustStatus = {
@@ -26,6 +32,16 @@ const accountTrustStatus: AccountTrustStatus = {
     "legitimateSupportInteractions",
     "verifiedEmailDomain"
   ]
+};
+
+export const neutralAccountTrustStatus: AccountTrustStatus = {
+  status: "neutral",
+  reasons: ["newerAccount", "noKnownSuspiciousActivity"]
+};
+
+export const suspiciousAccountTrustStatus: AccountTrustStatus = {
+  status: "suspicious",
+  reasons: ["recentSuspiciousActivity"]
 };
 
 const accountProfile: AccountProfile = {
@@ -179,6 +195,7 @@ const conversationHistoryAfterTurn1: ConversationHistory = Object.assign(
 function buildInput(params: {
   id: string;
   content: string;
+  accountTrustStatus?: AccountTrustStatus;
   supportTopicKnowledge?: SupportTopicKnowledge;
   conversationHistory?: ConversationHistory;
 }): SupportProcessingPipelineInput {
@@ -190,7 +207,7 @@ function buildInput(params: {
       content: params.content
     },
     latestUserAttachments: [],
-    accountTrustStatus,
+    accountTrustStatus: params.accountTrustStatus ?? accountTrustStatus,
     accountProfile,
     accountInteractionTraits,
     supportTopicKnowledge: params.supportTopicKnowledge || {
@@ -239,6 +256,24 @@ export const supportProcessingTestCases: SupportProcessingTestCase[] = [
       supportTopicKnowledge: supportTopicKnowledgeAfterTurn1,
       conversationHistory: conversationHistoryAfterTurn1
     })
+  },
+  {
+    id: "4",
+    label: "End-to-end - LLM truster review allows legitimate support URL",
+    description:
+      "Runs the full pipeline with a neutral account and a support message containing a URL, forcing latest-user-message security to ask the LLM truster.",
+    input: buildInput({
+      id: "support_pipeline_llm_truster_continue",
+      accountTrustStatus: neutralAccountTrustStatus,
+      content:
+        "Bonjour, je n'arrive pas à me connecter à mon espace Twake. Voici l'URL de mon instance : https://samo.example.com. Pouvez-vous m'aider à comprendre pourquoi la connexion échoue ?"
+    }),
+    expected: {
+      shouldUseLlmTruster: true,
+      expectedLlmReviewRoute: "continue",
+      expectedFinalSecurityRoute: "continue",
+      minUserResponseMessages: 1
+    }
   }
 ];
 

@@ -43,6 +43,13 @@ const MODEL_DEFINITIONS: Record<string, LLMModelDefinition> = {
     defaultMaxEstimatedTotalTokens: 15000
   },
 
+  llmTrusterReview: {
+    envPrefix: "LLM_TRUSTER",
+    defaultModel: "mistralai/mistral-small-3.2-24b-instruct",
+    defaultProvider: "mistral",
+    defaultMaxEstimatedTotalTokens: 5000
+  },
+
   ragSearch: {
     envPrefix: "LLM_RAG",
     defaultModel: "mistralai/mistral-small-3.2-24b-instruct",

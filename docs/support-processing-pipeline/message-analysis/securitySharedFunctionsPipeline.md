@@ -317,22 +317,44 @@ flowchart TB
   subgraph PIPELINE["llmReview = runLlmTrusterReview(llmTrusterReviewInput)"]
     direction TB
 
-    T_IGNORE_KIND["<b>Ignore reviewKind at runtime</b><br/>
-    void input.reviewKind"]
+    T_REQUEST["<b>Delegate request</b><br/>
+    requestLlmTrusterReview(input)"]
 
-    T_TRUSTED{"<b>accountTrustStatus.status === trusted ?</b>"}
+    T_BUILD_PROMPT["<b>Build LLM truster prompt</b><br/>
+    systemPrompt<br/>
+    userPrompt by reviewKind"]
 
-    T_CONTINUE["<b>Return continue</b><br/>
-    route: continue<br/>
-    reason: trusted_account_review_mock"]
+    T_CALL_LLM["<b>Call central LLM client</b><br/>
+    preset: llmTrusterReview<br/>
+    JSON object response"]
 
-    T_STOP["<b>Return stop</b><br/>
-    route: stop<br/>
-    reason: non_trusted_account_review_mock"]
+    T_LLM_SUCCESS{"<b>LLM request succeeded ?</b>"}
 
-    T_IGNORE_KIND --> T_TRUSTED
-    T_TRUSTED -->|yes| T_CONTINUE
-    T_TRUSTED -->|no| T_STOP
+    T_PARSE["<b>Parse JSON response</b><br/>
+    parseLlmTrusterReviewOutput(content)"]
+
+    T_VALID_ROUTE{"<b>route is continue / stop ?</b>"}
+
+    T_CONTINUE_OR_STOP["<b>Return LLM decision</b><br/>
+    route: continue / stop<br/>
+    reason?"]
+
+    T_INVALID_FAILED["<b>Return failed</b><br/>
+    route: failed<br/>
+    reason: invalid_llm_truster_response"]
+
+    T_REQUEST_FAILED["<b>Return failed</b><br/>
+    route: failed<br/>
+    reason: llm_truster_request_failed"]
+
+    T_REQUEST --> T_BUILD_PROMPT
+    T_BUILD_PROMPT --> T_CALL_LLM
+    T_CALL_LLM --> T_LLM_SUCCESS
+    T_LLM_SUCCESS -->|yes| T_PARSE
+    T_LLM_SUCCESS -->|no| T_REQUEST_FAILED
+    T_PARSE --> T_VALID_ROUTE
+    T_VALID_ROUTE -->|yes| T_CONTINUE_OR_STOP
+    T_VALID_ROUTE -->|no| T_INVALID_FAILED
   end
 
   subgraph NEXT_STEP["Next step"]
@@ -354,15 +376,19 @@ flowchart TB
   classDef nextOutputBlock fill:#8b0000,stroke:#5c0000,color:#ffffff,stroke-width:1px;
 
   class PREVIOUS_INPUTS previousBlock;
-  class T_IGNORE_KIND,T_CONTINUE,T_STOP processingBlock;
+  class T_REQUEST,T_BUILD_PROMPT,T_CALL_LLM,T_PARSE,T_CONTINUE_OR_STOP,T_INVALID_FAILED,T_REQUEST_FAILED processingBlock;
   class NEXT_OUTPUTS nextOutputBlock;
 
   style PIPELINE fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
   style PREVIOUS_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
   style NEXT_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
-  style T_TRUSTED fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
+  style T_LLM_SUCCESS fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
+  style T_VALID_ROUTE fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
 
   linkStyle default stroke:#000000,stroke-width:2px;
 ```
 
-Note : the output type allows `failed`, but the current mock does not produce `failed`.
+Notes:
+- The LLM is asked to return JSON only with `route: "continue" | "stop"`.
+- The `failed` route is produced by local parsing/request handling, not by the expected LLM decision.
+- If URLs are present, the prompt tells the LLM not to browse them and to judge only from the provided text.
