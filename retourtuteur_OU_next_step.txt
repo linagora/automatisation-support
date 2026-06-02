@@ -23,14 +23,15 @@ next step 2 : attachment analysis modified. Mermaid is valid. run and types need
 * **Ajouter un garde-fou post-LLM dans `turnUnderstandingDelta`** : si un nouveau topic est couvert par un `scope_boundary`, le supprimer du delta. Même avec un bon prompt, le LLM peut encore créer un topic Canva/imprimante en plus du scope boundary.
 
 next step : runsearch decsion integrer la decision de faire recherceh vers vers le rag 
+corriger le converation historry pour en faire queque chose de plsu compacte à envoyer au LLM et à afficher au support
+vérifier les inputs reéelles de chaque fonction
 
 intégrerr les security gate de message analysis
 refactor les types proprement sans redondance
 refactor les tests pour que ce soit cohérent 
 documenter certaines pipeline
 split en sous fonction certains code trop long en 1 seul fonction
-corriger le converation historry pour en faire queque chose de plsu compacte à envoyer au LLM et à afficher au support
-vérifier les inputs reéelles de chaque fonction
+
 automatiser l'update de la base de données de ticket
 relire et clean l'ensemble du code pour préparer avant la production
 
@@ -41,3 +42,12 @@ brancher le chat message
 
 Prompt GPT : 
 okay maintenant j'aimerai avancer justement dans une nouvelle pipeline qui recoit le patches production et tient à jour une base de données de connaissance. L'idée c'es tqu'ne sortie de ptaches pipeline la fonction vienne créer ou mettre à jour la base de donnée en donnant les infos user et le ticket lié auourd'hui
+
+
+Drizzel ou Drizzzer: demander à Khaled ou Paul  https://orm.drizzle.team/
+pour adpater JSON en DB
+Brancher le chat support : environnemnt sur QA ou Stagging, channel de support non utilisé
+, il faudrait qu'on me file un token pour lire ce channel là
+Demander à Pierre Marty pour savoir si ça existe ou pas, créer un channel sur QA ou stagging qu'on nomme discussion. matrix
+recuperer room Id qui est le channel de sdsicussion + token pour s'autitifer sur cette room.
+
