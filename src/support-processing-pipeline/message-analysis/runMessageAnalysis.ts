@@ -122,7 +122,8 @@ async function runMessageAnalysis(
 
     const attachmentAnalysisSecurityInput: AttachmentAnalysisSecurityInput = {
       attachmentAnalysis,
-      accountTrustStatus
+      accountTrustStatus,
+      latestUserMessageContent: latestUserMessage.content
     };
 
     const attachmentAnalysisSecurityDecision =

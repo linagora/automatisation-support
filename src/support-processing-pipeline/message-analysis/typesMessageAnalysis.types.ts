@@ -5,7 +5,6 @@
 import type {
   AccountTrustStatus,
   ConversationHistory,
-  InputCleaningCheckName,
   LatestUserAttachment,
   LatestUserMessage,
   MessageAnalysisInput,
@@ -13,6 +12,13 @@ import type {
   SupportTopicKnowledge,
   TurnUnderstandingDelta
 } from "../typesSupportProcessingPipeline.types";
+import type {
+  TextSecurityCheckName
+} from "./security-functions/shared/runTextSecurityChecks";
+import type {
+  AttachmentReadinessCheckName,
+  AttachmentReadinessDecision
+} from "./attachment-analysis/typesAttachmentAnalysis.types";
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -37,20 +43,33 @@ type SecurityDecisionRoute =
   | "continue"
   | "stop";
 
-type ContextAccountDecision =
-  | "continue"
-  | "stop"
-  | "review_with_llm_truster";
-
 type SecurityLlmReviewRoute =
   | "continue"
   | "stop"
   | "failed";
 
-type SecurityDecisionHistory = {
-  checked: InputCleaningCheckName[];
-  failed: InputCleaningCheckName[];
-  contextAccountDecision: ContextAccountDecision;
+export type LatestUserMessageSecurityCheckName =
+  TextSecurityCheckName;
+
+export type AttachmentAnalysisSecurityCheckName =
+  | TextSecurityCheckName
+  | AttachmentReadinessCheckName
+  | "attachment_analysis_failed"
+  | "attachment_refused"
+  | "suspicious_attachment_content";
+
+type SecurityDecisionHistory<TCheckName extends string> = {
+  checked: TCheckName[];
+  failed: TCheckName[];
+  llmReview?: {
+    route: SecurityLlmReviewRoute;
+    reason?: string;
+  };
+};
+
+type AttachmentAnalysisSecurityDecisionHistory<TCheckName extends string> = {
+  checked: TCheckName[];
+  failed: TCheckName[];
   llmReview?: {
     route: SecurityLlmReviewRoute;
     reason?: string;
@@ -66,7 +85,7 @@ export type LatestUserMessageSecurityDecision = {
   decision: {
     route: SecurityDecisionRoute;
   };
-  history: SecurityDecisionHistory;
+  history: SecurityDecisionHistory<LatestUserMessageSecurityCheckName>;
 };
 
 /* =====================================================
@@ -83,10 +102,17 @@ export type AttachmentAnalysisItem = {
   status:
     | "analyzed"
     | "failed"
-    | "refused";
+    | "refused"
+    | "suspicious";
+  reason?: string;
+  readinessDecision?: AttachmentReadinessDecision;
   analysis?: {
-    summary: string;
+    summary?: string;
     other?: string;
+    llmDescription?: string;
+    visionDescription?: string;
+    structuredObservations?: unknown;
+    visionObservations?: unknown;
   };
 };
 
@@ -99,13 +125,14 @@ export type AttachmentAnalysis = AttachmentAnalysisItem[];
 export type AttachmentAnalysisSecurityInput = {
   attachmentAnalysis: AttachmentAnalysis;
   accountTrustStatus: AccountTrustStatus;
+  latestUserMessageContent: string;
 };
 
 export type AttachmentAnalysisSecurityDecision = {
   decision: {
     route: SecurityDecisionRoute;
   };
-  history: SecurityDecisionHistory;
+  history: AttachmentAnalysisSecurityDecisionHistory<AttachmentAnalysisSecurityCheckName>;
 };
 
 /* =====================================================
