@@ -6,6 +6,9 @@ import type {
   ConversationHistory,
   TurnUnderstandingDelta,
 } from "../../typesSupportProcessingPipeline.types";
+import type {
+  AttachmentAnalysis
+} from "../typesMessageAnalysis.types";
 
 /**
  * À remplacer par ton vrai prompt système.
@@ -44,7 +47,7 @@ segment_type = "topic" — use when the segment creates, matches, updates, or en
 segment_type = "signal" — use when the segment relates to the support relationship or product experience but fills no topic field:
 thanks, feedback, disappointment, urgency without technical detail, apology, closure, churn intent, complaint without actionable detail, etc.
 Do NOT create a signal for:
-- "I cannot provide a screenshot/video/logs" → put in topic_details.screenshot_available / video_available / logs_available
+- "I cannot provide logs" → put in topic_details.logs_available
 - any statement that fills a topic field (os, platform, frequency, error_message, etc.)
 
 segment_type = "scope_boundary" — use when the segment is outside Linagora support scope. 
@@ -77,7 +80,7 @@ scope_boundary_type: generic_out_of_scope | non_support_linagora | unrelated_req
 ==================================================
 For each topic segment:
 
-Matches a topic from previous_analysis_output → matched_historical_topic = "yes", reuse id_topic, reuse topic_category / tool_or_product / topic_action / topic_object / topic_label unless latest message explicitly corrects them.
+Matches a topic from previous_analysis_output → matched_historical_topic = "yes", reuse id_topic, reuse topic_category, tool_or_product, topic_action, and topic_object unless the user explicitly corrects one of them.
 When a matched topic is resolved: update observed_result to reflect the resolution (e.g. "now works"), update user_goal, set blocking_issue to "no". Do not duplicate values across fields — pre_problem_state and observed_result must never contain the same text.
 New distinct issue, request, or question → matched_historical_topic = "no", new id_topic (increment from highest in previous_analysis_output, or start at 1).
 Unclear → do not return as topic, set warning_comprehension = "yes".
@@ -104,7 +107,8 @@ question_faq vs request: if the user asks whether something is possible or plann
 
 Determine (English only, return "" if not explicit):
 - tool_or_product, topic_action, topic_object
-- topic_label = tool_or_product + " : " + topic_action + " : " + topic_object
+- Do not output topic_label.
+  The backend builds display labels from tool_or_product, topic_action, and topic_object.
 
 ==================================================
 5. EXTRACTION
@@ -142,7 +146,10 @@ BUG + ACCESS_SECURITY FIELDS:
 - access_action [access_security only] → e.g. "log in", "reset password"
 - auth_method [access_security only] → e.g. "password", "phone number"
 - os, device (specific model only), browser, app_version (specific version only)
-- server_or_instance, affected_users (only if explicit), video_available, logs_available [bug only]
+- server_or_instance, affected_users (only if explicit), logs_available [bug only]
+- Do not create topic_details fields to indicate whether an attachment, screenshot, image, or video is present.
+  Attachment presence and analysis status are handled by the backend outside topic_details.
+  You may still use attachment_analysis to extract useful business facts such as observed_result, error_message, page_or_screen, or visible_text.
 
 BILLING FIELDS — fill all that apply when topic_category = "billing":
 - billing_issue_type → e.g. "double charge", "payment refused", "unexpected subscription"
@@ -174,7 +181,7 @@ tested_action:
 outcome_tested_action: "worked" | "failed" | "partially_worked" | "not_tried" | "unclear" — omit if tested_action is empty. Both tested_action and outcome_tested_action are SEGMENT-LEVEL fields, not inside topic_details.
 
 user_goal (English, max 200 chars):
-- internal summary using topic_label + key details + tested_action/outcome if relevant
+- internal summary using tool_or_product, topic_action, topic_object, key details, and tested_action/outcome if relevant
 - build from previous user_goal if available; do not remove previously known info
 - no emotions, opinions, or unsupported causes
 
@@ -202,7 +209,6 @@ The output must follow this structure:
     "tool_or_product": "...",
     "topic_action": "...",
     "topic_object": "...",
-    "topic_label": "...",
     "topic_details": [{"field_name": "<allowed_topic_detail_field_name>", "value": "<explicit_useful_value>"}],
     "tested_actions": [{"action": "...", "outcome": "worked|failed|partially_worked|not_tried|unclear"}],
     "user_goal": "...",
@@ -213,21 +219,6 @@ The output must follow this structure:
   "segments_suspicious": [{"segment_verbatim": "...", "checkName": "empty_message|prompt_injection_attempt|internal_information_request|sensitive_data_request|spam_like_message|suspicious_attachments|account_trust_status"}]
 }
 `.trim();
-
-type AttachmentAnalysisItem = {
-  filename?: string;
-  status: "analyzed" | "failed" | "refused";
-  reason?: string;
-  analysis?: {
-    llmDescription?: string;
-    visionDescription?: string;
-    structuredObservations?: unknown;
-    visionObservations?: unknown;
-    relationToPreviousAttachment?: string;
-  };
-};
-
-type AttachmentAnalysis = AttachmentAnalysisItem[];
 
 type LightWeightMessageAnalysis = Partial<
   Pick<
@@ -274,7 +265,6 @@ function buildSupportTopicKnowledgeContext(
       tool_or_product: topic.tool_or_product,
       topic_action: topic.topic_action,
       topic_object: topic.topic_object,
-      topic_label: topic.topic_label,
       topic_details: topic.topic_details,
       tested_actions: topic.tested_actions,
       user_goal: topic.user_goal,

@@ -36,30 +36,20 @@ flowchart TB
 
     T_REFUSED_INPUT["<b>Prepare refusedAttachmentRouteInput</b><br/>
     refusedAttachmentRouteInput = {<br/>
-    attachmentAnalysis<br/>
     accountTrustStatus<br/>
     }"]
 
     subgraph REFUSED_ROUTE_DATA["refusedAttachmentRouteDecision = decideRefusedAttachmentRoute(refusedAttachmentRouteInput)"]
       direction LR
       REFUSED_ROUTE_INPUTS["<b>refusedAttachmentRouteInput</b><br/>
-      attachmentAnalysis<br/>
       accountTrustStatus"]
       REFUSED_ROUTE_OUTPUTS["<b>Output</b><br/>
       refusedAttachmentRouteDecision = {<br/>
       route: continue / stop<br/>
       reason?<br/>
-      checked<br/>
-      failed<br/>
       }"]
       REFUSED_ROUTE_INPUTS --> REFUSED_ROUTE_OUTPUTS
     end
-
-    T_REFUSED_ADD_RESULTS["<b>Add refused security results</b><br/>
-    attachmentAnalysisSecurityDecision.history.checked +=<br/>
-    refusedAttachmentRouteDecision.checked<br/><br/>
-    attachmentAnalysisSecurityDecision.history.failed +=<br/>
-    refusedAttachmentRouteDecision.failed"]
 
     T_REFUSED_ROUTE_DECISION{"<b>refusedAttachmentRouteDecision.route ?</b>"}
 
@@ -87,6 +77,7 @@ flowchart TB
     T_TEXT_CHECKS_INPUT["<b>Prepare textSecurityChecksInput</b><br/>
     textSecurityChecksInput = {<br/>
     text: attachmentAnalysis[].analysis?.llmDescription<br/>
+    disabledChecks: [excessive_repetition]<br/>
     }<br/><br/>
     Only attachments with analysis are used"]
 
@@ -196,8 +187,7 @@ flowchart TB
 
     T_REFUSED_ROUTE -->|yes| T_REFUSED_INPUT
     T_REFUSED_INPUT --> REFUSED_ROUTE_DATA
-    REFUSED_ROUTE_DATA --> T_REFUSED_ADD_RESULTS
-    T_REFUSED_ADD_RESULTS --> T_REFUSED_ROUTE_DECISION
+    REFUSED_ROUTE_DATA --> T_REFUSED_ROUTE_DECISION
     T_REFUSED_ROUTE_DECISION -->|continue| T_REFUSED_CONTINUE
     T_REFUSED_ROUTE_DECISION -->|stop| T_REFUSED_STOP
     T_REFUSED_CONTINUE --> T_RETURN
@@ -247,7 +237,7 @@ flowchart TB
   class REFUSED_ROUTE_INPUTS,TEXT_CHECKS_INPUTS,TRUST_DECISION_INPUTS,REVIEW_INPUTS inputBlock;
   class REFUSED_ROUTE_OUTPUTS,TEXT_CHECKS_OUTPUTS,TRUST_DECISION_OUTPUTS,REVIEW_OUTPUTS outputBlock;
 
-  class T_INIT,T_FAILED_ROUTE,T_FAILED_DECISION,T_REFUSED_ROUTE,T_REFUSED_INPUT,T_REFUSED_ADD_RESULTS,T_REFUSED_ROUTE_DECISION,T_REFUSED_CONTINUE,T_REFUSED_STOP,T_SUSPICIOUS_ROUTE,T_SUSPICIOUS_REVIEW_INPUT,T_TEXT_CHECKS_INPUT,T_ADD_TEXT_RESULTS,T_TRUST_DECISION_INPUT,T_TRUST_ROUTE_DECISION,T_TEXT_CONTINUE,T_TEXT_STOP,T_TEXT_REVIEW_INPUT,T_REVIEW_ROUTE,T_REVIEW_CONTINUE,T_REVIEW_STOP,T_RETURN processingBlock;
+  class T_INIT,T_FAILED_ROUTE,T_FAILED_DECISION,T_REFUSED_ROUTE,T_REFUSED_INPUT,T_REFUSED_ROUTE_DECISION,T_REFUSED_CONTINUE,T_REFUSED_STOP,T_SUSPICIOUS_ROUTE,T_SUSPICIOUS_REVIEW_INPUT,T_TEXT_CHECKS_INPUT,T_ADD_TEXT_RESULTS,T_TRUST_DECISION_INPUT,T_TRUST_ROUTE_DECISION,T_TEXT_CONTINUE,T_TEXT_STOP,T_TEXT_REVIEW_INPUT,T_REVIEW_ROUTE,T_REVIEW_CONTINUE,T_REVIEW_STOP,T_RETURN processingBlock;
 
   class NEXT_OUTPUTS nextOutputBlock;
 
@@ -263,6 +253,9 @@ flowchart TB
 
   linkStyle default stroke:#000000,stroke-width:2px;
 ```
+
+Note:
+When attachment descriptions are checked with `runTextSecurityChecks`, `excessive_repetition` is disabled because the analyzed text is a vision-generated description, not the raw user message.
 
 ## decideRefusedAttachmentRoute
 

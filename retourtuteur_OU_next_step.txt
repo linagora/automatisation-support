@@ -50,4 +50,3 @@ Brancher le chat support : environnemnt sur QA ou Stagging, channel de support n
 , il faudrait qu'on me file un token pour lire ce channel là
 Demander à Pierre Marty pour savoir si ça existe ou pas, créer un channel sur QA ou stagging qu'on nomme discussion. matrix
 recuperer room Id qui est le channel de sdsicussion + token pour s'autitifer sur cette room.
-

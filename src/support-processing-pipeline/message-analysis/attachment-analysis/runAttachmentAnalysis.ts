@@ -114,7 +114,8 @@ async function runAttachmentAnalysis(
     arrayIndex < attachmentAnalysis.length;
     arrayIndex++
   ) {
-    const attachmentIndex = attachmentAnalysis[arrayIndex].attachmentIndex;
+    const attachmentIndex =
+      attachmentAnalysis[arrayIndex].attachmentIndex ?? arrayIndex + 1;
 
     /* =====================================================
      * Prepare attachmentReadinessDecisionInput

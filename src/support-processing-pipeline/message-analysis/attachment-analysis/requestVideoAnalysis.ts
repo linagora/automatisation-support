@@ -320,27 +320,35 @@ function mergeSegmentAnalyses(
     })
     .join("\n\n");
 
-  return {
-    status: hasSuspiciousSegment ? "suspicious" : "analyzed",
-    reason: hasSuspiciousSegment
-      ? segmentAnalyses
+  const analysis = {
+    llmDescription,
+    structuredObservations: {
+      segments: segmentAnalyses
+    },
+    relationToPreviousAttachment:
+      segmentAnalyses[segmentAnalyses.length - 1]
+        .relationToPreviousAttachment
+  };
+
+  if (hasSuspiciousSegment) {
+    return {
+      status: "suspicious",
+      reason:
+        segmentAnalyses
           .map(function (segmentAnalysis) {
             return segmentAnalysis.reason;
           })
           .filter(function (reason): reason is string {
             return typeof reason === "string" && reason.length > 0;
           })
-          .join(", ") || "suspicious_video_analysis"
-      : undefined,
-    analysis: {
-      llmDescription,
-      structuredObservations: {
-        segments: segmentAnalyses
-      },
-      relationToPreviousAttachment:
-        segmentAnalyses[segmentAnalyses.length - 1]
-          .relationToPreviousAttachment
-    }
+          .join(", ") || "suspicious_video_analysis",
+      analysis
+    };
+  }
+
+  return {
+    status: "analyzed",
+    analysis
   };
 }
 

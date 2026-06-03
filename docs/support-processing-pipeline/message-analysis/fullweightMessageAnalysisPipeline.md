@@ -23,7 +23,6 @@ flowchart TB
     conversationHistory<br/>
     attachmentAnalysis?<br/>
     lightWeightMessageAnalysis?<br/>
-    expectedOutputSchema<br/>
     }"]
 
     subgraph PROMPT_DATA["fullWeightPrompt = buildFullWeightPrompt(buildFullWeightPromptInput)"]
@@ -34,14 +33,12 @@ flowchart TB
       supportTopicKnowledge<br/>
       conversationHistory<br/>
       attachmentAnalysis?<br/>
-      lightWeightMessageAnalysis?<br/>
-      expectedOutputSchema"]
+      lightWeightMessageAnalysis?"]
 
       PROMPT_OUTPUTS["<b>Output</b><br/>
       fullWeightPrompt = {<br/>
       systemPrompt<br/>
       userPrompt<br/>
-      expectedOutputSchema<br/>
       }<br/><br/>
       Purpose:<br/>
       prepare the complete prompt sent to the LLM"]
@@ -49,15 +46,15 @@ flowchart TB
       PROMPT_INPUTS --> PROMPT_OUTPUTS
     end
 
-    T_REQUEST_INPUT["<b>Prepare requestTextAnalysisInput</b><br/>
-    requestTextAnalysisInput = {<br/>
+    T_REQUEST_INPUT["<b>Prepare requestFullWeightAnalysisInput</b><br/>
+    requestFullWeightAnalysisInput = {<br/>
     fullWeightPrompt<br/>
     }"]
 
-    subgraph REQUEST_DATA["rawFullWeightMessageAnalysis = requestTextAnalysis(requestTextAnalysisInput)"]
+    subgraph REQUEST_DATA["rawFullWeightMessageAnalysis = requestFullWeightAnalysis(requestFullWeightAnalysisInput)"]
       direction LR
 
-      REQUEST_INPUTS["<b>requestTextAnalysisInput</b><br/>
+      REQUEST_INPUTS["<b>requestFullWeightAnalysisInput</b><br/>
       fullWeightPrompt"]
 
       REQUEST_OUTPUTS["<b>Output</b><br/>
@@ -77,15 +74,13 @@ flowchart TB
     T_FORMAT_INPUT["<b>Prepare formatFullWeightMessageAnalysisOutputInput</b><br/>
     formatFullWeightMessageAnalysisOutputInput = {<br/>
     rawFullWeightMessageAnalysis<br/>
-    expectedOutputSchema<br/>
     }"]
 
     subgraph FORMAT_DATA["fullWeightMessageAnalysisOutput = formatFullWeightMessageAnalysisOutput(formatFullWeightMessageAnalysisOutputInput)"]
       direction LR
 
       FORMAT_INPUTS["<b>formatFullWeightMessageAnalysisOutputInput</b><br/>
-      rawFullWeightMessageAnalysis<br/>
-      expectedOutputSchema"]
+      rawFullWeightMessageAnalysis"]
 
       FORMAT_OUTPUTS["<b>Output</b><br/>
       fullWeightMessageAnalysisOutput = {<br/>

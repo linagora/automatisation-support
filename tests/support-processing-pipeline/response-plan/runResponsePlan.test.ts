@@ -12,6 +12,9 @@ function createBaseInput(): ResponsePlanInput {
       gateChecked: {},
       gateFailed: []
     },
+    supportTopicKnowledge: {
+      segments_topic: []
+    },
     accountTrustStatus: {
       status: "trusted",
       reasons: []
@@ -32,7 +35,7 @@ function createBaseInput(): ResponsePlanInput {
     },
     possibleSolutions: [],
     decisionSearchingSolution: {
-      type: "acknowledgement"
+      topics: []
     }
   };
 }
@@ -66,7 +69,9 @@ describe("runResponsePlan", function () {
             matched_historical_topic: "no",
             id_topic: 1,
             topic_category: "bug",
-            topic_label: "Skipped topic"
+            tool_or_product: "Twake Drive",
+            topic_action: "create",
+            topic_object: "folder"
           }
         ],
         segments_signal: [
@@ -118,7 +123,9 @@ describe("runResponsePlan", function () {
             matched_historical_topic: "no",
             id_topic: 1,
             topic_category: "bug",
-            topic_label: "Skipped topic"
+            tool_or_product: "Twake Drive",
+            topic_action: "create",
+            topic_object: "folder"
           }
         ],
         segments_signal: [
@@ -159,7 +166,9 @@ describe("runResponsePlan", function () {
       matched_historical_topic: "no",
       id_topic: 1,
       topic_category: "bug",
-      topic_label: "Cozy Drive folder creation",
+      tool_or_product: "Cozy Drive",
+      topic_action: "create",
+      topic_object: "folder",
       topic_details: {},
       user_goal: "Create a folder",
       blocking_issue: "yes"
@@ -187,7 +196,12 @@ describe("runResponsePlan", function () {
       },
       possibleSolutions,
       decisionSearchingSolution: {
-        type: "solution_searching"
+        topics: [
+          {
+            topic_id: 1,
+            type: "solution_searching"
+          }
+        ]
       }
     });
 
@@ -213,7 +227,9 @@ describe("runResponsePlan", function () {
               title: {
                 topic_id: 1,
                 topic_category: "bug",
-                topic_label: "Cozy Drive folder creation",
+                tool_or_product: "Cozy Drive",
+                topic_action: "create",
+                topic_object: "folder",
                 matched_historical_topic: false
               },
               updated_fields_acknowledgement: {
@@ -230,10 +246,132 @@ describe("runResponsePlan", function () {
             }
           }
         ],
-        politeness_closure: "thanks_for_cooperation"
+        politeness_closure: "thanks_for_cooperation1"
       }
     ]);
     expect(output.messagesPlan.signalPlanMessages).toEqual([signalSegment]);
     expect(output.messagesPlan.handoverPlanMessages).toEqual([]);
+  });
+
+  it("builds topic display label from structured topic fields", function () {
+    const output = runResponsePlan({
+      ...createBaseInput(),
+      turnUnderstandingDelta: {
+        ...createBaseInput().turnUnderstandingDelta,
+        segments_topic: [
+          {
+            matched_historical_topic: "no",
+            id_topic: 1,
+            topic_category: "bug",
+            tool_or_product: "Twake Drive",
+            topic_action: "create",
+            topic_object: "folder"
+          }
+        ]
+      },
+      decisionSearchingSolution: {
+        topics: [
+          {
+            topic_id: 1,
+            type: "acknowledgement"
+          }
+        ]
+      }
+    });
+
+    expect(
+      output.messagesPlan.topicPlanMessages[0].topics_responses[0]
+        .topic_response.title
+    ).toMatchObject({
+      tool_or_product: "Twake Drive",
+      topic_action: "create",
+      topic_object: "folder"
+    });
+    expect(
+      output.messagesPlan.topicPlanMessages[0].topics_responses[0]
+        .topic_response.title
+    ).not.toHaveProperty("topic_label");
+  });
+
+  it("does not copy old topic_label into response plan title", function () {
+    const output = runResponsePlan({
+      ...createBaseInput(),
+      turnUnderstandingDelta: {
+        ...createBaseInput().turnUnderstandingDelta,
+        segments_topic: [
+          {
+            matched_historical_topic: "no",
+            id_topic: 1,
+            topic_category: "bug",
+            topic_label: "Legacy topic label"
+          }
+        ]
+      },
+      decisionSearchingSolution: {
+        topics: [
+          {
+            topic_id: 1,
+            type: "acknowledgement"
+          }
+        ]
+      }
+    });
+
+    expect(
+      output.messagesPlan.topicPlanMessages[0].topics_responses[0]
+        .topic_response.title
+    ).not.toHaveProperty("topic_label");
+  });
+
+  it("builds historical topic title when support topic knowledge has no topic_label", function () {
+    const output = runResponsePlan({
+      ...createBaseInput(),
+      supportTopicKnowledge: {
+        segments_topic: [
+          {
+            id_topic: 1,
+            topic_category: "bug",
+            tool_or_product: "Twake Drive",
+            topic_action: "create",
+            topic_object: "folder"
+          }
+        ]
+      },
+      turnUnderstandingDelta: {
+        ...createBaseInput().turnUnderstandingDelta,
+        segments_topic: [
+          {
+            matched_historical_topic: "yes",
+            id_topic: 1,
+            topic_details: {
+              observed_result: "validation button is disabled"
+            }
+          }
+        ]
+      },
+      decisionSearchingSolution: {
+        topics: [
+          {
+            topic_id: 1,
+            type: "acknowledgement"
+          }
+        ]
+      }
+    });
+
+    expect(
+      output.messagesPlan.topicPlanMessages[0].topics_responses[0]
+        .topic_response.title
+    ).toMatchObject({
+      topic_category: "bug",
+      tool_or_product: "Twake Drive",
+      topic_action: "create",
+      topic_object: "folder",
+      matched_historical_topic: true
+    });
+    expect(
+      output.messagesPlan.topicPlanMessages[0].topics_responses[0]
+        .topic_response.title
+    ).not.toHaveProperty("topic_label");
   });
 });

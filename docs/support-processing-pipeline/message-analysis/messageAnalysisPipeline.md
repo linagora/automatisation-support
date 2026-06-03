@@ -38,7 +38,6 @@ flowchart TB
       history: {<br/>
       checked: InputCleaningCheckName[]<br/>
       failed: InputCleaningCheckName[]<br/>
-      contextAccountDecision: continue / stop / review_with_llm_truster<br/>
       llmReview?: { route: continue / stop / failed, reason? }<br/>
       }<br/>
       }"]
@@ -71,7 +70,7 @@ flowchart TB
       ATTACHMENT_OUTPUTS["<b>Output</b><br/>
       6.2 attachmentAnalysis = [{<br/>
       filename<br/>
-      status: analyzed / failed / refused<br/>
+      status: analysis_pending / analyzed / failed / refused / suspicious<br/>
       analysis?<br/>
       }]"]
       ATTACHMENT_INPUTS --> ATTACHMENT_OUTPUTS
@@ -81,20 +80,21 @@ flowchart TB
     attachmentAnalysisSecurityInput = {<br/>
     attachmentAnalysis<br/>
     accountTrustStatus<br/>
+    latestUserMessageContent<br/>
     }"]
 
     subgraph ATTACHMENT_SECURITY_DATA["attachmentAnalysisSecurityDecision = runAttachmentAnalysisSecurity(attachmentAnalysisSecurityInput)"]
       direction LR
       ATTACHMENT_SECURITY_INPUTS["<b>attachmentAnalysisSecurityInput</b><br/>
       attachmentAnalysis<br/>
-      accountTrustStatus"]
+      accountTrustStatus<br/>
+      latestUserMessageContent"]
       ATTACHMENT_SECURITY_OUTPUTS["<b>Output</b><br/>
       6.3 attachmentAnalysisSecurityDecision = {<br/>
       decision: { route: continue / stop }<br/>
       history: {<br/>
-      checked: InputCleaningCheckName[]<br/>
-      failed: InputCleaningCheckName[]<br/>
-      contextAccountDecision: continue / stop / review_with_llm_truster<br/>
+      checked: AttachmentAnalysisSecurityCheckName[]<br/>
+      failed: AttachmentAnalysisSecurityCheckName[]<br/>
       llmReview?: { route: continue / stop / failed, reason? }<br/>
       }<br/>
       }"]
@@ -208,6 +208,8 @@ flowchart TB
         T_STOP_DELTA_INPUT["<b>Prepare turnUnderstandingDeltaInput</b><br/>
         turnUnderstandingDeltaInput = {<br/>
         securityGateSummary<br/>
+        latestUserAttachments?<br/>
+        attachmentAnalysis?<br/>
         supportTopicKnowledge<br/>
         conversationHistory<br/>
         }"]
@@ -216,6 +218,8 @@ flowchart TB
           direction LR
           STOP_DELTA_INPUTS["<b>turnUnderstandingDeltaInput</b><br/>
           securityGateSummary<br/>
+          latestUserAttachments?<br/>
+          attachmentAnalysis?<br/>
           supportTopicKnowledge<br/>
           conversationHistory"]
           STOP_DELTA_OUTPUTS["<b>Output</b><br/>
@@ -229,6 +233,7 @@ flowchart TB
         T_COMPLETED_DELTA_INPUT["<b>Prepare turnUnderstandingDeltaInput</b><br/>
         turnUnderstandingDeltaInput = {<br/>
         securityGateSummary<br/>
+        latestUserAttachments<br/>
         attachmentAnalysis?<br/>
         analysisGate?<br/>
         lightWeightMessageAnalysis?<br/>
@@ -241,6 +246,7 @@ flowchart TB
           direction LR
           COMPLETED_DELTA_INPUTS["<b>turnUnderstandingDeltaInput</b><br/>
           securityGateSummary<br/>
+          latestUserAttachments<br/>
           attachmentAnalysis?<br/>
           analysisGate?<br/>
           lightWeightMessageAnalysis?<br/>

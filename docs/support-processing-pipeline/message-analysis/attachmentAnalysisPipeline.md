@@ -23,22 +23,16 @@ flowchart TB
 
       T_READINESS_INPUT["<b>Prepare attachmentReadinessDecisionInput</b><br/>
       attachmentReadinessDecisionInput = {<br/>
-      attachment<br/>
+      attachmentIndex<br/>
+      attachmentAnalysis<br/>
       }"]
 
       subgraph READINESS_DATA["attachmentReadinessDecision = decideAttachmentReadiness(attachmentReadinessDecisionInput)"]
         direction LR
 
         READINESS_INPUTS["<b>attachmentReadinessDecisionInput</b><br/>
-        attachment = {<br/>
-        name?<br/>
-        type?<br/>
-        mimeType?<br/>
-        sizeBytes?<br/>
-        url?<br/>
-        path?<br/>
-        ...<br/>
-        }"]
+        attachmentIndex<br/>
+        attachmentAnalysis"]
 
         READINESS_OUTPUTS["<b>Output</b><br/>
         attachmentReadinessDecision = {<br/>
@@ -48,8 +42,7 @@ flowchart TB
         history: {<br/>
         checked: AttachmentReadinessCheckName[]<br/>
         failed: AttachmentReadinessCheckName[]<br/>
-        detectedFormat: image / video / unknown<br/>
-        refusalReason?<br/>
+        detectedFormat: image / video / other<br/>
         }<br/>
         }"]
 
@@ -63,18 +56,15 @@ flowchart TB
       attachmentAnalysisItem = {<br/>
       filename<br/>
       status: refused<br/>
-      reason: attachmentReadinessDecision.history.refusalReason<br/>
+      reason: failed checks or attachment_readiness_failed<br/>
       readinessDecision: attachmentReadinessDecision<br/>
       }"]
 
-      T_SEQUENCE_CONTEXT["<b>Prepare attachmentSequenceContext</b><br/>
-      attachmentSequenceContext = {<br/>
-      alreadyAnalyzedAttachments: attachmentAnalysis<br/>
-      remainingAttachmentsToAnalyze: metadata of attachments after current one<br/>
-      }<br/><br/>
-      Purpose:<br/>
-      give the vision LLM context about previous files<br/>
-      and tell it which files are still not analyzed"]
+      T_SEQUENCE_CONTEXT["<b>Update current item with readiness</b><br/>
+      attachmentAnalysis[attachmentIndex] includes<br/>
+      readinessDecision<br/><br/>
+      attachmentAnalysis stays available as context<br/>
+      for image / video analysis"]
 
       T_VISUAL_FORMAT_ROUTE{"<b>visual format ?</b><br/>
       attachmentReadinessDecision.history.detectedFormat<br/><br/>
@@ -82,25 +72,22 @@ flowchart TB
 
       T_IMAGE_INPUT["<b>Prepare imageAnalysisInput</b><br/>
       imageAnalysisInput = {<br/>
-      attachment<br/>
+      attachmentIndex<br/>
       latestUserMessage<br/>
-      attachmentSequenceContext<br/>
+      attachmentAnalysis<br/>
       }"]
 
       subgraph IMAGE_DATA["imageAnalysisResult = requestImageAnalysis(imageAnalysisInput)"]
         direction LR
 
         IMAGE_INPUTS["<b>imageAnalysisInput</b><br/>
-        attachment<br/>
+        attachmentIndex<br/>
         latestUserMessage<br/>
-        attachmentSequenceContext = {<br/>
-        alreadyAnalyzedAttachments<br/>
-        remainingAttachmentsToAnalyze<br/>
-        }"]
+        attachmentAnalysis"]
 
         IMAGE_OUTPUTS["<b>Output</b><br/>
         imageAnalysisResult = {<br/>
-        status: analyzed / failed<br/>
+        status: analyzed / failed / suspicious<br/>
         reason?<br/>
         analysis?: {<br/>
         llmDescription<br/>
@@ -139,27 +126,33 @@ flowchart TB
       readinessDecision: attachmentReadinessDecision<br/>
       }"]
 
+      T_IMAGE_SUSPICIOUS_ITEM["<b>Build suspicious item</b><br/>
+      attachmentAnalysisItem = {<br/>
+      filename<br/>
+      status: suspicious<br/>
+      reason: imageAnalysisResult.reason<br/>
+      readinessDecision: attachmentReadinessDecision<br/>
+      analysis<br/>
+      }"]
+
       T_VIDEO_INPUT["<b>Prepare videoAnalysisInput</b><br/>
       videoAnalysisInput = {<br/>
-      attachment<br/>
+      attachmentIndex<br/>
       latestUserMessage<br/>
-      attachmentSequenceContext<br/>
+      attachmentAnalysis<br/>
       }"]
 
       subgraph VIDEO_DATA["videoAnalysisResult = requestVideoAnalysis(videoAnalysisInput)"]
         direction LR
 
         VIDEO_INPUTS["<b>videoAnalysisInput</b><br/>
-        attachment<br/>
+        attachmentIndex<br/>
         latestUserMessage<br/>
-        attachmentSequenceContext = {<br/>
-        alreadyAnalyzedAttachments<br/>
-        remainingAttachmentsToAnalyze<br/>
-        }"]
+        attachmentAnalysis"]
 
         VIDEO_OUTPUTS["<b>Output</b><br/>
         videoAnalysisResult = {<br/>
-        status: analyzed / failed<br/>
+        status: analyzed / failed / suspicious<br/>
         reason?<br/>
         analysis?: {<br/>
         llmDescription<br/>
@@ -198,9 +191,18 @@ flowchart TB
       readinessDecision: attachmentReadinessDecision<br/>
       }"]
 
-      T_COLLECT["<b>Add item to output</b><br/>
-      attachmentAnalysis.push(attachmentAnalysisItem)<br/><br/>
-      The pushed item becomes available as context<br/>
+      T_VIDEO_SUSPICIOUS_ITEM["<b>Build suspicious item</b><br/>
+      attachmentAnalysisItem = {<br/>
+      filename<br/>
+      status: suspicious<br/>
+      reason: videoAnalysisResult.reason<br/>
+      readinessDecision: attachmentReadinessDecision<br/>
+      analysis<br/>
+      }"]
+
+      T_COLLECT["<b>Update current output item</b><br/>
+      attachmentAnalysis[attachmentIndex] = attachmentAnalysisItem<br/><br/>
+      The updated item remains available as context<br/>
       for the next attachment analysis"]
 
       T_READINESS_INPUT --> READINESS_DATA
@@ -217,30 +219,33 @@ flowchart TB
       IMAGE_DATA --> T_IMAGE_ROUTE
       T_IMAGE_ROUTE -->|analyzed| T_IMAGE_ANALYZED_ITEM
       T_IMAGE_ROUTE -->|failed| T_IMAGE_FAILED_ITEM
+      T_IMAGE_ROUTE -->|suspicious| T_IMAGE_SUSPICIOUS_ITEM
       T_IMAGE_ANALYZED_ITEM --> T_COLLECT
       T_IMAGE_FAILED_ITEM --> T_COLLECT
+      T_IMAGE_SUSPICIOUS_ITEM --> T_COLLECT
 
       T_VISUAL_FORMAT_ROUTE -->|video| T_VIDEO_INPUT
       T_VIDEO_INPUT --> VIDEO_DATA
       VIDEO_DATA --> T_VIDEO_ROUTE
       T_VIDEO_ROUTE -->|analyzed| T_VIDEO_ANALYZED_ITEM
       T_VIDEO_ROUTE -->|failed| T_VIDEO_FAILED_ITEM
+      T_VIDEO_ROUTE -->|suspicious| T_VIDEO_SUSPICIOUS_ITEM
       T_VIDEO_ANALYZED_ITEM --> T_COLLECT
       T_VIDEO_FAILED_ITEM --> T_COLLECT
+      T_VIDEO_SUSPICIOUS_ITEM --> T_COLLECT
     end
 
     T_RETURN["<b>Return attachmentAnalysis</b><br/>
     attachmentAnalysis = [{<br/>
     filename<br/>
-    status: analyzed / failed / refused<br/>
+    status: analysis_pending / analyzed / failed / refused / suspicious<br/>
     reason?<br/>
     readinessDecision?: {<br/>
     decision: { route: continue / stop }<br/>
     history: {<br/>
     checked<br/>
     failed<br/>
-    detectedFormat<br/>
-    refusalReason?<br/>
+    detectedFormat: image / video / other<br/>
     }<br/>
     }<br/>
     analysis?: {<br/>
@@ -274,7 +279,7 @@ flowchart TB
   class READINESS_INPUTS,IMAGE_INPUTS,VIDEO_INPUTS inputBlock;
   class READINESS_OUTPUTS,IMAGE_OUTPUTS,VIDEO_OUTPUTS outputBlock;
 
-  class T_INIT_OUTPUT,T_READINESS_INPUT,T_READINESS_ROUTE,T_REFUSED_ITEM,T_SEQUENCE_CONTEXT,T_VISUAL_FORMAT_ROUTE,T_IMAGE_INPUT,T_IMAGE_ROUTE,T_IMAGE_ANALYZED_ITEM,T_IMAGE_FAILED_ITEM,T_VIDEO_INPUT,T_VIDEO_ROUTE,T_VIDEO_ANALYZED_ITEM,T_VIDEO_FAILED_ITEM,T_COLLECT,T_RETURN processingBlock;
+  class T_INIT_OUTPUT,T_READINESS_INPUT,T_READINESS_ROUTE,T_REFUSED_ITEM,T_SEQUENCE_CONTEXT,T_VISUAL_FORMAT_ROUTE,T_IMAGE_INPUT,T_IMAGE_ROUTE,T_IMAGE_ANALYZED_ITEM,T_IMAGE_FAILED_ITEM,T_IMAGE_SUSPICIOUS_ITEM,T_VIDEO_INPUT,T_VIDEO_ROUTE,T_VIDEO_ANALYZED_ITEM,T_VIDEO_FAILED_ITEM,T_VIDEO_SUSPICIOUS_ITEM,T_COLLECT,T_RETURN processingBlock;
 
   class NEXT_OUTPUTS nextOutputBlock;
 

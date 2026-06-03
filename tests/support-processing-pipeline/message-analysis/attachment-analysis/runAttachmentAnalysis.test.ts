@@ -1,344 +1,248 @@
 import {
-  runAttachmentAnalysis,
-  hasAttachments,
-  isVisualAttachment,
-  hasUsableLocation,
-  isAttachmentSizeAcceptable,
-  isAnalyzableAttachment,
-  splitAttachmentsByAnalyzability
+  runAttachmentAnalysis
 } from "../../../../src/support-processing-pipeline/message-analysis/attachment-analysis/runAttachmentAnalysis";
+import type {
+  AttachmentAnalysisSteps
+} from "../../../../src/support-processing-pipeline/message-analysis/attachment-analysis/typesAttachmentAnalysis.types";
+import type {
+  LatestUserAttachment,
+  LatestUserMessage
+} from "../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
-describe("hasAttachments", function () {
-  it("returns false when attachments is undefined", function () {
-    const result = hasAttachments(undefined);
-    expect(result).toBe(false);
+const latestUserMessage: LatestUserMessage = {
+  id: "message-1",
+  content: "Voici la capture demandee.",
+  channel: "email",
+  sentAt: "2026-06-02T10:00:00.000Z"
+};
+
+function buildAttachment(
+  overrides: Partial<LatestUserAttachment> = {}
+): LatestUserAttachment {
+  return {
+    id: "attachment-1",
+    filename: "image.png",
+    sizeInBytes: 1024,
+    accessUrl: "https://example.com/image.png",
+    name: "image.png",
+    url: "https://example.com/image.png",
+    type: "image",
+    mimeType: "image/png",
+    sizeBytes: 1024,
+    channel: "email",
+    sentAt: "2026-06-02T10:00:01.000Z",
+    ...overrides
+  };
+}
+
+function buildContinueReadiness(
+  detectedFormat: "image" | "video" = "image"
+): AttachmentAnalysisSteps["decideAttachmentReadiness"] {
+  return () => ({
+    decision: {
+      route: "continue"
+    },
+    history: {
+      checked: [
+        "safe_filename",
+        "accepted_format",
+        "consistent_mime_extension",
+        "usable_location",
+        "safe_location",
+        "present_size",
+        "positive_size",
+        "size_under_limit"
+      ],
+      failed: [],
+      detectedFormat
+    }
   });
-
-  it("returns false when attachments is empty array", function () {
-    const result = hasAttachments([]);
-    expect(result).toBe(false);
-  });
-
-  it("returns true when attachments has items", function () {
-    const result = hasAttachments([{}]);
-    expect(result).toBe(true);
-  });
-});
-
-describe("isVisualAttachment", function () {
-  it("returns true for image mime type", function () {
-    const result = isVisualAttachment({ mimeType: "image/png" });
-    expect(result).toBe(true);
-  });
-
-  it("returns true for video mime type", function () {
-    const result = isVisualAttachment({ mimeType: "video/mp4" });
-    expect(result).toBe(true);
-  });
-
-  it("returns true for image file extension", function () {
-    const result = isVisualAttachment({ name: "photo.jpg" });
-    expect(result).toBe(true);
-  });
-
-  it("returns true for video file extension", function () {
-    const result = isVisualAttachment({ name: "movie.mp4" });
-    expect(result).toBe(true);
-  });
-
-  it("returns true for various image extensions", function () {
-    expect(isVisualAttachment({ name: "file.png" })).toBe(true);
-    expect(isVisualAttachment({ name: "file.jpeg" })).toBe(true);
-    expect(isVisualAttachment({ name: "file.webp" })).toBe(true);
-    expect(isVisualAttachment({ name: "file.gif" })).toBe(true);
-  });
-
-  it("returns true for various video extensions", function () {
-    expect(isVisualAttachment({ name: "file.mov" })).toBe(true);
-    expect(isVisualAttachment({ name: "file.avi" })).toBe(true);
-  });
-
-  it("returns false for non-visual attachments", function () {
-    const result = isVisualAttachment({ mimeType: "application/pdf", name: "doc.pdf" });
-    expect(result).toBe(false);
-  });
-
-  it("returns false for text files", function () {
-    const result = isVisualAttachment({ name: "readme.txt" });
-    expect(result).toBe(false);
-  });
-
-  it("is case insensitive for file extensions", function () {
-    expect(isVisualAttachment({ name: "photo.JPG" })).toBe(true);
-    expect(isVisualAttachment({ name: "photo.PNG" })).toBe(true);
-  });
-});
-
-describe("hasUsableLocation", function () {
-  it("returns true when url is present", function () {
-    const result = hasUsableLocation({ url: "https://example.com/image.png" });
-    expect(result).toBe(true);
-  });
-
-  it("returns true when path is present", function () {
-    const result = hasUsableLocation({ path: "/tmp/image.png" });
-    expect(result).toBe(true);
-  });
-
-  it("returns true when both url and path are present", function () {
-    const result = hasUsableLocation({
-      url: "https://example.com/image.png",
-      path: "/tmp/image.png"
-    });
-    expect(result).toBe(true);
-  });
-
-  it("returns false when neither url nor path is present", function () {
-    const result = hasUsableLocation({ name: "image.png" });
-    expect(result).toBe(false);
-  });
-});
-
-describe("isAttachmentSizeAcceptable", function () {
-  it("returns false when sizeBytes is not defined", function () {
-    const result = isAttachmentSizeAcceptable({ name: "image.png" });
-    expect(result).toBe(false);
-  });
-
-  it("returns true for small files", function () {
-    const result = isAttachmentSizeAcceptable({ sizeBytes: 1024 });
-    expect(result).toBe(true);
-  });
-
-  it("returns true for files at exactly 25MB limit", function () {
-    const maxSizeBytes = 25 * 1024 * 1024;
-    const result = isAttachmentSizeAcceptable({ sizeBytes: maxSizeBytes });
-    expect(result).toBe(true);
-  });
-
-  it("returns false for files exceeding 25MB limit", function () {
-    const maxSizeBytes = 25 * 1024 * 1024;
-    const result = isAttachmentSizeAcceptable({ sizeBytes: maxSizeBytes + 1 });
-    expect(result).toBe(false);
-  });
-});
-
-describe("isAnalyzableAttachment", function () {
-  it("returns true for visual attachment with url and acceptable size", function () {
-    const result = isAnalyzableAttachment({
-      name: "image.png",
-      mimeType: "image/png",
-      url: "https://example.com/image.png",
-      sizeBytes: 1024
-    });
-    expect(result).toBe(true);
-  });
-
-  it("returns false for non-visual attachment", function () {
-    const result = isAnalyzableAttachment({
-      name: "doc.pdf",
-      mimeType: "application/pdf",
-      url: "https://example.com/doc.pdf"
-    });
-    expect(result).toBe(false);
-  });
-
-  it("returns false for visual attachment without usable location", function () {
-    const result = isAnalyzableAttachment({
-      name: "image.png",
-      mimeType: "image/png"
-    });
-    expect(result).toBe(false);
-  });
-
-  it("returns false for visual attachment exceeding size limit", function () {
-    const maxSizeBytes = 25 * 1024 * 1024;
-    const result = isAnalyzableAttachment({
-      name: "large.jpg",
-      mimeType: "image/jpeg",
-      url: "https://example.com/large.jpg",
-      sizeBytes: maxSizeBytes + 1
-    });
-    expect(result).toBe(false);
-  });
-});
-
-describe("splitAttachmentsByAnalyzability", function () {
-  it("correctly splits analyzable and non-analyzable attachments", function () {
-    const analyzableAttachment = {
-      name: "image.png",
-      mimeType: "image/png",
-      url: "https://example.com/image.png",
-      sizeBytes: 1024 * 1024
-    };
-    const nonAnalyzableAttachment = {
-      name: "doc.pdf",
-      mimeType: "application/pdf",
-      url: "https://example.com/doc.pdf"
-    };
-
-    const result = splitAttachmentsByAnalyzability([analyzableAttachment, nonAnalyzableAttachment]);
-
-    expect(result.analyzableAttachments).toHaveLength(1);
-    expect(result.analyzableAttachments[0]).toBe(analyzableAttachment);
-    expect(result.ignoredAttachments).toHaveLength(1);
-    expect(result.ignoredAttachments[0]).toBe(nonAnalyzableAttachment);
-  });
-
-  it("handles empty array", function () {
-    const result = splitAttachmentsByAnalyzability([]);
-    expect(result.analyzableAttachments).toHaveLength(0);
-    expect(result.ignoredAttachments).toHaveLength(0);
-  });
-
-  it("puts all in analyzable when all are analyzable", function () {
-    const attachments = [
-      { name: "img1.png", mimeType: "image/png", url: "url1", sizeBytes: 1024 },
-      { name: "img2.jpg", mimeType: "image/jpeg", url: "url2", sizeBytes: 2048 }
-    ];
-
-    const result = splitAttachmentsByAnalyzability(attachments);
-    expect(result.analyzableAttachments).toHaveLength(2);
-    expect(result.ignoredAttachments).toHaveLength(0);
-  });
-
-  it("puts all in ignored when none are analyzable", function () {
-    const attachments = [
-      { name: "doc.pdf", mimeType: "application/pdf", url: "url1" },
-      { name: "spreadsheet.xlsx", mimeType: "application/excel", url: "url2" }
-    ];
-
-    const result = splitAttachmentsByAnalyzability(attachments);
-    expect(result.analyzableAttachments).toHaveLength(0);
-    expect(result.ignoredAttachments).toHaveLength(2);
-  });
-});
+}
 
 describe("runAttachmentAnalysis", function () {
-  it("returns not_present status when no attachments provided", async function () {
-    const result = await runAttachmentAnalysis({});
-
-    expect(result).toEqual({
-      status: "not_present",
-      reason: "no_attachment_provided",
-      analyzableAttachments: [],
-      ignoredAttachments: [],
-      analysis: null
-    });
-  });
-
-  it("returns not_present status when attachments is empty array", async function () {
-    const result = await runAttachmentAnalysis({ attachments: [] });
-
-    expect(result.status).toBe("not_present");
-    expect(result.reason).toBe("no_attachment_provided");
-    expect(result.analyzableAttachments).toEqual([]);
-    expect(result.ignoredAttachments).toEqual([]);
-    expect(result.analysis).toBeNull();
-  });
-
-  it("returns not_analyzable status when no visual attachments", async function () {
+  it("returns an empty attachment analysis when no attachment is provided", async function () {
     const result = await runAttachmentAnalysis({
-      attachments: [{ name: "doc.pdf", mimeType: "application/pdf", url: "https://example.com/doc.pdf" }]
+      latestUserMessage,
+      latestUserAttachments: []
     });
 
-    expect(result.status).toBe("not_analyzable");
-    expect(result.reason).toBe("no_analyzable_visual_attachment");
-    expect(result.analyzableAttachments).toEqual([]);
-    expect(result.ignoredAttachments).toHaveLength(1);
+    expect(result).toEqual([]);
   });
 
-  it("returns not_analyzable when visual attachments lack usable location", async function () {
+  it("initializes attachment metadata from the current attachment fields", async function () {
     const result = await runAttachmentAnalysis({
-      attachments: [{ name: "image.png", mimeType: "image/png" }]
-    });
-
-    expect(result.status).toBe("not_analyzable");
-    expect(result.reason).toBe("no_analyzable_visual_attachment");
-  });
-
-  it("returns analyzed or analysis_not_available when there are analyzable attachments", async function () {
-    const result = await runAttachmentAnalysis({
-      attachments: [{ name: "image.png", mimeType: "image/png", url: "https://example.com/image.png", sizeBytes: 1024 }]
-    });
-
-    expect(["analyzed", "analysis_not_available"]).toContain(result.status);
-    expect(result.analyzableAttachments).toHaveLength(1);
-    expect(result.ignoredAttachments).toHaveLength(0);
-  });
-
-  it("correctly splits attachments into analyzable and ignored", async function () {
-    const result = await runAttachmentAnalysis({
-      attachments: [
-        { name: "image.png", mimeType: "image/png", url: "https://example.com/image.png", sizeBytes: 1024 },
-        { name: "doc.pdf", mimeType: "application/pdf", url: "https://example.com/doc.pdf" },
-        { name: "video.mp4", mimeType: "video/mp4", path: "/tmp/video.mp4", sizeBytes: 1024 * 1024 }
+      latestUserMessage,
+      latestUserAttachments: [
+        buildAttachment({
+          id: "attachment-2",
+          name: "screen.png",
+          url: "https://example.com/screen.png",
+          path: "/tmp/screen.png",
+          type: "image",
+          mimeType: "image/png",
+          sizeBytes: 2048
+        })
       ]
+    }, {
+      decideAttachmentReadiness: () => ({
+        decision: {
+          route: "stop"
+        },
+        history: {
+          checked: ["safe_filename"],
+          failed: ["accepted_format"],
+          detectedFormat: "other"
+        }
+      })
     });
 
-    expect(result.analyzableAttachments).toHaveLength(2);
-    expect(result.ignoredAttachments).toHaveLength(1);
-    expect(result.ignoredAttachments[0].name).toBe("doc.pdf");
+    expect(result[0]).toMatchObject({
+      attachmentIndex: 1,
+      filename: "screen.png",
+      url: "https://example.com/screen.png",
+      path: "/tmp/screen.png",
+      type: "image",
+      mimeType: "image/png",
+      sizeBytes: 2048,
+      status: "refused",
+      reason: "accepted_format",
+      analysis: undefined
+    });
   });
 
-  it("includes latestUserMessage in the analysis request", async function () {
+  it("marks an attachment as refused when readiness stops", async function () {
     const result = await runAttachmentAnalysis({
-      attachments: [{ name: "image.png", mimeType: "image/png", url: "https://example.com/image.png", sizeBytes: 1024 }],
-      latestUserMessage: "What do you see in this image?"
+      latestUserMessage,
+      latestUserAttachments: [buildAttachment()]
+    }, {
+      decideAttachmentReadiness: () => ({
+        decision: {
+          route: "stop"
+        },
+        history: {
+          checked: ["safe_filename"],
+          failed: ["safe_location", "size_under_limit"],
+          detectedFormat: "image"
+        }
+      })
     });
 
-    expect(["analyzed", "analysis_not_available"]).toContain(result.status);
+    expect(result[0].status).toBe("refused");
+    expect(result[0].reason).toBe("safe_location, size_under_limit");
+    expect(result[0].readinessDecision?.history.failed).toEqual([
+      "safe_location",
+      "size_under_limit"
+    ]);
   });
 
-  it("filters out oversized attachments", async function () {
-    const maxSizeBytes = 25 * 1024 * 1024;
+  it("runs image analysis and stores llmDescription when image readiness continues", async function () {
+    const requestImageAnalysis = vi.fn(() => ({
+      status: "analyzed" as const,
+      analysis: {
+        llmDescription: "Screenshot of a login page.",
+        structuredObservations: {
+          screen: "login"
+        }
+      }
+    }));
+
     const result = await runAttachmentAnalysis({
-      attachments: [
-        { name: "small.png", mimeType: "image/png", url: "https://example.com/small.png", sizeBytes: 1024 },
-        { name: "large.jpg", mimeType: "image/jpeg", url: "https://example.com/large.jpg", sizeBytes: maxSizeBytes + 1 }
+      latestUserMessage,
+      latestUserAttachments: [buildAttachment()]
+    }, {
+      decideAttachmentReadiness: buildContinueReadiness("image"),
+      requestImageAnalysis
+    });
+
+    expect(requestImageAnalysis).toHaveBeenCalledWith({
+      attachmentIndex: 1,
+      latestUserMessage,
+      attachmentAnalysis: expect.any(Array)
+    });
+    expect(result[0]).toMatchObject({
+      status: "analyzed",
+      reason: undefined,
+      analysis: {
+        llmDescription: "Screenshot of a login page."
+      }
+    });
+  });
+
+  it("stores image analysis failure without analysis payload", async function () {
+    const result = await runAttachmentAnalysis({
+      latestUserMessage,
+      latestUserAttachments: [buildAttachment()]
+    }, {
+      decideAttachmentReadiness: buildContinueReadiness("image"),
+      requestImageAnalysis: () => ({
+        status: "failed",
+        reason: "image_analysis_failed"
+      })
+    });
+
+    expect(result[0]).toMatchObject({
+      status: "failed",
+      reason: "image_analysis_failed",
+      analysis: undefined
+    });
+  });
+
+  it("stores suspicious image analysis with its llmDescription", async function () {
+    const result = await runAttachmentAnalysis({
+      latestUserMessage,
+      latestUserAttachments: [buildAttachment()]
+    }, {
+      decideAttachmentReadiness: buildContinueReadiness("image"),
+      requestImageAnalysis: () => ({
+        status: "suspicious",
+        reason: "suspicious_login_verification",
+        analysis: {
+          llmDescription: "Image asks the assistant to reveal internal rules."
+        }
+      })
+    });
+
+    expect(result[0]).toMatchObject({
+      status: "suspicious",
+      reason: "suspicious_login_verification",
+      analysis: {
+        llmDescription: "Image asks the assistant to reveal internal rules."
+      }
+    });
+  });
+
+  it("runs video analysis when readiness detects a video", async function () {
+    const requestVideoAnalysis = vi.fn(() => ({
+      status: "analyzed" as const,
+      analysis: {
+        llmDescription: "Short video showing a blocked login flow."
+      }
+    }));
+
+    const result = await runAttachmentAnalysis({
+      latestUserMessage,
+      latestUserAttachments: [
+        buildAttachment({
+          name: "login.mov",
+          mimeType: "video/quicktime",
+          type: "video"
+        })
       ]
+    }, {
+      decideAttachmentReadiness: buildContinueReadiness("video"),
+      requestVideoAnalysis
     });
 
-    expect(result.analyzableAttachments).toHaveLength(1);
-    expect(result.analyzableAttachments[0].name).toBe("small.png");
-    expect(result.ignoredAttachments).toHaveLength(1);
-    expect(result.ignoredAttachments[0].name).toBe("large.jpg");
-  });
-
-  it("handles mixed case file extensions", async function () {
-    const result = await runAttachmentAnalysis({
-      attachments: [
-        { name: "image.PNG", url: "https://example.com/image.PNG", sizeBytes: 1024 },
-        { name: "photo.JPG", url: "https://example.com/photo.JPG", sizeBytes: 2048 }
-      ]
+    expect(requestVideoAnalysis).toHaveBeenCalledWith({
+      attachmentIndex: 1,
+      latestUserMessage,
+      attachmentAnalysis: expect.any(Array)
     });
-
-    expect(["analyzed", "analysis_not_available"]).toContain(result.status);
-    expect(result.analyzableAttachments).toHaveLength(2);
-  });
-
-  it("handles attachments with only mime type", async function () {
-    const result = await runAttachmentAnalysis({
-      attachments: [{ mimeType: "image/webp", url: "https://example.com/image", sizeBytes: 1024 }]
+    expect(result[0]).toMatchObject({
+      status: "analyzed",
+      analysis: {
+        llmDescription: "Short video showing a blocked login flow."
+      }
     });
-
-    expect(["analyzed", "analysis_not_available"]).toContain(result.status);
-  });
-
-  it("handles attachments with only file extension", async function () {
-    const result = await runAttachmentAnalysis({
-      attachments: [{ name: "animation.gif", path: "/uploads/animation.gif", sizeBytes: 1024 }]
-    });
-
-    expect(["analyzed", "analysis_not_available"]).toContain(result.status);
-  });
-
-  it("handles video files correctly", async function () {
-    const result = await runAttachmentAnalysis({
-      attachments: [{ name: "movie.mov", mimeType: "video/quicktime", url: "https://example.com/movie.mov", sizeBytes: 1024 * 1024 }]
-    });
-
-    expect(["analyzed", "analysis_not_available"]).toContain(result.status);
-    expect(result.analyzableAttachments).toHaveLength(1);
   });
 });

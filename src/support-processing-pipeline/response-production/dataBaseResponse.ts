@@ -171,9 +171,7 @@ const dataBaseResponse: DataBaseResponse = {
         currency: "devise",
         billing_date_or_period: "date ou période de facturation",
         gap_observed: "écart observé",
-        question_intent: "intention de la question",
-        video_available: "vidéo disponible",
-        image_available: "image disponible"
+        question_intent: "intention de la question"
       },
       topicDetailsDescriptions: {
         default: "information complémentaire utile pour traiter la demande",
@@ -203,8 +201,6 @@ const dataBaseResponse: DataBaseResponse = {
         app_version: "version précise de l’application",
         server_or_instance: "serveur ou instance concerné",
         affected_users: "utilisateurs affectés",
-        video_available:
-          "présence éventuelle d’une vidéo montrant le problème",
         logs_available: "présence éventuelle de journaux/logs disponibles",
         billing_issue_type: "type de problème de facturation",
         billing_provider: "prestataire ou moyen de paiement concerné",
@@ -219,6 +215,8 @@ const dataBaseResponse: DataBaseResponse = {
           "intention de la question, par exemple savoir comment faire, si c’est possible ou si c’est prévu"
       },
       topicDetailValueTranslations: {
+        "yes": "oui",
+        "no": "non",
         "nothing happens": "rien ne se passe",
         "click create folder": "cliquer sur créer un dossier",
         "click on create folder": "cliquer sur créer un dossier",
@@ -397,9 +395,7 @@ const dataBaseResponse: DataBaseResponse = {
         currency: "currency",
         billing_date_or_period: "billing date or period",
         gap_observed: "observed gap",
-        question_intent: "question intent",
-        video_available: "video available",
-        image_available: "image available"
+        question_intent: "question intent"
       },
       topicDetailsDescriptions: {
         default: "additional useful information to handle the request",
@@ -429,7 +425,6 @@ const dataBaseResponse: DataBaseResponse = {
         app_version: "precise application version",
         server_or_instance: "server or instance concerned",
         affected_users: "affected users",
-        video_available: "whether a video showing the problem is available",
         logs_available: "whether logs are available",
         billing_issue_type: "type of billing issue",
         billing_provider: "billing provider or payment method concerned",

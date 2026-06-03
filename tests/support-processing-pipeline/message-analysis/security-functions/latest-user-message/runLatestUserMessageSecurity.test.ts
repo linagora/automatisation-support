@@ -128,4 +128,20 @@ describe("runLatestUserMessageSecurity", function () {
     expectNoContextAccountDecision(output);
     expectNoAccountTrustStatusInHistory(output);
   });
+
+  it("still evaluates excessive repetition on the raw latest user message", async function () {
+    const output = await runLatestUserMessageSecurity({
+      latestUserMessage: buildMessage(
+        "urgent urgent urgent urgent urgent urgent urgent urgent help please"
+      ),
+      accountTrustStatus: trustedAccount
+    });
+
+    expect(output.decision.route).toBe("continue");
+    expect(output.history.failed).toContain("excessive_repetition");
+    expect(output.history.llmReview).toEqual({
+      route: "continue",
+      reason: "trusted_account_review_mock"
+    });
+  });
 });

@@ -1,4 +1,7 @@
 import { dataBaseResponse } from "./dataBaseResponse";
+import {
+  buildTopicDisplayLabel
+} from "../buildTopicDisplayLabel";
 
 import type {
   LackComprehensionPlanMessage,
@@ -8,6 +11,9 @@ import type {
   TopicMainResponse,
   TopicPlanMessage
 } from "../response-plan/typesResponsePlan.types";
+import type {
+  TurnAttachments
+} from "../typesSupportProcessingPipeline.types";
 import type { LabelDatabase, ResponseLanguage } from "./dataBaseResponse";
 
 type ScopeBoundaryPlanMessage = {
@@ -257,6 +263,107 @@ function ensureFinalPeriod(value: string): string {
   return /[.!?]$/.test(value) ? value : `${value}.`;
 }
 
+function flattenAttachments(
+  attachments: TurnAttachments | undefined
+): TurnAttachments[keyof TurnAttachments] {
+  if (!attachments) {
+    return [];
+  }
+
+  return [
+    ...attachments.images,
+    ...attachments.videos,
+    ...attachments.other
+  ];
+}
+
+function hasAnalysisFailureStatus(status: string): boolean {
+  return status === "failed" || status === "refused";
+}
+
+function buildAttachmentAcknowledgement(
+  userLanguage: ResponseLanguage,
+  attachments: TurnAttachments | undefined
+): string | undefined {
+  const attachmentItems = flattenAttachments(attachments);
+
+  if (attachmentItems.length === 0) {
+    return undefined;
+  }
+
+  const hasAnalysisFailure = attachmentItems.some((attachmentItem) => {
+    return hasAnalysisFailureStatus(attachmentItem.status);
+  });
+  const allAnalyzed = attachmentItems.every((attachmentItem) => {
+    return attachmentItem.status === "analyzed";
+  });
+  const hasSuspicious = attachmentItems.some((attachmentItem) => {
+    return attachmentItem.status === "suspicious";
+  });
+
+  if (attachmentItems.length > 1) {
+    if (hasAnalysisFailure) {
+      return userLanguage === "french"
+        ? "J’ai aussi bien reçu les pièces jointes, mais certaines n’ont pas pu être analysées automatiquement."
+        : "I also received the attachments, but some could not be analyzed automatically.";
+    }
+
+    if (allAnalyzed) {
+      return userLanguage === "french"
+        ? "J’ai aussi bien reçu et analysé les pièces jointes."
+        : "I also received and analyzed the attachments.";
+    }
+
+    if (hasSuspicious) {
+      return userLanguage === "french"
+        ? "J’ai aussi bien reçu les pièces jointes."
+        : "I also received the attachments.";
+    }
+
+    return userLanguage === "french"
+      ? "J’ai aussi bien reçu les pièces jointes."
+      : "I also received the attachments.";
+  }
+
+  const [attachmentItem] = attachmentItems;
+  const isImage = attachments?.images.includes(attachmentItem) === true;
+  const isVideo = attachments?.videos.includes(attachmentItem) === true;
+
+  if (attachmentItem.status === "suspicious") {
+    return userLanguage === "french"
+      ? "J’ai aussi bien reçu la pièce jointe."
+      : "I also received the attachment.";
+  }
+
+  if (isImage) {
+    return attachmentItem.status === "analyzed"
+      ? userLanguage === "french"
+        ? "J’ai aussi bien reçu et analysé une capture d’écran."
+        : "I also received and analyzed a screenshot."
+      : userLanguage === "french"
+        ? "J’ai aussi bien reçu une capture d’écran, mais je n’ai pas pu l’analyser automatiquement."
+        : "I also received a screenshot, but I could not analyze it automatically.";
+  }
+
+  if (isVideo) {
+    return attachmentItem.status === "analyzed"
+      ? userLanguage === "french"
+        ? "J’ai aussi bien reçu et analysé une vidéo."
+        : "I also received and analyzed a video."
+      : userLanguage === "french"
+        ? "J’ai aussi bien reçu une vidéo, mais je n’ai pas pu l’analyser automatiquement."
+        : "I also received a video, but I could not analyze it automatically.";
+  }
+
+  return attachmentItem.status === "analyzed"
+    ? userLanguage === "french"
+      ? "J’ai aussi bien reçu et analysé la pièce jointe."
+      : "I also received and analyzed the attachment."
+    : userLanguage === "french"
+      ? "J’ai aussi bien reçu la pièce jointe, mais je n’ai pas pu l’analyser automatiquement."
+      : "I also received the attachment, but I could not analyze it automatically.";
+}
+
 function transformTopicRelationAcknowledgement(
   userLanguage: ResponseLanguage,
   topicPlanMessage: TopicPlanMessage
@@ -293,7 +400,16 @@ function transformTopicRelationAcknowledgement(
     return "";
   }
 
-  return `${templates.prefix}${parts.join(templates.separator)}${templates.suffix}`;
+  const topicAcknowledgement =
+    `${templates.prefix}${parts.join(templates.separator)}${templates.suffix}`;
+  const attachmentAcknowledgement = buildAttachmentAcknowledgement(
+    userLanguage,
+    topicPlanMessage.attachments
+  );
+
+  return [topicAcknowledgement, attachmentAcknowledgement]
+    .filter((part): part is string => part !== undefined && part.length > 0)
+    .join(" ");
 }
 
 function formatCount(userLanguage: ResponseLanguage, count: number): string {
@@ -335,11 +451,12 @@ function transformTopicTitle(
     : valueFromLabels(dataBaseResponse[userLanguage].topic.topicStatusLabels, "new");
   const topicCategoryLabel =
     topicCategoryLabels[topicCategory] || topicCategory.replaceAll("_", " ");
+  const topicLabel = buildTopicDisplayLabel(topicResponse.title);
 
   return interpolate(dataBaseResponse[userLanguage].topic.title, {
     topic_id: stringifyValue(topicResponse.title.topic_id),
     topic_category: topicCategoryLabel,
-    topic_label: stringifyValue(topicResponse.title.topic_label),
+    topic_label: topicLabel,
     topic_status: topicStatusLabel
   });
 }

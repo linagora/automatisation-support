@@ -167,6 +167,7 @@ async function runSupportProcessingPipeline(
     accountTrustStatus,
     accountProfile,
     accountInteractionTraits,
+    supportTopicKnowledge,
     turnUnderstandingDelta,
     possibleSolutions,
     decisionSearchingSolution: decisionSearchingSolutionForResponsePlan

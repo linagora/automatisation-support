@@ -16,7 +16,12 @@
  */
 
 import type {
+  AttachmentAnalysisItem,
+  LatestUserAttachment,
   SupportTopicKnowledge,
+  TurnAttachmentKind,
+  TurnAttachmentReference,
+  TurnAttachments,
   TurnUnderstandingDelta
 } from "../../typesSupportProcessingPipeline.types";
 
@@ -70,8 +75,167 @@ function isYesNo(value: unknown): value is "yes" | "no" {
   return value === "yes" || value === "no";
 }
 
+function normalizeAttachmentFormatValue(
+  value: string | undefined
+): string | undefined {
+  return typeof value === "string" ? value.trim().toLowerCase() : undefined;
+}
+
+function startsWithFormat(
+  value: string | undefined,
+  format: "image" | "video"
+): boolean {
+  const normalizedValue = normalizeAttachmentFormatValue(value);
+
+  return (
+    normalizedValue === format ||
+    normalizedValue?.startsWith(`${format}/`) === true
+  );
+}
+
 function hasKeys(value: object): boolean {
   return Object.keys(value).length > 0;
+}
+
+function findAttachmentAnalysisItem(
+  attachmentAnalysis: AttachmentAnalysisItem[],
+  attachmentIndex: number
+): AttachmentAnalysisItem | undefined {
+  return (
+    attachmentAnalysis.find((analysisItem) => {
+      return analysisItem.attachmentIndex === attachmentIndex;
+    }) ?? attachmentAnalysis[attachmentIndex - 1]
+  );
+}
+
+function classifyAttachmentWithAnalysis(
+  attachment: LatestUserAttachment,
+  analysis: AttachmentAnalysisItem
+): TurnAttachmentKind {
+  const detectedFormat = analysis.readinessDecision?.history.detectedFormat;
+
+  if (
+    detectedFormat === "image" ||
+    startsWithFormat(attachment.mimeType, "image") ||
+    startsWithFormat(attachment.type, "image") ||
+    startsWithFormat(analysis.mimeType, "image") ||
+    startsWithFormat(analysis.type, "image")
+  ) {
+    return "image";
+  }
+
+  if (
+    detectedFormat === "video" ||
+    startsWithFormat(attachment.mimeType, "video") ||
+    startsWithFormat(attachment.type, "video") ||
+    startsWithFormat(analysis.mimeType, "video") ||
+    startsWithFormat(analysis.type, "video")
+  ) {
+    return "video";
+  }
+
+  return "other";
+}
+
+function getAttachmentBucket(kind: TurnAttachmentKind): keyof TurnAttachments {
+  if (kind === "image") {
+    return "images";
+  }
+
+  if (kind === "video") {
+    return "videos";
+  }
+
+  return "other";
+}
+
+function isSafeShortAccessUrl(value: string | undefined): value is string {
+  if (!isNonEmptyString(value)) {
+    return false;
+  }
+
+  const trimmedValue = value.trim();
+
+  return !trimmedValue.startsWith("data:") && trimmedValue.length <= 2048;
+}
+
+function buildTurnAttachmentReference(
+  attachment: LatestUserAttachment,
+  analysis: AttachmentAnalysisItem,
+  kind: TurnAttachmentKind
+): TurnAttachmentReference {
+  const reference: TurnAttachmentReference = {
+    id: attachment.id,
+    kind,
+    filename: attachment.filename ?? analysis.filename,
+    mimeType: attachment.mimeType ?? attachment.type ?? analysis.mimeType ??
+      analysis.type,
+    sizeInBytes: attachment.sizeInBytes ?? attachment.sizeBytes ??
+      analysis.sizeBytes,
+    status: analysis.status,
+    reason: analysis.reason
+  };
+
+  if (isSafeShortAccessUrl(attachment.accessUrl)) {
+    reference.accessUrl = attachment.accessUrl.trim();
+  }
+
+  if (analysis.analysis) {
+    reference.analysis = {
+      llmDescription: analysis.analysis.llmDescription,
+      structuredObservations: analysis.analysis.structuredObservations
+    };
+  }
+
+  return reference;
+}
+
+function buildTurnAttachments(
+  latestUserAttachments: LatestUserAttachment[] | undefined,
+  attachmentAnalysis: AttachmentAnalysisItem[] | undefined
+): TurnAttachments | undefined {
+  if (
+    latestUserAttachments === undefined ||
+    latestUserAttachments.length === 0 ||
+    attachmentAnalysis === undefined ||
+    attachmentAnalysis.length === 0
+  ) {
+    return undefined;
+  }
+
+  const attachments: TurnAttachments = {
+    images: [],
+    videos: [],
+    other: []
+  };
+
+  latestUserAttachments.forEach((attachment, arrayIndex) => {
+    const analysis = findAttachmentAnalysisItem(
+      attachmentAnalysis,
+      arrayIndex + 1
+    );
+
+    if (analysis === undefined) {
+      return;
+    }
+
+    const kind = classifyAttachmentWithAnalysis(attachment, analysis);
+    const category = getAttachmentBucket(kind);
+
+    attachments[category].push(
+      buildTurnAttachmentReference(attachment, analysis, kind)
+    );
+  });
+
+  if (
+    attachments.images.length === 0 &&
+    attachments.videos.length === 0 &&
+    attachments.other.length === 0
+  ) {
+    return undefined;
+  }
+
+  return attachments;
 }
 
 function getFullWeightAnalysis(
@@ -491,6 +655,15 @@ function assembleTurnUnderstandingDelta(
   turnUnderstandingDelta.securityGateSummary = normalizeSecurityGateSummary(
     input.securityGateSummary
   );
+
+  const attachments = buildTurnAttachments(
+    input.latestUserAttachments,
+    input.attachmentAnalysis
+  );
+
+  if (attachments !== undefined) {
+    turnUnderstandingDelta.attachments = attachments;
+  }
 
   let analysisSource: AnalysisSource = undefined;
 

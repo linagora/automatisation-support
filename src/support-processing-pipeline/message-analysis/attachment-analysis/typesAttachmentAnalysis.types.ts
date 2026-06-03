@@ -13,8 +13,22 @@
  */
 
 import type {
+  AttachmentAnalysisItem,
+  AttachmentReadinessCheckName,
+  AttachmentReadinessDecision,
+  AttachmentVisionAnalysis,
   LatestUserAttachment,
   LatestUserMessage
+} from "../../typesSupportProcessingPipeline.types";
+
+export type {
+  AttachmentAnalysisItem,
+  AttachmentAnalysisStatus,
+  AttachmentDetectedFormat,
+  AttachmentReadinessCheckName,
+  AttachmentReadinessDecision,
+  AttachmentVisionAnalysis,
+  AttachmentVisionObservations
 } from "../../typesSupportProcessingPipeline.types";
 
 /* =====================================================
@@ -30,53 +44,9 @@ export type AttachmentAnalysisInput = {
  * Attachment readiness decision
  * ===================================================== */
 
-type AttachmentReadinessRoute =
-  | "continue"
-  | "stop";
-
-type AttachmentDetectedFormat =
-  | "image"
-  | "video"
-  | "other";
-
-export type AttachmentReadinessCheckName =
-  | "safe_filename"
-  | "accepted_format"
-  | "consistent_mime_extension"
-  | "usable_location"
-  | "safe_location"
-  | "present_size"
-  | "positive_size"
-  | "size_under_limit";
-
 export type AttachmentReadinessDecisionInput = {
   attachmentIndex: number;
   attachmentAnalysis: AttachmentAnalysis;
-};
-
-export type AttachmentReadinessDecision = {
-  decision: {
-    route: AttachmentReadinessRoute;
-  };
-  history: {
-    checked: AttachmentReadinessCheckName[];
-    failed: AttachmentReadinessCheckName[];
-    detectedFormat: AttachmentDetectedFormat;
-  };
-};
-
-/* =====================================================
- * Attachment vision analysis
- * ===================================================== */
-
-type AttachmentVisionObservations = {
-  other?: unknown;
-};
-
-type AttachmentVisionAnalysis = {
-  visionDescription: string;
-  visionObservations?: AttachmentVisionObservations;
-  relationToPreviousAttachment?: string;
 };
 
 /* =====================================================
@@ -103,25 +73,6 @@ type AttachmentVisionAnalysisResult =
 /* =====================================================
  * Attachment analysis item
  * ===================================================== */
-
-export type AttachmentAnalysisItem = {
-  attachmentIndex: number;
-  filename: string | undefined;
-  url: string | undefined;
-  path: string | undefined;
-  type: string | undefined;
-  mimeType: string | undefined;
-  sizeBytes: number | undefined;
-  status:
-    | "analysis_pending"
-    | "analyzed"
-    | "failed"
-    | "refused"
-    | "suspicious";
-  reason: string | undefined;
-  readinessDecision: AttachmentReadinessDecision | undefined;
-  analysis: AttachmentVisionAnalysis | undefined;
-};
 
 export type AttachmentAnalysis = AttachmentAnalysisItem[];
 

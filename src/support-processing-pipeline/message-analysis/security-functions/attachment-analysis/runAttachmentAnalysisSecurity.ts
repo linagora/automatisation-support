@@ -94,7 +94,8 @@ async function runAttachmentAnalysisSecurity(
   }
 
   const textSecurityChecks = runTextSecurityChecks({
-    text: attachmentAnalysisText
+    text: attachmentAnalysisText,
+    disabledChecks: ["excessive_repetition"]
   });
 
   const trustDecision = decideTextSecurityWithAccountTrust({

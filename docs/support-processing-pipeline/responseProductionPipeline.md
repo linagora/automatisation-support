@@ -20,7 +20,6 @@ flowchart TB
 
     T_INIT_OUTPUT["<b>Initialize final output</b><br/>
     userResponse = {<br/>
-    language: responsePlan.responseLanguage,<br/>
     messages: []<br/>
     }"]
 
@@ -139,31 +138,34 @@ flowchart TB
     from imported dataBaseResponse"]
 
     T_SECURITY["<b>Transform security gate</b><br/>
-    stringField = transformStringFields(userLanguage, securityGatePlanMessage)<br/>
+    stringField = transformSecurityGatePlanMessage(userLanguage, securityGatePlanMessage)<br/>
     stringResponsePlan.messagesPlan.securityGatePlanMessage = stringField"]
 
     T_SUSPICIOUS["<b>Transform suspicious</b><br/>
-    stringField = transformStringFields(userLanguage, suspiciousPlanMessage)<br/>
+    stringField = transformSuspiciousPlanMessage(userLanguage, suspiciousPlanMessage)<br/>
     stringResponsePlan.messagesPlan.suspiciousPlanMessage = stringField"]
 
     T_LACK["<b>Transform lack comprehension</b><br/>
-    stringField = transformStringFields(userLanguage, lackComprehensionPlanMessage)<br/>
+    stringField = transformLackComprehensionPlanMessage(userLanguage, lackComprehensionPlanMessage)<br/>
     stringResponsePlan.messagesPlan.lackComprehensionPlanMessage = stringField"]
 
     T_SCOPE["<b>Transform scope boundary</b><br/>
-    stringField = transformStringFields(userLanguage, scopeBoundaryPlanMessages)<br/>
+    stringField = scopeBoundaryPlanMessages.map(transformScopeBoundaryPlanMessage)<br/>
     stringResponsePlan.messagesPlan.scopeBoundaryPlanMessages = stringField"]
 
     T_TOPIC["<b>Transform topic</b><br/>
-    stringField = transformStringFields(userLanguage, topicPlanMessages)<br/>
+    stringField = topicPlanMessages.map(transformTopicPlanMessage)<br/>
+    transformTopicPlanMessage uses:<br/>
+    buildAttachmentAcknowledgement for global attachments<br/>
+    buildTopicDisplayLabel for topic titles<br/>
     stringResponsePlan.messagesPlan.topicPlanMessages = stringField"]
 
     T_SIGNAL["<b>Transform signal</b><br/>
-    stringField = transformStringFields(userLanguage, signalPlanMessages)<br/>
+    stringField = transformSignalPlanMessages(userLanguage, signalPlanMessages)<br/>
     stringResponsePlan.messagesPlan.signalPlanMessages = stringField"]
 
     T_HANDOVER["<b>Transform handover</b><br/>
-    stringField = transformStringFields(userLanguage, handoverPlanMessages)<br/>
+    stringField = handoverPlanMessages.map(transformHandoverPlanMessage)<br/>
     stringResponsePlan.messagesPlan.handoverPlanMessages = stringField"]
 
     T_RETURN["<b>Return stringResponsePlan</b>"]

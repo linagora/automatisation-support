@@ -1,173 +1,191 @@
+import { describe, expect, it, vi } from "vitest";
+
 import {
   runSupportProcessingPipeline
 } from "../../src/support-processing-pipeline/runSupportProcessingPipeline";
 
+import type {
+  SupportProcessingPipelineInput,
+  SupportProcessingPipelineSteps
+} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+
+function buildInput(): SupportProcessingPipelineInput {
+  return {
+    latestUserMessage: {
+      id: "msg_1",
+      content: "Bonjour, je n'arrive pas à me connecter.",
+      channel: "email",
+      sentAt: "2026-06-03T08:00:00.000Z"
+    },
+    latestUserAttachments: [],
+    accountTrustStatus: {
+      status: "trusted",
+      reasons: []
+    },
+    accountProfile: {
+      accountType: "company",
+      actualPlan: "paid",
+      paymentStatus: "up_to_date",
+      planHistory: [],
+      createdAt: "2025-01-01T00:00:00.000Z",
+      daysSinceCreation: 519
+    },
+    accountInteractionTraits: {
+      labels: [],
+      lastUpdatedAt: "2026-06-03T08:00:00.000Z"
+    },
+    supportTopicKnowledge: {
+      segments_topic: []
+    },
+    conversationHistory: []
+  };
+}
+
 describe("runSupportProcessingPipeline", function () {
-  it("runs all pipeline steps and returns the final output", function () {
-    const ticketMemoryBeforeTurn = {
-      supportKnowledge: {
-        topics: []
+  it("runs current pipeline steps and returns user response plus patches", async function () {
+    const input = buildInput();
+    const turnUnderstandingDelta = {
+      user_language: "french",
+      securityGateSummary: {
+        gateChecked: {},
+        gateFailed: []
       },
-      supportKnowledgeDeltaHistory: [],
-      conversationLogs: [],
-      userInformations: {
-        userId: "user_123"
-      }
-    };
-
-    const input = {
-      latestUserMessage: {
-        text: "Bonjour, je n'arrive pas à me connecter."
-      },
-      attachments: [],
-      ticketMemoryBeforeTurn
-    };
-
-    const supportKnowledgeAfterTurn = {
-      userLanguage: "fr",
-      topics: [
+      segments_lack_comprehension: [],
+      segments_topic: [
         {
+          matched_historical_topic: "no" as const,
           id_topic: 1,
-          topic_label: "Problème de connexion"
-        }
-      ]
-    };
-
-    const supportKnowledgeDelta = {
-      hasNewInformation: true,
-      newTopics: [
-        {
-          id_topic: 1,
-          topic_label: "Problème de connexion"
+          topic_category: "access_security" as const,
+          tool_or_product: "Twake",
+          topic_action: "connect",
+          topic_object: "account",
+          topic_details: {
+            observed_result: "cannot connect",
+            expected_result: "successful login",
+            access_action: "login",
+            auth_method: "password"
+          },
+          user_goal: "Connect to Twake account",
+          blocking_issue: "yes" as const
         }
       ],
-      updatedTopics: [],
-      resolvedTopics: [],
-      newSignals: [],
-      newScopeBoundaries: [],
-      warningComprehensionChanged: false
+      segments_signal: [],
+      segments_scope_boundary: [],
+      segments_suspicious: []
     };
-
-    const possibleSolutions = {
-      status: "solutions_found",
-      solutions: [
-        {
-          title: "Solution de test"
-        }
-      ]
+    const searchDecision = {
+      decision: {
+        route: "continue" as const,
+        topics: [
+          {
+            topic_id: 1,
+            type: "solution_searching" as const,
+            missing_fields: []
+          }
+        ]
+      },
+      detected: {
+        topicsQualificationResult: "evaluated" as const,
+        solutionLikelihoodResult: "rag_relevant" as const
+      },
+      history: {
+        checked: [],
+        failed: []
+      }
     };
-
+    const possibleSolutions = [
+      {
+        id: "solution_1",
+        solution: "Reset the account password."
+      }
+    ];
     const responsePlan = {
-      userLanguage: "fr",
-      messages: [
-        {
-          messageType: "topic_response",
-          topicId: 1
-        }
-      ]
+      responseLanguage: "french" as const,
+      messagesPlan: {
+        scopeBoundaryPlanMessages: [],
+        topicPlanMessages: [],
+        signalPlanMessages: [],
+        handoverPlanMessages: []
+      }
     };
-
     const userResponse = {
       messages: [
-        "Réponse automatique"
+        {
+          type: "topic_response" as const,
+          content: "Réponse automatique"
+        }
       ]
     };
-
-    const ticketMemoryAfterTurn = {
-      supportKnowledge: supportKnowledgeAfterTurn,
-      supportKnowledgeDeltaHistory: [
-        supportKnowledgeDelta
-      ],
-      conversationLogs: [],
-      userInformations: {
-        userId: "user_123"
+    const patches = {
+      analysisPatch: {
+        turnUnderstandingDelta
+      },
+      securityPatch: {
+        securityGateSummary: {
+          gateChecked: {},
+          gateFailed: []
+        }
+      },
+      responsePatch: {
+        responsePlan
+      },
+      metadataPatch: {
+        generatedAt: "2026-06-03T08:00:00.000Z",
+        source: "support-processing-pipeline" as const
       }
     };
-
-    const callOrder: string[] = [];
-
-    const steps = {
-      runMessageAnalysis: function (stepInput: any) {
-        callOrder.push("message-analysis");
-
-        expect(stepInput.latestUserMessage).toEqual(input.latestUserMessage);
-        expect(stepInput.attachments).toEqual(input.attachments);
-        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
-
-        return {
-          supportKnowledgeAfterTurn,
-          supportKnowledgeDelta
-        };
-      },
-
-      runSearchDecision: function (stepInput: any) {
-        callOrder.push("search-decision");
-
-        expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
-        expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
-        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
-
-        return true;
-      },
-
-      runSolutionRetrieval: function (stepInput: any) {
-        callOrder.push("solution-retrieval");
-
-        expect(stepInput.decisionSearchingSolution).toBe(true);
-        expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
-        expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
-        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
-
-        return possibleSolutions;
-      },
-
-      runResponsePlan: function (stepInput: any) {
-        callOrder.push("response-plan");
-
-        expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
-        expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
-        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
-        expect(stepInput.possibleSolutions).toEqual(possibleSolutions);
-
-        return responsePlan;
-      },
-
-      runResponseProduction: function (stepInput: any) {
-        callOrder.push("response-production");
-
-        expect(stepInput.responsePlan).toEqual(responsePlan);
-
-        return userResponse;
-      },
-
-      runDataProduction: function (stepInput: any) {
-        callOrder.push("data-production");
-
-        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
-        expect(stepInput.supportKnowledgeAfterTurn).toEqual(supportKnowledgeAfterTurn);
-        expect(stepInput.supportKnowledgeDelta).toEqual(supportKnowledgeDelta);
-        expect(stepInput.conversationLogs).toEqual(ticketMemoryBeforeTurn.conversationLogs);
-        expect(stepInput.userInformations).toEqual(ticketMemoryBeforeTurn.userInformations);
-        expect(stepInput.responsePlan).toEqual(responsePlan);
-
-        return ticketMemoryAfterTurn;
-      }
+    const steps: SupportProcessingPipelineSteps = {
+      runMessageAnalysis: vi.fn(async () => turnUnderstandingDelta),
+      runSearchDecision: vi.fn(async () => searchDecision),
+      runSolutionRetrieval: vi.fn(async () => possibleSolutions),
+      runResponsePlan: vi.fn(async () => responsePlan),
+      runResponseProduction: vi.fn(async () => userResponse),
+      runPatchesProduction: vi.fn(async () => patches)
     };
 
-    const output = runSupportProcessingPipeline(input, steps);
+    const output = await runSupportProcessingPipeline(input, steps);
 
-    expect(callOrder).toEqual([
-      "message-analysis",
-      "search-decision",
-      "solution-retrieval",
-      "response-plan",
-      "response-production",
-      "data-production"
-    ]);
-
+    expect(steps.runMessageAnalysis).toHaveBeenCalledWith({
+      latestUserMessage: input.latestUserMessage,
+      latestUserAttachments: input.latestUserAttachments,
+      accountTrustStatus: input.accountTrustStatus,
+      supportTopicKnowledge: input.supportTopicKnowledge,
+      conversationHistory: input.conversationHistory
+    });
+    expect(steps.runSearchDecision).toHaveBeenCalledWith({
+      supportTopicKnowledge: input.supportTopicKnowledge,
+      turnUnderstandingDelta,
+      accountTrustStatus: input.accountTrustStatus,
+      accountProfile: input.accountProfile,
+      accountInteractionTraits: input.accountInteractionTraits,
+      conversationHistory: input.conversationHistory
+    });
+    expect(steps.runSolutionRetrieval).toHaveBeenCalledWith({
+      supportTopicKnowledge: input.supportTopicKnowledge,
+      turnUnderstandingDelta
+    });
+    expect(steps.runResponsePlan).toHaveBeenCalledWith({
+      securityGateSummary: turnUnderstandingDelta.securityGateSummary,
+      accountTrustStatus: input.accountTrustStatus,
+      accountProfile: input.accountProfile,
+      accountInteractionTraits: input.accountInteractionTraits,
+      supportTopicKnowledge: input.supportTopicKnowledge,
+      turnUnderstandingDelta,
+      possibleSolutions,
+      decisionSearchingSolution: {
+        topics: searchDecision.decision.topics
+      }
+    });
+    expect(steps.runResponseProduction).toHaveBeenCalledWith({
+      responsePlan
+    });
+    expect(steps.runPatchesProduction).toHaveBeenCalledWith({
+      turnUnderstandingDelta,
+      responsePlan
+    });
     expect(output).toEqual({
       userResponse,
-      ticketMemoryAfterTurn
+      patches
     });
   });
 });

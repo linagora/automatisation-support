@@ -5,60 +5,154 @@ import {
 import type {
   ResponseProductionInput
 } from "../../../src/support-processing-pipeline/response-production/runResponseProduction";
+import type {
+  TurnAttachments
+} from "../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+
+function buildTopicResponseInput(
+  attachments?: TurnAttachments,
+  title: ResponseProductionInput["responsePlan"]["messagesPlan"]["topicPlanMessages"][number]["topics_responses"][number]["topic_response"]["title"] = {
+    topic_id: 1,
+    topic_category: "bug",
+    tool_or_product: "Twake",
+    topic_action: "connect",
+    topic_object: "account",
+    matched_historical_topic: false
+  }
+): ResponseProductionInput {
+  return {
+    responsePlan: {
+      responseLanguage: "french",
+      messagesPlan: {
+        securityGatePlanMessage: undefined,
+        suspiciousPlanMessage: undefined,
+        lackComprehensionPlanMessage: undefined,
+        scopeBoundaryPlanMessages: [],
+        topicPlanMessages: [
+          {
+            politeness_opening: "salutation_and_understanding_1",
+            topic_relation_acknowledgement: {
+              no_matched_historical_topic_count: 1,
+              matched_historical_topic_count: 0
+            },
+            ...(attachments ? { attachments } : {}),
+            topics_responses: [
+              {
+                topic_response: {
+                  title,
+                  updated_fields_acknowledgement: {},
+                  main_response: {
+                    type: "acknowledgement"
+                  },
+                  next_step: "wait_more_info"
+                }
+              }
+            ],
+            politeness_closure: "thanks_for_cooperation1"
+          }
+        ],
+        signalPlanMessages: [],
+        handoverPlanMessages: []
+      }
+    }
+  };
+}
+
+function buildAttachments(
+  statuses: ("analyzed" | "failed" | "refused" | "suspicious")[],
+  category: keyof TurnAttachments = "images"
+): TurnAttachments {
+  const attachments: TurnAttachments = {
+    images: [],
+    videos: [],
+    other: []
+  };
+
+  statuses.forEach((status, index) => {
+    attachments[category].push({
+      id: `attachment_${index + 1}`,
+      kind: category === "videos"
+        ? "video"
+        : category === "images"
+          ? "image"
+          : "other",
+      filename: category === "videos" ? "video.mp4" : "image.png",
+      sizeInBytes: 1024,
+      mimeType: category === "videos" ? "video/mp4" : "image/png",
+      status,
+      ...(status === "failed" || status === "refused"
+        ? { reason: "analysis_failed" }
+        : {}),
+      analysis: {
+        llmDescription: "Attachment description."
+      }
+    });
+  });
+
+  return attachments;
+}
 
 describe("runResponseProduction", function () {
   it("transforms the response plan into final user messages", function () {
-    const input: ResponseProductionInput = {
-      responsePlan: {
-        responseLanguage: "french",
-        messagesPlan: {
-          securityGatePlanMessage: undefined,
-          suspiciousPlanMessage: undefined,
-          lackComprehensionPlanMessage: undefined,
-          scopeBoundaryPlanMessages: [],
-          topicPlanMessages: [
-            {
-              politeness_opening: "salutation_and_understanding_1",
-              topic_relation_acknowledgement: {
-                no_matched_historical_topic_count: 1,
-                matched_historical_topic_count: 0
-              },
-              topics_responses: [
-                {
-                  topic_response: {
-                    title: {
-                      topic_id: 1,
-                      topic_label: "Probleme de connexion",
-                      matched_historical_topic: false
-                    },
-                    updated_fields_acknowledgement: {},
-                    main_response: {
-                      type: "acknowledgement"
-                    },
-                    next_step: "wait_more_info"
-                  }
-                }
-              ],
-              politeness_closure: "thanks_for_cooperation"
-            }
-          ],
-          signalPlanMessages: [],
-          handoverPlanMessages: []
-        }
-      }
-    };
+    const input = buildTopicResponseInput();
 
     const output = runResponseProduction(input);
 
-    expect(output).toEqual({
-      messages: [
-        {
-          type: "topic_response",
-          content:
-            "Bonjour, merci pour votre message.\nJ’ai identifié 1 nouveau(x) sujet(s) et 0 sujet(s) faisant référence à un sujet en cours.\nSujet 1 - undefined - Probleme de connexion - (Nouveau sujet) undefined Nous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux. Nous attendons votre retour pour obtenir plus d’informations.\nundefined"
-        }
-      ]
-    });
+    expect(output.messages[0].type).toBe("topic_response");
+    expect(output.messages[0].content).toContain(
+      "J’ai identifié un nouveau sujet."
+    );
+    expect(output.messages[0].content).not.toContain(
+      "J’ai aussi bien reçu"
+    );
+  });
+
+  it("adds a global acknowledgement for one analyzed image", function () {
+    const output = runResponseProduction(
+      buildTopicResponseInput(buildAttachments(["analyzed"], "images"))
+    );
+
+    expect(output.messages[0].content).toContain(
+      "J’ai identifié un nouveau sujet. J’ai aussi bien reçu et analysé une capture d’écran."
+    );
+  });
+
+  it("adds a global acknowledgement for one image that could not be analyzed", function () {
+    const output = runResponseProduction(
+      buildTopicResponseInput(buildAttachments(["failed"], "images"))
+    );
+
+    expect(output.messages[0].content).toContain(
+      "J’ai aussi bien reçu une capture d’écran, mais je n’ai pas pu l’analyser automatiquement."
+    );
+  });
+
+  it("adds a global acknowledgement for multiple attachments with mixed statuses", function () {
+    const output = runResponseProduction(
+      buildTopicResponseInput(buildAttachments(["analyzed", "refused"], "images"))
+    );
+
+    expect(output.messages[0].content).toContain(
+      "J’ai aussi bien reçu les pièces jointes, mais certaines n’ont pas pu être analysées automatiquement."
+    );
+  });
+
+  it("builds topic title label from structured topic fields", function () {
+    const output = runResponseProduction(
+      buildTopicResponseInput(undefined, {
+        topic_id: 1,
+        topic_category: "bug",
+        tool_or_product: "Twake Drive",
+        topic_action: "create",
+        topic_object: "folder",
+        matched_historical_topic: true
+      })
+    );
+
+    expect(output.messages[0].content).toContain(
+      "Sujet 1 - Bug - Twake Drive : create : folder - (En cours)"
+    );
+    expect(output.messages[0].content).not.toContain("Legacy label");
   });
 
   it("keeps security and handover messages in pipeline order", function () {

@@ -5,12 +5,14 @@ flowchart TB
     direction TB
     PREVIOUS_INPUTS["<b>Input prepared by runSupportProcessingPipeline</b><br/>
     responsePlanInput = {<br/>
-    securityGateSummary = { gateChecked: {}, gateFailed: {} }<br/>
+    securityGateSummary = { gateChecked: {}, gateFailed: [] }<br/>
     accountTrustStatus<br/>
     accountProfile<br/>
     accountInteractionTraits<br/>
+    supportTopicKnowledge<br/>
     turnUnderstandingDelta<br/>
     possibleSolutions<br/>
+    decisionSearchingSolution<br/>
     }"]
   end
 
@@ -56,6 +58,7 @@ flowchart TB
 
     T_TOPIC_INPUT["<b>Prepare topicPlanInput</b><br/>
     topicPlanInput = {<br/>
+    supportTopicKnowledge<br/>
     turnUnderstandingDelta<br/>
     possibleSolutions<br/>
     decisionSearchingSolution<br/>
@@ -64,6 +67,7 @@ flowchart TB
     subgraph TOPIC_PLAN_DATA["topicPlanMessages = addTopicPlanMessage(topicPlanInput)"]
       direction LR
       TOPIC_PLAN_INPUTS["<b>topicPlanInput</b><br/>
+      supportTopicKnowledge<br/>
       turnUnderstandingDelta<br/>
       possibleSolutions<br/>
       decisionSearchingSolution"]
@@ -192,20 +196,22 @@ flowchart TB
   subgraph PIPELINE["main_response = addTopicMainResponse(topicMainResponseInput)"]
     direction TB
 
-    T_READ_DECISION["<b>Read search decision</b><br/>
-    decisionSearchingSolution"]
+    T_READ_DECISION["<b>Find topic search decision</b><br/>
+    topicDecision = decisionSearchingSolution.topics<br/>
+    .find(topic_id === topicSegment.id_topic)"]
 
     T_ASK_MORE_INFO_ROUTE{"<b>Ask more info?</b><br/>
-    decisionSearchingSolution.type === &quot;ask_more_info&quot;"}
+    topicDecision?.type === &quot;ask_more_info&quot;"}
 
     T_RETURN_ASK_FIELDS["<b>Return ask_fields main response</b><br/>
     main_response = {<br/>
     type: &quot;ask_fields&quot;<br/>
-    fields: decisionSearchingSolution.missing_fields<br/>
+    details: { fields_requested: topicDecision.missing_fields }<br/>
     }"]
 
     T_ACK_ROUTE{"<b>Acknowledgement?</b><br/>
-    decisionSearchingSolution.type === &quot;acknowledgement&quot;"}
+    topicDecision?.type === &quot;acknowledgement&quot;<br/>
+    or topicDecision is undefined"}
 
     T_RETURN_ACK["<b>Return acknowledgement main response</b><br/>
     main_response = {<br/>
@@ -213,7 +219,7 @@ flowchart TB
     }"]
 
     T_SEARCH_ROUTE{"<b>Solution searching?</b><br/>
-    decisionSearchingSolution.type === &quot;solution_searching&quot;"}
+    topicDecision?.type === &quot;solution_searching&quot;"}
 
     T_SOLUTION_ROUTE{"<b>Solution available?</b><br/>
     possibleSolutions.length > 0"}
@@ -221,7 +227,7 @@ flowchart TB
     T_RETURN_SOLUTION["<b>Return propose_solution main response</b><br/>
     main_response = {<br/>
     type: &quot;propose_solution&quot;<br/>
-    solutions: possibleSolutions<br/>
+    details: { solutions: possibleSolutions }<br/>
     }"]
 
     T_FALLBACK_ACK["<b>Fallback to acknowledgement</b><br/>
@@ -291,6 +297,7 @@ flowchart TB
     direction TB
     PREVIOUS_INPUTS["<b>Input prepared by runResponsePlan</b><br/>
     topicPlanInput = {<br/>
+    supportTopicKnowledge<br/>
     turnUnderstandingDelta<br/>
     possibleSolutions<br/>
     decisionSearchingSolution<br/>
@@ -310,6 +317,7 @@ flowchart TB
     topicPlanMessage = {<br/>
     politeness_opening<br/>
     topic_relation_acknowledgement<br/>
+    attachments?<br/>
     topics_responses: []<br/>
     politeness_closure: undefined<br/>
     }"]
@@ -320,6 +328,10 @@ flowchart TB
     matched_historical_topic_count<br/>
     }"]
 
+    T_ATTACHMENTS_ACK["<b>Attach global turn attachments if present</b><br/>
+    topicPlanMessage.attachments =<br/>
+    turnUnderstandingDelta.attachments"]
+
     subgraph TOPIC_LOOP["For each turnUnderstandingDelta.segments_topic item"]
       direction TB
 
@@ -327,7 +339,9 @@ flowchart TB
       title = {<br/>
       topic_id<br/>
       topic_category<br/>
-      topic_label<br/>
+      tool_or_product<br/>
+      topic_action<br/>
+      topic_object<br/>
       matched_historical_topic<br/>
       }"]
 
@@ -381,7 +395,8 @@ flowchart TB
     T_TOPIC_ROUTE -->|yes| T_RETURN_EMPTY
     T_TOPIC_ROUTE -->|no| T_INIT_GLOBAL
     T_INIT_GLOBAL --> T_RELATION_ACK
-    T_RELATION_ACK --> TOPIC_LOOP
+    T_RELATION_ACK --> T_ATTACHMENTS_ACK
+    T_ATTACHMENTS_ACK --> TOPIC_LOOP
     TOPIC_LOOP --> T_ADD_CLOSURE
     T_ADD_CLOSURE --> T_RETURN_TOPIC_MESSAGES
   end
@@ -409,7 +424,7 @@ flowchart TB
   class MAIN_RESPONSE_INPUTS inputBlock;
   class MAIN_RESPONSE_OUTPUTS outputBlock;
 
-  class T_RETURN_EMPTY,T_INIT_GLOBAL,T_RELATION_ACK,T_TOPIC_TITLE,T_UPDATED_FIELDS,T_MAIN_RESPONSE_INPUT,T_NEXT_STEP,T_ADD_TOPIC_RESPONSE,T_ADD_CLOSURE,T_RETURN_TOPIC_MESSAGES processingBlock;
+  class T_RETURN_EMPTY,T_INIT_GLOBAL,T_RELATION_ACK,T_ATTACHMENTS_ACK,T_TOPIC_TITLE,T_UPDATED_FIELDS,T_MAIN_RESPONSE_INPUT,T_NEXT_STEP,T_ADD_TOPIC_RESPONSE,T_ADD_CLOSURE,T_RETURN_TOPIC_MESSAGES processingBlock;
 
   class NEXT_OUTPUTS nextOutputBlock;
 

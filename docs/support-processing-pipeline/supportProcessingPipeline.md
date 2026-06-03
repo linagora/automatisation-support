@@ -68,7 +68,8 @@ flowchart TB
     end
 
     T2{"<b>if</b><br/>
-    decisionSearchingSolution.shouldSearchSolution === true"}
+    decisionSearchingSolution.decision.topics<br/>
+    contains type = solution_searching"}
 
     T_SR_INPUT["<b>Prepare solutionRetrievalInput</b><br/>
     solutionRetrievalInput = { supportTopicKnowledge, turnUnderstandingDelta }"]
@@ -87,15 +88,24 @@ flowchart TB
 
     T3["<b>Prepare responsePlanInput</b><br/>
     responsePlanInput = {<br/>
-    securityGateSummary = { gateChecked: {}, gateFailed: {} }<br/>
-    turnUnderstandingDelta, possibleSolutions }"]
+    securityGateSummary = { gateChecked: {}, gateFailed: [] }<br/>
+    accountTrustStatus<br/>
+    accountProfile<br/>
+    accountInteractionTraits<br/>
+    supportTopicKnowledge<br/>
+    turnUnderstandingDelta<br/>
+    possibleSolutions<br/>
+    decisionSearchingSolution<br/>
+    }"]
 
     subgraph RP_PLAN_DATA["responsePlan = runResponsePlan(responsePlanInput)"]
       direction LR
 
       RP_PLAN_INPUTS["<b>responsePlanInput</b><br/>
-      securityGateSummary = { gateChecked: {}, gateFailed: {} },<br/>
-      turnUnderstandingDelta, possibleSolutions"]
+      securityGateSummary = { gateChecked: {}, gateFailed: [] },<br/>
+      accountTrustStatus, accountProfile, accountInteractionTraits,<br/>
+      supportTopicKnowledge, turnUnderstandingDelta,<br/>
+      possibleSolutions, decisionSearchingSolution"]
 
       RP_PLAN_OUTPUTS["<b>Output</b><br/>
       9. responsePlan"]
@@ -118,27 +128,28 @@ flowchart TB
       RP_INPUTS --> RP_OUTPUTS
     end
 
-    T5["<b>Prepare dataProductionInput</b><br/>
-    dataProductionInput = { turnUnderstandingDelta, responsePlan }"]
+    T5["<b>Prepare patchesProductionInput</b><br/>
+    patchesProductionInput = { turnUnderstandingDelta, responsePlan }"]
 
-    subgraph DP_DATA["dataProductionOutput = runDataProduction(dataProductionInput)"]
+    subgraph DP_DATA["patches = runPatchesProduction(patchesProductionInput)"]
       direction LR
 
-      DP_INPUTS["<b>dataProductionInput</b><br/>
+      DP_INPUTS["<b>patchesProductionInput</b><br/>
       turnUnderstandingDelta, responsePlan"]
 
       DP_OUTPUTS["<b>Output</b><br/>
-      11.1 supportTopicKnowledgePatch, 11.2 conversationHistoryPatch,<br/>
-      3.1 accountTrustStatusPatch, 3.3 accountInteractionTraitsPatch"]
+      patches = {<br/>
+      analysisPatch<br/>
+      securityPatch<br/>
+      responsePatch<br/>
+      metadataPatch<br/>
+      }"]
 
       DP_INPUTS --> DP_OUTPUTS
     end
 
     T6["<b>Return final pipeline output</b><br/>
-    return { userResponse, patches: {<br/>
-    supportTopicKnowledgePatch, conversationHistoryPatch,<br/>
-    accountTrustStatusPatch, accountInteractionTraitsPatch<br/>
-    } }"]
+    return { userResponse, patches }"]
 
     T0 --> MA_DATA
     MA_DATA --> T1
@@ -170,9 +181,8 @@ flowchart TB
     direction TB
 
     NEXT_OUTPUTS["<b>Outputs produced by runSupportProcessingPipeline</b><br/>
-    10. userResponse, 11.1 supportTopicKnowledgePatch,<br/>
-    11.2 conversationHistoryPatch, 3.1 accountTrustStatusPatch,<br/>
-    3.3 accountInteractionTraitsPatch"]
+    userResponse<br/>
+    patches"]
   end
 
   PREVIOUS_STEP --> PIPELINE
@@ -320,7 +330,19 @@ Produced by `runMessageAnalysis(messageAnalysisInput)`.
 ```ts
 const turnUnderstandingDelta = {
   user_language: "english",
-  warning_comprehension: "no",
+  securityGateSummary: {
+    gateChecked: {
+      latestUserMessageSecurityDecision: {
+        decision: { route: "continue" },
+        history: { checked: [], failed: [] }
+      },
+      attachmentAnalysisSecurityDecision: {
+        decision: { route: "continue" },
+        history: { checked: [], failed: [] }
+      }
+    },
+    gateFailed: []
+  },
   segments_topic: [
     {
       matched_historical_topic: "no",
@@ -329,7 +351,6 @@ const turnUnderstandingDelta = {
       tool_or_product: "Cozy Drive",
       topic_action: "create",
       topic_object: "folder",
-      topic_label: "Cozy Drive : create : folder",
       topic_details: {
         feature_or_page: "folder creation",
         provided_url: "samo.mycozy.cloud",
@@ -337,16 +358,33 @@ const turnUnderstandingDelta = {
         expected_result: "folder should be created",
         platform: "web",
         browser: "Firefox",
-        trigger_action: "click Créer un dossier",
-        image_available: "yes"
+        trigger_action: "click Créer un dossier"
       },
       user_goal:
         "Cozy Drive : create : folder — user cannot create a folder on samo.mycozy.cloud with Firefox.",
       blocking_issue: "yes"
     }
   ],
+  segments_lack_comprehension: [],
   segments_signal: [],
-  segments_scope_boundary: []
+  segments_scope_boundary: [],
+  segments_suspicious: [],
+  attachments: {
+    images: [
+      {
+        id: "att_001",
+        kind: "image",
+        filename: "folder-creation-bug.png",
+        sizeInBytes: 348000,
+        status: "analyzed",
+        analysis: {
+          llmDescription: "Screenshot of Cozy Drive where folder creation does not react."
+        }
+      }
+    ],
+    videos: [],
+    other: []
+  }
 };
 ```
 
@@ -360,10 +398,23 @@ At this point, the topic exists but is not qualified enough to search for a reli
 
 ```ts
 const decisionSearchingSolution = {
-  shouldSearchSolution: false,
+  decision: {
+    route: "continue",
+    topics: [
+      {
+        topic_id: 1,
+        type: "ask_more_info",
+        missing_fields: ["os", "device"]
+      }
+    ]
+  },
   detected: {
-    topicsQualificationResult: "partial",
-    solutionLikelihoodResult: "unknown"
+    topicsQualificationResult: "evaluated",
+    solutionLikelihoodResult: "rag_not_relevant"
+  },
+  history: {
+    checked: [],
+    failed: []
   }
 };
 ```
@@ -372,7 +423,7 @@ const decisionSearchingSolution = {
 
 ## 8. `possibleSolutions`
 
-Since `decisionSearchingSolution.shouldSearchSolution` is `false`, retrieval is skipped.
+Since no topic decision has `type: "solution_searching"`, retrieval is skipped.
 
 ```ts
 const possibleSolutions = [];
@@ -397,24 +448,39 @@ const responsePlan = {
       {
         politeness_opening: "salutation_and_understanding_1",
         topic_relation_acknowledgement: {
-          new_topics_count: 1,
+          no_matched_historical_topic_count: 1,
           matched_historical_topic_count: 0
         },
-        topic_response: {
-          topic_id: 1,
-          topic_category: "bug",
-          topic_label: "Cozy Drive : create : folder",
-          updated_fields_acknowledgement: {
-            observed_result: "nothing happens",
-            expected_result: "folder should be created",
-            browser: "Firefox",
-            image_available: "yes"
-          },
-          main_response: "ask_fields",
-          fields_requested: ["os", "device", "browser"],
-          next_step: "wait_more_info"
-        },
-        politeness_closure: "thanks_for_cooperation"
+        attachments: turnUnderstandingDelta.attachments,
+        topics_responses: [
+          {
+            topic_response: {
+              title: {
+                topic_id: 1,
+                topic_category: "bug",
+                tool_or_product: "Cozy Drive",
+                topic_action: "create",
+                topic_object: "folder",
+                matched_historical_topic: false
+              },
+              updated_fields_acknowledgement: {
+                topic_details: {
+                  observed_result: "nothing happens",
+                  expected_result: "folder should be created",
+                  browser: "Firefox"
+                }
+              },
+              main_response: {
+                type: "ask_fields",
+                details: {
+                  fields_requested: ["os", "device"]
+                }
+              },
+              next_step: "wait_more_info"
+            }
+          }
+        ],
+        politeness_closure: "thanks_for_cooperation1"
       }
     ],
     signalPlanMessages: [],
@@ -436,7 +502,7 @@ const userResponse = {
       type: "topic_response",
       content: `Hello, thank you for your message.
 
-I understand that you are reporting a new issue.
+I identified a new topic. I also received and analyzed a screenshot.
 
 Topic 1 - Cozy Drive : create : folder
 
@@ -457,54 +523,25 @@ Thank you for your cooperation.`
 
 ---
 
-## 11. `dataProductionOutput`
+## 11. `patches`
 
-Produced by `runDataProduction(dataProductionInput)`.
+Produced by `runPatchesProduction(patchesProductionInput)`.
 
 ```ts
-const dataProductionOutput = {
-  supportTopicKnowledgePatch: {
-    topicSegmentDeltas: [
-      {
-        matched_historical_topic: "no",
-        id_topic: 1,
-        topic_category: "bug",
-        tool_or_product: "Cozy Drive",
-        topic_action: "create",
-        topic_object: "folder",
-        topic_label: "Cozy Drive : create : folder",
-        topic_details: {
-          feature_or_page: "folder creation",
-          provided_url: "samo.mycozy.cloud",
-          observed_result: "nothing happens",
-          expected_result: "folder should be created",
-          platform: "web",
-          browser: "Firefox",
-          trigger_action: "click Créer un dossier",
-          image_available: "yes"
-        },
-        user_goal:
-          "Cozy Drive : create : folder — user cannot create a folder on samo.mycozy.cloud with Firefox.",
-        blocking_issue: "yes"
-      }
-    ]
+const patches = {
+  analysisPatch: {
+    turnUnderstandingDelta
   },
-  conversationHistoryPatch: [
-    {
-      id: "event_001",
-      message_id: "msg_user_001",
-      role: "user",
-      created_at: "2026-05-12T08:30:00.000Z",
-      turnUnderstandingDelta
-    },
-    {
-      id: "event_002",
-      message_id: "msg_bot_001",
-      role: "bot",
-      created_at: "2026-05-12T08:31:00.000Z",
-      responsePlan
-    }
-  ]
+  securityPatch: {
+    securityGateSummary: turnUnderstandingDelta.securityGateSummary
+  },
+  responsePatch: {
+    responsePlan
+  },
+  metadataPatch: {
+    generatedAt: "2026-05-12T08:31:00.000Z",
+    source: "support-processing-pipeline"
+  }
 };
 ```
 
@@ -515,7 +552,7 @@ const dataProductionOutput = {
 ```ts
 const firstPipelineOutput = {
   userResponse,
-  patches: dataProductionOutput
+  patches
 };
 ```
 
@@ -523,7 +560,7 @@ const firstPipelineOutput = {
 
 ## State before the second pipeline run
 
-After applying the first patch, the persistent support knowledge now contains the known topic.
+Before the second run, the external support state now contains the known topic.
 
 ```ts
 const supportTopicKnowledgeBeforeSecondRun = {
@@ -534,7 +571,6 @@ const supportTopicKnowledgeBeforeSecondRun = {
       tool_or_product: "Cozy Drive",
       topic_action: "create",
       topic_object: "folder",
-      topic_label: "Cozy Drive : create : folder",
       topic_details: {
         feature_or_page: "folder creation",
         provided_url: "samo.mycozy.cloud",
@@ -542,8 +578,7 @@ const supportTopicKnowledgeBeforeSecondRun = {
         expected_result: "folder should be created",
         platform: "web",
         browser: "Firefox",
-        trigger_action: "click Créer un dossier",
-        image_available: "yes"
+        trigger_action: "click Créer un dossier"
       },
       user_goal:
         "Cozy Drive : create : folder — user cannot create a folder on samo.mycozy.cloud with Firefox.",
@@ -552,9 +587,7 @@ const supportTopicKnowledgeBeforeSecondRun = {
   ]
 };
 
-const conversationHistoryBeforeSecondRun = [
-  ...dataProductionOutput.conversationHistoryPatch
-];
+const conversationHistoryBeforeSecondRun = [];
 ```
 
 ---
@@ -588,7 +621,15 @@ Produced by `runMessageAnalysis(messageAnalysisInput)`.
 ```ts
 const turnUnderstandingDeltaSecondRun = {
   user_language: "english",
-  warning_comprehension: "no",
+  securityGateSummary: {
+    gateChecked: {
+      latestUserMessageSecurityDecision: {
+        decision: { route: "continue" },
+        history: { checked: [], failed: [] }
+      }
+    },
+    gateFailed: []
+  },
   segments_topic: [
     {
       matched_historical_topic: "yes",
@@ -611,13 +652,15 @@ const turnUnderstandingDeltaSecondRun = {
       blocking_issue: "yes"
     }
   ],
+  segments_lack_comprehension: [],
   segments_signal: [
     {
       signal_verbatim: "This is really annoying",
       signal_types: ["negative_feedback", "disappointment"]
     }
   ],
-  segments_scope_boundary: []
+  segments_scope_boundary: [],
+  segments_suspicious: []
 };
 ```
 
@@ -629,16 +672,25 @@ Produced by `runSearchDecision(searchDecisionInput)`.
 
 The topic is now qualified enough to search for a solution.
 
-Here, `solutionLikelihoodResult` is `"unknown"`, which means the system does not yet know whether a reliable solution exists. Since the topic is qualified enough, the pipeline still runs solution retrieval.
-
-If `solutionLikelihoodResult` had been `"unlikely"` and no search was needed, then `shouldSearchSolution` would have been `false` and `runSolutionRetrieval` would have been skipped.
-
 ```ts
 const decisionSearchingSolutionSecondRun = {
-  shouldSearchSolution: true,
+  decision: {
+    route: "continue",
+    topics: [
+      {
+        topic_id: 1,
+        type: "solution_searching",
+        missing_fields: []
+      }
+    ]
+  },
   detected: {
-    topicsQualificationResult: "qualified",
-    solutionLikelihoodResult: "unknown"
+    topicsQualificationResult: "evaluated",
+    solutionLikelihoodResult: "rag_relevant"
+  },
+  history: {
+    checked: [],
+    failed: []
   }
 };
 ```
@@ -662,24 +714,43 @@ const responsePlanSecondRun = {
       {
         politeness_opening: "understanding_1",
         topic_relation_acknowledgement: {
-          new_topics_count: 0,
+          no_matched_historical_topic_count: 0,
           matched_historical_topic_count: 1
         },
-        topic_response: {
-          topic_id: 1,
-          topic_category: "bug",
-          topic_label: "Cozy Drive : create : folder",
-          updated_fields_acknowledgement: {
-            os: "Windows 11",
-            device: "Dell XPS 13",
-            browser: "Chrome 124",
-            frequency: "every time",
-            affected_scope: "Firefox and Chrome"
-          },
-          main_response: "acknowledgement",
-          next_step: "handover_to_support"
-        },
-        politeness_closure: "available_if_needed"
+        topics_responses: [
+          {
+            topic_response: {
+              title: {
+                topic_id: 1,
+                topic_category: "bug",
+                tool_or_product: "Cozy Drive",
+                topic_action: "create",
+                topic_object: "folder",
+                matched_historical_topic: true
+              },
+              updated_fields_acknowledgement: {
+                topic_details: {
+                  os: "Windows 11",
+                  device: "Dell XPS 13",
+                  browser: "Chrome 124",
+                  frequency: "every time",
+                  affected_scope: "Firefox and Chrome"
+                },
+                tested_solutions: [
+                  {
+                    tested_action: "try from Chrome 124",
+                    outcome_tested_action: "failed"
+                  }
+                ]
+              },
+              main_response: {
+                type: "acknowledgement"
+              },
+              next_step: "wait_for_support"
+            }
+          }
+        ],
+        politeness_closure: "thanks_for_cooperation1"
       }
     ],
     signalPlanMessages: [
@@ -744,52 +815,25 @@ I remain available if needed.`
 ```
 ---
 
-## 11. `dataProductionOutput`
+## 11. `patches`
 
-Produced by `runDataProduction(dataProductionInput)`.
+Produced by `runPatchesProduction(patchesProductionInput)`.
 
 ```ts
-const dataProductionOutputSecondRun = {
-  supportTopicKnowledgePatch: {
-    topicSegmentDeltas: [
-      {
-        matched_historical_topic: "yes",
-        id_topic: 1,
-        topic_details: {
-          os: "Windows 11",
-          device: "Dell XPS 13",
-          browser: "Chrome 124",
-          frequency: "every time",
-          affected_scope: "Firefox and Chrome"
-        },
-        tested_actions: [
-          {
-            tested_action: "try from Chrome 124",
-            outcome_tested_action: "failed"
-          }
-        ],
-        user_goal:
-          "Cozy Drive : create : folder — user cannot create a folder on samo.mycozy.cloud with Firefox or Chrome; trying from Chrome 124 failed.",
-        blocking_issue: "yes"
-      }
-    ]
+const patchesSecondRun = {
+  analysisPatch: {
+    turnUnderstandingDelta: turnUnderstandingDeltaSecondRun
   },
-  conversationHistoryPatch: [
-    {
-      id: "event_003",
-      message_id: "msg_user_002",
-      role: "user",
-      created_at: "2026-05-12T08:40:00.000Z",
-      turnUnderstandingDelta: turnUnderstandingDeltaSecondRun
-    },
-    {
-      id: "event_004",
-      message_id: "msg_bot_002",
-      role: "bot",
-      created_at: "2026-05-12T08:41:00.000Z",
-      responsePlan: responsePlanSecondRun
-    }
-  ]
+  securityPatch: {
+    securityGateSummary: turnUnderstandingDeltaSecondRun.securityGateSummary
+  },
+  responsePatch: {
+    responsePlan: responsePlanSecondRun
+  },
+  metadataPatch: {
+    generatedAt: "2026-05-12T08:41:00.000Z",
+    source: "support-processing-pipeline"
+  }
 };
 ```
 
@@ -800,6 +844,6 @@ const dataProductionOutputSecondRun = {
 ```ts
 const secondPipelineOutput = {
   userResponse: userResponseSecondRun,
-  patches: dataProductionOutputSecondRun
+  patches: patchesSecondRun
 };
 ```

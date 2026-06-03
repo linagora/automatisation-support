@@ -3,8 +3,8 @@ const TOPIC_DETAIL_FIELD_NAMES = [
   "expected_result", "error_message", "platform", "account_context",
   "frequency", "affected_scope", "additional_context", "trigger_action",
   "access_action", "auth_method", "os", "device", "browser", "app_version",
-  "server_or_instance", "affected_users", "logs_available", "video_available",
-  "image_available", "billing_issue_type", "billing_provider", "offer_or_plan",
+  "server_or_instance", "affected_users", "logs_available",
+  "billing_issue_type", "billing_provider", "offer_or_plan",
   "amount", "currency", "billing_date_or_period", "gap_observed",
   "question_intent"
 ] as const;
@@ -107,7 +107,6 @@ const topicSegmentSchema = objectOf(
     tool_or_product: stringOrNull,
     topic_action: stringOrNull,
     topic_object: stringOrNull,
-    topic_label: stringOrNull,
     topic_details: arrayOf(
       topicDetailItemSchema,
       "Raw list of explicit useful details for this topic. Use one item per detail and [] when there is no useful detail."
@@ -126,7 +125,6 @@ const topicSegmentSchema = objectOf(
     "tool_or_product",
     "topic_action",
     "topic_object",
-    "topic_label",
     "topic_details",
     "tested_actions",
     "user_goal",

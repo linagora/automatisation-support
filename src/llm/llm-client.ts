@@ -16,8 +16,7 @@ import {
 } from "./llm-config";
 
 import {
-  estimateLLMTokenUsage,
-  type LLMTokenEstimate
+  estimateLLMTokenUsage
 } from "./llm-token-estimator";
 
 import type {
@@ -27,6 +26,7 @@ import type {
   LLMModelConfig,
   LLMRequestBody,
   LLMResponse,
+  LLMTokenEstimate,
   LLMUsage
 } from "./types.llm-types";
 

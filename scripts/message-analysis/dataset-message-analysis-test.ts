@@ -47,7 +47,6 @@ const turn1Delta: TurnUnderstandingDelta = {
       tool_or_product: "Twake Drive",
       topic_action: "create",
       topic_object: "folder",
-      topic_label: "Twake Drive : create : folder",
       topic_details: {
         platform: "mobile app",
         os: "Android",
@@ -66,7 +65,6 @@ const turn1Delta: TurnUnderstandingDelta = {
       tool_or_product: "Twake",
       topic_action: "reset",
       topic_object: "password",
-      topic_label: "Twake : reset : password",
       topic_details: {
         access_action: "reset password",
         auth_method: "email",
@@ -106,7 +104,6 @@ const supportTopicKnowledgeAfterTurn1: SupportTopicKnowledge = {
       tool_or_product: "Twake Drive",
       topic_action: "create",
       topic_object: "folder",
-      topic_label: "Twake Drive : create : folder",
       topic_details: {
         platform: "mobile app",
         os: "Android",
@@ -124,7 +121,6 @@ const supportTopicKnowledgeAfterTurn1: SupportTopicKnowledge = {
       tool_or_product: "Twake",
       topic_action: "reset",
       topic_object: "password",
-      topic_label: "Twake : reset : password",
       topic_details: {
         access_action: "reset password",
         auth_method: "email",

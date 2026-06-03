@@ -5,6 +5,9 @@ flowchart TB
     direction TB
     PREVIOUS_INPUTS["<b>Input provided to assembleTurnUnderstandingDelta</b><br/>
     turnUnderstandingDeltaInput = {<br/>
+    securityGateSummary<br/>
+    latestUserAttachments?<br/>
+    attachmentAnalysis?<br/>
     supportTopicKnowledge<br/>
     fullWeightMessageAnalysisOutput?<br/>
     lightWeightMessageAnalysis?<br/>
@@ -25,6 +28,31 @@ flowchart TB
     segments_scope_boundary: []<br/>
     segments_suspicious: []<br/>
     }"]
+
+    T_SET_SECURITY["<b>Set security summary</b><br/>
+    turnUnderstandingDelta.securityGateSummary =<br/>
+    normalizeSecurityGateSummary(input.securityGateSummary)"]
+
+    T_BUILD_ATTACHMENTS["<b>Build lightweight attachment references</b><br/>
+    attachments = buildTurnAttachments(<br/>
+    latestUserAttachments,<br/>
+    attachmentAnalysis<br/>
+    )<br/><br/>
+    Output buckets:<br/>
+    images / videos / other"]
+
+    T_ATTACHMENTS_ROUTE{"<b>attachments built?</b>"}
+
+    T_SET_ATTACHMENTS["<b>Add global attachments</b><br/>
+    turnUnderstandingDelta.attachments = {<br/>
+    images: TurnAttachmentReference[]<br/>
+    videos: TurnAttachmentReference[]<br/>
+    other: TurnAttachmentReference[]<br/>
+    }<br/><br/>
+    References are lightweight:<br/>
+    id, kind, filename?, mimeType?, sizeInBytes?,<br/>
+    status, reason?, storageKey?, safe accessUrl?,<br/>
+    analysis?: { llmDescription?, structuredObservations? }"]
 
     T_ANALYSIS_EMPTY_ROUTE{"<b>No analysis available?</b><br/>
     fullWeightMessageAnalysisOutput?.analysis is empty<br/>
@@ -213,7 +241,12 @@ flowchart TB
     Optional internal metadata:<br/>
     numberOfCleanedFields"]
 
-    T_INIT --> T_ANALYSIS_EMPTY_ROUTE
+    T_INIT --> T_SET_SECURITY
+    T_SET_SECURITY --> T_BUILD_ATTACHMENTS
+    T_BUILD_ATTACHMENTS --> T_ATTACHMENTS_ROUTE
+    T_ATTACHMENTS_ROUTE -->|yes| T_SET_ATTACHMENTS
+    T_ATTACHMENTS_ROUTE -->|no| T_ANALYSIS_EMPTY_ROUTE
+    T_SET_ATTACHMENTS --> T_ANALYSIS_EMPTY_ROUTE
 
     T_ANALYSIS_EMPTY_ROUTE -->|yes| T_RETURN_EMPTY
     T_ANALYSIS_EMPTY_ROUTE -->|no| T_SET_SOURCE
@@ -255,9 +288,9 @@ flowchart TB
 
   class PREVIOUS_INPUTS previousBlock;
 
-  class T_ANALYSIS_EMPTY_ROUTE,T_SOURCE_ROUTE,T_TOPIC_ROUTE,T_MATCH_ROUTE,T_EXISTING_ROUTE,T_DETAIL_EXISTS_ROUTE,T_DETAIL_DUPLICATE_ROUTE,T_TESTED_ACTION_EXISTS_ROUTE,T_USER_GOAL_ROUTE,T_USER_GOAL_LENGTH_CHECK,T_BLOCKING_ROUTE,T_USEFUL_TOPIC_ROUTE routeBlock;
+  class T_ATTACHMENTS_ROUTE,T_ANALYSIS_EMPTY_ROUTE,T_SOURCE_ROUTE,T_TOPIC_ROUTE,T_MATCH_ROUTE,T_EXISTING_ROUTE,T_DETAIL_EXISTS_ROUTE,T_DETAIL_DUPLICATE_ROUTE,T_TESTED_ACTION_EXISTS_ROUTE,T_USER_GOAL_ROUTE,T_USER_GOAL_LENGTH_CHECK,T_BLOCKING_ROUTE,T_USEFUL_TOPIC_ROUTE routeBlock;
 
-  class T_INIT,T_RETURN_EMPTY,T_SET_SOURCE,T_SET_LANGUAGE,T_LIGHT_PROCESS,T_FULL_NON_TOPIC,T_NEW_TOPIC,T_FIND_EXISTING,T_KEEP_FOR_REVIEW,T_INIT_MATCHED_DELTA,T_DETAIL_KEEP_NEW,T_DETAIL_COMPARE,T_DETAIL_DROP,T_DETAIL_KEEP_PRECISION,T_TESTED_ACTION_DROP,T_TESTED_ACTION_KEEP,T_USER_GOAL_KEEP,T_USER_GOAL_DROP,T_BLOCKING_KEEP,T_ADD_MATCHED_TOPIC,T_DROP_MATCHED_TOPIC,T_BUILD_OUTPUT processingBlock;
+  class T_INIT,T_SET_SECURITY,T_BUILD_ATTACHMENTS,T_SET_ATTACHMENTS,T_RETURN_EMPTY,T_SET_SOURCE,T_SET_LANGUAGE,T_LIGHT_PROCESS,T_FULL_NON_TOPIC,T_NEW_TOPIC,T_FIND_EXISTING,T_KEEP_FOR_REVIEW,T_INIT_MATCHED_DELTA,T_DETAIL_KEEP_NEW,T_DETAIL_COMPARE,T_DETAIL_DROP,T_DETAIL_KEEP_PRECISION,T_TESTED_ACTION_DROP,T_TESTED_ACTION_KEEP,T_USER_GOAL_KEEP,T_USER_GOAL_DROP,T_BLOCKING_KEEP,T_ADD_MATCHED_TOPIC,T_DROP_MATCHED_TOPIC,T_BUILD_OUTPUT processingBlock;
 
   class NEXT_OUTPUTS nextOutputBlock;
 
@@ -271,3 +304,6 @@ flowchart TB
 
   linkStyle default stroke:#000000,stroke-width:2px;
   ```
+
+Note:
+`TurnUnderstandingDelta.attachments` stores lightweight references only. It does not store the complete `LatestUserAttachment`, the complete `AttachmentAnalysisItem`, local `path`, raw `url`, data URLs, or base64 payloads. A short safe `accessUrl` can be copied only when available and suitable for long-term history.

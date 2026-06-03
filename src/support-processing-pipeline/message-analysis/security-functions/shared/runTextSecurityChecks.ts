@@ -14,6 +14,7 @@ export type TextSecurityCheckName =
 
 export type TextSecurityCheckInput = {
   text: string;
+  disabledChecks?: TextSecurityCheckName[];
 };
 
 export type TextSecurityCheckOutput = {
@@ -156,8 +157,13 @@ function runTextSecurityChecks(
     failed: []
   };
   const normalizedText = normalizeSecurityText(input.text);
+  const disabledChecks = new Set(input.disabledChecks ?? []);
 
   for (const test of TEXT_SECURITY_TESTS) {
+    if (disabledChecks.has(test.checkName)) {
+      continue;
+    }
+
     const target = test.detectRisk(normalizedText) ? "failed" : "checked";
 
     output[target].push(test.checkName);

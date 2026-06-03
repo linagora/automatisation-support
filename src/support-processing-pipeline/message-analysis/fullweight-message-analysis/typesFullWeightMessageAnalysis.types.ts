@@ -4,19 +4,9 @@ import type {
   SupportTopicKnowledge,
   TurnUnderstandingDelta,
 } from "../../typesSupportProcessingPipeline.types";
-
-export type AttachmentAnalysisItem = {
-  filename?: string;
-  status: "analyzed" | "failed" | "refused";
-  reason?: string;
-  analysis?: {
-    llmDescription?: string;
-    structuredObservations?: unknown;
-    relationToPreviousAttachment?: string;
-  };
-};
-
-export type AttachmentAnalysis = AttachmentAnalysisItem[];
+import type {
+  AttachmentAnalysis
+} from "../typesMessageAnalysis.types";
 
 export type LightWeightMessageAnalysis = Partial<
   Pick<
@@ -109,16 +99,4 @@ export type FullWeightMessageAnalysisOutput = {
 
 export type RequestFullWeightAnalysisInput = {
   fullWeightPrompt: FullWeightPrompt;
-};
-
-// src/support-processing-pipeline/message-analysis/fullweight-message-analysis/typesFullWeightMessageAnalysis.types.ts
-
-
-export type RawFullWeightMessageAnalysis = {
-  status: "completed" | "failed";
-  parsedResponse?: unknown;
-  rawResponse?: string;
-  error?: {
-    message: string;
-  };
 };

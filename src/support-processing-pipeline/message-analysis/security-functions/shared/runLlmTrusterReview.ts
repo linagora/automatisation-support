@@ -4,6 +4,9 @@ import type {
 import type {
   TextSecurityCheckOutput
 } from "./runTextSecurityChecks";
+import type {
+  SecurityLlmReview
+} from "../../typesMessageAnalysis.types";
 
 import {
   requestLlmTrusterReview
@@ -42,10 +45,7 @@ type LlmTrusterReviewInput =
       accountTrustStatus: AccountTrustStatus;
     };
 
-type LlmTrusterReviewOutput = {
-  route: "continue" | "stop" | "failed";
-  reason?: string;
-};
+type LlmTrusterReviewOutput = SecurityLlmReview;
 
 async function runLlmTrusterReview(
   input: LlmTrusterReviewInput

@@ -93,8 +93,99 @@ export type LatestUserAttachment = {
   filename: string;
   sizeInBytes: number;
   accessUrl?: string;
+  name?: string;
+  url?: string;
+  path?: string;
+  type?: string;
+  mimeType?: string;
+  sizeBytes?: number;
   channel: "email" | "twake_chat" | "other";
   sentAt: string;
+};
+
+export type AttachmentReadinessCheckName =
+  | "safe_filename"
+  | "accepted_format"
+  | "consistent_mime_extension"
+  | "usable_location"
+  | "safe_location"
+  | "present_size"
+  | "positive_size"
+  | "size_under_limit";
+
+export type AttachmentDetectedFormat =
+  | "image"
+  | "video"
+  | "other";
+
+export type AttachmentReadinessDecision = {
+  decision: {
+    route: "continue" | "stop";
+  };
+  history: {
+    checked: AttachmentReadinessCheckName[];
+    failed: AttachmentReadinessCheckName[];
+    detectedFormat: AttachmentDetectedFormat;
+  };
+};
+
+export type AttachmentVisionObservations = {
+  other?: unknown;
+};
+
+export type AttachmentVisionAnalysis = {
+  llmDescription: string;
+  structuredObservations?: unknown;
+  visionDescription?: string;
+  visionObservations?: AttachmentVisionObservations;
+  relationToPreviousAttachment?: string;
+};
+
+export type AttachmentAnalysisStatus =
+  | "analysis_pending"
+  | "analyzed"
+  | "failed"
+  | "refused"
+  | "suspicious";
+
+export type AttachmentAnalysisItem = {
+  attachmentIndex?: number;
+  filename?: string;
+  url?: string;
+  path?: string;
+  type?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+  status: AttachmentAnalysisStatus;
+  reason?: string;
+  readinessDecision?: AttachmentReadinessDecision;
+  analysis?: AttachmentVisionAnalysis;
+};
+
+export type TurnAttachmentKind = "image" | "video" | "other";
+
+export type TurnAttachmentAnalysisStatus = AttachmentAnalysisStatus;
+
+export type TurnAttachmentReference = {
+  id: string;
+  kind: TurnAttachmentKind;
+  filename?: string;
+  mimeType?: string;
+  sizeInBytes?: number;
+  status: TurnAttachmentAnalysisStatus;
+  reason?: string;
+  storageKey?: string;
+  accessUrl?: string;
+  analysis?: {
+    llmDescription?: string;
+    structuredObservations?: unknown;
+  };
+};
+
+export type TurnAttachments = {
+  images: TurnAttachmentReference[];
+  videos: TurnAttachmentReference[];
+  other: TurnAttachmentReference[];
 };
 
 /* =====================================================
@@ -103,19 +194,7 @@ export type LatestUserAttachment = {
 
 export type AccountTrustStatus = {
   status: "trusted" | "neutral" | "suspicious";
-  reasons: (
-    | "longHistory"
-    | "noSuspiciousActivity"
-    | "payingCustomer"
-    | "highValueAccount"
-    | "legitimateSupportInteractions"
-    | "repeatedValidIssues"
-    | "verifiedEmailDomain"
-    | "recentAccountCreation"
-    | "suspiciousActivity"
-    | "paymentFailure"
-    | "abusiveBehavior"
-  )[];
+  reasons?: string[];
 };
 
 /* =====================================================
@@ -191,8 +270,6 @@ type TopicDetails = {
   billing_date_or_period?: string;
   gap_observed?: string;
   question_intent?: "how_to" | "is_it_possible" | "future_availability";
-  video_available?: "yes" | "no";
-  image_available?: "yes" | "no";
 };
 
 export type SupportTopicKnowledge = {
@@ -202,7 +279,7 @@ export type SupportTopicKnowledge = {
     tool_or_product?: string;
     topic_action?: string;
     topic_object?: string;
-    topic_label: string;
+    topic_label?: string;
     topic_details: TopicDetails;
     tested_actions?: {
       tested_action: string;
@@ -260,7 +337,7 @@ type NewTopicDelta = {
   tool_or_product?: string;
   topic_action?: string;
   topic_object?: string;
-  topic_label: string;
+  topic_label?: string;
   topic_details: TopicDetails;
   tested_actions?: {
     tested_action: string;
@@ -285,6 +362,7 @@ export type TurnUnderstandingDelta = {
   segments_signal: SignalSegment[];
   segments_scope_boundary: ScopeBoundarySegment[];
   segments_suspicious: SuspiciousSegment[];
+  attachments?: TurnAttachments;
 };
 
 /* =====================================================

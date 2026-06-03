@@ -412,4 +412,27 @@ describe("runAttachmentAnalysisSecurity", function () {
     expectNoContextAccountDecision(output);
     expectNoAccountTrustStatusInHistory(output);
   });
+
+  it("does not evaluate excessive repetition on attachment descriptions", async function () {
+    const attachmentAnalysis: AttachmentAnalysis = [
+      {
+        filename: "repeated-description.png",
+        status: "analyzed",
+        analysis: {
+          llmDescription:
+            "folder folder folder folder folder folder folder folder creation screen"
+        }
+      }
+    ];
+
+    const output = await runAttachmentAnalysisSecurity({
+      attachmentAnalysis,
+      accountTrustStatus: trustedAccount,
+      latestUserMessageContent
+    });
+
+    expect(output.decision.route).toBe("continue");
+    expect(output.history.checked).not.toContain("excessive_repetition");
+    expect(output.history.failed).not.toContain("excessive_repetition");
+  });
 });

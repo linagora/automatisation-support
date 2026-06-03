@@ -1,3 +1,7 @@
+import type {
+  TurnAttachments
+} from "../typesSupportProcessingPipeline.types";
+
 type UnknownRecord = Record<string, unknown>;
 
 type SegmentList<T = UnknownRecord> = T[];
@@ -14,10 +18,24 @@ type TopicDetails = UnknownRecord;
 
 type TestedSolution = UnknownRecord;
 
+type SupportTopicKnowledgeForResponsePlan = {
+  segments_topic: {
+    id_topic: number;
+    topic_category: TopicCategory;
+    tool_or_product?: string;
+    topic_action?: string;
+    topic_object?: string;
+    topic_label?: string;
+  }[];
+};
+
 type TopicSegment = {
   matched_historical_topic: "yes" | "no";
   id_topic: number;
   topic_category?: TopicCategory;
+  tool_or_product?: string;
+  topic_action?: string;
+  topic_object?: string;
   topic_label?: string;
   topic_details?: TopicDetails;
   tested_solutions?: TestedSolution[];
@@ -30,6 +48,7 @@ type TurnUnderstandingDeltaForResponsePlan = {
   segments_signal: SegmentList;
   segments_scope_boundary: SegmentList;
   segments_suspicious: SegmentList;
+  attachments?: TurnAttachments;
 };
 
 export type SecurityGateSummary = {
@@ -96,12 +115,15 @@ export type TopicPlanMessage = {
     no_matched_historical_topic_count: number;
     matched_historical_topic_count: number;
   };
+  attachments?: TurnAttachments;
   topics_responses: {
     topic_response: {
       title: {
         topic_id: number;
         topic_category?: TopicCategory;
-        topic_label?: string;
+        tool_or_product?: string;
+        topic_action?: string;
+        topic_object?: string;
         matched_historical_topic: boolean;
       };
       updated_fields_acknowledgement: {
@@ -139,12 +161,14 @@ export type ResponsePlanInput = {
   accountTrustStatus: unknown;
   accountProfile: unknown;
   accountInteractionTraits: unknown;
+  supportTopicKnowledge: SupportTopicKnowledgeForResponsePlan;
   turnUnderstandingDelta: TurnUnderstandingDeltaForResponsePlan;
   possibleSolutions: TopicSolution[];
   decisionSearchingSolution: DecisionSearchingSolutionForResponsePlan;
 };
 
 export type TopicPlanInput = {
+  supportTopicKnowledge: SupportTopicKnowledgeForResponsePlan;
   turnUnderstandingDelta: TurnUnderstandingDeltaForResponsePlan;
   possibleSolutions: TopicSolution[];
   decisionSearchingSolution: DecisionSearchingSolutionForResponsePlan;

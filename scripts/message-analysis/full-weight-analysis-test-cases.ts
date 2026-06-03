@@ -33,7 +33,6 @@ const previousAccessIssueDelta: TurnUnderstandingDelta = {
       tool_or_product: "Twake",
       topic_action: "log in",
       topic_object: "account",
-      topic_label: "Twake : log in : account",
       topic_details: {
         access_action: "log in",
         observed_result: "user cannot log in"
@@ -71,7 +70,9 @@ const previousAccessIssueHistory: ConversationHistory = Object.assign(
               topic_response: {
                 topic_id: 1,
                 topic_category: "access_security",
-                topic_label: "Twake : log in : account",
+                tool_or_product: "Twake",
+                topic_action: "log in",
+                topic_object: "account",
                 main_response: "ask_fields",
                 fields_requested: ["error_message"],
                 next_step: "wait_more_info"
@@ -166,7 +167,6 @@ export const fullWeightAnalysisTestCases: FullWeightAnalysisTestCase[] = [
             tool_or_product: "Twake",
             topic_action: "log in",
             topic_object: "account",
-            topic_label: "Twake : log in : account",
             topic_details: {
               access_action: "log in",
               observed_result: "user cannot log in"

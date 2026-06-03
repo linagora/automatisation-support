@@ -16,8 +16,18 @@ import type {
   FullWeightOutputCheckName,
   FullWeightCleanAnalysis,
 } from "./typesFullWeightMessageAnalysis.types";
+import type {
+  TurnUnderstandingDelta
+} from "../../typesSupportProcessingPipeline.types";
 
 type UnknownRecord = Record<string, unknown>;
+type LackComprehensionSegment =
+  TurnUnderstandingDelta["segments_lack_comprehension"][number];
+type TopicSegment = TurnUnderstandingDelta["segments_topic"][number];
+type SignalSegment = TurnUnderstandingDelta["segments_signal"][number];
+type ScopeBoundarySegment =
+  TurnUnderstandingDelta["segments_scope_boundary"][number];
+type SuspiciousSegment = TurnUnderstandingDelta["segments_suspicious"][number];
 
 const USER_LANGUAGES = ["French", "English", "Other", "Unknown"];
 const TOPIC_CATEGORIES = ["billing", "access_security", "bug", "request", "question_faq", "other"];
@@ -47,9 +57,16 @@ const TOPIC_DETAIL_FIELDS = [
   "expected_result", "error_message", "platform", "account_context",
   "frequency", "affected_scope", "additional_context", "trigger_action",
   "access_action", "auth_method", "os", "device", "browser", "app_version",
-  "server_or_instance", "affected_users", "logs_available", "video_available",
-  "image_available", "billing_issue_type", "billing_provider", "offer_or_plan",
+  "server_or_instance", "affected_users", "logs_available",
+  "billing_issue_type", "billing_provider", "offer_or_plan",
   "amount", "currency", "billing_date_or_period", "gap_observed", "question_intent",
+];
+
+const LEGACY_ATTACHMENT_TOPIC_DETAIL_FIELDS = [
+  "attachment_available",
+  "screenshot_available",
+  "image_available",
+  "video_available",
 ];
 
 function shouldDebugFullWeightAnalysis(): boolean {
@@ -139,8 +156,8 @@ function stop(params: {
 }
 
 function normalizeTopicDetailFieldName(fieldName: string): string | undefined {
-  if (fieldName === "screenshot_available") {
-    return "image_available";
+  if (LEGACY_ATTACHMENT_TOPIC_DETAIL_FIELDS.includes(fieldName)) {
+    return undefined;
   }
 
   return TOPIC_DETAIL_FIELDS.includes(fieldName) ? fieldName : undefined;
@@ -204,7 +221,7 @@ function normalizeTestedActions(rawTestedActions: unknown): UnknownRecord[] {
   return output;
 }
 
-function normalizeTopicSegment(rawTopic: unknown): UnknownRecord | undefined {
+function normalizeTopicSegment(rawTopic: unknown): TopicSegment | undefined {
   if (!isRecord(rawTopic)) {
     return undefined;
   }
@@ -246,26 +263,30 @@ function normalizeTopicSegment(rawTopic: unknown): UnknownRecord | undefined {
     topic.blocking_issue = rawTopic.blocking_issue;
   }
 
-  return topic;
+  return topic as TopicSegment;
 }
 
-function normalizeTopics(rawSegments: unknown[]): UnknownRecord[] {
+function normalizeTopics(rawSegments: unknown[]): TopicSegment[] {
   return rawSegments
     .map(normalizeTopicSegment)
-    .filter((segment): segment is UnknownRecord => segment !== undefined);
+    .filter((segment): segment is TopicSegment => segment !== undefined);
 }
 
-function normalizeLackComprehension(rawSegments: unknown[]): UnknownRecord[] {
+function normalizeLackComprehension(
+  rawSegments: unknown[]
+): LackComprehensionSegment[] {
   return rawSegments.flatMap((segment) => {
     if (!isRecord(segment) || !isString(segment.segment_verbatim)) {
       return [];
     }
 
-    return [{ segment_verbatim: segment.segment_verbatim }];
+    return [{
+      segment_verbatim: segment.segment_verbatim
+    }];
   });
 }
 
-function normalizeSignals(rawSegments: unknown[]): UnknownRecord[] {
+function normalizeSignals(rawSegments: unknown[]): SignalSegment[] {
   return rawSegments.flatMap((segment) => {
     if (!isRecord(segment) || !isString(segment.signal_verbatim) || !Array.isArray(segment.signal_types)) {
       return [];
@@ -280,11 +301,13 @@ function normalizeSignals(rawSegments: unknown[]): UnknownRecord[] {
     return [{
       signal_verbatim: segment.signal_verbatim,
       signal_types: signalTypes,
-    }];
+    } as SignalSegment];
   });
 }
 
-function normalizeScopeBoundaries(rawSegments: unknown[]): UnknownRecord[] {
+function normalizeScopeBoundaries(
+  rawSegments: unknown[]
+): ScopeBoundarySegment[] {
   return rawSegments.flatMap((segment) => {
     if (!isRecord(segment) || !isString(segment.signal_verbatim)) {
       return [];
@@ -297,11 +320,11 @@ function normalizeScopeBoundaries(rawSegments: unknown[]): UnknownRecord[] {
     return [{
       signal_verbatim: segment.signal_verbatim,
       scope_boundary_type: segment.scope_boundary_type,
-    }];
+    } as ScopeBoundarySegment];
   });
 }
 
-function normalizeSuspicious(rawSegments: unknown[]): UnknownRecord[] {
+function normalizeSuspicious(rawSegments: unknown[]): SuspiciousSegment[] {
   return rawSegments.flatMap((segment) => {
     if (!isRecord(segment) || !oneOf(segment.checkName, SUSPICIOUS_CHECKS)) {
       return [];
@@ -315,7 +338,7 @@ function normalizeSuspicious(rawSegments: unknown[]): UnknownRecord[] {
       output.segment_verbatim = segment.segment_verbatim;
     }
 
-    return [output];
+    return [output as SuspiciousSegment];
   });
 }
 
@@ -391,6 +414,12 @@ function formatFullWeightMessageAnalysisOutput(
     });
   }
 
+  const validSegmentsLackComprehension = segmentsLackComprehension ?? [];
+  const validSegmentsTopic = segmentsTopic ?? [];
+  const validSegmentsSignal = segmentsSignal ?? [];
+  const validSegmentsScopeBoundary = segmentsScopeBoundary ?? [];
+  const validSegmentsSuspicious = segmentsSuspicious ?? [];
+
   checked.push(
     "segments_lack_comprehension_valid",
     "segments_topic_valid",
@@ -403,11 +432,15 @@ function formatFullWeightMessageAnalysisOutput(
     user_language: oneOf(cleanedResponse.user_language, USER_LANGUAGES)
       ? cleanedResponse.user_language.toLowerCase()
       : undefined,
-    segments_lack_comprehension: normalizeLackComprehension(segmentsLackComprehension),
-    segments_topic: normalizeTopics(segmentsTopic),
-    segments_signal: normalizeSignals(segmentsSignal),
-    segments_scope_boundary: normalizeScopeBoundaries(segmentsScopeBoundary),
-    segments_suspicious: normalizeSuspicious(segmentsSuspicious),
+    segments_lack_comprehension: normalizeLackComprehension(
+      validSegmentsLackComprehension
+    ),
+    segments_topic: normalizeTopics(validSegmentsTopic),
+    segments_signal: normalizeSignals(validSegmentsSignal),
+    segments_scope_boundary: normalizeScopeBoundaries(
+      validSegmentsScopeBoundary
+    ),
+    segments_suspicious: normalizeSuspicious(validSegmentsSuspicious),
   };
 
   logDebugStep("fullWeight normalized analysis", analysis);

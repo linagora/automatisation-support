@@ -90,6 +90,7 @@ async function runMessageAnalysis(
 
     const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
       securityGateSummary,
+      latestUserAttachments,
       supportTopicKnowledge,
       conversationHistory
     };
@@ -138,6 +139,8 @@ async function runMessageAnalysis(
 
       const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
         securityGateSummary,
+        latestUserAttachments,
+        attachmentAnalysis,
         supportTopicKnowledge,
         conversationHistory
       };
@@ -223,6 +226,7 @@ async function runMessageAnalysis(
 
   const turnUnderstandingDeltaInput: TurnUnderstandingDeltaInput = {
     securityGateSummary,
+    latestUserAttachments,
     ...(attachmentAnalysis ? { attachmentAnalysis } : {}),
     ...(analysisGate ? { analysisGate } : {}),
     ...(lightWeightMessageAnalysis ? { lightWeightMessageAnalysis } : {}),

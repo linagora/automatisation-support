@@ -92,7 +92,6 @@ const turn1Delta: TurnUnderstandingDelta = {
       tool_or_product: "Twake Drive",
       topic_action: "create",
       topic_object: "folder",
-      topic_label: "Twake Drive : create : folder",
       topic_details: {
         platform: "mobile app",
         os: "Android",
@@ -111,7 +110,6 @@ const turn1Delta: TurnUnderstandingDelta = {
       tool_or_product: "Twake",
       topic_action: "reset",
       topic_object: "password",
-      topic_label: "Twake : reset : password",
       topic_details: {
         access_action: "reset password",
         observed_result: "no email received",
@@ -150,7 +148,6 @@ const supportTopicKnowledgeAfterTurn1: SupportTopicKnowledge = {
       tool_or_product: topicSegment.tool_or_product,
       topic_action: topicSegment.topic_action,
       topic_object: topicSegment.topic_object,
-      topic_label: topicSegment.topic_label || "undefined",
       topic_details: topicSegment.topic_details || {},
       user_goal: topicSegment.user_goal || "undefined",
       blocking_issue: topicSegment.blocking_issue || "no"
@@ -274,6 +271,22 @@ export const supportProcessingTestCases: SupportProcessingTestCase[] = [
       expectedFinalSecurityRoute: "continue",
       minUserResponseMessages: 1
     }
+  },
+  {
+    id: "5",
+    label: "End-to-end - image-only weak text attachment topic creation",
+    description:
+      "Runs the full pipeline with weak text and an image attachment to verify fullweight can use attachmentAnalysis to create a topic.",
+    needsAttachment: true,
+    input: buildInput({
+      id: "support_pipeline_image_only_attachment_topic",
+      content: "Voici la capture.",
+      accountTrustStatus,
+      supportTopicKnowledge: {
+        segments_topic: []
+      },
+      conversationHistory: []
+    })
   }
 ];
 

@@ -1,5 +1,4 @@
 import { addTopicMainResponse } from "./addTopicMainResponse";
-
 import type {
   TopicMainResponse,
   TopicNextStep,
@@ -17,6 +16,15 @@ function resolveNextStep(mainResponse: TopicMainResponse): TopicNextStep {
   }
 
   return "wait_for_support";
+}
+
+function findHistoricalTopic(
+  topicPlanInput: TopicPlanInput,
+  idTopic: number
+): TopicPlanInput["supportTopicKnowledge"]["segments_topic"][number] | undefined {
+  return topicPlanInput.supportTopicKnowledge.segments_topic.find((topic) => {
+    return topic.id_topic === idTopic;
+  });
 }
 
 function addTopicPlanMessage(
@@ -43,11 +51,27 @@ function addTopicPlanMessage(
         return topicSegment.matched_historical_topic === "yes";
       }).length
     },
+    ...(turnUnderstandingDelta.attachments
+      ? { attachments: turnUnderstandingDelta.attachments }
+      : {}),
     topics_responses: [],
     politeness_closure: "thanks_for_cooperation1"
   };
 
   for (const topicSegment of topicSegments) {
+    const historicalTopic =
+      topicSegment.matched_historical_topic === "yes"
+        ? findHistoricalTopic(topicPlanInput, topicSegment.id_topic)
+        : undefined;
+    const topicTitleSource = historicalTopic ?? topicSegment;
+    const topicDisplaySource = {
+      topic_label: topicSegment.topic_label ?? topicTitleSource.topic_label,
+      tool_or_product: topicSegment.tool_or_product ??
+        topicTitleSource.tool_or_product,
+      topic_action: topicSegment.topic_action ?? topicTitleSource.topic_action,
+      topic_object: topicSegment.topic_object ?? topicTitleSource.topic_object
+    };
+
     const mainResponse = addTopicMainResponse({
       topicSegment,
       possibleSolutions,
@@ -57,8 +81,17 @@ function addTopicPlanMessage(
     const topicResponse: TopicPlanMessage["topics_responses"][number]["topic_response"] = {
       title: {
         topic_id: topicSegment.id_topic,
-        topic_category: topicSegment.topic_category,
-        topic_label: topicSegment.topic_label,
+        topic_category: topicSegment.topic_category ??
+          topicTitleSource.topic_category,
+        ...(topicDisplaySource.tool_or_product
+          ? { tool_or_product: topicDisplaySource.tool_or_product }
+          : {}),
+        ...(topicDisplaySource.topic_action
+          ? { topic_action: topicDisplaySource.topic_action }
+          : {}),
+        ...(topicDisplaySource.topic_object
+          ? { topic_object: topicDisplaySource.topic_object }
+          : {}),
         matched_historical_topic: topicSegment.matched_historical_topic === "yes"
       },
       updated_fields_acknowledgement: {

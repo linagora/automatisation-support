@@ -2,97 +2,6 @@
  * Shared LLM types.
  */
 
-import type {
-  LLMModelConfig
-} from "./llm-config";
-
-export interface MessageContentText {
-  type: "text";
-  text: string;
-}
-
-export interface MessageContentImage {
-  type: "image_url";
-  image_url: {
-    url: string;
-    detail?: "low" | "high" | "auto";
-  };
-}
-
-export type MessageContent =
-  | MessageContentText
-  | MessageContentImage;
-
-export interface LLMMessage {
-  role: "system" | "user" | "assistant";
-  content: string | MessageContent[];
-}
-
-export interface LLMRequestBody {
-  model: string;
-  messages: LLMMessage[];
-  temperature?: number;
-  max_tokens?: number;
-  response_format?: LLMResponseFormat;
-}
-
-export interface LLMUsage {
-  prompt_tokens?: number;
-  completion_tokens?: number;
-  total_tokens?: number;
-  [key: string]: unknown;
-}
-
-export interface LLMResponseChoice {
-  message: {
-    role: string;
-    content: string;
-  };
-  index: number;
-  finish_reason: string;
-}
-
-export interface LLMResponse {
-  id?: string;
-  model?: string;
-  choices: LLMResponseChoice[];
-  usage?: LLMUsage;
-  error?: {
-    message: string;
-    type?: string;
-    code?: string;
-  };
-}
-
-export interface LLMClientResult {
-  success: boolean;
-  content?: string;
-  usage?: LLMUsage;
-  model?: string;
-  preset?: string;
-  responseId?: string;
-  error?: string;
-}
-
-export interface CallLLMOptions {
-  preset?: string;
-  config?: Partial<LLMModelConfig>;
-  temperature?: number;
-  maxTokens?: number;
-  logUsage?: boolean;
-
-  /**
-   * Optional one-shot override.
-   * Normal token budgets should come from llm-config presets.
-   */
-  maxEstimatedTotalTokens?: number;
-  responseFormat?: LLMResponseFormat;
-}
-
-/**
- * Shared LLM types.
- */
-
 export type LLMProvider =
   | "openai"
   | "mistral"
@@ -138,13 +47,30 @@ export interface LLMMessage {
   content: string | MessageContent[];
 }
 
-export type LLMRequestBody = {
+export type LLMJsonSchemaResponseFormat = {
+  type: "json_schema";
+  json_schema: {
+    name: string;
+    strict: boolean;
+    schema: Record<string, unknown>;
+  };
+};
+
+export type LLMJsonObjectResponseFormat = {
+  type: "json_object";
+};
+
+export type LLMResponseFormat =
+  | LLMJsonSchemaResponseFormat
+  | LLMJsonObjectResponseFormat;
+
+export interface LLMRequestBody {
   model: string;
   messages: LLMMessage[];
-  temperature: number;
-  max_tokens: number;
-  response_format?: CallLLMOptions["responseFormat"];
-};
+  temperature?: number;
+  max_tokens?: number;
+  response_format?: LLMResponseFormat;
+}
 
 export interface LLMUsage {
   prompt_tokens?: number;
@@ -174,6 +100,13 @@ export interface LLMResponse {
   };
 }
 
+export interface LLMTokenEstimate {
+  textTokens: number;
+  imageTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+}
+
 export interface LLMClientResult {
   success: boolean;
   content?: string;
@@ -184,6 +117,7 @@ export interface LLMClientResult {
   responseId?: string;
   error?: string;
 }
+
 export interface CallLLMOptions {
   preset?: string;
   config?: Partial<LLMModelConfig>;
@@ -196,28 +130,5 @@ export interface CallLLMOptions {
    * Normal token budgets should come from llm-config presets.
    */
   maxEstimatedTotalTokens?: number;
+  responseFormat?: LLMResponseFormat;
 }
-
-export interface LLMTokenEstimate {
-  textTokens: number;
-  imageTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-}
-
-export type LLMJsonSchemaResponseFormat = {
-  type: "json_schema";
-  json_schema: {
-    name: string;
-    strict: boolean;
-    schema: Record<string, unknown>;
-  };
-};
-
-export type LLMJsonObjectResponseFormat = {
-  type: "json_object";
-};
-
-export type LLMResponseFormat =
-  | LLMJsonSchemaResponseFormat
-  | LLMJsonObjectResponseFormat;

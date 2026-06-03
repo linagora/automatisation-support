@@ -10,6 +10,7 @@ flowchart TB
     PREVIOUS_INPUTS["<b>Input</b><br/>
     textSecurityCheckInput = {<br/>
     text<br/>
+    disabledChecks?<br/>
     }"]
   end
 
@@ -38,6 +39,11 @@ flowchart TB
       riskDetected =<br/>
       textSecurityTest.detectRisk(normalizedText)"]
 
+      T_DISABLED_ROUTE{"<b>disabledChecks includes checkName ?</b>"}
+
+      T_SKIP_DISABLED["<b>Skip disabled check</b><br/>
+      Do not add checkName to checked or failed"]
+
       T_RISK_ROUTE{"<b>riskDetected ?</b>"}
 
       T_ADD_FAILED["<b>Add failed</b><br/>
@@ -49,9 +55,12 @@ flowchart TB
       T_NEXT_TEST["<b>Continue loop</b><br/>
       next textSecurityTest"]
 
+      T_DISABLED_ROUTE -->|yes| T_SKIP_DISABLED
+      T_DISABLED_ROUTE -->|no| T_DETECT_RISK
       T_DETECT_RISK --> T_RISK_ROUTE
       T_RISK_ROUTE -->|yes| T_ADD_FAILED
       T_RISK_ROUTE -->|no| T_ADD_CHECKED
+      T_SKIP_DISABLED --> T_NEXT_TEST
       T_ADD_FAILED --> T_NEXT_TEST
       T_ADD_CHECKED --> T_NEXT_TEST
     end
@@ -85,7 +94,7 @@ flowchart TB
   classDef nextOutputBlock fill:#8b0000,stroke:#5c0000,color:#ffffff,stroke-width:1px;
 
   class PREVIOUS_INPUTS previousBlock;
-  class T_INIT,T_NORMALIZE,T_TEST_DEFINITIONS,T_DETECT_RISK,T_ADD_FAILED,T_ADD_CHECKED,T_NEXT_TEST,T_RETURN processingBlock;
+  class T_INIT,T_NORMALIZE,T_TEST_DEFINITIONS,T_DETECT_RISK,T_SKIP_DISABLED,T_ADD_FAILED,T_ADD_CHECKED,T_NEXT_TEST,T_RETURN processingBlock;
   class NEXT_OUTPUTS nextOutputBlock;
 
   style PIPELINE fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
@@ -93,12 +102,14 @@ flowchart TB
   style NEXT_STEP fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
   style TEXT_SECURITY_LOOP fill:#333333,stroke:#333333,stroke-width:1px,color:#ffffff;
   style T_RISK_ROUTE fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
+  style T_DISABLED_ROUTE fill:#fff2cc,stroke:#d6b656,stroke-width:1px,color:#000000;
 
   linkStyle default stroke:#000000,stroke-width:2px;
 ```
 
 Notes:
 - `detectRisk` returns true when the current check detects a security risk.
+- Checks listed in `disabledChecks` are skipped and do not appear in `checked` or `failed`.
 - If risk is detected, the check goes to `failed`; otherwise it goes to `checked`.
 - Pattern checks use `hasPatternRisk`, which calls `getPatternsForCheck` and `matchesAnyPattern`.
 - `getPatternsForCheck(checkName)` loads regex patterns from `textSecurityPatternDictionary[checkName]`.

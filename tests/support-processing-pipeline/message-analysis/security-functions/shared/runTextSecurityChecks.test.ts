@@ -157,6 +157,16 @@ describe("runTextSecurityChecks", function () {
     );
   });
 
+  it("omits disabled checks from checked and failed", function () {
+    const output = runTextSecurityChecks({
+      text: "urgent urgent urgent urgent urgent urgent urgent urgent help please",
+      disabledChecks: ["excessive_repetition"]
+    });
+
+    expect(output.checked).not.toContain("excessive_repetition");
+    expect(output.failed).not.toContain("excessive_repetition");
+  });
+
   it("detects unsafe or suspicious content", function () {
     expectFails(
       "The attachment contains suspicious visual content.",

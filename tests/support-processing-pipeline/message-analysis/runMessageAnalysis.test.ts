@@ -1,226 +1,177 @@
+import { describe, expect, it, vi } from "vitest";
+
 import {
   runMessageAnalysis
 } from "../../../src/support-processing-pipeline/message-analysis/runMessageAnalysis";
 
+import type {
+  AccountTrustStatus,
+  ConversationHistory,
+  LatestUserAttachment,
+  LatestUserMessage,
+  SupportTopicKnowledge
+} from "../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+import type {
+  AttachmentAnalysis,
+  MessageAnalysisSteps
+} from "../../../src/support-processing-pipeline/message-analysis/typesMessageAnalysis.types";
+
+const latestUserMessage: LatestUserMessage = {
+  id: "message_1",
+  content: "Voici une capture du probleme.",
+  channel: "email",
+  sentAt: "2026-06-03T08:00:00.000Z"
+};
+
+const latestUserAttachments: LatestUserAttachment[] = [
+  {
+    id: "local_attachment_1",
+    filename: "image.png",
+    name: "image.png",
+    mimeType: "image/png",
+    sizeInBytes: 1024,
+    sizeBytes: 1024,
+    channel: "email",
+    sentAt: "2026-06-03T08:00:01.000Z"
+  }
+];
+
+const accountTrustStatus: AccountTrustStatus = {
+  status: "trusted",
+  reasons: []
+};
+
+const supportTopicKnowledge: SupportTopicKnowledge = {
+  segments_topic: []
+};
+
+const conversationHistory = [] as ConversationHistory;
+
 describe("runMessageAnalysis", function () {
-  it("runs all message-analysis steps and returns messageAnalysisOutput", function () {
-    const ticketMemoryBeforeTurn = {
-      supportKnowledge: {
-        topics: []
-      },
-      supportKnowledgeDeltaHistory: [],
-      conversationLogs: [],
-      userInformations: {
-        userId: "user_123"
-      }
-    };
-
-    const input = {
-      latestUserMessage: {
-        text: "Bonjour, je n'arrive pas à me connecter."
-      },
-      attachments: [
-        {
-          type: "image",
-          name: "screenshot.png"
+  it("adds deterministic attachment groups to the returned turnUnderstandingDelta", async function () {
+    const attachmentAnalysis: AttachmentAnalysis = [
+      {
+        attachmentIndex: 1,
+        filename: "image.png",
+        mimeType: "image/png",
+        status: "analyzed",
+        analysis: {
+          llmDescription: "Screenshot of a folder creation modal."
         }
-      ],
-      ticketMemoryBeforeTurn
+      }
+    ];
+    const steps: MessageAnalysisSteps = {
+      runLatestUserMessageSecurity: vi.fn(async () => ({
+        decision: {
+          route: "continue" as const
+        },
+        history: {
+          checked: [],
+          failed: []
+        }
+      })),
+      runAttachmentAnalysis: vi.fn(async () => attachmentAnalysis),
+      runAttachmentAnalysisSecurity: vi.fn(async () => ({
+        decision: {
+          route: "continue" as const
+        },
+        history: {
+          checked: [],
+          failed: []
+        }
+      })),
+      runFullWeightMessageAnalysis: vi.fn(async () => ({
+        decision: {
+          route: "continue" as const
+        },
+        history: {
+          checked: [],
+          failed: []
+        },
+        analysis: {
+          user_language: "french",
+          segments_lack_comprehension: [],
+          segments_topic: [],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      }))
     };
 
-    const callOrder: string[] = [];
+    const output = await runMessageAnalysis({
+      latestUserMessage,
+      latestUserAttachments,
+      accountTrustStatus,
+      supportTopicKnowledge,
+      conversationHistory
+    }, steps);
 
-    const steps = {
-      runInputCleaning: function (stepInput: any) {
-        callOrder.push("input-cleaning");
-
-        expect(stepInput.latestUserMessage).toEqual(input.latestUserMessage);
-        expect(stepInput.attachments).toEqual(input.attachments);
-        expect(stepInput.ticketMemoryBeforeTurn).toEqual(ticketMemoryBeforeTurn);
-
-        return {
-          shouldAnalyzeMessage: true,
-          shouldDescribeAttachments: true,
-          reason: "message_has_attachment"
-        };
-      },
-
-      runAttachmentAnalysis: function (stepInput: any) {
-        callOrder.push("attachment-analysis");
-
-        expect(stepInput.inputCleaning).toEqual({
-          shouldAnalyzeMessage: true,
-          shouldDescribeAttachments: true,
-          reason: "message_has_attachment"
-        });
-
-        return {
-          status: stepInput.inputCleaning.shouldDescribeAttachments ? "described" : "skipped",
-          extractedText: "Erreur de connexion visible sur la capture."
-        };
-      },
-
-      decideRunPreAnalysis: function (stepInput: any) {
-        callOrder.push("run-decision-pre-analysis");
-
-        expect(stepInput.attachmentAnalysis).toEqual({
-          status: "described",
-          extractedText: "Erreur de connexion visible sur la capture."
-        });
-
-        return {
-          shouldRunPreAnalysisLlm0: true,
-          shouldRunSupportAnalysisLlm1: true,
-          reason: "support_request_confirmed"
-        };
-      },
-
-      runPreAnalysisLlm0: function (stepInput: any) {
-        callOrder.push("pre-analysis-llm0");
-
-        expect(stepInput.runDecisionPreAnalysis).toEqual({
-          shouldRunPreAnalysisLlm0: true,
-          shouldRunSupportAnalysisLlm1: true,
-          reason: "support_request_confirmed"
-        });
-
-        return {
-          route: "run_support_analysis_llm1",
-          reason: "support_request_confirmed"
-        };
-      },
-
-      runSupportAnalysisLlm1: function (stepInput: any) {
-        callOrder.push("support-analysis-llm1");
-
-        expect(stepInput.preAnalysisLlm0).toEqual({
-          route: "run_support_analysis_llm1",
-          reason: "support_request_confirmed"
-        });
-
-        return {
-          userLanguage: "fr",
-          topics: [
-            {
-              id_topic: 1,
-              topic_label: "Problème de connexion"
-            }
-          ]
-        };
-      },
-
-      assembleSupportKnowledge: function (stepInput: any) {
-        callOrder.push("support-knowledge-assembly");
-
-        expect(stepInput.inputCleaning).toEqual({
-          shouldAnalyzeMessage: true,
-          shouldDescribeAttachments: true,
-          reason: "message_has_attachment"
-        });
-
-        expect(stepInput.attachmentAnalysis).toEqual({
-          status: "described",
-          extractedText: "Erreur de connexion visible sur la capture."
-        });
-
-        expect(stepInput.runDecisionPreAnalysis).toEqual({
-          shouldRunPreAnalysisLlm0: true,
-          shouldRunSupportAnalysisLlm1: true,
-          reason: "support_request_confirmed"
-        });
-
-        expect(stepInput.preAnalysisLlm0).toEqual({
-          route: "run_support_analysis_llm1",
-          reason: "support_request_confirmed"
-        });
-
-        expect(stepInput.supportAnalysisLlm1).toEqual({
-          userLanguage: "fr",
-          topics: [
-            {
-              id_topic: 1,
-              topic_label: "Problème de connexion"
-            }
-          ]
-        });
-
-        return {
-          supportKnowledgeAfterTurn: {
-            userLanguage: "fr",
-            topics: [
-              {
-                id_topic: 1,
-                topic_label: "Problème de connexion"
-              }
-            ]
-          },
-          supportKnowledgeDelta: {
-            hasNewInformation: true,
-            newTopics: [
-              {
-                id_topic: 1,
-                topic_label: "Problème de connexion"
-              }
-            ],
-            updatedTopics: [],
-            resolvedTopics: [],
-            newSignals: [],
-            newScopeBoundaries: [],
-            warningComprehensionChanged: false
-          }
-        };
-      }
-    };
-
-    const output = runMessageAnalysis(input, steps);
-
-    expect(callOrder).toEqual([
-      "input-cleaning",
-      "attachment-analysis",
-      "run-decision-pre-analysis",
-      "pre-analysis-llm0",
-      "support-analysis-llm1",
-      "support-knowledge-assembly"
-    ]);
-
-    expect(output).toEqual({
-      supportKnowledgeAfterTurn: {
-        userLanguage: "fr",
-        topics: [
-          {
-            id_topic: 1,
-            topic_label: "Problème de connexion"
-          }
-        ]
-      },
-      supportKnowledgeDelta: {
-        hasNewInformation: true,
-        newTopics: [
-          {
-            id_topic: 1,
-            topic_label: "Problème de connexion"
-          }
-        ],
-        updatedTopics: [],
-        resolvedTopics: [],
-        newSignals: [],
-        newScopeBoundaries: [],
-        warningComprehensionChanged: false
-      }
+    expect(steps.runAttachmentAnalysis).toHaveBeenCalledWith({
+      latestUserMessage,
+      latestUserAttachments
     });
+    expect(steps.runAttachmentAnalysisSecurity).toHaveBeenCalledWith({
+      attachmentAnalysis,
+      accountTrustStatus,
+      latestUserMessageContent: latestUserMessage.content
+    });
+    expect(steps.runFullWeightMessageAnalysis).toHaveBeenCalledWith({
+      latestUserMessage,
+      supportTopicKnowledge,
+      conversationHistory,
+      attachmentAnalysis
+    });
+    expect(output.attachments?.images).toHaveLength(1);
+    expect(output.attachments?.images[0]).toMatchObject({
+      id: "local_attachment_1",
+      kind: "image",
+      status: "analyzed"
+    });
+    expect(output.attachments?.images[0]).not.toHaveProperty("attachment");
+    expect(output.attachments?.images[0]).not.toHaveProperty("url");
+    expect(output.attachments?.images[0]).not.toHaveProperty("path");
+    expect(output.attachments?.videos).toEqual([]);
+    expect(output.attachments?.other).toEqual([]);
   });
 
-  it("throws an explicit error when a required step is missing", function () {
-    const input = {
-      latestUserMessage: {
-        text: "Bonjour"
-      },
-      attachments: [],
-      ticketMemoryBeforeTurn: null
+  it("does not add attachments when no attachment was received", async function () {
+    const steps: MessageAnalysisSteps = {
+      runLatestUserMessageSecurity: vi.fn(async () => ({
+        decision: {
+          route: "continue" as const
+        },
+        history: {
+          checked: [],
+          failed: []
+        }
+      })),
+      runAnalysisGate: vi.fn(async () => ({
+        decision: {
+          route: "light_weight_first" as const
+        },
+        history: {
+          prefer_light_first: [],
+          prefer_full_direct: []
+        }
+      })),
+      runLightWeightMessageAnalysis: vi.fn(async () => ({
+        shouldRunSupportMessageAnalysis: false,
+        segments_signal: [],
+        segments_scope_boundary: [],
+        segments_suspicious: []
+      }))
     };
 
-    expect(function () {
-      runMessageAnalysis(input);
-    }).toThrow("runInputCleaning is not implemented yet");
+    const output = await runMessageAnalysis({
+      latestUserMessage,
+      latestUserAttachments: [],
+      accountTrustStatus,
+      supportTopicKnowledge,
+      conversationHistory
+    }, steps);
+
+    expect(output.attachments).toBeUndefined();
+    expect(steps.runAttachmentAnalysis).toBeUndefined();
   });
 });

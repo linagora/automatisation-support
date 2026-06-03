@@ -16,9 +16,17 @@ import type {
   TextSecurityCheckName
 } from "./security-functions/shared/runTextSecurityChecks";
 import type {
-  AttachmentReadinessCheckName,
-  AttachmentReadinessDecision
+  AttachmentAnalysis,
+  AttachmentAnalysisInput,
+  AttachmentReadinessCheckName
 } from "./attachment-analysis/typesAttachmentAnalysis.types";
+import type {
+  FullWeightMessageAnalysisOutput
+} from "./fullweight-message-analysis/typesFullWeightMessageAnalysis.types";
+
+export type {
+  FullWeightMessageAnalysisOutput
+} from "./fullweight-message-analysis/typesFullWeightMessageAnalysis.types";
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -43,10 +51,15 @@ type SecurityDecisionRoute =
   | "continue"
   | "stop";
 
-type SecurityLlmReviewRoute =
+export type SecurityLlmReviewRoute =
   | "continue"
   | "stop"
   | "failed";
+
+export type SecurityLlmReview = {
+  route: SecurityLlmReviewRoute;
+  reason?: string;
+};
 
 export type LatestUserMessageSecurityCheckName =
   TextSecurityCheckName;
@@ -61,19 +74,7 @@ export type AttachmentAnalysisSecurityCheckName =
 type SecurityDecisionHistory<TCheckName extends string> = {
   checked: TCheckName[];
   failed: TCheckName[];
-  llmReview?: {
-    route: SecurityLlmReviewRoute;
-    reason?: string;
-  };
-};
-
-type AttachmentAnalysisSecurityDecisionHistory<TCheckName extends string> = {
-  checked: TCheckName[];
-  failed: TCheckName[];
-  llmReview?: {
-    route: SecurityLlmReviewRoute;
-    reason?: string;
-  };
+  llmReview?: SecurityLlmReview;
 };
 
 export type LatestUserMessageSecurityInput = {
@@ -88,35 +89,10 @@ export type LatestUserMessageSecurityDecision = {
   history: SecurityDecisionHistory<LatestUserMessageSecurityCheckName>;
 };
 
-/* =====================================================
- * 6.2 attachmentAnalysis
- * ===================================================== */
-
-export type AttachmentAnalysisInput = {
-  latestUserMessage: LatestUserMessage;
-  latestUserAttachments: LatestUserAttachment[];
+export type {
+  AttachmentAnalysis,
+  AttachmentAnalysisInput
 };
-
-export type AttachmentAnalysisItem = {
-  filename: string;
-  status:
-    | "analyzed"
-    | "failed"
-    | "refused"
-    | "suspicious";
-  reason?: string;
-  readinessDecision?: AttachmentReadinessDecision;
-  analysis?: {
-    summary?: string;
-    other?: string;
-    llmDescription?: string;
-    visionDescription?: string;
-    structuredObservations?: unknown;
-    visionObservations?: unknown;
-  };
-};
-
-export type AttachmentAnalysis = AttachmentAnalysisItem[];
 
 /* =====================================================
  * 6.3 attachmentAnalysisSecurityDecision
@@ -132,7 +108,7 @@ export type AttachmentAnalysisSecurityDecision = {
   decision: {
     route: SecurityDecisionRoute;
   };
-  history: AttachmentAnalysisSecurityDecisionHistory<AttachmentAnalysisSecurityCheckName>;
+  history: SecurityDecisionHistory<AttachmentAnalysisSecurityCheckName>;
 };
 
 /* =====================================================
@@ -218,31 +194,25 @@ export type FullWeightMessageAnalysisInput = {
   lightWeightMessageAnalysis?: LightWeightMessageAnalysis;
 };
 
-export type FullWeightMessageAnalysis = {
-  user_language?: string;
-  segments_lack_comprehension: TurnUnderstandingDelta["segments_lack_comprehension"];
-  segments_topic: TurnUnderstandingDelta["segments_topic"];
-  segments_signal: TurnUnderstandingDelta["segments_signal"];
-  segments_scope_boundary: TurnUnderstandingDelta["segments_scope_boundary"];
-  segments_suspicious: TurnUnderstandingDelta["segments_suspicious"];
-};
-
 /* =====================================================
  * 6. turnUnderstandingDelta
  * ===================================================== */
 
 export type SecurityGateStoppedTurnUnderstandingDeltaInput = {
   securityGateSummary: SecurityGateSummary;
+  latestUserAttachments?: LatestUserAttachment[];
+  attachmentAnalysis?: AttachmentAnalysis;
   supportTopicKnowledge: SupportTopicKnowledge;
   conversationHistory: ConversationHistory;
 };
 
 export type CompletedAnalysisTurnUnderstandingDeltaInput = {
   securityGateSummary: SecurityGateSummary;
+  latestUserAttachments: LatestUserAttachment[];
   attachmentAnalysis?: AttachmentAnalysis;
-  analysisGate: AnalysisGate;
+  analysisGate?: AnalysisGate;
   lightWeightMessageAnalysis?: LightWeightMessageAnalysis;
-  fullWeightMessageAnalysis?: FullWeightMessageAnalysis;
+  fullWeightMessageAnalysisOutput?: FullWeightMessageAnalysisOutput;
   supportTopicKnowledge: SupportTopicKnowledge;
   conversationHistory: ConversationHistory;
 };
@@ -283,7 +253,7 @@ export type MessageAnalysisSteps = {
 
   runFullWeightMessageAnalysis?: MessageAnalysisStep<
     FullWeightMessageAnalysisInput,
-    FullWeightMessageAnalysis
+    FullWeightMessageAnalysisOutput
   >;
 
   assembleTurnUnderstandingDelta?: MessageAnalysisStep<

@@ -26,6 +26,7 @@ function runResponsePlan(input: ResponsePlanInput): ResponsePlan {
     accountTrustStatus,
     accountProfile,
     accountInteractionTraits,
+    supportTopicKnowledge,
     turnUnderstandingDelta,
     possibleSolutions,
     decisionSearchingSolution
@@ -64,6 +65,7 @@ function runResponsePlan(input: ResponsePlanInput): ResponsePlan {
       turnUnderstandingDelta.segments_scope_boundary;
 
     const topicPlanInput: TopicPlanInput = {
+      supportTopicKnowledge,
       turnUnderstandingDelta,
       possibleSolutions,
       decisionSearchingSolution
