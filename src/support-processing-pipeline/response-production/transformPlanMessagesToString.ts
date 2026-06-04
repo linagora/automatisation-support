@@ -1,7 +1,4 @@
 import { dataBaseResponse } from "./dataBaseResponse";
-import {
-  buildTopicDisplayLabel
-} from "../buildTopicDisplayLabel";
 
 import type {
   LackComprehensionPlanMessage,
@@ -125,6 +122,28 @@ function valueFromLabels(labels: LabelDatabase, key: unknown): string {
   }
 
   return labels[key] || labels.default;
+}
+
+function nonEmpty(value: string | undefined): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function buildTopicDisplayLabel(
+  title: TopicPlanMessage["topics_responses"][number]["topic_response"]["title"]
+): string {
+  const structuredParts = [
+    title.tool_or_product,
+    title.topic_action,
+    title.topic_object
+  ];
+
+  if (structuredParts.every(nonEmpty)) {
+    return structuredParts.map((part) => {
+      return part.trim();
+    }).join(" : ");
+  }
+
+  return "Sujet support";
 }
 
 function transformSecurityGatePlanMessage(

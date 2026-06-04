@@ -155,6 +155,20 @@ describe("runResponseProduction", function () {
     expect(output.messages[0].content).not.toContain("Legacy label");
   });
 
+  it("uses a safe fallback topic title label when structured topic fields are missing", function () {
+    const output = runResponseProduction(
+      buildTopicResponseInput(undefined, {
+        topic_id: 1,
+        topic_category: "bug",
+        matched_historical_topic: false
+      })
+    );
+
+    expect(output.messages[0].content).toContain(
+      "Sujet 1 - Bug - Sujet support - (Nouveau)"
+    );
+  });
+
   it("keeps security and handover messages in pipeline order", function () {
     const input: ResponseProductionInput = {
       responsePlan: {
