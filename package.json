@@ -18,6 +18,7 @@
     "test:message-analysis": "tsx scripts/message-analysis/test-message-analysis.ts",
     "test:support-processing-pipeline": "tsx tests/support-processing-pipeline/test-support-processing-pipeline.ts",
     "test:support-processing": "tsx scripts/support-processing/test-support-processing.ts",
+    "test:support-processing:mini": "tsx scripts/support-processing/test-support-processing-mini-suite.ts",
     "matrix:send-test": "tsx scripts/matrix/send-test-matrix-message.ts",
     "matrix:listen": "tsx scripts/matrix/listen-matrix-messages.ts"
   },

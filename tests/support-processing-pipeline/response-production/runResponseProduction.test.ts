@@ -18,7 +18,8 @@ function buildTopicResponseInput(
     topic_action: "connect",
     topic_object: "account",
     matched_historical_topic: false
-  }
+  },
+  optionalEvidenceRequest?: ResponseProductionInput["responsePlan"]["messagesPlan"]["topicPlanMessages"][number]["topics_responses"][number]["topic_response"]["optional_evidence_requested"]
 ): ResponseProductionInput {
   return {
     responsePlan: {
@@ -41,6 +42,12 @@ function buildTopicResponseInput(
                 topic_response: {
                   title,
                   updated_fields_acknowledgement: {},
+                  ...(optionalEvidenceRequest
+                    ? {
+                        optional_evidence_requested:
+                          optionalEvidenceRequest
+                      }
+                    : {}),
                   main_response: {
                     type: "acknowledgement"
                   },
@@ -107,6 +114,12 @@ describe("runResponseProduction", function () {
     );
   });
 
+  it("does not render undefined when updated fields acknowledgement is empty", function () {
+    const output = runResponseProduction(buildTopicResponseInput());
+
+    expect(output.messages[0].content).not.toContain("undefined");
+  });
+
   it("adds a global acknowledgement for one analyzed image", function () {
     const output = runResponseProduction(
       buildTopicResponseInput(buildAttachments(["analyzed"], "images"))
@@ -155,6 +168,22 @@ describe("runResponseProduction", function () {
     expect(output.messages[0].content).not.toContain("Legacy label");
   });
 
+  it("builds topic title label from partial structured topic fields", function () {
+    const output = runResponseProduction(
+      buildTopicResponseInput(undefined, {
+        topic_id: 1,
+        topic_category: "access_security",
+        tool_or_product: "Twake",
+        topic_action: "log in",
+        matched_historical_topic: false
+      })
+    );
+
+    expect(output.messages[0].content).toContain(
+      "Sujet 1 - Accès / sécurité - Twake : log in - (Nouveau)"
+    );
+  });
+
   it("uses a safe fallback topic title label when structured topic fields are missing", function () {
     const output = runResponseProduction(
       buildTopicResponseInput(undefined, {
@@ -166,6 +195,47 @@ describe("runResponseProduction", function () {
 
     expect(output.messages[0].content).toContain(
       "Sujet 1 - Bug - Sujet support - (Nouveau)"
+    );
+  });
+
+  it("adds optional visual evidence wording without changing acknowledgement response", function () {
+    const output = runResponseProduction(
+      buildTopicResponseInput(undefined, undefined, {
+        types: ["screenshot", "video"],
+        reason: "bug_visual_context_helpful"
+      })
+    );
+
+    expect(output.messages[0].content).toContain(
+      "Nous avons désormais toutes les informations"
+    );
+    expect(output.messages[0].content).toContain(
+      "Si possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support."
+    );
+  });
+
+  it("adds optional visual evidence wording after requested fields", function () {
+    const input = buildTopicResponseInput(undefined, undefined, {
+      types: ["screenshot", "video"],
+      reason: "bug_visual_context_helpful"
+    });
+
+    input.responsePlan.messagesPlan.topicPlanMessages[0].topics_responses[0]
+      .topic_response.main_response = {
+        type: "ask_fields",
+        details: {
+          fields_requested: ["platform"]
+        }
+      };
+
+    const output = runResponseProduction(input);
+    const content = output.messages[0].content;
+
+    expect(content).toContain(
+      "- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop."
+    );
+    expect(content.indexOf("- Plateforme")).toBeLessThan(
+      content.indexOf("Si possible, vous pouvez aussi joindre")
     );
   });
 

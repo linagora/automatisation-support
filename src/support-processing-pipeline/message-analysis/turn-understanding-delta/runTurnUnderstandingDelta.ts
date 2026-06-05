@@ -463,6 +463,61 @@ function cleanTestedActionsDelta(
   return cleanedTestedActions;
 }
 
+function cleanSegmentVerbatimsDelta(
+  returnedSegmentVerbatims: unknown,
+  existingSegmentVerbatims: string[] | undefined,
+  numberOfCleanedFields: Counter
+): string[] {
+  if (!Array.isArray(returnedSegmentVerbatims)) {
+    return [];
+  }
+
+  const existingVerbatims = new Set(existingSegmentVerbatims ?? []);
+  const cleanedSegmentVerbatims: string[] = [];
+
+  for (const returnedSegmentVerbatim of returnedSegmentVerbatims) {
+    if (!isNonEmptyString(returnedSegmentVerbatim)) {
+      continue;
+    }
+
+    const trimmedSegmentVerbatim = returnedSegmentVerbatim.trim();
+
+    if (
+      existingVerbatims.has(trimmedSegmentVerbatim) ||
+      cleanedSegmentVerbatims.includes(trimmedSegmentVerbatim)
+    ) {
+      numberOfCleanedFields.value += 1;
+      continue;
+    }
+
+    cleanedSegmentVerbatims.push(trimmedSegmentVerbatim);
+  }
+
+  return cleanedSegmentVerbatims;
+}
+
+function normalizeSegmentVerbatims(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const segmentVerbatims: string[] = [];
+
+  for (const item of value) {
+    if (!isNonEmptyString(item)) {
+      continue;
+    }
+
+    const trimmedItem = item.trim();
+
+    if (!segmentVerbatims.includes(trimmedItem)) {
+      segmentVerbatims.push(trimmedItem);
+    }
+  }
+
+  return segmentVerbatims;
+}
+
 function shouldKeepUserGoal(
   returnedUserGoal: unknown,
   existingUserGoal: string | undefined,
@@ -504,6 +559,16 @@ function buildMinimalMatchedTopicForReview(
     cleanedTopic.tested_actions = topicRecord.tested_actions;
   }
 
+  if (Array.isArray(topicRecord.segment_verbatims)) {
+    const segmentVerbatims = normalizeSegmentVerbatims(
+      topicRecord.segment_verbatims
+    );
+
+    if (segmentVerbatims.length > 0) {
+      cleanedTopic.segment_verbatims = segmentVerbatims;
+    }
+  }
+
   if (isNonEmptyString(topicRecord.user_goal)) {
     cleanedTopic.user_goal = topicRecord.user_goal;
   }
@@ -528,6 +593,13 @@ function cleanedMatchedTopicHasUsefulDelta(
   if (
     Array.isArray(cleanedTopicDelta.tested_actions) &&
     cleanedTopicDelta.tested_actions.length > 0
+  ) {
+    return true;
+  }
+
+  if (
+    Array.isArray(cleanedTopicDelta.segment_verbatims) &&
+    cleanedTopicDelta.segment_verbatims.length > 0
   ) {
     return true;
   }
@@ -573,6 +645,16 @@ function cleanMatchedHistoricalTopic(
 
   if (cleanedTestedActions.length > 0) {
     cleanedTopicDelta.tested_actions = cleanedTestedActions;
+  }
+
+  const cleanedSegmentVerbatims = cleanSegmentVerbatimsDelta(
+    topicRecord.segment_verbatims,
+    existingTopic.segment_verbatims,
+    numberOfCleanedFields
+  );
+
+  if (cleanedSegmentVerbatims.length > 0) {
+    cleanedTopicDelta.segment_verbatims = cleanedSegmentVerbatims;
   }
 
   if (

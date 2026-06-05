@@ -111,11 +111,75 @@ describe("fullweight attachment flags contract", function () {
     expect(prompt.userPrompt).not.toContain("topic_label");
   });
 
+  it("aligns topic identity fields with the nullable schema contract", function () {
+    const prompt = buildFullWeightPrompt({
+      latestUserMessage,
+      supportTopicKnowledge,
+      conversationHistory,
+      attachmentAnalysis
+    });
+
+    expect(prompt.systemPrompt).toContain(
+      "return null if not explicitly available"
+    );
+    expect(prompt.systemPrompt).not.toContain(
+      "return \"\" if not explicit"
+    );
+    expect(prompt.systemPrompt).toContain(
+      "tool_or_product: product, tool, app, service, or module explicitly mentioned by the user or present in the matched historical topic."
+    );
+    expect(prompt.systemPrompt).toContain(
+      "topic_action: user action or product action involved in the issue"
+    );
+    expect(prompt.systemPrompt).toContain(
+      "topic_object: object targeted by the action"
+    );
+    expect(prompt.systemPrompt).toContain(
+      "Do not invent tool_or_product, topic_action, or topic_object to satisfy the schema."
+    );
+    expect(prompt.systemPrompt).toContain(
+      "If matched_historical_topic = yes, reuse tool_or_product, topic_action, and topic_object from the matched topic unless the user explicitly corrects them."
+    );
+  });
+
   it("does not allow topic_label in the response schema", function () {
     const serializedSchema = JSON.stringify(
       fullWeightMessageAnalysisResponseFormat
     );
 
     expect(serializedSchema).not.toContain("topic_label");
+  });
+
+  it("asks the LLM to output exact topic segment verbatims without rewriting", function () {
+    const prompt = buildFullWeightPrompt({
+      latestUserMessage,
+      supportTopicKnowledge,
+      conversationHistory,
+      attachmentAnalysis
+    });
+
+    expect(prompt.systemPrompt).toContain(
+      "segment_verbatims must contain the exact user message fragments that support this topic."
+    );
+    expect(prompt.systemPrompt).toContain(
+      "Preserve the user's original wording and language."
+    );
+    expect(prompt.systemPrompt).toContain(
+      "Do not translate, summarize, or rewrite."
+    );
+    expect(prompt.systemPrompt).toContain(
+      "return them as separate array items in their original order."
+    );
+    expect(prompt.systemPrompt).toContain(
+      "Do not include attachment analysis text as user verbatim."
+    );
+  });
+
+  it("allows topic segment verbatims in the response schema", function () {
+    const serializedSchema = JSON.stringify(
+      fullWeightMessageAnalysisResponseFormat
+    );
+
+    expect(serializedSchema).toContain("segment_verbatims");
   });
 });

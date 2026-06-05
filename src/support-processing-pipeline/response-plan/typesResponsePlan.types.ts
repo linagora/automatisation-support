@@ -97,11 +97,17 @@ export type TopicNextStep =
   | "handover"
   | "wait_for_support";
 
+export type OptionalEvidenceRequest = {
+  types: ("screenshot" | "video")[];
+  reason: "bug_visual_context_helpful";
+};
+
 export type DecisionSearchingSolutionForResponsePlan = {
   topics: {
     topic_id: number;
     type: "ask_more_info" | "acknowledgement" | "solution_searching";
     missing_fields?: string[];
+    optional_evidence_requested?: OptionalEvidenceRequest;
   }[];
 };
 
@@ -130,6 +136,7 @@ export type TopicPlanMessage = {
         topic_details?: TopicDetails;
         tested_solutions?: TestedSolution[];
       };
+      optional_evidence_requested?: OptionalEvidenceRequest;
       main_response: TopicMainResponse;
       next_step: TopicNextStep;
     };

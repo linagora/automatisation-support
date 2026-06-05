@@ -135,9 +135,9 @@ function buildTopicDisplayLabel(
     title.tool_or_product,
     title.topic_action,
     title.topic_object
-  ];
+  ].filter(nonEmpty);
 
-  if (structuredParts.every(nonEmpty)) {
+  if (structuredParts.length > 0) {
     return structuredParts.map((part) => {
       return part.trim();
     }).join(" : ");
@@ -252,6 +252,23 @@ function transformTopicMainResponse(
   }
 
   return templates.acknowledgement;
+}
+
+function transformOptionalEvidenceRequest(
+  userLanguage: ResponseLanguage,
+  optionalEvidenceRequest: TopicPlanMessage["topics_responses"][number]["topic_response"]["optional_evidence_requested"]
+): string | undefined {
+  if (
+    optionalEvidenceRequest?.reason !== "bug_visual_context_helpful" ||
+    !optionalEvidenceRequest.types.includes("screenshot") ||
+    !optionalEvidenceRequest.types.includes("video")
+  ) {
+    return undefined;
+  }
+
+  return userLanguage === "french"
+    ? "Si possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support."
+    : "If possible, you can also attach a screenshot or short video to help support.";
 }
 
 function formatRequestedField(
@@ -545,7 +562,7 @@ function transformTestedSolutions(
 function transformUpdatedFieldsAcknowledgement(
   userLanguage: ResponseLanguage,
   updatedFieldsAcknowledgement: TopicPlanMessage["topics_responses"][number]["topic_response"]["updated_fields_acknowledgement"]
-): string {
+): string | undefined {
   const templates = dataBaseResponse[userLanguage].topic;
   const updatedDetails = transformUpdatedTopicDetails(
     userLanguage,
@@ -567,7 +584,7 @@ function transformUpdatedFieldsAcknowledgement(
 
   messages.push(...testedSolutions);
 
-  return messages.length > 0 ? messages.join(" ") : "undefined";
+  return messages.length > 0 ? messages.join(" ") : undefined;
 }
 
 function transformNextStep(userLanguage: ResponseLanguage, nextStep: unknown): string {
@@ -585,8 +602,14 @@ function transformTopicResponse(
       topicResponse.updated_fields_acknowledgement
     ),
     transformTopicMainResponse(userLanguage, topicResponse.main_response),
+    transformOptionalEvidenceRequest(
+      userLanguage,
+      topicResponse.optional_evidence_requested
+    ),
     transformNextStep(userLanguage, topicResponse.next_step)
-  ].join("\n");
+  ].filter((part): part is string => {
+    return part !== undefined && part.length > 0;
+  }).join("\n");
 }
 
 function transformTopicPlanMessage(

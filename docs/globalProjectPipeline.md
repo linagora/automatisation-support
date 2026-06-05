@@ -12,6 +12,11 @@ flowchart LR
             userId / roomId<br/>
             messageId<br/>
             attachments?<br/>
+            }<br/><br/>
+            events = {<br/>
+            message_received<br/>
+            typing_started<br/>
+            typing_stopped / inactivity<br/>
             }"]
 
             TICKET_DB["Base de connaissance tickets<br/><br/>
@@ -62,71 +67,180 @@ flowchart LR
         subgraph CODE["automatisation-support"]
             direction TB
 
-            LISTENER["Listener messagerie<br/><br/>
-            reçoit : messages / typing<br/>
-            envoie : réponses bot"]
+            subgraph LISTENER_STEP["Listener messagerie — normalise les événements"]
+                direction LR
 
-            MATCH["Matching<br/>message / ticket / user<br/><br/>
-            inputs = {<br/>
-            messageId<br/>
-            userId / roomId<br/>
-            }"]
+                LISTENER_INPUT["<b>Input</b><br/><br/>
+                messagingEvent = {<br/>
+                message?<br/>
+                typingEvent?<br/>
+                }<br/><br/>
+                message = {<br/>
+                content<br/>
+                userId<br/>
+                roomId<br/>
+                messageId<br/>
+                attachments?<br/>
+                createdAt<br/>
+                }"]
 
-            BUFFER["Buffer worker<br/><br/>
-            accumule les messages<br/>
-            attend fin typing / timeout<br/>
-            prépare un batch"]
+                LISTENER_OUTPUT["<b>Output</b><br/><br/>
+                listenerEvent = {<br/>
+                message?<br/>
+                typingState?<br/>
+                }<br/><br/>
+                typingState = {<br/>
+                userId<br/>
+                roomId<br/>
+                isTyping<br/>
+                updatedAt<br/>
+                }"]
 
-            BUILD_INPUT["Build pipeline input<br/><br/>
-            SupportProcessingPipelineInput = {<br/>
-            latestUserMessage<br/>
-            latestUserAttachments<br/>
-            account context<br/>
-            supportTopicKnowledge<br/>
-            conversationHistory<br/>
-            }"]
+                LISTENER_INPUT ~~~ LISTENER_OUTPUT
+            end
 
-            MESSAGE_ANALYSIS["Message analysis<br/><br/>
-            security gates<br/>
-            attachment analysis<br/>
-            fullweight analysis<br/>
-            turnUnderstandingDelta"]
+            subgraph BUFFER_STEP["Buffer worker — stack par roomId / userId + flush après X secondes"]
+                direction LR
 
-            SEARCH_DECISION["Search decision<br/><br/>
-            décide :<br/>
-            ask_more_info<br/>
-            retrieve_solution<br/>
-            continue_without_rag"]
+                BUFFER_INPUT["<b>Input</b><br/><br/>
+                listenerEvent = {<br/>
+                message?<br/>
+                typingState?<br/>
+                }"]
 
-            SOLUTION_RETRIEVAL["Solution retrieval<br/><br/>
-            récupère solutions possibles<br/>
-            si le topic est assez qualifié"]
+                BUFFER_OUTPUT["<b>Output</b><br/><br/>
+                bufferedMessages = {<br/>
+                messages[]<br/>
+                }<br/><br/>
+                messages[] = messages envoyés<br/>
+                par un même user<br/><br/>
+                Si plusieurs users sont prêts :<br/>
+                plusieurs outputs successifs"]
 
-            RESPONSE_PLAN["Response plan<br/><br/>
-            construit le plan<br/>
-            topic responses<br/>
-            signal responses<br/>
-            handover / scope boundary"]
+                BUFFER_INPUT ~~~ BUFFER_OUTPUT
+            end
 
-            RESPONSE_PRODUCTION["Response production<br/><br/>
-            génère les messages<br/>
-            prêts à envoyer"]
+            subgraph MATCH_STEP["Matching — messages / ticket(s) / user"]
+                direction LR
 
-            PATCHES_PRODUCTION["Patches production<br/><br/>
-            analysisPatch<br/>
-            securityPatch<br/>
-            responsePatch<br/>
-            metadataPatch"]
+                MATCH_INPUT["<b>Input</b><br/><br/>
+                bufferedMessages = {<br/>
+                messages[]<br/>
+                }<br/><br/>
+                Chaque message contient déjà :<br/>
+                userId<br/>
+                roomId<br/>
+                messageId<br/>
+                attachments?<br/>
+                createdAt"]
 
-            LISTENER --> MATCH
-            MATCH --> BUFFER
-            BUFFER --> BUILD_INPUT
-            BUILD_INPUT --> MESSAGE_ANALYSIS
-            MESSAGE_ANALYSIS --> SEARCH_DECISION
-            SEARCH_DECISION --> SOLUTION_RETRIEVAL
-            SOLUTION_RETRIEVAL --> RESPONSE_PLAN
-            RESPONSE_PLAN --> RESPONSE_PRODUCTION
-            RESPONSE_PRODUCTION --> PATCHES_PRODUCTION
+                MATCH_OUTPUT["<b>Output</b><br/><br/>
+                matchingResult = {<br/>
+                messages[]<br/>
+                tickets[]<br/>
+                user?<br/>
+                }<br/><br/>
+                tickets[] = en général 1 ticket<br/>
+                user? = 0 ou 1 user connu"]
+
+                MATCH_INPUT ~~~ MATCH_OUTPUT
+            end
+
+            subgraph BUILD_INPUT_STEP["Build pipeline input — prépare l'objet central"]
+                direction LR
+
+                BUILD_INPUT_INPUT["<b>Input</b><br/><br/>
+                matchingResult = {<br/>
+                messages[]<br/>
+                tickets[]<br/>
+                user?<br/>
+                }"]
+
+                BUILD_INPUT_OUTPUT["<b>Output</b><br/><br/>
+                SupportProcessingPipelineInput = {<br/>
+                latestUserMessage<br/>
+                latestUserAttachments<br/>
+                accountContext<br/>
+                supportTopicKnowledge<br/>
+                conversationHistory<br/>
+                }"]
+
+                BUILD_INPUT_INPUT ~~~ BUILD_INPUT_OUTPUT
+            end
+
+            subgraph SUPPORT_PIPELINE_STEP["Support processing pipeline — analyse, RAG, décision et génération"]
+                direction LR
+
+                SUPPORT_PIPELINE_INPUT["<b>Input</b><br/><br/>
+                SupportProcessingPipelineInput = {<br/>
+                latestUserMessage<br/>
+                latestUserAttachments<br/>
+                accountContext<br/>
+                supportTopicKnowledge<br/>
+                conversationHistory<br/>
+                }"]
+
+                SUPPORT_PIPELINE_OUTPUT["<b>Output</b><br/><br/>
+                SupportProcessingPipelineOutput = {<br/>
+                messagesToSend[]<br/>
+                patches<br/>
+                }<br/><br/>
+                patches = {<br/>
+                analysisPatch?<br/>
+                securityPatch?<br/>
+                responsePatch?<br/>
+                metadataPatch?<br/>
+                }"]
+
+                SUPPORT_PIPELINE_INPUT ~~~ SUPPORT_PIPELINE_OUTPUT
+            end
+
+            subgraph PATCH_APPLICATION_STEP["Patch application — met à jour les bases de connaissance"]
+                direction LR
+
+                PATCH_APPLICATION_INPUT["<b>Input</b><br/><br/>
+                patches = {<br/>
+                analysisPatch?<br/>
+                securityPatch?<br/>
+                responsePatch?<br/>
+                metadataPatch?<br/>
+                }<br/><br/>
+                tickets[]<br/>
+                user?"]
+
+                PATCH_APPLICATION_OUTPUT["<b>Output</b><br/><br/>
+                persistenceResult = {<br/>
+                updatedTickets[]<br/>
+                updatedUser?<br/>
+                storedMetadata?<br/>
+                }"]
+
+                PATCH_APPLICATION_INPUT ~~~ PATCH_APPLICATION_OUTPUT
+            end
+
+            subgraph MESSAGE_DELIVERY_STEP["Message delivery — prépare et envoie les réponses"]
+                direction LR
+
+                MESSAGE_DELIVERY_INPUT["<b>Input</b><br/><br/>
+                messagesToSend[]<br/>
+                persistenceResult?"]
+
+                MESSAGE_DELIVERY_OUTPUT["<b>Output</b><br/><br/>
+                sentMessages = {<br/>
+                deliveredMessages[]<br/>
+                failedMessages[]?<br/>
+                deliveryMetadata<br/>
+                }"]
+
+                MESSAGE_DELIVERY_INPUT ~~~ MESSAGE_DELIVERY_OUTPUT
+            end
+
+            LISTENER_STEP --> BUFFER_STEP
+            BUFFER_STEP --> MATCH_STEP
+            MATCH_STEP --> BUILD_INPUT_STEP
+            BUILD_INPUT_STEP --> SUPPORT_PIPELINE_STEP
+            SUPPORT_PIPELINE_STEP --> PATCH_APPLICATION_STEP
+            PATCH_APPLICATION_STEP --> MESSAGE_DELIVERY_STEP
         end
 
         EXT ~~~ CODE
@@ -141,12 +255,27 @@ flowchart LR
     classDef pipeline fill:#ffffff,stroke:#2b5d9a,stroke-width:2px,color:#111;
     classDef output fill:#f8cecc,stroke:#b85450,stroke-width:1.5px,color:#111;
 
-    class MSG,LISTENER messaging;
-    class TICKET_DB,USER_DB,MATCH knowledge;
+    classDef inputBlock fill:#0b6b3a,stroke:#064a28,color:#ffffff,stroke-width:1px;
+    classDef outputBlock fill:#8b0000,stroke:#5c0000,color:#ffffff,stroke-width:1px;
+
+    class MSG messaging;
+    class TICKET_DB,USER_DB knowledge;
     class LLM llm;
     class RAG rag;
     class FRONT frontend;
-    class BUFFER,BUILD_INPUT backend;
-    class MESSAGE_ANALYSIS,SEARCH_DECISION,SOLUTION_RETRIEVAL,RESPONSE_PLAN pipeline;
-    class RESPONSE_PRODUCTION,PATCHES_PRODUCTION output;
+
+    class LISTENER_INPUT,BUFFER_INPUT,MATCH_INPUT,BUILD_INPUT_INPUT,SUPPORT_PIPELINE_INPUT,PATCH_APPLICATION_INPUT,MESSAGE_DELIVERY_INPUT inputBlock;
+    class LISTENER_OUTPUT,BUFFER_OUTPUT,MATCH_OUTPUT,BUILD_INPUT_OUTPUT,SUPPORT_PIPELINE_OUTPUT,PATCH_APPLICATION_OUTPUT,MESSAGE_DELIVERY_OUTPUT outputBlock;
+
+    style GLOBAL fill:#ffffff,stroke:#000000,stroke-width:1px,color:#000000;
+    style EXT fill:#f7f7f7,stroke:#888,stroke-width:1px,color:#000000;
+    style CODE fill:#eef8ff,stroke:#000000,stroke-width:1px,color:#000000;
+
+    style LISTENER_STEP fill:#d9e8f5,stroke:#4f93d2,stroke-width:1.5px,color:#111;
+    style BUFFER_STEP fill:#eef5ff,stroke:#2b5d9a,stroke-width:1.5px,color:#111;
+    style MATCH_STEP fill:#d5e8d4,stroke:#82b366,stroke-width:1.5px,color:#111;
+    style BUILD_INPUT_STEP fill:#eef5ff,stroke:#2b5d9a,stroke-width:1.5px,color:#111;
+    style SUPPORT_PIPELINE_STEP fill:#ffffff,stroke:#2b5d9a,stroke-width:2px,color:#111;
+    style PATCH_APPLICATION_STEP fill:#d5e8d4,stroke:#82b366,stroke-width:1.5px,color:#111;
+    style MESSAGE_DELIVERY_STEP fill:#d9e8f5,stroke:#4f93d2,stroke-width:1.5px,color:#111;
 ```

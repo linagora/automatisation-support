@@ -293,6 +293,49 @@ describe("runResponsePlan", function () {
     ).not.toHaveProperty("topic_label");
   });
 
+  it("copies optional evidence request from search decision into topic response", function () {
+    const output = runResponsePlan({
+      ...createBaseInput(),
+      turnUnderstandingDelta: {
+        ...createBaseInput().turnUnderstandingDelta,
+        segments_topic: [
+          {
+            matched_historical_topic: "no",
+            id_topic: 1,
+            topic_category: "bug",
+            tool_or_product: "Twake Drive",
+            topic_action: "create",
+            topic_object: "folder"
+          }
+        ]
+      },
+      decisionSearchingSolution: {
+        topics: [
+          {
+            topic_id: 1,
+            type: "acknowledgement",
+            optional_evidence_requested: {
+              types: ["screenshot", "video"],
+              reason: "bug_visual_context_helpful"
+            }
+          }
+        ]
+      }
+    });
+
+    expect(
+      output.messagesPlan.topicPlanMessages[0].topics_responses[0]
+        .topic_response.optional_evidence_requested
+    ).toEqual({
+      types: ["screenshot", "video"],
+      reason: "bug_visual_context_helpful"
+    });
+    expect(
+      output.messagesPlan.topicPlanMessages[0].topics_responses[0]
+        .topic_response.main_response.type
+    ).toBe("acknowledgement");
+  });
+
   it("does not copy old topic_label into response plan title", function () {
     const output = runResponsePlan({
       ...createBaseInput(),

@@ -4,6 +4,7 @@ import type {
 } from "../typesSupportProcessingPipeline.types";
 
 const SEARCH_DECISION_STRICTNESS = 2;
+const MAX_MISSING_FIELDS_TO_ASK = 2;
 
 const RAG_ELIGIBLE_TOPIC_CATEGORIES = [
   "bug",
@@ -33,6 +34,41 @@ type TopicCategory =
 type RequiredFieldsByCategory = Record<TopicCategory, string[]>;
 
 type TopicDecision = SearchDecisionOutput["decision"]["topics"][number];
+type OptionalEvidenceRequest =
+  NonNullable<TopicDecision["optional_evidence_requested"]>;
+
+const BUG_VISUAL_EVIDENCE_REQUEST: OptionalEvidenceRequest = {
+  types: ["screenshot", "video"],
+  reason: "bug_visual_context_helpful"
+};
+
+const MISSING_FIELD_PRIORITY_BY_CATEGORY: RequiredFieldsByCategory = {
+  bug: [
+    "observed_result",
+    "error_message",
+    "trigger_action",
+    "platform",
+    "expected_result"
+  ],
+  access_security: [
+    "observed_result",
+    "access_action",
+    "auth_method",
+    "platform",
+    "account_context"
+  ],
+  billing: [
+    "billing_issue_type",
+    "observed_result",
+    "billing_provider",
+    "amount",
+    "currency",
+    "billing_date_or_period"
+  ],
+  request: ["gap_observed", "feature_or_page", "additional_context"],
+  question_faq: ["question_intent", "feature_or_page", "additional_context"],
+  other: ["additional_context", "observed_result"]
+};
 
 const REQUIRED_FIELDS_BY_STRICTNESS: Record<
   1 | 2 | 3,
@@ -52,7 +88,8 @@ const REQUIRED_FIELDS_BY_STRICTNESS: Record<
       "access_action",
       "auth_method",
       "observed_result",
-      "expected_result"
+      "platform",
+      "account_context"
     ],
     billing: [
       "billing_issue_type",
@@ -146,6 +183,325 @@ function getMissingFields(params: {
   });
 }
 
+function selectMissingFieldsToAsk(params: {
+  topicCategory: TopicCategory;
+  missingFields: string[];
+}): string[] {
+  const priority =
+    MISSING_FIELD_PRIORITY_BY_CATEGORY[params.topicCategory] ?? [];
+  const sortedMissingFields = [...params.missingFields].sort(
+    (leftField, rightField) => {
+      const leftPriority = priority.includes(leftField)
+        ? priority.indexOf(leftField)
+        : Number.MAX_SAFE_INTEGER;
+      const rightPriority = priority.includes(rightField)
+        ? priority.indexOf(rightField)
+        : Number.MAX_SAFE_INTEGER;
+
+      return leftPriority - rightPriority;
+    }
+  );
+
+  return sortedMissingFields.slice(0, MAX_MISSING_FIELDS_TO_ASK);
+}
+
+function getStringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() !== ""
+    ? value.trim()
+    : undefined;
+}
+
+function normalizedIncludesAny(
+  value: string | undefined,
+  expectedParts: string[]
+): boolean {
+  const normalizedValue = value?.trim().toLowerCase();
+
+  if (!normalizedValue) {
+    return false;
+  }
+
+  return expectedParts.some((expectedPart) => {
+    return normalizedValue.includes(expectedPart);
+  });
+}
+
+function getAccessSecurityTopicShape(params: {
+  topicAction: string | undefined;
+  topicObject: string | undefined;
+  topicDetails: Record<string, unknown> | undefined;
+}): "login" | "password_reset" | "permission_denied" | "fallback" {
+  const observedResult = getStringValue(params.topicDetails?.observed_result);
+  const errorMessage = getStringValue(params.topicDetails?.error_message);
+
+  if (
+    normalizedIncludesAny(params.topicAction, [
+      "permission",
+      "access denied"
+    ]) ||
+    normalizedIncludesAny(observedResult, [
+      "permission denied",
+      "access denied",
+      "forbidden",
+      "not authorized",
+      "unauthorized"
+    ]) ||
+    normalizedIncludesAny(errorMessage, [
+      "permission denied",
+      "access denied",
+      "forbidden",
+      "not authorized",
+      "unauthorized"
+    ])
+  ) {
+    return "permission_denied";
+  }
+
+  if (
+    normalizedIncludesAny(params.topicAction, [
+      "reset",
+      "password reset"
+    ]) ||
+    normalizedIncludesAny(params.topicObject, [
+      "password",
+      "reset email",
+      "email"
+    ])
+  ) {
+    return "password_reset";
+  }
+
+  if (
+    normalizedIncludesAny(params.topicAction, [
+      "login",
+      "log in",
+      "connect",
+      "sign in"
+    ]) ||
+    normalizedIncludesAny(params.topicObject, [
+      "account",
+      "session"
+    ])
+  ) {
+    return "login";
+  }
+
+  return "fallback";
+}
+
+function filterAccessSecurityCandidateFields(params: {
+  candidateFields: string[];
+  topicDetails: Record<string, unknown> | undefined;
+  topicAction: string | undefined;
+}): string[] {
+  return params.candidateFields.filter((fieldName) => {
+    if (fieldName === "observed_result" && isFilledField(
+      params.topicDetails?.error_message
+    )) {
+      return false;
+    }
+
+    if (fieldName === "access_action" && params.topicAction !== undefined) {
+      return false;
+    }
+
+    return !isFilledField(params.topicDetails?.[fieldName]);
+  });
+}
+
+function getAccessSecurityFieldsToAsk(params: {
+  topicDetails: Record<string, unknown> | undefined;
+  topicAction: string | undefined;
+  topicObject: string | undefined;
+}): string[] {
+  const topicShape = getAccessSecurityTopicShape(params);
+  const candidateFieldsByShape: Record<typeof topicShape, string[]> = {
+    login: ["platform", "error_message", "account_context"],
+    password_reset: ["account_context", "platform"],
+    permission_denied: [
+      "feature_or_page",
+      "account_context",
+      "observed_result",
+      "platform"
+    ],
+    fallback: [
+      "observed_result",
+      "access_action",
+      "auth_method",
+      "platform",
+      "account_context"
+    ]
+  };
+  const fieldsToAsk = filterAccessSecurityCandidateFields({
+    candidateFields: candidateFieldsByShape[topicShape],
+    topicDetails: params.topicDetails,
+    topicAction: params.topicAction
+  });
+
+  return fieldsToAsk.slice(0, MAX_MISSING_FIELDS_TO_ASK);
+}
+
+function removePreviouslyRequestedFields(params: {
+  missingFields: string[];
+  previouslyRequestedFields: string[];
+}): string[] {
+  const previouslyRequestedFields = new Set(params.previouslyRequestedFields);
+
+  return params.missingFields.filter((fieldName) => {
+    return !previouslyRequestedFields.has(fieldName);
+  });
+}
+
+function getRecordValue(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null
+    ? value as Record<string, unknown>
+    : undefined;
+}
+
+function findHistoricalTopic(
+  input: SearchDecisionInput,
+  topicId: number
+): SearchDecisionInput["supportTopicKnowledge"]["segments_topic"][number] | undefined {
+  return input.supportTopicKnowledge.segments_topic.find((topic) => {
+    return topic.id_topic === topicId;
+  });
+}
+
+function getTopicDetailsForDecision(params: {
+  input: SearchDecisionInput;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+}): Record<string, unknown> | undefined {
+  const currentTopicDetails = getRecordValue(params.topic.topic_details);
+
+  if (params.topic.matched_historical_topic !== "yes") {
+    return currentTopicDetails;
+  }
+
+  const historicalTopic = findHistoricalTopic(
+    params.input,
+    params.topic.id_topic
+  );
+  const historicalTopicDetails = getRecordValue(historicalTopic?.topic_details);
+  const topicDetailsForDecision = {
+    ...(historicalTopicDetails ?? {}),
+    ...(currentTopicDetails ?? {})
+  };
+
+  return Object.keys(topicDetailsForDecision).length > 0
+    ? topicDetailsForDecision
+    : undefined;
+}
+
+function getTopicCategoryForDecision(params: {
+  input: SearchDecisionInput;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+}): TopicCategory {
+  if (isTopicCategory(params.topic.topic_category)) {
+    return params.topic.topic_category;
+  }
+
+  if (params.topic.matched_historical_topic === "yes") {
+    const historicalTopic = findHistoricalTopic(
+      params.input,
+      params.topic.id_topic
+    );
+
+    if (isTopicCategory(historicalTopic?.topic_category)) {
+      return historicalTopic.topic_category;
+    }
+  }
+
+  return "other";
+}
+
+function getTopicStringFieldForDecision(params: {
+  input: SearchDecisionInput;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  fieldName: "tool_or_product" | "topic_action" | "topic_object";
+}): string | undefined {
+  const currentValue = getStringValue(params.topic[params.fieldName]);
+
+  if (currentValue !== undefined) {
+    return currentValue;
+  }
+
+  if (params.topic.matched_historical_topic !== "yes") {
+    return undefined;
+  }
+
+  const historicalTopic = findHistoricalTopic(
+    params.input,
+    params.topic.id_topic
+  );
+
+  return getStringValue(historicalTopic?.[params.fieldName]);
+}
+
+function isClearQuestionFaqTopic(params: {
+  input: SearchDecisionInput;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
+}): boolean {
+  return (
+    isFilledField(params.topicDetails?.question_intent) &&
+    getTopicStringFieldForDecision({
+      input: params.input,
+      topic: params.topic,
+      fieldName: "tool_or_product"
+    }) !== undefined &&
+    getTopicStringFieldForDecision({
+      input: params.input,
+      topic: params.topic,
+      fieldName: "topic_action"
+    }) !== undefined &&
+    getTopicStringFieldForDecision({
+      input: params.input,
+      topic: params.topic,
+      fieldName: "topic_object"
+    }) !== undefined
+  );
+}
+
+function selectUsefulMissingFields(params: {
+  input: SearchDecisionInput;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicCategory: TopicCategory;
+  topicDetails: Record<string, unknown> | undefined;
+  missingFields: string[];
+}): string[] {
+  if (params.topicCategory === "access_security") {
+    return getAccessSecurityFieldsToAsk({
+      topicDetails: params.topicDetails,
+      topicAction: getTopicStringFieldForDecision({
+        input: params.input,
+        topic: params.topic,
+        fieldName: "topic_action"
+      }),
+      topicObject: getTopicStringFieldForDecision({
+        input: params.input,
+        topic: params.topic,
+        fieldName: "topic_object"
+      })
+    });
+  }
+
+  if (
+    params.topicCategory === "question_faq" &&
+    isClearQuestionFaqTopic({
+      input: params.input,
+      topic: params.topic,
+      topicDetails: params.topicDetails
+    })
+  ) {
+    return [];
+  }
+
+  return selectMissingFieldsToAsk({
+    topicCategory: params.topicCategory,
+    missingFields: params.missingFields
+  });
+}
+
 function isRagEligibleTopicCategory(topicCategory: TopicCategory): boolean {
   return RAG_ELIGIBLE_TOPIC_CATEGORIES.includes(
     topicCategory as (typeof RAG_ELIGIBLE_TOPIC_CATEGORIES)[number]
@@ -160,6 +516,129 @@ function hasStringInList(value: unknown, expectedValues: string[]): boolean {
   return value.some((item) => {
     return typeof item === "string" && expectedValues.includes(item);
   });
+}
+
+function getFieldsRequestedFromTopicResponse(
+  topicResponse: unknown,
+  topicId: number
+): string[] {
+  const topicResponseRecord = getRecordValue(topicResponse);
+  const title = getRecordValue(topicResponseRecord?.title);
+
+  if (title?.topic_id !== topicId) {
+    return [];
+  }
+
+  const mainResponse = getRecordValue(topicResponseRecord?.main_response);
+
+  if (mainResponse?.type !== "ask_fields") {
+    return [];
+  }
+
+  const details = getRecordValue(mainResponse.details);
+  const fieldsRequested = details?.fields_requested;
+
+  if (!Array.isArray(fieldsRequested)) {
+    return [];
+  }
+
+  return fieldsRequested.filter((fieldName): fieldName is string => {
+    return typeof fieldName === "string";
+  });
+}
+
+function getPreviouslyRequestedFieldsForTopic(
+  input: SearchDecisionInput,
+  topicId: number
+): string[] {
+  const previouslyRequestedFields = new Set<string>();
+
+  for (const conversationEvent of input.conversationHistory ?? []) {
+    if (conversationEvent.role !== "bot") {
+      continue;
+    }
+
+    const topicPlanMessages =
+      conversationEvent.responsePlan.messagesPlan.topicPlanMessages;
+
+    for (const topicPlanMessage of topicPlanMessages) {
+      for (const topicResponseWrapper of topicPlanMessage.topics_responses) {
+        const fieldsRequested = getFieldsRequestedFromTopicResponse(
+          topicResponseWrapper.topic_response,
+          topicId
+        );
+
+        for (const fieldName of fieldsRequested) {
+          previouslyRequestedFields.add(fieldName);
+        }
+      }
+    }
+  }
+
+  return [...previouslyRequestedFields];
+}
+
+function hasVisualAttachment(input: SearchDecisionInput): boolean {
+  const attachments = input.turnUnderstandingDelta.attachments;
+
+  return (
+    (attachments?.images.length ?? 0) > 0 ||
+    (attachments?.videos.length ?? 0) > 0
+  );
+}
+
+function hasPreviouslyRequestedVisualEvidenceForTopic(
+  input: SearchDecisionInput,
+  topicId: number
+): boolean {
+  for (const conversationEvent of input.conversationHistory ?? []) {
+    if (conversationEvent.role !== "bot") {
+      continue;
+    }
+
+    const topicPlanMessages =
+      conversationEvent.responsePlan.messagesPlan.topicPlanMessages;
+
+    for (const topicPlanMessage of topicPlanMessages) {
+      for (const topicResponseWrapper of topicPlanMessage.topics_responses) {
+        const topicResponse = topicResponseWrapper.topic_response;
+
+        if (
+          topicResponse.title.topic_id === topicId &&
+          topicResponse.optional_evidence_requested !== undefined
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+function getOptionalEvidenceRequestForTopic(params: {
+  input: SearchDecisionInput;
+  topicId: number;
+  topicCategory: TopicCategory;
+}): OptionalEvidenceRequest | undefined {
+  if (params.topicCategory !== "bug") {
+    return undefined;
+  }
+
+  if (hasVisualAttachment(params.input)) {
+    return undefined;
+  }
+
+  if (
+    hasPreviouslyRequestedVisualEvidenceForTopic(
+      params.input,
+      params.topicId
+    )
+  ) {
+    return undefined;
+  }
+
+  return BUG_VISUAL_EVIDENCE_REQUEST;
 }
 
 function hasExplicitHandoverRequest(input: SearchDecisionInput): boolean {
@@ -354,24 +833,49 @@ async function runSearchDecision(
 ): Promise<SearchDecisionOutput> {
   const topicDecisions = input.turnUnderstandingDelta.segments_topic.map(
     (topic): TopicDecision => {
-      const topicCategory = isTopicCategory(topic.topic_category)
-        ? topic.topic_category
-        : "other";
-      const topicDetails =
-        typeof topic.topic_details === "object" &&
-        topic.topic_details !== null
-          ? topic.topic_details
-          : undefined;
+      const topicCategory = getTopicCategoryForDecision({
+        input,
+        topic
+      });
+      const topicDetails = getTopicDetailsForDecision({
+        input,
+        topic
+      });
       const missingFields = getMissingFields({
         topicCategory,
         topicDetails
       });
+      const usefulMissingFields = selectUsefulMissingFields({
+        input,
+        topic,
+        topicCategory,
+        topicDetails,
+        missingFields
+      });
+      const previouslyRequestedFields = getPreviouslyRequestedFieldsForTopic(
+        input,
+        topic.id_topic
+      );
+      const fieldsToAsk = removePreviouslyRequestedFields({
+        missingFields: usefulMissingFields,
+        previouslyRequestedFields
+      });
+      const optionalEvidenceRequest = getOptionalEvidenceRequestForTopic({
+        input,
+        topicId: topic.id_topic,
+        topicCategory
+      });
+      const optionalEvidenceFields =
+        optionalEvidenceRequest === undefined
+          ? {}
+          : { optional_evidence_requested: optionalEvidenceRequest };
 
-      if (missingFields.length > 0) {
+      if (fieldsToAsk.length > 0) {
         return {
           topic_id: topic.id_topic,
           type: "ask_more_info",
-          missing_fields: missingFields
+          missing_fields: fieldsToAsk,
+          ...optionalEvidenceFields
         };
       }
 
@@ -384,7 +888,8 @@ async function runSearchDecision(
         })
           ? "solution_searching"
           : "acknowledgement",
-        missing_fields: []
+        missing_fields: [],
+        ...optionalEvidenceFields
       };
     }
   );

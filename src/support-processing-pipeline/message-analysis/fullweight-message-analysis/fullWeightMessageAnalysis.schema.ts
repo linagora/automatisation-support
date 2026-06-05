@@ -38,6 +38,10 @@ const OUTCOMES = [
 
 const stringSchema = { type: "string" } as const;
 const stringOrNull = { anyOf: [{ type: "string" }, { type: "null" }] } as const;
+const stringArraySchema = arrayOf(
+  stringSchema,
+  "Exact non-empty latest-user-message fragments that support this topic, in original order. Use [] when none exists."
+);
 
 function enumSchema(
   values: readonly string[],
@@ -107,6 +111,7 @@ const topicSegmentSchema = objectOf(
     tool_or_product: stringOrNull,
     topic_action: stringOrNull,
     topic_object: stringOrNull,
+    segment_verbatims: stringArraySchema,
     topic_details: arrayOf(
       topicDetailItemSchema,
       "Raw list of explicit useful details for this topic. Use one item per detail and [] when there is no useful detail."
@@ -125,6 +130,7 @@ const topicSegmentSchema = objectOf(
     "tool_or_product",
     "topic_action",
     "topic_object",
+    "segment_verbatims",
     "topic_details",
     "tested_actions",
     "user_goal",

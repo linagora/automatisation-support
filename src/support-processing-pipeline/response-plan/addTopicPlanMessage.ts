@@ -77,6 +77,9 @@ function addTopicPlanMessage(
       possibleSolutions,
       decisionSearchingSolution
     });
+    const topicDecision = decisionSearchingSolution.topics.find((decision) => {
+      return decision.topic_id === topicSegment.id_topic;
+    });
 
     const topicResponse: TopicPlanMessage["topics_responses"][number]["topic_response"] = {
       title: {
@@ -98,6 +101,12 @@ function addTopicPlanMessage(
         topic_details: topicSegment.topic_details,
         tested_solutions: topicSegment.tested_solutions
       },
+      ...(topicDecision?.optional_evidence_requested
+        ? {
+            optional_evidence_requested:
+              topicDecision.optional_evidence_requested
+          }
+        : {}),
       main_response: mainResponse,
       next_step: resolveNextStep(mainResponse)
     };

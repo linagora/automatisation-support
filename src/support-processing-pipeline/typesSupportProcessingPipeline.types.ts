@@ -280,6 +280,7 @@ export type SupportTopicKnowledge = {
     topic_action?: string;
     topic_object?: string;
     topic_label?: string;
+    segment_verbatims?: string[];
     topic_details: TopicDetails;
     tested_actions?: {
       tested_action: string;
@@ -321,6 +322,7 @@ type ExistingTopicDelta = {
   topic_action?: string;
   topic_object?: string;
   topic_label?: string;
+  segment_verbatims?: string[];
   topic_details?: Partial<TopicDetails>;
   tested_actions?: {
     tested_action: string;
@@ -338,6 +340,7 @@ type NewTopicDelta = {
   topic_action?: string;
   topic_object?: string;
   topic_label?: string;
+  segment_verbatims?: string[];
   topic_details: TopicDetails;
   tested_actions?: {
     tested_action: string;
@@ -414,6 +417,10 @@ export type DecisionSearchingSolution = {
       topic_id: number;
       type: "ask_more_info" | "acknowledgement" | "solution_searching";
       missing_fields: string[];
+      optional_evidence_requested?: {
+        types: ("screenshot" | "video")[];
+        reason: "bug_visual_context_helpful";
+      };
     }[];
   };
   detected: {

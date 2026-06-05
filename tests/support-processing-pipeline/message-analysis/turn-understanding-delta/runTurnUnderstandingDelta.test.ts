@@ -145,3 +145,123 @@ describe("assembleTurnUnderstandingDelta attachments", function () {
     expect(output.attachments?.videos).toEqual([]);
   });
 });
+
+describe("assembleTurnUnderstandingDelta topic segment verbatims", function () {
+  it("keeps segment_verbatims on new topics", function () {
+    const output = assembleTurnUnderstandingDelta({
+      securityGateSummary: {
+        gateChecked: {},
+        gateFailed: {}
+      },
+      latestUserAttachments: [],
+      supportTopicKnowledge,
+      conversationHistory,
+      fullWeightMessageAnalysisOutput: {
+        decision: {
+          route: "continue"
+        },
+        history: {
+          checked: [],
+          failed: []
+        },
+        analysis: {
+          user_language: "French",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "no",
+              id_topic: 1,
+              topic_category: "question_faq",
+              tool_or_product: "Drive",
+              topic_action: "share",
+              topic_object: "folder",
+              segment_verbatims: [
+                "Comment partager un dossier avec un collègue dans Drive ?"
+              ],
+              topic_details: {
+                question_intent: "how_to"
+              },
+              user_goal: "Share a folder in Drive",
+              blocking_issue: "no"
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      }
+    });
+
+    expect(output.segments_topic[0]).toMatchObject({
+      matched_historical_topic: "no",
+      segment_verbatims: [
+        "Comment partager un dossier avec un collègue dans Drive ?"
+      ]
+    });
+  });
+
+  it("keeps segment_verbatims on matched topics even when other fields are duplicates", function () {
+    const output = assembleTurnUnderstandingDelta({
+      securityGateSummary: {
+        gateChecked: {},
+        gateFailed: {}
+      },
+      latestUserAttachments: [],
+      supportTopicKnowledge: {
+        segments_topic: [
+          {
+            id_topic: 1,
+            topic_category: "bug",
+            tool_or_product: "Drive",
+            topic_action: "create",
+            topic_object: "folder",
+            topic_details: {
+              observed_result: "button stays disabled"
+            },
+            user_goal: "Create a folder in Drive",
+            blocking_issue: "yes"
+          }
+        ]
+      },
+      conversationHistory,
+      fullWeightMessageAnalysisOutput: {
+        decision: {
+          route: "continue"
+        },
+        history: {
+          checked: [],
+          failed: []
+        },
+        analysis: {
+          user_language: "French",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "yes",
+              id_topic: 1,
+              segment_verbatims: [
+                "Le bouton reste grisé."
+              ],
+              topic_details: {
+                observed_result: "button stays disabled"
+              }
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      }
+    });
+
+    expect(output.segments_topic).toEqual([
+      {
+        matched_historical_topic: "yes",
+        id_topic: 1,
+        segment_verbatims: [
+          "Le bouton reste grisé."
+        ]
+      }
+    ]);
+  });
+});

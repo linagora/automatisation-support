@@ -80,10 +80,15 @@ scope_boundary_type: generic_out_of_scope | non_support_linagora | unrelated_req
 ==================================================
 For each topic segment:
 
-Matches a topic from previous_analysis_output → matched_historical_topic = "yes", reuse id_topic, reuse topic_category, tool_or_product, topic_action, and topic_object unless the user explicitly corrects one of them.
+Matches a topic from previous_analysis_output → matched_historical_topic = "yes", reuse id_topic, reuse topic_category, tool_or_product, topic_action, and topic_object from the matched topic unless the user explicitly corrects one of them.
 When a matched topic is resolved: update observed_result to reflect the resolution (e.g. "now works"), update user_goal, set blocking_issue to "no". Do not duplicate values across fields — pre_problem_state and observed_result must never contain the same text.
 New distinct issue, request, or question → matched_historical_topic = "no", new id_topic (increment from highest in previous_analysis_output, or start at 1).
 Unclear → do not return as topic, set warning_comprehension = "yes".
+
+segment_verbatims must contain the exact user message fragments that support this topic.
+Preserve the user's original wording and language. Do not translate, summarize, or rewrite.
+If multiple non-contiguous fragments support the same topic, return them as separate array items in their original order.
+Do not include attachment analysis text as user verbatim.
 
 ==================================================
 4. TOPIC IDENTIFICATION (only if matched_historical_topic = "no")
@@ -105,8 +110,12 @@ question_faq vs request: if the user asks whether something is possible or plann
 - "Will calendar sharing be available?" → question_faq, future_availability
 - "I'd like you to add read-only sharing" → request
 
-Determine (English only, return "" if not explicit):
-- tool_or_product, topic_action, topic_object
+Determine (English only, return null if not explicitly available):
+- tool_or_product: product, tool, app, service, or module explicitly mentioned by the user or present in the matched historical topic.
+- topic_action: user action or product action involved in the issue, such as login, create, reset, upload, receive.
+- topic_object: object targeted by the action, such as folder, password, email, file, backup.
+- Do not invent tool_or_product, topic_action, or topic_object to satisfy the schema. If the value is not explicit or not available from a matched historical topic, return null.
+- If matched_historical_topic = yes, reuse tool_or_product, topic_action, and topic_object from the matched topic unless the user explicitly corrects them.
 - Do not output topic_label.
   The backend builds display labels from tool_or_product, topic_action, and topic_object.
 
@@ -206,9 +215,10 @@ The output must follow this structure:
     "matched_historical_topic": "yes|no",
     "id_topic": 1,
     "topic_category": "billing|access_security|bug|request|question_faq|other",
-    "tool_or_product": "...",
-    "topic_action": "...",
-    "topic_object": "...",
+    "tool_or_product": "...|null",
+    "topic_action": "...|null",
+    "topic_object": "...|null",
+    "segment_verbatims": ["<exact user message fragment>"],
     "topic_details": [{"field_name": "<allowed_topic_detail_field_name>", "value": "<explicit_useful_value>"}],
     "tested_actions": [{"action": "...", "outcome": "worked|failed|partially_worked|not_tried|unclear"}],
     "user_goal": "...",
@@ -265,6 +275,7 @@ function buildSupportTopicKnowledgeContext(
       tool_or_product: topic.tool_or_product,
       topic_action: topic.topic_action,
       topic_object: topic.topic_object,
+      segment_verbatims: topic.segment_verbatims,
       topic_details: topic.topic_details,
       tested_actions: topic.tested_actions,
       user_goal: topic.user_goal,

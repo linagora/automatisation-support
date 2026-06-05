@@ -221,6 +221,20 @@ function normalizeTestedActions(rawTestedActions: unknown): UnknownRecord[] {
   return output;
 }
 
+function normalizeSegmentVerbatims(rawSegmentVerbatims: unknown): string[] {
+  if (!Array.isArray(rawSegmentVerbatims)) {
+    return [];
+  }
+
+  return rawSegmentVerbatims.flatMap((item) => {
+    if (!isString(item)) {
+      return [];
+    }
+
+    return [item.trim()];
+  });
+}
+
 function normalizeTopicSegment(rawTopic: unknown): TopicSegment | undefined {
   if (!isRecord(rawTopic)) {
     return undefined;
@@ -243,6 +257,13 @@ function normalizeTopicSegment(rawTopic: unknown): TopicSegment | undefined {
     if (isString(rawTopic[key])) {
       topic[key] = rawTopic[key];
     }
+  }
+
+  const segmentVerbatims = normalizeSegmentVerbatims(
+    rawTopic.segment_verbatims
+  );
+  if (segmentVerbatims.length > 0) {
+    topic.segment_verbatims = segmentVerbatims;
   }
 
   const topicDetails = normalizeTopicDetails(rawTopic.topic_details);
