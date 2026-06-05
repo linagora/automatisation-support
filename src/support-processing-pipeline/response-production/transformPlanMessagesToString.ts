@@ -23,6 +23,12 @@ type SignalPlanMessage = {
   signal_types?: unknown;
 };
 
+const DISSATISFACTION_SIGNAL_TYPES = [
+  "churn_intent",
+  "negative_feedback",
+  "disappointment"
+] as const;
+
 type HandoverPlanMessage = Record<string, unknown>;
 
 type StringTopicPlanMessage = {
@@ -663,6 +669,14 @@ function transformSignalPlanMessages(
     signalTypes.includes("thanks_positive")
   ) {
     messages.push(templates.responses.thanks);
+  }
+
+  if (
+    DISSATISFACTION_SIGNAL_TYPES.some((signalType) => {
+      return signalTypes.includes(signalType);
+    })
+  ) {
+    messages.push(templates.responses.dissatisfaction);
   }
 
   if (signalTypes.includes("time_sensitive")) {

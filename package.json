@@ -19,6 +19,8 @@
     "test:support-processing-pipeline": "tsx tests/support-processing-pipeline/test-support-processing-pipeline.ts",
     "test:support-processing": "tsx scripts/support-processing/test-support-processing.ts",
     "test:support-processing:mini": "tsx scripts/support-processing/test-support-processing-mini-suite.ts",
+    "test:support-processing:quality": "tsx scripts/support-processing/test-support-processing-quality.ts",
+    "test:support-processing:quality:full": "tsx scripts/support-processing/test-support-processing-quality.ts --full",
     "matrix:send-test": "tsx scripts/matrix/send-test-matrix-message.ts",
     "matrix:listen": "tsx scripts/matrix/listen-matrix-messages.ts"
   },

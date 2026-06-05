@@ -1,0 +1,159 @@
+{
+  "generatedAt": "2026-06-05T10:20:59.935Z",
+  "results": [
+    {
+      "testCase": {
+        "id": 12,
+        "label": "Churn complaint without clear technical request",
+        "latestUserMessage": "Franchement je vais arreter mon abonnement, il y a trop de problemes et je perds du temps a chaque fois."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_12",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Franchement je vais arreter mon abonnement, il y a trop de problemes et je perds du temps a chaque fois."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "signal_response",
+              "content": "C’est bien noté."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [],
+              "segments_signal": [
+                {
+                  "signal_verbatim": "Franchement je vais arreter mon abonnement, il y a trop de problemes et je perds du temps a chaque fois.",
+                  "signal_types": [
+                    "disappointment",
+                    "churn_intent",
+                    "negative_feedback"
+                  ]
+                }
+              ],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [
+                  {
+                    "signal_verbatim": "Franchement je vais arreter mon abonnement, il y a trop de problemes et je perds du temps a chaque fois.",
+                    "signal_types": [
+                      "disappointment",
+                      "churn_intent",
+                      "negative_feedback"
+                    ]
+                  }
+                ],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T10:20:59.933Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 4098
+    }
+  ]
+}

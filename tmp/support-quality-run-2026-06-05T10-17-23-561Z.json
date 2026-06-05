@@ -1,0 +1,1829 @@
+{
+  "generatedAt": "2026-06-05T10:17:23.561Z",
+  "results": [
+    {
+      "testCase": {
+        "id": 1,
+        "label": "Bug app crash / dark theme unreadable button",
+        "latestUserMessage": "Depuis la mise a jour, l'application se ferme quand j'active le theme sombre et le bouton Enregistrer devient presque illisible."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_1",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Depuis la mise a jour, l'application se ferme quand j'active le theme sombre et le bouton Enregistrer devient presque illisible."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Bug - application : activate : dark theme - (Nouveau)\nJe comprends que vous indiquez : état avant le problème (after update), résultat observé (application closes, Save button becomes unreadable), résultat attendu (application should remain open, Save button should be readable), fonctionnalité ou page (dark theme).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "application",
+                  "topic_action": "activate",
+                  "topic_object": "dark theme",
+                  "segment_verbatims": [
+                    "Depuis la mise a jour, l'application se ferme quand j'active le theme sombre et le bouton Enregistrer devient presque illisible."
+                  ],
+                  "topic_details": {
+                    "pre_problem_state": "after update",
+                    "observed_result": "application closes, Save button becomes unreadable",
+                    "expected_result": "application should remain open, Save button should be readable",
+                    "feature_or_page": "dark theme"
+                  },
+                  "user_goal": "use dark theme without application crashing and ensure Save button is readable",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "application",
+                            "topic_action": "activate",
+                            "topic_object": "dark theme",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "pre_problem_state": "after update",
+                              "observed_result": "application closes, Save button becomes unreadable",
+                              "expected_result": "application should remain open, Save button should be readable",
+                              "feature_or_page": "dark theme"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T10:16:38.072Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 8419
+    },
+    {
+      "testCase": {
+        "id": 2,
+        "label": "Bug Drive create folder / rename file",
+        "latestUserMessage": "Dans Drive je n'arrive pas a creer un dossier, et quand je renomme un fichier le nouveau nom n'est pas sauvegarde."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_2",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Dans Drive je n'arrive pas a creer un dossier, et quand je renomme un fichier le nouveau nom n'est pas sauvegarde."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié deux nouveaux sujets.\n\nSujet 1 - Bug - Drive : create : folder - (Nouveau)\nJe comprends que vous indiquez : résultat observé (cannot create folder), résultat attendu (le dossier devrait être créé).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons votre retour pour obtenir plus d’informations."
+            },
+            {
+              "type": "topic_response",
+              "content": "Sujet 2 - Bug - Drive : rename : file - (Nouveau)\nJe comprends que vous indiquez : résultat observé (new name not saved), résultat attendu (file name should be saved).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Drive",
+                  "topic_action": "create",
+                  "topic_object": "folder",
+                  "segment_verbatims": [
+                    "Dans Drive je n'arrive pas a creer un dossier"
+                  ],
+                  "topic_details": {
+                    "observed_result": "cannot create folder",
+                    "expected_result": "folder should be created"
+                  },
+                  "user_goal": "create a folder in Drive",
+                  "blocking_issue": "yes"
+                },
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 2,
+                  "topic_category": "bug",
+                  "tool_or_product": "Drive",
+                  "topic_action": "rename",
+                  "topic_object": "file",
+                  "segment_verbatims": [
+                    "quand je renomme un fichier le nouveau nom n'est pas sauvegarde"
+                  ],
+                  "topic_details": {
+                    "observed_result": "new name not saved",
+                    "expected_result": "file name should be saved"
+                  },
+                  "user_goal": "rename a file in Drive",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 2,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "Drive",
+                            "topic_action": "create",
+                            "topic_object": "folder",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "observed_result": "cannot create folder",
+                              "expected_result": "folder should be created"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      },
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 2,
+                            "topic_category": "bug",
+                            "tool_or_product": "Drive",
+                            "topic_action": "rename",
+                            "topic_object": "file",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "observed_result": "new name not saved",
+                              "expected_result": "file name should be saved"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T10:16:47.925Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 9851
+    },
+    {
+      "testCase": {
+        "id": 3,
+        "label": "Bug Android folder creation with error",
+        "latestUserMessage": "Sur Android, quand je cree un dossier dans Drive j'ai le message Vous devez nommer votre dossier alors que le nom est bien rempli."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_3",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Sur Android, quand je cree un dossier dans Drive j'ai le message Vous devez nommer votre dossier alors que le nom est bien rempli."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Bug - Drive : create : folder - (Nouveau)\nJe comprends que vous indiquez : message d’erreur (Vous devez nommer votre dossier), état avant le problème (nom est bien rempli), résultat observé (message Vous devez nommer votre dossier), résultat attendu (create folder without error message), plateforme (Android).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons l’intervention du support humain pour prendre le relais.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Drive",
+                  "topic_action": "create",
+                  "topic_object": "folder",
+                  "segment_verbatims": [
+                    "Sur Android, quand je cree un dossier dans Drive j'ai le message Vous devez nommer votre dossier alors que le nom est bien rempli."
+                  ],
+                  "topic_details": {
+                    "error_message": "Vous devez nommer votre dossier",
+                    "pre_problem_state": "nom est bien rempli",
+                    "observed_result": "message Vous devez nommer votre dossier",
+                    "expected_result": "create folder without error message",
+                    "platform": "Android"
+                  },
+                  "user_goal": "Create a folder in Drive on Android without encountering the error message",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "Drive",
+                            "topic_action": "create",
+                            "topic_object": "folder",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "error_message": "Vous devez nommer votre dossier",
+                              "pre_problem_state": "nom est bien rempli",
+                              "observed_result": "message Vous devez nommer votre dossier",
+                              "expected_result": "create folder without error message",
+                              "platform": "Android"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T10:16:51.405Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 3480
+    },
+    {
+      "testCase": {
+        "id": 5,
+        "label": "VoiceOver iOS accessibility",
+        "latestUserMessage": "Avec VoiceOver sur iPhone, je n'arrive pas a savoir quel bouton permet d'envoyer un message dans Twake Chat."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_5",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Avec VoiceOver sur iPhone, je n'arrive pas a savoir quel bouton permet d'envoyer un message dans Twake Chat."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Bug - Twake Chat : send : message - (Nouveau)\nJe comprends que vous indiquez : plateforme (iPhone), fonctionnalité ou page (Twake Chat), résultat observé (cannot identify the button to send a message), résultat attendu (identify the button to send a message).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nNous attendons l’intervention du support humain pour prendre le relais.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Twake Chat",
+                  "topic_action": "send",
+                  "topic_object": "message",
+                  "segment_verbatims": [
+                    "Avec VoiceOver sur iPhone, je n'arrive pas a savoir quel bouton permet d'envoyer un message dans Twake Chat."
+                  ],
+                  "topic_details": {
+                    "platform": "iPhone",
+                    "feature_or_page": "Twake Chat",
+                    "observed_result": "cannot identify the button to send a message",
+                    "expected_result": "identify the button to send a message"
+                  },
+                  "user_goal": "Identify the button to send a message in Twake Chat using VoiceOver on iPhone",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "Twake Chat",
+                            "topic_action": "send",
+                            "topic_object": "message",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "platform": "iPhone",
+                              "feature_or_page": "Twake Chat",
+                              "observed_result": "cannot identify the button to send a message",
+                              "expected_result": "identify the button to send a message"
+                            }
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T10:16:54.784Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 3378
+    },
+    {
+      "testCase": {
+        "id": 7,
+        "label": "Feature request password folders",
+        "latestUserMessage": "Est-ce que vous pouvez ajouter des dossiers pour organiser les mots de passe ?"
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_7",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Est-ce que vous pouvez ajouter des dossiers pour organiser les mots de passe ?"
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Demande - organize : passwords - (Nouveau)\nJe comprends que vous indiquez : écart observé (folder creation for password organization).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nNous attendons l’intervention du support humain pour prendre le relais.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "request",
+                  "topic_action": "organize",
+                  "topic_object": "passwords",
+                  "segment_verbatims": [
+                    "Est-ce que vous pouvez ajouter des dossiers pour organiser les mots de passe ?"
+                  ],
+                  "topic_details": {
+                    "gap_observed": "folder creation for password organization"
+                  },
+                  "user_goal": "User wants to add folders to organize passwords",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "request",
+                            "topic_action": "organize",
+                            "topic_object": "passwords",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "gap_observed": "folder creation for password organization"
+                            }
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T10:17:00.529Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 5744
+    },
+    {
+      "testCase": {
+        "id": 8,
+        "label": "Feature request export / sharing / photos",
+        "latestUserMessage": "J'aimerais pouvoir exporter mes photos, les partager avec ma famille et choisir un album entier d'un coup."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_8",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "J'aimerais pouvoir exporter mes photos, les partager avec ma famille et choisir un album entier d'un coup."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Demande - export : photos - (Nouveau)\nJe comprends que vous indiquez : écart observé (export photos, share with family, select entire album at once).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nNous attendons l’intervention du support humain pour prendre le relais.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "request",
+                  "topic_action": "export",
+                  "topic_object": "photos",
+                  "segment_verbatims": [
+                    "J'aimerais pouvoir exporter mes photos"
+                  ],
+                  "topic_details": {
+                    "gap_observed": "export photos, share with family, select entire album at once"
+                  },
+                  "user_goal": "User wants to export photos, share them with family, and select an entire album at once",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "request",
+                            "topic_action": "export",
+                            "topic_object": "photos",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "gap_observed": "export photos, share with family, select entire album at once"
+                            }
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T10:17:05.546Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 5017
+    },
+    {
+      "testCase": {
+        "id": 11,
+        "label": "Bank and administrative connectors unavailable",
+        "latestUserMessage": "Les connecteurs de ma banque et de l'ENSAP sont indisponibles depuis plusieurs jours, je ne peux plus importer mes documents."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_11",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Les connecteurs de ma banque et de l'ENSAP sont indisponibles depuis plusieurs jours, je ne peux plus importer mes documents."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Bug - connecteurs : importer : documents - (Nouveau)\nJe comprends que vous indiquez : résultat observé (Les connecteurs de ma banque et de l'ENSAP sont indisponibles), résultat attendu (importer mes documents), fréquence (depuis plusieurs jours), périmètre affecté (connecteurs de ma banque et de l'ENSAP).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "connecteurs",
+                  "topic_action": "importer",
+                  "topic_object": "documents",
+                  "segment_verbatims": [
+                    "Les connecteurs de ma banque et de l'ENSAP sont indisponibles depuis plusieurs jours, je ne peux plus importer mes documents."
+                  ],
+                  "topic_details": {
+                    "observed_result": "Les connecteurs de ma banque et de l'ENSAP sont indisponibles",
+                    "expected_result": "importer mes documents",
+                    "frequency": "depuis plusieurs jours",
+                    "affected_scope": "connecteurs de ma banque et de l'ENSAP"
+                  },
+                  "user_goal": "restore availability of bank and ENSAP connectors to import documents",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "connecteurs",
+                            "topic_action": "importer",
+                            "topic_object": "documents",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "observed_result": "Les connecteurs de ma banque et de l'ENSAP sont indisponibles",
+                              "expected_result": "importer mes documents",
+                              "frequency": "depuis plusieurs jours",
+                              "affected_scope": "connecteurs de ma banque et de l'ENSAP"
+                            }
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T10:17:13.930Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 8384
+    },
+    {
+      "testCase": {
+        "id": 14,
+        "label": "Historical follow-up resolved then new issue",
+        "latestUserMessage": "Ca marche maintenant pour le dossier, merci. Par contre je ne recois plus les notifications Drive.",
+        "supportTopicKnowledge": {
+          "segments_topic": [
+            {
+              "id_topic": 1,
+              "topic_category": "bug",
+              "tool_or_product": "Twake Drive",
+              "topic_action": "create",
+              "topic_object": "folder",
+              "segment_verbatims": [
+                "Je n'arrive pas a creer un dossier dans Drive depuis Android."
+              ],
+              "topic_details": {
+                "platform": "mobile app",
+                "os": "Android",
+                "trigger_action": "tap create folder",
+                "observed_result": "folder is not created",
+                "expected_result": "folder should be created"
+              },
+              "user_goal": "Create a folder in Twake Drive on Android mobile app but the folder is not created",
+              "blocking_issue": "yes"
+            }
+          ]
+        },
+        "conversationHistory": [
+          {
+            "id": "quality_drive_folder_user_1",
+            "message_id": "quality_drive_folder_msg_1",
+            "role": "user",
+            "created_at": "2026-05-20T09:00:00.000Z",
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "securityGateSummary": {
+                "gateChecked": {},
+                "gateFailed": []
+              },
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Twake Drive",
+                  "topic_action": "create",
+                  "topic_object": "folder",
+                  "segment_verbatims": [
+                    "Je n'arrive pas a creer un dossier dans Drive depuis Android."
+                  ],
+                  "topic_details": {
+                    "platform": "mobile app",
+                    "os": "Android",
+                    "trigger_action": "tap create folder",
+                    "observed_result": "folder is not created",
+                    "expected_result": "folder should be created"
+                  },
+                  "user_goal": "Create a folder in Twake Drive on Android mobile app but the folder is not created",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": []
+            }
+          },
+          {
+            "id": "quality_drive_folder_bot_1",
+            "message_id": "quality_drive_folder_bot_msg_1",
+            "role": "bot",
+            "created_at": "2026-05-20T09:01:00.000Z",
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          }
+        ]
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_14",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Ca marche maintenant pour le dossier, merci. Par contre je ne recois plus les notifications Drive."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": [
+            {
+              "id_topic": 1,
+              "topic_category": "bug",
+              "tool_or_product": "Twake Drive",
+              "topic_action": "create",
+              "topic_object": "folder",
+              "segment_verbatims": [
+                "Je n'arrive pas a creer un dossier dans Drive depuis Android."
+              ],
+              "topic_details": {
+                "platform": "mobile app",
+                "os": "Android",
+                "trigger_action": "tap create folder",
+                "observed_result": "folder is not created",
+                "expected_result": "folder should be created"
+              },
+              "user_goal": "Create a folder in Twake Drive on Android mobile app but the folder is not created",
+              "blocking_issue": "yes"
+            }
+          ]
+        },
+        "conversationHistory": [
+          {
+            "id": "quality_drive_folder_user_1",
+            "message_id": "quality_drive_folder_msg_1",
+            "role": "user",
+            "created_at": "2026-05-20T09:00:00.000Z",
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "securityGateSummary": {
+                "gateChecked": {},
+                "gateFailed": []
+              },
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Twake Drive",
+                  "topic_action": "create",
+                  "topic_object": "folder",
+                  "segment_verbatims": [
+                    "Je n'arrive pas a creer un dossier dans Drive depuis Android."
+                  ],
+                  "topic_details": {
+                    "platform": "mobile app",
+                    "os": "Android",
+                    "trigger_action": "tap create folder",
+                    "observed_result": "folder is not created",
+                    "expected_result": "folder should be created"
+                  },
+                  "user_goal": "Create a folder in Twake Drive on Android mobile app but the folder is not created",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": []
+            }
+          },
+          {
+            "id": "quality_drive_folder_bot_1",
+            "message_id": "quality_drive_folder_bot_msg_1",
+            "role": "bot",
+            "created_at": "2026-05-20T09:01:00.000Z",
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          }
+        ]
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet et un sujet déjà en cours.\n\nSujet 1 - Bug - Twake Drive : create : folder - (En cours)\nJe comprends que vous indiquez : résultat observé (folder is now created).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nNous attendons l’intervention du support humain pour prendre le relais."
+            },
+            {
+              "type": "topic_response",
+              "content": "Sujet 2 - Bug - Twake Drive : receive : notifications - (Nouveau)\nJe comprends que vous indiquez : résultat observé (notifications are not received), résultat attendu (notifications should be received).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            },
+            {
+              "type": "signal_response",
+              "content": "Avec plaisir."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "yes",
+                  "id_topic": 1,
+                  "topic_details": {
+                    "observed_result": "folder is now created"
+                  },
+                  "tested_actions": [
+                    {
+                      "tested_action": "retry folder creation",
+                      "outcome_tested_action": "worked"
+                    }
+                  ],
+                  "segment_verbatims": [
+                    "Ca marche maintenant pour le dossier"
+                  ],
+                  "user_goal": "Create a folder in Twake Drive on Android mobile app, folder creation now works but notifications are not received",
+                  "blocking_issue": "no"
+                },
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 2,
+                  "topic_category": "bug",
+                  "tool_or_product": "Twake Drive",
+                  "topic_action": "receive",
+                  "topic_object": "notifications",
+                  "segment_verbatims": [
+                    "je ne recois plus les notifications Drive"
+                  ],
+                  "topic_details": {
+                    "observed_result": "notifications are not received",
+                    "expected_result": "notifications should be received"
+                  },
+                  "user_goal": "Receive notifications from Twake Drive but notifications are not received",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [
+                {
+                  "signal_verbatim": "merci",
+                  "signal_types": [
+                    "thanks_positive"
+                  ]
+                }
+              ],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 1
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "Twake Drive",
+                            "topic_action": "create",
+                            "topic_object": "folder",
+                            "matched_historical_topic": true
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "observed_result": "folder is now created"
+                            }
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      },
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 2,
+                            "topic_category": "bug",
+                            "tool_or_product": "Twake Drive",
+                            "topic_action": "receive",
+                            "topic_object": "notifications",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "observed_result": "notifications are not received",
+                              "expected_result": "notifications should be received"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [
+                  {
+                    "signal_verbatim": "merci",
+                    "signal_types": [
+                      "thanks_positive"
+                    ]
+                  }
+                ],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T10:17:23.559Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 9629
+    }
+  ]
+}

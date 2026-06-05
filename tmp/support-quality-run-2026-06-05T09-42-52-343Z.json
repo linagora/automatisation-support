@@ -1,0 +1,209 @@
+{
+  "generatedAt": "2026-06-05T09:42:52.344Z",
+  "results": [
+    {
+      "testCase": {
+        "id": 1,
+        "label": "Bug app crash / dark theme unreadable button",
+        "latestUserMessage": "Depuis la mise a jour, l'application se ferme quand j'active le theme sombre et le bouton Enregistrer devient presque illisible."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_1",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Depuis la mise a jour, l'application se ferme quand j'active le theme sombre et le bouton Enregistrer devient presque illisible."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Bug - application : activate : dark theme - (Nouveau)\nJe comprends que vous indiquez : état avant le problème (after update), résultat observé (application closes when activating dark theme and save button becomes almost unreadable), résultat attendu (application should not close and save button should be readable), fonctionnalité ou page (dark theme).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Action déclenchante : action normale du produit qui déclenche le problème.\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "application",
+                  "topic_action": "activate",
+                  "topic_object": "dark theme",
+                  "segment_verbatims": [
+                    "Depuis la mise a jour, l'application se ferme quand j'active le theme sombre et le bouton Enregistrer devient presque illisible."
+                  ],
+                  "topic_details": {
+                    "pre_problem_state": "after update",
+                    "observed_result": "application closes when activating dark theme and save button becomes almost unreadable",
+                    "expected_result": "application should not close and save button should be readable",
+                    "feature_or_page": "dark theme"
+                  },
+                  "user_goal": "Use dark theme without application crashing and ensure save button is readable",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "application",
+                            "topic_action": "activate",
+                            "topic_object": "dark theme",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "pre_problem_state": "after update",
+                              "observed_result": "application closes when activating dark theme and save button becomes almost unreadable",
+                              "expected_result": "application should not close and save button should be readable",
+                              "feature_or_page": "dark theme"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "trigger_action",
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T09:42:52.342Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 4361
+    }
+  ]
+}

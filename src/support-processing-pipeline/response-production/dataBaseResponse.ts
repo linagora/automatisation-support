@@ -53,6 +53,7 @@ type DataBaseResponse = {
       responses: {
         default: string;
         thanks: string;
+        dissatisfaction: string;
         timeSensitive: string;
       };
       labels: LabelDatabase;
@@ -260,6 +261,8 @@ const dataBaseResponse: DataBaseResponse = {
       responses: {
         default: "C’est bien noté.",
         thanks: "Avec plaisir.",
+        dissatisfaction:
+          "Je suis désolé que le service ne réponde plus à vos attentes. Votre retour est bien pris en compte ; le support peut reprendre la main pour regarder votre situation et vous répondre plus précisément.",
         timeSensitive: "Nous faisons au plus vite."
       },
       labels: {
@@ -470,6 +473,8 @@ const dataBaseResponse: DataBaseResponse = {
       responses: {
         default: "Noted.",
         thanks: "You’re welcome.",
+        dissatisfaction:
+          "I’m sorry the service no longer meets your expectations. Your feedback has been taken into account; support can take over to review your situation and reply more precisely.",
         timeSensitive: "We’ll do our best to handle this quickly."
       },
       labels: {

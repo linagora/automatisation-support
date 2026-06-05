@@ -211,6 +211,18 @@ function getStringValue(value: unknown): string | undefined {
     : undefined;
 }
 
+function getStringListValue(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    return typeof item === "string" && item.trim() !== ""
+      ? [item.trim()]
+      : [];
+  });
+}
+
 function normalizedIncludesAny(
   value: string | undefined,
   expectedParts: string[]
@@ -223,6 +235,15 @@ function normalizedIncludesAny(
 
   return expectedParts.some((expectedPart) => {
     return normalizedValue.includes(expectedPart);
+  });
+}
+
+function normalizedTextIncludesAny(
+  values: (string | undefined)[],
+  expectedParts: string[]
+): boolean {
+  return values.some((value) => {
+    return normalizedIncludesAny(value, expectedParts);
   });
 }
 
@@ -462,6 +483,114 @@ function isClearQuestionFaqTopic(params: {
   );
 }
 
+function getTopicSegmentVerbatims(
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number]
+): string[] {
+  return getStringListValue(topic.segment_verbatims);
+}
+
+function getTopicUserGoal(
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number]
+): string | undefined {
+  return getStringValue(topic.user_goal);
+}
+
+function hasBugUsefulContext(params: {
+  input: SearchDecisionInput;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
+}): boolean {
+  return (
+    getTopicStringFieldForDecision({
+      input: params.input,
+      topic: params.topic,
+      fieldName: "topic_action"
+    }) !== undefined ||
+    isFilledField(params.topicDetails?.feature_or_page) ||
+    isFilledField(params.topicDetails?.error_message) ||
+    getTopicSegmentVerbatims(params.topic).length > 0
+  );
+}
+
+function isBugObservedResultUseful(
+  topicDetails: Record<string, unknown> | undefined
+): boolean {
+  const observedResult = getStringValue(topicDetails?.observed_result);
+
+  if (!observedResult) {
+    return false;
+  }
+
+  return !normalizedIncludesAny(observedResult, [
+    "does not work",
+    "doesn't work",
+    "not working",
+    "ne marche pas",
+    "ça ne marche pas",
+    "ca ne marche pas",
+    "bug",
+    "problem",
+    "problème",
+    "probleme"
+  ]);
+}
+
+function getBugFieldsToAsk(params: {
+  input: SearchDecisionInput;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
+  missingFields: string[];
+}): string[] {
+  if (
+    isBugObservedResultUseful(params.topicDetails) &&
+    hasBugUsefulContext({
+      input: params.input,
+      topic: params.topic,
+      topicDetails: params.topicDetails
+    })
+  ) {
+    return params.missingFields.includes("platform") &&
+      !isFilledField(params.topicDetails?.platform)
+      ? ["platform"]
+      : [];
+  }
+
+  return selectMissingFieldsToAsk({
+    topicCategory: "bug",
+    missingFields: params.missingFields
+  });
+}
+
+function isClearRequestTopic(params: {
+  input: SearchDecisionInput;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
+}): boolean {
+  const hasStructuredTitle =
+    getTopicStringFieldForDecision({
+      input: params.input,
+      topic: params.topic,
+      fieldName: "tool_or_product"
+    }) !== undefined ||
+    getTopicStringFieldForDecision({
+      input: params.input,
+      topic: params.topic,
+      fieldName: "topic_action"
+    }) !== undefined ||
+    getTopicStringFieldForDecision({
+      input: params.input,
+      topic: params.topic,
+      fieldName: "topic_object"
+    }) !== undefined;
+
+  return (
+    getTopicSegmentVerbatims(params.topic).length > 0 &&
+    (getTopicUserGoal(params.topic) !== undefined ||
+      isFilledField(params.topicDetails?.gap_observed)) &&
+    hasStructuredTitle
+  );
+}
+
 function selectUsefulMissingFields(params: {
   input: SearchDecisionInput;
   topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
@@ -483,6 +612,26 @@ function selectUsefulMissingFields(params: {
         fieldName: "topic_object"
       })
     });
+  }
+
+  if (params.topicCategory === "bug") {
+    return getBugFieldsToAsk({
+      input: params.input,
+      topic: params.topic,
+      topicDetails: params.topicDetails,
+      missingFields: params.missingFields
+    });
+  }
+
+  if (
+    params.topicCategory === "request" &&
+    isClearRequestTopic({
+      input: params.input,
+      topic: params.topic,
+      topicDetails: params.topicDetails
+    })
+  ) {
+    return [];
   }
 
   if (
@@ -616,10 +765,101 @@ function hasPreviouslyRequestedVisualEvidenceForTopic(
   return false;
 }
 
+function getTopicSearchText(params: {
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
+}): string[] {
+  return [
+    getStringValue(params.topic.tool_or_product),
+    getStringValue(params.topic.topic_action),
+    getStringValue(params.topic.topic_object),
+    getStringValue(params.topic.user_goal),
+    ...getTopicSegmentVerbatims(params.topic),
+    ...Object.values(params.topicDetails ?? {}).flatMap((value) => {
+      return getStringValue(value) ?? [];
+    })
+  ].filter((value): value is string => {
+    return value !== undefined;
+  });
+}
+
+function isResolvedBugTopic(params: {
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
+}): boolean {
+  return normalizedTextIncludesAny(getTopicSearchText(params), [
+    "works now",
+    "now works",
+    "is now created",
+    "now created",
+    "fixed",
+    "resolved",
+    "marche maintenant",
+    "fonctionne maintenant",
+    "c'est resolu",
+    "c'est résolu",
+    "ca marche maintenant",
+    "ça marche maintenant"
+  ]);
+}
+
+function isAccessibilityNonVisualBug(params: {
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
+}): boolean {
+  return normalizedTextIncludesAny(getTopicSearchText(params), [
+    "voiceover",
+    "screen reader",
+    "lecteur d'écran",
+    "lecteur d ecran",
+    "accessibility",
+    "accessibilite",
+    "accessibilité"
+  ]);
+}
+
+function isConnectorUnavailableBug(params: {
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
+}): boolean {
+  return normalizedTextIncludesAny(getTopicSearchText(params), [
+    "connector",
+    "connecteur",
+    "connecteurs",
+    "bank connector",
+    "bank connectors",
+    "ensap",
+    "unavailable",
+    "indisponible",
+    "indisponibles"
+  ]);
+}
+
+function shouldRequestOptionalVisualEvidence(params: {
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
+}): boolean {
+  if (isResolvedBugTopic(params)) {
+    return false;
+  }
+
+  if (isAccessibilityNonVisualBug(params)) {
+    return false;
+  }
+
+  if (isConnectorUnavailableBug(params)) {
+    return false;
+  }
+
+  return true;
+}
+
 function getOptionalEvidenceRequestForTopic(params: {
   input: SearchDecisionInput;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
   topicId: number;
   topicCategory: TopicCategory;
+  topicDetails: Record<string, unknown> | undefined;
 }): OptionalEvidenceRequest | undefined {
   if (params.topicCategory !== "bug") {
     return undefined;
@@ -634,6 +874,15 @@ function getOptionalEvidenceRequestForTopic(params: {
       params.input,
       params.topicId
     )
+  ) {
+    return undefined;
+  }
+
+  if (
+    !shouldRequestOptionalVisualEvidence({
+      topic: params.topic,
+      topicDetails: params.topicDetails
+    })
   ) {
     return undefined;
   }
@@ -817,8 +1066,20 @@ function shouldSearchSolution(params: {
   input: SearchDecisionInput;
   topicId: number;
   topicCategory: TopicCategory;
+  topic: SearchDecisionInput["turnUnderstandingDelta"]["segments_topic"][number];
+  topicDetails: Record<string, unknown> | undefined;
 }): boolean {
   if (!isRagEligibleTopicCategory(params.topicCategory)) {
+    return false;
+  }
+
+  if (
+    params.topicCategory === "bug" &&
+    isResolvedBugTopic({
+      topic: params.topic,
+      topicDetails: params.topicDetails
+    })
+  ) {
     return false;
   }
 
@@ -862,8 +1123,10 @@ async function runSearchDecision(
       });
       const optionalEvidenceRequest = getOptionalEvidenceRequestForTopic({
         input,
+        topic,
         topicId: topic.id_topic,
-        topicCategory
+        topicCategory,
+        topicDetails
       });
       const optionalEvidenceFields =
         optionalEvidenceRequest === undefined
@@ -884,7 +1147,9 @@ async function runSearchDecision(
         type: shouldSearchSolution({
           input,
           topicId: topic.id_topic,
-          topicCategory
+          topicCategory,
+          topic,
+          topicDetails
         })
           ? "solution_searching"
           : "acknowledgement",
