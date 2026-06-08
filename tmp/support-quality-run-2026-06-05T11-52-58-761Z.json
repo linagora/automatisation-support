@@ -1,0 +1,3225 @@
+{
+  "generatedAt": "2026-06-05T11:52:58.761Z",
+  "results": [
+    {
+      "testCase": {
+        "id": 1,
+        "label": "Bug app crash / dark theme unreadable button",
+        "latestUserMessage": "Depuis la mise a jour, l'application se ferme quand j'active le theme sombre et le bouton Enregistrer devient presque illisible."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_1",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Depuis la mise a jour, l'application se ferme quand j'active le theme sombre et le bouton Enregistrer devient presque illisible."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Bug - application : activate : dark theme - (Nouveau)\nJe comprends que vous indiquez : état avant le problème (after update), résultat observé (app closes, save button becomes almost unreadable), résultat attendu (app should not close, save button should be readable), fonctionnalité ou page (dark theme).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "application",
+                  "topic_action": "activate",
+                  "topic_object": "dark theme",
+                  "segment_verbatims": [
+                    "Depuis la mise a jour, l'application se ferme quand j'active le theme sombre et le bouton Enregistrer devient presque illisible."
+                  ],
+                  "topic_details": {
+                    "pre_problem_state": "after update",
+                    "observed_result": "app closes, save button becomes almost unreadable",
+                    "expected_result": "app should not close, save button should be readable",
+                    "feature_or_page": "dark theme"
+                  },
+                  "user_goal": "use dark theme without app crashing and ensure save button is readable",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "application",
+                            "topic_action": "activate",
+                            "topic_object": "dark theme",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "pre_problem_state": "after update",
+                              "observed_result": "app closes, save button becomes almost unreadable",
+                              "expected_result": "app should not close, save button should be readable",
+                              "feature_or_page": "dark theme"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:51:45.564Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 9358
+    },
+    {
+      "testCase": {
+        "id": 2,
+        "label": "Bug Drive create folder / rename file",
+        "latestUserMessage": "Dans Drive je n'arrive pas a creer un dossier, et quand je renomme un fichier le nouveau nom n'est pas sauvegarde."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_2",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Dans Drive je n'arrive pas a creer un dossier, et quand je renomme un fichier le nouveau nom n'est pas sauvegarde."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié deux nouveaux sujets.\n\nSujet 1 - Bug - Drive : create : dossier - (Nouveau)\nJe comprends que vous indiquez : résultat observé (cannot create a folder), résultat attendu (le dossier devrait être créé).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons votre retour pour obtenir plus d’informations."
+            },
+            {
+              "type": "topic_response",
+              "content": "Sujet 2 - Bug - Drive : rename : fichier - (Nouveau)\nJe comprends que vous indiquez : résultat observé (new name is not saved), résultat attendu (file name should be saved).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Drive",
+                  "topic_action": "create",
+                  "topic_object": "dossier",
+                  "segment_verbatims": [
+                    "Dans Drive je n'arrive pas a creer un dossier"
+                  ],
+                  "topic_details": {
+                    "observed_result": "cannot create a folder",
+                    "expected_result": "folder should be created"
+                  },
+                  "user_goal": "create a folder in Drive",
+                  "blocking_issue": "yes"
+                },
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 2,
+                  "topic_category": "bug",
+                  "tool_or_product": "Drive",
+                  "topic_action": "rename",
+                  "topic_object": "fichier",
+                  "segment_verbatims": [
+                    "quand je renomme un fichier le nouveau nom n'est pas sauvegarde"
+                  ],
+                  "topic_details": {
+                    "observed_result": "new name is not saved",
+                    "expected_result": "file name should be saved"
+                  },
+                  "user_goal": "rename a file in Drive",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 2,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "Drive",
+                            "topic_action": "create",
+                            "topic_object": "dossier",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "observed_result": "cannot create a folder",
+                              "expected_result": "folder should be created"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      },
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 2,
+                            "topic_category": "bug",
+                            "tool_or_product": "Drive",
+                            "topic_action": "rename",
+                            "topic_object": "fichier",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "observed_result": "new name is not saved",
+                              "expected_result": "file name should be saved"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:51:49.131Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 3565
+    },
+    {
+      "testCase": {
+        "id": 3,
+        "label": "Bug Android folder creation with error",
+        "latestUserMessage": "Sur Android, quand je cree un dossier dans Drive j'ai le message Vous devez nommer votre dossier alors que le nom est bien rempli."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_3",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Sur Android, quand je cree un dossier dans Drive j'ai le message Vous devez nommer votre dossier alors que le nom est bien rempli."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Bug - Drive : create : folder - (Nouveau)\nJe comprends que vous indiquez : plateforme (Android), fonctionnalité ou page (folder creation), état avant le problème (name is filled), résultat observé (message 'Vous devez nommer votre dossier'), résultat attendu (folder creation without error message), message d’erreur (Vous devez nommer votre dossier).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons l’intervention du support humain pour prendre le relais.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Drive",
+                  "topic_action": "create",
+                  "topic_object": "folder",
+                  "segment_verbatims": [
+                    "Sur Android, quand je cree un dossier dans Drive j'ai le message Vous devez nommer votre dossier alors que le nom est bien rempli."
+                  ],
+                  "topic_details": {
+                    "platform": "Android",
+                    "feature_or_page": "folder creation",
+                    "pre_problem_state": "name is filled",
+                    "observed_result": "message 'Vous devez nommer votre dossier'",
+                    "expected_result": "folder creation without error message",
+                    "error_message": "Vous devez nommer votre dossier"
+                  },
+                  "user_goal": "create a folder in Drive on Android without error message",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "Drive",
+                            "topic_action": "create",
+                            "topic_object": "folder",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "platform": "Android",
+                              "feature_or_page": "folder creation",
+                              "pre_problem_state": "name is filled",
+                              "observed_result": "message 'Vous devez nommer votre dossier'",
+                              "expected_result": "folder creation without error message",
+                              "error_message": "Vous devez nommer votre dossier"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:51:57.219Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 8086
+    },
+    {
+      "testCase": {
+        "id": 4,
+        "label": "Login impossible",
+        "latestUserMessage": "Impossible de me connecter a mon compte Twake depuis ce matin, mon mot de passe est refuse alors qu'il fonctionne d'habitude."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_4",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Impossible de me connecter a mon compte Twake depuis ce matin, mon mot de passe est refuse alors qu'il fonctionne d'habitude."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "security_gate",
+              "content": "Our security system identified a potentially problematic element and automatic analysis was stopped. Support will take over to confirm or dismiss this decision."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "Unknown",
+              "segments_lack_comprehension": [],
+              "segments_topic": [],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {},
+                "gateFailed": [
+                  {
+                    "decision": {
+                      "route": "stop"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": [
+                        "credential_or_secret_leak"
+                      ],
+                      "llmReview": {
+                        "route": "stop",
+                        "reason": "user message contains a password"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {},
+              "gateFailed": [
+                {
+                  "decision": {
+                    "route": "stop"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": [
+                      "credential_or_secret_leak"
+                    ],
+                    "llmReview": {
+                      "route": "stop",
+                      "reason": "user message contains a password"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "english",
+              "messagesPlan": {
+                "securityGatePlanMessage": {
+                  "gateFailed": [
+                    {
+                      "decision": {
+                        "route": "stop"
+                      },
+                      "history": {
+                        "checked": [
+                          "prompt_injection_attempt",
+                          "internal_information_request",
+                          "sensitive_data_request",
+                          "spam_like_text",
+                          "suspicious_link_or_url",
+                          "excessive_repetition",
+                          "unsafe_or_suspicious_content"
+                        ],
+                        "failed": [
+                          "credential_or_secret_leak"
+                        ],
+                        "llmReview": {
+                          "route": "stop",
+                          "reason": "user message contains a password"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:51:58.959Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 1739
+    },
+    {
+      "testCase": {
+        "id": 5,
+        "label": "VoiceOver iOS accessibility",
+        "latestUserMessage": "Avec VoiceOver sur iPhone, je n'arrive pas a savoir quel bouton permet d'envoyer un message dans Twake Chat."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_5",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Avec VoiceOver sur iPhone, je n'arrive pas a savoir quel bouton permet d'envoyer un message dans Twake Chat."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Bug - Twake Chat : send : message - (Nouveau)\nJe comprends que vous indiquez : plateforme (iPhone), système d’exploitation (iOS), état avant le problème (Using VoiceOver on iPhone), résultat observé (Cannot identify the button to send a message), résultat attendu (Be able to identify and use the send message button), fonctionnalité ou page (Twake Chat).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nNous attendons l’intervention du support humain pour prendre le relais.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Twake Chat",
+                  "topic_action": "send",
+                  "topic_object": "message",
+                  "segment_verbatims": [
+                    "Avec VoiceOver sur iPhone, je n'arrive pas a savoir quel bouton permet d'envoyer un message dans Twake Chat."
+                  ],
+                  "topic_details": {
+                    "platform": "iPhone",
+                    "os": "iOS",
+                    "pre_problem_state": "Using VoiceOver on iPhone",
+                    "observed_result": "Cannot identify the button to send a message",
+                    "expected_result": "Be able to identify and use the send message button",
+                    "feature_or_page": "Twake Chat"
+                  },
+                  "user_goal": "Identify the button to send a message in Twake Chat using VoiceOver on iPhone",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "Twake Chat",
+                            "topic_action": "send",
+                            "topic_object": "message",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "platform": "iPhone",
+                              "os": "iOS",
+                              "pre_problem_state": "Using VoiceOver on iPhone",
+                              "observed_result": "Cannot identify the button to send a message",
+                              "expected_result": "Be able to identify and use the send message button",
+                              "feature_or_page": "Twake Chat"
+                            }
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:05.514Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 6554
+    },
+    {
+      "testCase": {
+        "id": 6,
+        "label": "FAQ MFA setup",
+        "latestUserMessage": "Comment activer la double authentification MFA sur mon compte Twake ?"
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_6",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Comment activer la double authentification MFA sur mon compte Twake ?"
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Accès / sécurité - Twake : activer : la double authentification MFA - (Nouveau)\nJe comprends que vous indiquez : action d’accès (activer la double authentification MFA), intention de la question (how_to).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Résultat observé : ce qui se produit réellement.\n- Méthode d’authentification : méthode d’authentification utilisée, par exemple mot de passe, numéro de téléphone ou e-mail.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "access_security",
+                  "tool_or_product": "Twake",
+                  "topic_action": "activer",
+                  "topic_object": "la double authentification MFA",
+                  "segment_verbatims": [
+                    "Comment activer la double authentification MFA sur mon compte Twake ?"
+                  ],
+                  "topic_details": {
+                    "access_action": "activer la double authentification MFA",
+                    "question_intent": "how_to"
+                  },
+                  "user_goal": "activate MFA on Twake account",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "access_security",
+                            "tool_or_product": "Twake",
+                            "topic_action": "activer",
+                            "topic_object": "la double authentification MFA",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "access_action": "activer la double authentification MFA",
+                              "question_intent": "how_to"
+                            }
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "observed_result",
+                                "auth_method"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:11.761Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 6246
+    },
+    {
+      "testCase": {
+        "id": 7,
+        "label": "Feature request password folders",
+        "latestUserMessage": "Est-ce que vous pouvez ajouter des dossiers pour organiser les mots de passe ?"
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_7",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Est-ce que vous pouvez ajouter des dossiers pour organiser les mots de passe ?"
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Demande - password manager : organize : passwords - (Nouveau)\nJe comprends que vous indiquez : écart observé (folder creation for password organization).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nNous attendons l’intervention du support humain pour prendre le relais.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "request",
+                  "tool_or_product": "password manager",
+                  "topic_action": "organize",
+                  "topic_object": "passwords",
+                  "segment_verbatims": [
+                    "Est-ce que vous pouvez ajouter des dossiers pour organiser les mots de passe ?"
+                  ],
+                  "topic_details": {
+                    "gap_observed": "folder creation for password organization"
+                  },
+                  "user_goal": "user wants to organize passwords with folders in the password manager",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "request",
+                            "tool_or_product": "password manager",
+                            "topic_action": "organize",
+                            "topic_object": "passwords",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "gap_observed": "folder creation for password organization"
+                            }
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:16.878Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 5117
+    },
+    {
+      "testCase": {
+        "id": 8,
+        "label": "Feature request export / sharing / photos",
+        "latestUserMessage": "J'aimerais pouvoir exporter mes photos, les partager avec ma famille et choisir un album entier d'un coup."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_8",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "J'aimerais pouvoir exporter mes photos, les partager avec ma famille et choisir un album entier d'un coup."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Demande - export : photos - (Nouveau)\nJe comprends que vous indiquez : écart observé (share photos with family, select entire album at once).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nNous attendons l’intervention du support humain pour prendre le relais.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "request",
+                  "topic_action": "export",
+                  "topic_object": "photos",
+                  "segment_verbatims": [
+                    "J'aimerais pouvoir exporter mes photos"
+                  ],
+                  "topic_details": {
+                    "gap_observed": "share photos with family, select entire album at once"
+                  },
+                  "user_goal": "export photos, share with family, select entire album at once",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "request",
+                            "topic_action": "export",
+                            "topic_object": "photos",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "gap_observed": "share photos with family, select entire album at once"
+                            }
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:21.793Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 4915
+    },
+    {
+      "testCase": {
+        "id": 9,
+        "label": "Billing double charge",
+        "latestUserMessage": "J'ai ete preleve deux fois ce mois-ci pour mon abonnement."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_9",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "J'ai ete preleve deux fois ce mois-ci pour mon abonnement."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Facturation - preleve : abonnement - (Nouveau)\nJe comprends que vous indiquez : type de problème de facturation (double charge), date ou période de facturation (ce mois-ci), résultat observé (J'ai ete preleve deux fois).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Prestataire de facturation : prestataire ou moyen de paiement concerné.\n- Montant : montant concerné.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "billing",
+                  "topic_action": "preleve",
+                  "topic_object": "abonnement",
+                  "segment_verbatims": [
+                    "J'ai ete preleve deux fois ce mois-ci pour mon abonnement."
+                  ],
+                  "topic_details": {
+                    "billing_issue_type": "double charge",
+                    "billing_date_or_period": "ce mois-ci",
+                    "observed_result": "J'ai ete preleve deux fois"
+                  },
+                  "user_goal": "Report double charge for subscription this month",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "billing",
+                            "topic_action": "preleve",
+                            "topic_object": "abonnement",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "billing_issue_type": "double charge",
+                              "billing_date_or_period": "ce mois-ci",
+                              "observed_result": "J'ai ete preleve deux fois"
+                            }
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "billing_provider",
+                                "amount"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:27.225Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 5431
+    },
+    {
+      "testCase": {
+        "id": 10,
+        "label": "Billing payment refused / Google Wallet",
+        "latestUserMessage": "Le paiement via Google Wallet est refuse alors que ma carte fonctionne, comment renouveler mon abonnement ?"
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_10",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Le paiement via Google Wallet est refuse alors que ma carte fonctionne, comment renouveler mon abonnement ?"
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Facturation - renew : subscription - (Nouveau)\nJe comprends que vous indiquez : type de problème de facturation (payment refused), prestataire de facturation (Google Wallet), résultat observé (payment refused), résultat attendu (renew subscription).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Montant : montant concerné.\n- Devise : devise concernée.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "billing",
+                  "topic_action": "renew",
+                  "topic_object": "subscription",
+                  "segment_verbatims": [
+                    "Le paiement via Google Wallet est refuse alors que ma carte fonctionne, comment renouveler mon abonnement ?"
+                  ],
+                  "topic_details": {
+                    "billing_issue_type": "payment refused",
+                    "billing_provider": "Google Wallet",
+                    "observed_result": "payment refused",
+                    "expected_result": "renew subscription"
+                  },
+                  "user_goal": "renew subscription after payment refusal via Google Wallet",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "billing",
+                            "topic_action": "renew",
+                            "topic_object": "subscription",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "billing_issue_type": "payment refused",
+                              "billing_provider": "Google Wallet",
+                              "observed_result": "payment refused",
+                              "expected_result": "renew subscription"
+                            }
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "amount",
+                                "currency"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:33.674Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 6448
+    },
+    {
+      "testCase": {
+        "id": 11,
+        "label": "Bank and administrative connectors unavailable",
+        "latestUserMessage": "Les connecteurs de ma banque et de l'ENSAP sont indisponibles depuis plusieurs jours, je ne peux plus importer mes documents."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_11",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Les connecteurs de ma banque et de l'ENSAP sont indisponibles depuis plusieurs jours, je ne peux plus importer mes documents."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet.\n\nSujet 1 - Bug - connecteurs : importer : documents - (Nouveau)\nJe comprends que vous indiquez : périmètre affecté (banque, ENSAP), fréquence (depuis plusieurs jours), résultat observé (connecteurs indisponibles), résultat attendu (importer mes documents).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "connecteurs",
+                  "topic_action": "importer",
+                  "topic_object": "documents",
+                  "segment_verbatims": [
+                    "Les connecteurs de ma banque et de l'ENSAP sont indisponibles depuis plusieurs jours, je ne peux plus importer mes documents."
+                  ],
+                  "topic_details": {
+                    "affected_scope": "banque, ENSAP",
+                    "frequency": "depuis plusieurs jours",
+                    "observed_result": "connecteurs indisponibles",
+                    "expected_result": "importer mes documents"
+                  },
+                  "user_goal": "Importer des documents via les connecteurs de la banque et de l'ENSAP",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 0
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "connecteurs",
+                            "topic_action": "importer",
+                            "topic_object": "documents",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "affected_scope": "banque, ENSAP",
+                              "frequency": "depuis plusieurs jours",
+                              "observed_result": "connecteurs indisponibles",
+                              "expected_result": "importer mes documents"
+                            }
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:40.637Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 6962
+    },
+    {
+      "testCase": {
+        "id": 12,
+        "label": "Churn complaint without clear technical request",
+        "latestUserMessage": "Franchement je vais arreter mon abonnement, il y a trop de problemes et je perds du temps a chaque fois."
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_12",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Franchement je vais arreter mon abonnement, il y a trop de problemes et je perds du temps a chaque fois."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "signal_response",
+              "content": "Je suis désolé que le service ne réponde plus à vos attentes. Votre retour est bien pris en compte ; le support peut reprendre la main pour regarder votre situation et vous répondre plus précisément."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [],
+              "segments_signal": [
+                {
+                  "signal_verbatim": "Franchement je vais arreter mon abonnement, il y a trop de problemes et je perds du temps a chaque fois.",
+                  "signal_types": [
+                    "disappointment",
+                    "churn_intent",
+                    "complaint_without_actionable_detail"
+                  ]
+                }
+              ],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [
+                  {
+                    "signal_verbatim": "Franchement je vais arreter mon abonnement, il y a trop de problemes et je perds du temps a chaque fois.",
+                    "signal_types": [
+                      "disappointment",
+                      "churn_intent",
+                      "complaint_without_actionable_detail"
+                    ]
+                  }
+                ],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:43.048Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 2410
+    },
+    {
+      "testCase": {
+        "id": 13,
+        "label": "Out of scope / restaurant spam",
+        "latestUserMessage": "Bonjour, notre restaurant propose des menus de groupe et un service traiteur, voulez-vous recevoir notre carte ?"
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_13",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Bonjour, notre restaurant propose des menus de groupe et un service traiteur, voulez-vous recevoir notre carte ?"
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": []
+        },
+        "conversationHistory": []
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "scope_boundary",
+              "content": "Cette partie de votre message ressemble à un contenu commercial ou non pertinent, donc elle ne sera pas traitée ici : \"Bonjour, notre restaurant propose des menus de groupe et un service traiteur, voulez-vous recevoir notre carte ?\"."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [],
+              "segments_signal": [],
+              "segments_scope_boundary": [
+                {
+                  "signal_verbatim": "Bonjour, notre restaurant propose des menus de groupe et un service traiteur, voulez-vous recevoir notre carte ?",
+                  "scope_boundary_type": "spam_or_commercial"
+                }
+              ],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [
+                  {
+                    "signal_verbatim": "Bonjour, notre restaurant propose des menus de groupe et un service traiteur, voulez-vous recevoir notre carte ?",
+                    "scope_boundary_type": "spam_or_commercial"
+                  }
+                ],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:45.143Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 2095
+    },
+    {
+      "testCase": {
+        "id": 14,
+        "label": "Historical follow-up resolved then new issue",
+        "latestUserMessage": "Ca marche maintenant pour le dossier, merci. Par contre je ne recois plus les notifications Drive.",
+        "supportTopicKnowledge": {
+          "segments_topic": [
+            {
+              "id_topic": 1,
+              "topic_category": "bug",
+              "tool_or_product": "Twake Drive",
+              "topic_action": "create",
+              "topic_object": "folder",
+              "segment_verbatims": [
+                "Je n'arrive pas a creer un dossier dans Drive depuis Android."
+              ],
+              "topic_details": {
+                "platform": "mobile app",
+                "os": "Android",
+                "trigger_action": "tap create folder",
+                "observed_result": "folder is not created",
+                "expected_result": "folder should be created"
+              },
+              "user_goal": "Create a folder in Twake Drive on Android mobile app but the folder is not created",
+              "blocking_issue": "yes"
+            }
+          ]
+        },
+        "conversationHistory": [
+          {
+            "id": "quality_drive_folder_user_1",
+            "message_id": "quality_drive_folder_msg_1",
+            "role": "user",
+            "created_at": "2026-05-20T09:00:00.000Z",
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "securityGateSummary": {
+                "gateChecked": {},
+                "gateFailed": []
+              },
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Twake Drive",
+                  "topic_action": "create",
+                  "topic_object": "folder",
+                  "segment_verbatims": [
+                    "Je n'arrive pas a creer un dossier dans Drive depuis Android."
+                  ],
+                  "topic_details": {
+                    "platform": "mobile app",
+                    "os": "Android",
+                    "trigger_action": "tap create folder",
+                    "observed_result": "folder is not created",
+                    "expected_result": "folder should be created"
+                  },
+                  "user_goal": "Create a folder in Twake Drive on Android mobile app but the folder is not created",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": []
+            }
+          },
+          {
+            "id": "quality_drive_folder_bot_1",
+            "message_id": "quality_drive_folder_bot_msg_1",
+            "role": "bot",
+            "created_at": "2026-05-20T09:01:00.000Z",
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          }
+        ]
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_14",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Ca marche maintenant pour le dossier, merci. Par contre je ne recois plus les notifications Drive."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": [
+            {
+              "id_topic": 1,
+              "topic_category": "bug",
+              "tool_or_product": "Twake Drive",
+              "topic_action": "create",
+              "topic_object": "folder",
+              "segment_verbatims": [
+                "Je n'arrive pas a creer un dossier dans Drive depuis Android."
+              ],
+              "topic_details": {
+                "platform": "mobile app",
+                "os": "Android",
+                "trigger_action": "tap create folder",
+                "observed_result": "folder is not created",
+                "expected_result": "folder should be created"
+              },
+              "user_goal": "Create a folder in Twake Drive on Android mobile app but the folder is not created",
+              "blocking_issue": "yes"
+            }
+          ]
+        },
+        "conversationHistory": [
+          {
+            "id": "quality_drive_folder_user_1",
+            "message_id": "quality_drive_folder_msg_1",
+            "role": "user",
+            "created_at": "2026-05-20T09:00:00.000Z",
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "securityGateSummary": {
+                "gateChecked": {},
+                "gateFailed": []
+              },
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "bug",
+                  "tool_or_product": "Twake Drive",
+                  "topic_action": "create",
+                  "topic_object": "folder",
+                  "segment_verbatims": [
+                    "Je n'arrive pas a creer un dossier dans Drive depuis Android."
+                  ],
+                  "topic_details": {
+                    "platform": "mobile app",
+                    "os": "Android",
+                    "trigger_action": "tap create folder",
+                    "observed_result": "folder is not created",
+                    "expected_result": "folder should be created"
+                  },
+                  "user_goal": "Create a folder in Twake Drive on Android mobile app but the folder is not created",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": []
+            }
+          },
+          {
+            "id": "quality_drive_folder_bot_1",
+            "message_id": "quality_drive_folder_bot_msg_1",
+            "role": "bot",
+            "created_at": "2026-05-20T09:01:00.000Z",
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          }
+        ]
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un nouveau sujet et un sujet déjà en cours.\n\nSujet 1 - Bug - Twake Drive : create : folder - (En cours)\nJe comprends que vous indiquez : résultat observé (folder is now created), message d’erreur (none).\nNous avons désormais toutes les informations pour que le support humain puisse prendre la main et vous répondre au mieux.\nNous attendons l’intervention du support humain pour prendre le relais."
+            },
+            {
+              "type": "topic_response",
+              "content": "Sujet 2 - Bug - Twake Drive : receive : notifications - (Nouveau)\nJe comprends que vous indiquez : résultat observé (notifications are not received), résultat attendu (notifications should be received).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Plateforme : canal d’exécution concerné, par exemple application mobile, web ou application desktop.\nSi possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            },
+            {
+              "type": "signal_response",
+              "content": "Avec plaisir."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "yes",
+                  "id_topic": 1,
+                  "topic_details": {
+                    "observed_result": "folder is now created",
+                    "error_message": "none"
+                  },
+                  "segment_verbatims": [
+                    "Ca marche maintenant pour le dossier"
+                  ],
+                  "user_goal": "Create a folder in Twake Drive on Android mobile app. The folder is now created but notifications are not received.",
+                  "blocking_issue": "no"
+                },
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 2,
+                  "topic_category": "bug",
+                  "tool_or_product": "Twake Drive",
+                  "topic_action": "receive",
+                  "topic_object": "notifications",
+                  "segment_verbatims": [
+                    "je ne recois plus les notifications Drive"
+                  ],
+                  "topic_details": {
+                    "observed_result": "notifications are not received",
+                    "expected_result": "notifications should be received"
+                  },
+                  "user_goal": "Receive notifications for Twake Drive but they are not received.",
+                  "blocking_issue": "no"
+                }
+              ],
+              "segments_signal": [
+                {
+                  "signal_verbatim": "merci",
+                  "signal_types": [
+                    "thanks_positive"
+                  ]
+                }
+              ],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 1,
+                      "matched_historical_topic_count": 1
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "bug",
+                            "tool_or_product": "Twake Drive",
+                            "topic_action": "create",
+                            "topic_object": "folder",
+                            "matched_historical_topic": true
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "observed_result": "folder is now created",
+                              "error_message": "none"
+                            }
+                          },
+                          "main_response": {
+                            "type": "acknowledgement"
+                          },
+                          "next_step": "wait_for_support"
+                        }
+                      },
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 2,
+                            "topic_category": "bug",
+                            "tool_or_product": "Twake Drive",
+                            "topic_action": "receive",
+                            "topic_object": "notifications",
+                            "matched_historical_topic": false
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "observed_result": "notifications are not received",
+                              "expected_result": "notifications should be received"
+                            }
+                          },
+                          "optional_evidence_requested": {
+                            "types": [
+                              "screenshot",
+                              "video"
+                            ],
+                            "reason": "bug_visual_context_helpful"
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "platform"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [
+                  {
+                    "signal_verbatim": "merci",
+                    "signal_types": [
+                      "thanks_positive"
+                    ]
+                  }
+                ],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:53.338Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 8195
+    },
+    {
+      "testCase": {
+        "id": 15,
+        "label": "Historical follow-up precision after existing login topic",
+        "latestUserMessage": "Pour la connexion, l'erreur exacte est Session expiree et je suis sur Firefox.",
+        "supportTopicKnowledge": {
+          "segments_topic": [
+            {
+              "id_topic": 1,
+              "topic_category": "access_security",
+              "tool_or_product": "Twake",
+              "topic_action": "login",
+              "topic_object": "account",
+              "segment_verbatims": [
+                "Je ne peux plus me connecter a Twake depuis ce matin."
+              ],
+              "topic_details": {
+                "access_action": "login",
+                "auth_method": "password",
+                "observed_result": "login fails",
+                "platform": "web"
+              },
+              "user_goal": "Log in to Twake account from the web app",
+              "blocking_issue": "yes"
+            }
+          ]
+        },
+        "conversationHistory": [
+          {
+            "id": "quality_login_user_1",
+            "message_id": "quality_login_msg_1",
+            "role": "user",
+            "created_at": "2026-05-20T09:00:00.000Z",
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "securityGateSummary": {
+                "gateChecked": {},
+                "gateFailed": []
+              },
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "access_security",
+                  "tool_or_product": "Twake",
+                  "topic_action": "login",
+                  "topic_object": "account",
+                  "segment_verbatims": [
+                    "Je ne peux plus me connecter a Twake depuis ce matin."
+                  ],
+                  "topic_details": {
+                    "access_action": "login",
+                    "auth_method": "password",
+                    "observed_result": "login fails",
+                    "platform": "web"
+                  },
+                  "user_goal": "Log in to Twake account from the web app",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": []
+            }
+          },
+          {
+            "id": "quality_login_bot_1",
+            "message_id": "quality_login_bot_msg_1",
+            "role": "bot",
+            "created_at": "2026-05-20T09:01:00.000Z",
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          }
+        ]
+      },
+      "input": {
+        "latestUserMessage": {
+          "id": "quality_case_15",
+          "channel": "email",
+          "sentAt": "2026-05-21T09:00:00.000Z",
+          "content": "Pour la connexion, l'erreur exacte est Session expiree et je suis sur Firefox."
+        },
+        "latestUserAttachments": [],
+        "accountTrustStatus": {
+          "status": "trusted",
+          "reasons": [
+            "longHistory",
+            "legitimateSupportInteractions",
+            "verifiedEmailDomain"
+          ]
+        },
+        "accountProfile": {
+          "accountType": "company",
+          "actualPlan": "paid",
+          "paymentStatus": "up_to_date",
+          "planHistory": [
+            {
+              "plan": "paid",
+              "startedAt": "2025-01-01T00:00:00.000Z",
+              "endedAt": null
+            }
+          ],
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "daysSinceCreation": 512
+        },
+        "accountInteractionTraits": {
+          "labels": [
+            "technical",
+            "needsGuidance"
+          ],
+          "lastUpdatedAt": "2026-05-21T08:00:00.000Z"
+        },
+        "supportTopicKnowledge": {
+          "segments_topic": [
+            {
+              "id_topic": 1,
+              "topic_category": "access_security",
+              "tool_or_product": "Twake",
+              "topic_action": "login",
+              "topic_object": "account",
+              "segment_verbatims": [
+                "Je ne peux plus me connecter a Twake depuis ce matin."
+              ],
+              "topic_details": {
+                "access_action": "login",
+                "auth_method": "password",
+                "observed_result": "login fails",
+                "platform": "web"
+              },
+              "user_goal": "Log in to Twake account from the web app",
+              "blocking_issue": "yes"
+            }
+          ]
+        },
+        "conversationHistory": [
+          {
+            "id": "quality_login_user_1",
+            "message_id": "quality_login_msg_1",
+            "role": "user",
+            "created_at": "2026-05-20T09:00:00.000Z",
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "securityGateSummary": {
+                "gateChecked": {},
+                "gateFailed": []
+              },
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "no",
+                  "id_topic": 1,
+                  "topic_category": "access_security",
+                  "tool_or_product": "Twake",
+                  "topic_action": "login",
+                  "topic_object": "account",
+                  "segment_verbatims": [
+                    "Je ne peux plus me connecter a Twake depuis ce matin."
+                  ],
+                  "topic_details": {
+                    "access_action": "login",
+                    "auth_method": "password",
+                    "observed_result": "login fails",
+                    "platform": "web"
+                  },
+                  "user_goal": "Log in to Twake account from the web app",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": []
+            }
+          },
+          {
+            "id": "quality_login_bot_1",
+            "message_id": "quality_login_bot_msg_1",
+            "role": "bot",
+            "created_at": "2026-05-20T09:01:00.000Z",
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          }
+        ]
+      },
+      "output": {
+        "userResponse": {
+          "messages": [
+            {
+              "type": "topic_response",
+              "content": "Bonjour, merci pour votre message.\nJ’ai identifié un sujet déjà en cours.\n\nSujet 1 - Accès / sécurité - Twake : login : account - (En cours)\nJe comprends que vous indiquez : message d’erreur (Session expiree), plateforme (Firefox).\nPour mieux vous aider, pourriez-vous préciser les éléments suivants :\n- Contexte du compte : contexte du compte, par exemple compte premium ou mode d’inscription.\nNous attendons votre retour pour obtenir plus d’informations.\nMerci pour votre coopération."
+            }
+          ]
+        },
+        "patches": {
+          "analysisPatch": {
+            "turnUnderstandingDelta": {
+              "user_language": "french",
+              "segments_lack_comprehension": [],
+              "segments_topic": [
+                {
+                  "matched_historical_topic": "yes",
+                  "id_topic": 1,
+                  "topic_details": {
+                    "error_message": "Session expiree",
+                    "platform": "Firefox"
+                  },
+                  "segment_verbatims": [
+                    "Pour la connexion, l'erreur exacte est Session expiree et je suis sur Firefox."
+                  ],
+                  "user_goal": "Log in to Twake account from the web app",
+                  "blocking_issue": "yes"
+                }
+              ],
+              "segments_signal": [],
+              "segments_scope_boundary": [],
+              "segments_suspicious": [],
+              "securityGateSummary": {
+                "gateChecked": {
+                  "latestUserMessageSecurityDecision": {
+                    "decision": {
+                      "route": "continue"
+                    },
+                    "history": {
+                      "checked": [
+                        "prompt_injection_attempt",
+                        "internal_information_request",
+                        "sensitive_data_request",
+                        "credential_or_secret_leak",
+                        "spam_like_text",
+                        "suspicious_link_or_url",
+                        "excessive_repetition",
+                        "unsafe_or_suspicious_content"
+                      ],
+                      "failed": []
+                    }
+                  }
+                },
+                "gateFailed": []
+              }
+            }
+          },
+          "securityPatch": {
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          },
+          "responsePatch": {
+            "responsePlan": {
+              "responseLanguage": "french",
+              "messagesPlan": {
+                "scopeBoundaryPlanMessages": [],
+                "topicPlanMessages": [
+                  {
+                    "politeness_opening": "salutation_and_understanding_1",
+                    "topic_relation_acknowledgement": {
+                      "no_matched_historical_topic_count": 0,
+                      "matched_historical_topic_count": 1
+                    },
+                    "topics_responses": [
+                      {
+                        "topic_response": {
+                          "title": {
+                            "topic_id": 1,
+                            "topic_category": "access_security",
+                            "tool_or_product": "Twake",
+                            "topic_action": "login",
+                            "topic_object": "account",
+                            "matched_historical_topic": true
+                          },
+                          "updated_fields_acknowledgement": {
+                            "topic_details": {
+                              "error_message": "Session expiree",
+                              "platform": "Firefox"
+                            }
+                          },
+                          "main_response": {
+                            "type": "ask_fields",
+                            "details": {
+                              "fields_requested": [
+                                "account_context"
+                              ]
+                            }
+                          },
+                          "next_step": "wait_more_info"
+                        }
+                      }
+                    ],
+                    "politeness_closure": "thanks_for_cooperation1"
+                  }
+                ],
+                "signalPlanMessages": [],
+                "handoverPlanMessages": []
+              }
+            }
+          },
+          "metadataPatch": {
+            "generatedAt": "2026-06-05T11:52:58.760Z",
+            "source": "support-processing-pipeline"
+          }
+        }
+      },
+      "warnings": [],
+      "durationMs": 5421
+    }
+  ]
+}

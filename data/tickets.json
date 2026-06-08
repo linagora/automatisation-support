@@ -1,0 +1,1209 @@
+[
+  {
+    "ticketId": "ticket__UczopiqrrWazyuYXkP_stg_lin-saas_com__gabolin_linagora_com_2026-06-08T10_50_17_390Z",
+    "roomId": "!UczopiqrrWazyuYXkP:stg.lin-saas.com",
+    "userId": "@gabolin:linagora.com",
+    "status": "active",
+    "supportTopicKnowledge": {
+      "segments_topic": [
+        {
+          "id_topic": 1,
+          "topic_category": "bug",
+          "topic_action": "create",
+          "topic_object": "folder",
+          "segment_verbatims": [
+            "Je pense avoir détecter un bug",
+            "quand je veux créer un dossier",
+            "le bouton apparait grisé",
+            "et m'empeche de créer",
+            "oui la plateforme c'est sur mon navigateur web",
+            "D'ailleurs j'ai essayé de créer un dossier en cliquant sur la touche entrée",
+            "mais j'ai ensutie essayé avec la souris et ça a focntionné",
+            "oui j'ai testé aussi de créer un dossier dans un autre dossier et cela a focntionnée finalement",
+            "quand vais je avoir un retoru sur mon problem ?"
+          ],
+          "topic_details": {
+            "observed_result": "button appears grayed out when using keyboard, works with mouse",
+            "expected_result": "be able to create a folder",
+            "platform": "web",
+            "trigger_action": "click Enter key",
+            "pre_problem_state": "user reported a bug and marked it as resolved"
+          },
+          "user_goal": "create a folder using the app on web platform, works with mouse and nested folders but not keyboard, waiting for support response",
+          "blocking_issue": "no",
+          "tested_actions": [
+            {
+              "tested_action": "use mouse to create folder",
+              "outcome_tested_action": "worked"
+            },
+            {
+              "tested_action": "create a folder inside another folder",
+              "outcome_tested_action": "worked"
+            }
+          ]
+        }
+      ]
+    },
+    "conversationHistory": [
+      {
+        "id": "history_user_$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk",
+        "message_id": "$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk",
+        "created_at": "2026-06-08T10:50:10.799Z",
+        "role": "user",
+        "turnUnderstandingDelta": {
+          "user_language": "french",
+          "segments_lack_comprehension": [
+            {
+              "segment_verbatim": "m'empeche"
+            }
+          ],
+          "segments_topic": [
+            {
+              "matched_historical_topic": "no",
+              "id_topic": 1,
+              "topic_category": "bug",
+              "topic_action": "create",
+              "topic_object": "folder",
+              "segment_verbatims": [
+                "Je pense avoir détecter un bug",
+                "quand je veux créer un dossier",
+                "le bouton apparait grisé",
+                "et m'empeche de créer"
+              ],
+              "topic_details": {
+                "observed_result": "button appears grayed out and prevents creation",
+                "expected_result": "be able to create a folder"
+              },
+              "user_goal": "create a folder using the app",
+              "blocking_issue": "yes"
+            }
+          ],
+          "segments_signal": [],
+          "segments_scope_boundary": [],
+          "segments_suspicious": [],
+          "securityGateSummary": {
+            "gateChecked": {
+              "latestUserMessageSecurityDecision": {
+                "decision": {
+                  "route": "continue"
+                },
+                "history": {
+                  "checked": [
+                    "prompt_injection_attempt",
+                    "internal_information_request",
+                    "sensitive_data_request",
+                    "credential_or_secret_leak",
+                    "spam_like_text",
+                    "suspicious_link_or_url",
+                    "excessive_repetition",
+                    "unsafe_or_suspicious_content"
+                  ],
+                  "failed": []
+                }
+              }
+            },
+            "gateFailed": []
+          }
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:1",
+        "message_id": "delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:0,delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:1",
+        "created_at": "2026-06-08T10:50:17.390Z",
+        "role": "bot",
+        "responsePlan": {
+          "responseLanguage": "french",
+          "messagesPlan": {
+            "lackComprehensionPlanMessage": {
+              "segments_lack_comprehension": [
+                {
+                  "segment_verbatim": "m'empeche"
+                }
+              ]
+            },
+            "scopeBoundaryPlanMessages": [],
+            "topicPlanMessages": [
+              {
+                "politeness_opening": "salutation_and_understanding_1",
+                "topic_relation_acknowledgement": {
+                  "no_matched_historical_topic_count": 1,
+                  "matched_historical_topic_count": 0
+                },
+                "topics_responses": [
+                  {
+                    "topic_response": {
+                      "title": {
+                        "topic_id": 1,
+                        "topic_category": "bug",
+                        "topic_action": "create",
+                        "topic_object": "folder",
+                        "matched_historical_topic": false
+                      },
+                      "updated_fields_acknowledgement": {
+                        "topic_details": {
+                          "observed_result": "button appears grayed out and prevents creation",
+                          "expected_result": "be able to create a folder"
+                        }
+                      },
+                      "optional_evidence_requested": {
+                        "types": [
+                          "screenshot",
+                          "video"
+                        ],
+                        "reason": "bug_visual_context_helpful"
+                      },
+                      "main_response": {
+                        "type": "ask_fields",
+                        "details": {
+                          "fields_requested": [
+                            "platform"
+                          ]
+                        }
+                      },
+                      "next_step": "wait_more_info"
+                    }
+                  }
+                ],
+                "politeness_closure": "thanks_for_cooperation1"
+              }
+            ],
+            "signalPlanMessages": [],
+            "handoverPlanMessages": []
+          }
+        }
+      },
+      {
+        "id": "history_user_$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE",
+        "message_id": "$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE",
+        "created_at": "2026-06-08T10:50:35.997Z",
+        "role": "user",
+        "turnUnderstandingDelta": {
+          "user_language": "french",
+          "segments_lack_comprehension": [],
+          "segments_topic": [
+            {
+              "matched_historical_topic": "yes",
+              "id_topic": 1,
+              "topic_details": {
+                "platform": "web"
+              },
+              "segment_verbatims": [
+                "oui la plateforme c'est sur mon navigateur web"
+              ],
+              "user_goal": "create a folder using the app on web platform",
+              "blocking_issue": "yes"
+            }
+          ],
+          "segments_signal": [],
+          "segments_scope_boundary": [],
+          "segments_suspicious": [],
+          "securityGateSummary": {
+            "gateChecked": {
+              "latestUserMessageSecurityDecision": {
+                "decision": {
+                  "route": "continue"
+                },
+                "history": {
+                  "checked": [
+                    "prompt_injection_attempt",
+                    "internal_information_request",
+                    "sensitive_data_request",
+                    "credential_or_secret_leak",
+                    "spam_like_text",
+                    "suspicious_link_or_url",
+                    "excessive_repetition",
+                    "unsafe_or_suspicious_content"
+                  ],
+                  "failed": []
+                }
+              }
+            },
+            "gateFailed": []
+          }
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE:0",
+        "message_id": "delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE:0",
+        "created_at": "2026-06-08T10:50:43.047Z",
+        "role": "bot",
+        "responsePlan": {
+          "responseLanguage": "french",
+          "messagesPlan": {
+            "scopeBoundaryPlanMessages": [],
+            "topicPlanMessages": [
+              {
+                "politeness_opening": "salutation_and_understanding_1",
+                "topic_relation_acknowledgement": {
+                  "no_matched_historical_topic_count": 0,
+                  "matched_historical_topic_count": 1
+                },
+                "topics_responses": [
+                  {
+                    "topic_response": {
+                      "title": {
+                        "topic_id": 1,
+                        "topic_category": "bug",
+                        "topic_action": "create",
+                        "topic_object": "folder",
+                        "matched_historical_topic": true
+                      },
+                      "updated_fields_acknowledgement": {
+                        "topic_details": {
+                          "platform": "web"
+                        }
+                      },
+                      "main_response": {
+                        "type": "acknowledgement"
+                      },
+                      "next_step": "wait_for_support"
+                    }
+                  }
+                ],
+                "politeness_closure": "thanks_for_cooperation1"
+              }
+            ],
+            "signalPlanMessages": [],
+            "handoverPlanMessages": []
+          }
+        }
+      },
+      {
+        "id": "history_user_$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q",
+        "message_id": "$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q",
+        "created_at": "2026-06-08T10:52:13.944Z",
+        "role": "user",
+        "turnUnderstandingDelta": {
+          "user_language": "french",
+          "segments_lack_comprehension": [],
+          "segments_topic": [
+            {
+              "matched_historical_topic": "yes",
+              "id_topic": 1,
+              "topic_details": {
+                "observed_result": "button appears grayed out when using keyboard, works with mouse",
+                "trigger_action": "click Enter key"
+              },
+              "tested_actions": [
+                {
+                  "tested_action": "use mouse to create folder",
+                  "outcome_tested_action": "worked"
+                }
+              ],
+              "segment_verbatims": [
+                "D'ailleurs j'ai essayé de créer un dossier en cliquant sur la touche entrée",
+                "mais j'ai ensutie essayé avec la souris et ça a focntionné"
+              ],
+              "user_goal": "create a folder using the app on web platform, works with mouse but not keyboard",
+              "blocking_issue": "no"
+            }
+          ],
+          "segments_signal": [],
+          "segments_scope_boundary": [],
+          "segments_suspicious": [],
+          "securityGateSummary": {
+            "gateChecked": {
+              "latestUserMessageSecurityDecision": {
+                "decision": {
+                  "route": "continue"
+                },
+                "history": {
+                  "checked": [
+                    "prompt_injection_attempt",
+                    "internal_information_request",
+                    "sensitive_data_request",
+                    "credential_or_secret_leak",
+                    "spam_like_text",
+                    "suspicious_link_or_url",
+                    "excessive_repetition",
+                    "unsafe_or_suspicious_content"
+                  ],
+                  "failed": []
+                }
+              }
+            },
+            "gateFailed": []
+          }
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q:0",
+        "message_id": "delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q:0",
+        "created_at": "2026-06-08T10:52:25.753Z",
+        "role": "bot",
+        "responsePlan": {
+          "responseLanguage": "french",
+          "messagesPlan": {
+            "scopeBoundaryPlanMessages": [],
+            "topicPlanMessages": [
+              {
+                "politeness_opening": "salutation_and_understanding_1",
+                "topic_relation_acknowledgement": {
+                  "no_matched_historical_topic_count": 0,
+                  "matched_historical_topic_count": 1
+                },
+                "topics_responses": [
+                  {
+                    "topic_response": {
+                      "title": {
+                        "topic_id": 1,
+                        "topic_category": "bug",
+                        "topic_action": "create",
+                        "topic_object": "folder",
+                        "matched_historical_topic": true
+                      },
+                      "updated_fields_acknowledgement": {
+                        "topic_details": {
+                          "observed_result": "button appears grayed out when using keyboard, works with mouse",
+                          "trigger_action": "click Enter key"
+                        }
+                      },
+                      "main_response": {
+                        "type": "acknowledgement"
+                      },
+                      "next_step": "wait_for_support"
+                    }
+                  }
+                ],
+                "politeness_closure": "thanks_for_cooperation1"
+              }
+            ],
+            "signalPlanMessages": [],
+            "handoverPlanMessages": []
+          }
+        }
+      },
+      {
+        "id": "history_user_$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q",
+        "message_id": "$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q",
+        "created_at": "2026-06-08T10:53:09.639Z",
+        "role": "user",
+        "turnUnderstandingDelta": {
+          "user_language": "french",
+          "segments_lack_comprehension": [],
+          "segments_topic": [
+            {
+              "matched_historical_topic": "yes",
+              "id_topic": 1,
+              "tested_actions": [
+                {
+                  "tested_action": "create a folder inside another folder",
+                  "outcome_tested_action": "worked"
+                }
+              ],
+              "segment_verbatims": [
+                "oui j'ai testé aussi de créer un dossier dans un autre dossier et cela a focntionnée finalement"
+              ],
+              "user_goal": "create a folder using the app on web platform, works with mouse and nested folders but not keyboard",
+              "blocking_issue": "no"
+            }
+          ],
+          "segments_signal": [],
+          "segments_scope_boundary": [],
+          "segments_suspicious": [],
+          "securityGateSummary": {
+            "gateChecked": {
+              "latestUserMessageSecurityDecision": {
+                "decision": {
+                  "route": "continue"
+                },
+                "history": {
+                  "checked": [
+                    "prompt_injection_attempt",
+                    "internal_information_request",
+                    "sensitive_data_request",
+                    "credential_or_secret_leak",
+                    "spam_like_text",
+                    "suspicious_link_or_url",
+                    "excessive_repetition",
+                    "unsafe_or_suspicious_content"
+                  ],
+                  "failed": []
+                }
+              }
+            },
+            "gateFailed": []
+          }
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q:0",
+        "message_id": "delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q:0",
+        "created_at": "2026-06-08T10:53:16.238Z",
+        "role": "bot",
+        "responsePlan": {
+          "responseLanguage": "french",
+          "messagesPlan": {
+            "scopeBoundaryPlanMessages": [],
+            "topicPlanMessages": [
+              {
+                "politeness_opening": "salutation_and_understanding_1",
+                "topic_relation_acknowledgement": {
+                  "no_matched_historical_topic_count": 0,
+                  "matched_historical_topic_count": 1
+                },
+                "topics_responses": [
+                  {
+                    "topic_response": {
+                      "title": {
+                        "topic_id": 1,
+                        "topic_category": "bug",
+                        "topic_action": "create",
+                        "topic_object": "folder",
+                        "matched_historical_topic": true
+                      },
+                      "updated_fields_acknowledgement": {},
+                      "main_response": {
+                        "type": "acknowledgement"
+                      },
+                      "next_step": "wait_for_support"
+                    }
+                  }
+                ],
+                "politeness_closure": "thanks_for_cooperation1"
+              }
+            ],
+            "signalPlanMessages": [],
+            "handoverPlanMessages": []
+          }
+        }
+      },
+      {
+        "id": "history_user_$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s",
+        "message_id": "$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s",
+        "created_at": "2026-06-08T10:53:39.581Z",
+        "role": "user",
+        "turnUnderstandingDelta": {
+          "user_language": "french",
+          "segments_lack_comprehension": [],
+          "segments_topic": [
+            {
+              "matched_historical_topic": "yes",
+              "id_topic": 1,
+              "topic_details": {
+                "pre_problem_state": "user reported a bug and marked it as resolved"
+              },
+              "segment_verbatims": [
+                "quand vais je avoir un retoru sur mon problem ?"
+              ],
+              "user_goal": "create a folder using the app on web platform, works with mouse and nested folders but not keyboard, waiting for support response",
+              "blocking_issue": "no"
+            }
+          ],
+          "segments_signal": [
+            {
+              "signal_verbatim": "quand vais je avoir un retoru sur mon problem ?",
+              "signal_types": [
+                "waiting"
+              ]
+            }
+          ],
+          "segments_scope_boundary": [],
+          "segments_suspicious": [],
+          "securityGateSummary": {
+            "gateChecked": {
+              "latestUserMessageSecurityDecision": {
+                "decision": {
+                  "route": "continue"
+                },
+                "history": {
+                  "checked": [
+                    "prompt_injection_attempt",
+                    "internal_information_request",
+                    "sensitive_data_request",
+                    "credential_or_secret_leak",
+                    "spam_like_text",
+                    "suspicious_link_or_url",
+                    "excessive_repetition",
+                    "unsafe_or_suspicious_content"
+                  ],
+                  "failed": []
+                }
+              }
+            },
+            "gateFailed": []
+          }
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:1",
+        "message_id": "delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:0,delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:1",
+        "created_at": "2026-06-08T10:53:46.856Z",
+        "role": "bot",
+        "responsePlan": {
+          "responseLanguage": "french",
+          "messagesPlan": {
+            "scopeBoundaryPlanMessages": [],
+            "topicPlanMessages": [
+              {
+                "politeness_opening": "salutation_and_understanding_1",
+                "topic_relation_acknowledgement": {
+                  "no_matched_historical_topic_count": 0,
+                  "matched_historical_topic_count": 1
+                },
+                "topics_responses": [
+                  {
+                    "topic_response": {
+                      "title": {
+                        "topic_id": 1,
+                        "topic_category": "bug",
+                        "topic_action": "create",
+                        "topic_object": "folder",
+                        "matched_historical_topic": true
+                      },
+                      "updated_fields_acknowledgement": {
+                        "topic_details": {
+                          "pre_problem_state": "user reported a bug and marked it as resolved"
+                        }
+                      },
+                      "main_response": {
+                        "type": "acknowledgement"
+                      },
+                      "next_step": "wait_for_support"
+                    }
+                  }
+                ],
+                "politeness_closure": "thanks_for_cooperation1"
+              }
+            ],
+            "signalPlanMessages": [
+              {
+                "signal_verbatim": "quand vais je avoir un retoru sur mon problem ?",
+                "signal_types": [
+                  "waiting"
+                ]
+              }
+            ],
+            "handoverPlanMessages": []
+          }
+        }
+      },
+      {
+        "id": "history_user_$vJxM8E2VJwTjydqU-craB2o0Zo85wcI9klc-qUx1c_g",
+        "message_id": "$vJxM8E2VJwTjydqU-craB2o0Zo85wcI9klc-qUx1c_g",
+        "created_at": "2026-06-08T10:54:19.479Z",
+        "role": "user",
+        "turnUnderstandingDelta": {
+          "user_language": "french",
+          "segments_lack_comprehension": [],
+          "segments_topic": [],
+          "segments_signal": [
+            {
+              "signal_verbatim": "je suis pressé",
+              "signal_types": [
+                "waiting",
+                "time_sensitive"
+              ]
+            }
+          ],
+          "segments_scope_boundary": [],
+          "segments_suspicious": [],
+          "securityGateSummary": {
+            "gateChecked": {
+              "latestUserMessageSecurityDecision": {
+                "decision": {
+                  "route": "continue"
+                },
+                "history": {
+                  "checked": [
+                    "prompt_injection_attempt",
+                    "internal_information_request",
+                    "sensitive_data_request",
+                    "credential_or_secret_leak",
+                    "spam_like_text",
+                    "suspicious_link_or_url",
+                    "excessive_repetition",
+                    "unsafe_or_suspicious_content"
+                  ],
+                  "failed": []
+                }
+              }
+            },
+            "gateFailed": []
+          }
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$vJxM8E2VJwTjydqU-craB2o0Zo85wcI9klc-qUx1c_g:0",
+        "message_id": "delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$vJxM8E2VJwTjydqU-craB2o0Zo85wcI9klc-qUx1c_g:0",
+        "created_at": "2026-06-08T10:54:24.745Z",
+        "role": "bot",
+        "responsePlan": {
+          "responseLanguage": "french",
+          "messagesPlan": {
+            "scopeBoundaryPlanMessages": [],
+            "topicPlanMessages": [],
+            "signalPlanMessages": [
+              {
+                "signal_verbatim": "je suis pressé",
+                "signal_types": [
+                  "waiting",
+                  "time_sensitive"
+                ]
+              }
+            ],
+            "handoverPlanMessages": []
+          }
+        }
+      },
+      {
+        "id": "history_user_$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo",
+        "message_id": "$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo",
+        "created_at": "2026-06-08T10:54:47.345Z",
+        "role": "user",
+        "turnUnderstandingDelta": {
+          "user_language": "french",
+          "segments_lack_comprehension": [
+            {
+              "segment_verbatim": "combien de banane pour faire un gateau à la banane ?"
+            }
+          ],
+          "segments_topic": [],
+          "segments_signal": [],
+          "segments_scope_boundary": [
+            {
+              "signal_verbatim": "combien de banane pour faire un gateau à la banane ?",
+              "scope_boundary_type": "generic_out_of_scope"
+            }
+          ],
+          "segments_suspicious": [],
+          "securityGateSummary": {
+            "gateChecked": {
+              "latestUserMessageSecurityDecision": {
+                "decision": {
+                  "route": "continue"
+                },
+                "history": {
+                  "checked": [
+                    "prompt_injection_attempt",
+                    "internal_information_request",
+                    "sensitive_data_request",
+                    "credential_or_secret_leak",
+                    "spam_like_text",
+                    "suspicious_link_or_url",
+                    "excessive_repetition",
+                    "unsafe_or_suspicious_content"
+                  ],
+                  "failed": []
+                }
+              }
+            },
+            "gateFailed": []
+          }
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo:1",
+        "message_id": "delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo:0,delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo:1",
+        "created_at": "2026-06-08T10:54:53.411Z",
+        "role": "bot",
+        "responsePlan": {
+          "responseLanguage": "french",
+          "messagesPlan": {
+            "lackComprehensionPlanMessage": {
+              "segments_lack_comprehension": [
+                {
+                  "segment_verbatim": "combien de banane pour faire un gateau à la banane ?"
+                }
+              ]
+            },
+            "scopeBoundaryPlanMessages": [
+              {
+                "signal_verbatim": "combien de banane pour faire un gateau à la banane ?",
+                "scope_boundary_type": "generic_out_of_scope"
+              }
+            ],
+            "topicPlanMessages": [],
+            "signalPlanMessages": [],
+            "handoverPlanMessages": []
+          }
+        }
+      },
+      {
+        "id": "history_user_$QdJlGMmv2Rq399nJES59XzRxbQKPMn-Cy3Dp0kLUY2o_$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY",
+        "message_id": "$QdJlGMmv2Rq399nJES59XzRxbQKPMn-Cy3Dp0kLUY2o,$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY",
+        "created_at": "2026-06-08T10:55:29.714Z",
+        "role": "user",
+        "turnUnderstandingDelta": {
+          "user_language": "french",
+          "segments_lack_comprehension": [
+            {
+              "segment_verbatim": "bonjour monsieur le bot"
+            }
+          ],
+          "segments_topic": [],
+          "segments_signal": [],
+          "segments_scope_boundary": [
+            {
+              "signal_verbatim": "quel age as tu ?",
+              "scope_boundary_type": "generic_out_of_scope"
+            }
+          ],
+          "segments_suspicious": [],
+          "securityGateSummary": {
+            "gateChecked": {
+              "latestUserMessageSecurityDecision": {
+                "decision": {
+                  "route": "continue"
+                },
+                "history": {
+                  "checked": [
+                    "prompt_injection_attempt",
+                    "internal_information_request",
+                    "sensitive_data_request",
+                    "credential_or_secret_leak",
+                    "spam_like_text",
+                    "suspicious_link_or_url",
+                    "excessive_repetition",
+                    "unsafe_or_suspicious_content"
+                  ],
+                  "failed": []
+                }
+              }
+            },
+            "gateFailed": []
+          }
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY:1",
+        "message_id": "delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY:0,delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY:1",
+        "created_at": "2026-06-08T10:55:34.270Z",
+        "role": "bot",
+        "responsePlan": {
+          "responseLanguage": "french",
+          "messagesPlan": {
+            "lackComprehensionPlanMessage": {
+              "segments_lack_comprehension": [
+                {
+                  "segment_verbatim": "bonjour monsieur le bot"
+                }
+              ]
+            },
+            "scopeBoundaryPlanMessages": [
+              {
+                "signal_verbatim": "quel age as tu ?",
+                "scope_boundary_type": "generic_out_of_scope"
+              }
+            ],
+            "topicPlanMessages": [],
+            "signalPlanMessages": [],
+            "handoverPlanMessages": []
+          }
+        }
+      }
+    ],
+    "metadata": {
+      "createdFrom": "support-processing-pipeline-patches",
+      "channel": "matrix",
+      "lastPatchGeneratedAt": "2026-06-08T10:55:34.270Z",
+      "lastUserLanguage": "french",
+      "lastSupportProcessingPatches": {
+        "analysisPatch": {
+          "turnUnderstandingDelta": {
+            "user_language": "french",
+            "segments_lack_comprehension": [
+              {
+                "segment_verbatim": "bonjour monsieur le bot"
+              }
+            ],
+            "segments_topic": [],
+            "segments_signal": [],
+            "segments_scope_boundary": [
+              {
+                "signal_verbatim": "quel age as tu ?",
+                "scope_boundary_type": "generic_out_of_scope"
+              }
+            ],
+            "segments_suspicious": [],
+            "securityGateSummary": {
+              "gateChecked": {
+                "latestUserMessageSecurityDecision": {
+                  "decision": {
+                    "route": "continue"
+                  },
+                  "history": {
+                    "checked": [
+                      "prompt_injection_attempt",
+                      "internal_information_request",
+                      "sensitive_data_request",
+                      "credential_or_secret_leak",
+                      "spam_like_text",
+                      "suspicious_link_or_url",
+                      "excessive_repetition",
+                      "unsafe_or_suspicious_content"
+                    ],
+                    "failed": []
+                  }
+                }
+              },
+              "gateFailed": []
+            }
+          }
+        },
+        "securityPatch": {
+          "securityGateSummary": {
+            "gateChecked": {
+              "latestUserMessageSecurityDecision": {
+                "decision": {
+                  "route": "continue"
+                },
+                "history": {
+                  "checked": [
+                    "prompt_injection_attempt",
+                    "internal_information_request",
+                    "sensitive_data_request",
+                    "credential_or_secret_leak",
+                    "spam_like_text",
+                    "suspicious_link_or_url",
+                    "excessive_repetition",
+                    "unsafe_or_suspicious_content"
+                  ],
+                  "failed": []
+                }
+              }
+            },
+            "gateFailed": []
+          }
+        },
+        "responsePatch": {
+          "responsePlan": {
+            "responseLanguage": "french",
+            "messagesPlan": {
+              "lackComprehensionPlanMessage": {
+                "segments_lack_comprehension": [
+                  {
+                    "segment_verbatim": "bonjour monsieur le bot"
+                  }
+                ]
+              },
+              "scopeBoundaryPlanMessages": [
+                {
+                  "signal_verbatim": "quel age as tu ?",
+                  "scope_boundary_type": "generic_out_of_scope"
+                }
+              ],
+              "topicPlanMessages": [],
+              "signalPlanMessages": [],
+              "handoverPlanMessages": []
+            }
+          }
+        },
+        "metadataPatch": {
+          "generatedAt": "2026-06-08T10:55:34.270Z",
+          "source": "support-processing-pipeline"
+        }
+      },
+      "lastSecurityGateSummary": {
+        "gateChecked": {
+          "latestUserMessageSecurityDecision": {
+            "decision": {
+              "route": "continue"
+            },
+            "history": {
+              "checked": [
+                "prompt_injection_attempt",
+                "internal_information_request",
+                "sensitive_data_request",
+                "credential_or_secret_leak",
+                "spam_like_text",
+                "suspicious_link_or_url",
+                "excessive_repetition",
+                "unsafe_or_suspicious_content"
+              ],
+              "failed": []
+            }
+          }
+        },
+        "gateFailed": []
+      },
+      "lastResponsePlan": {
+        "responseLanguage": "french",
+        "messagesPlan": {
+          "lackComprehensionPlanMessage": {
+            "segments_lack_comprehension": [
+              {
+                "segment_verbatim": "bonjour monsieur le bot"
+              }
+            ]
+          },
+          "scopeBoundaryPlanMessages": [
+            {
+              "signal_verbatim": "quel age as tu ?",
+              "scope_boundary_type": "generic_out_of_scope"
+            }
+          ],
+          "topicPlanMessages": [],
+          "signalPlanMessages": [],
+          "handoverPlanMessages": []
+        }
+      },
+      "conversationHistoryCompactInteractionLogs": [
+        {
+          "id": "compact_2026-06-08T10_50_17_390Z_1",
+          "created_at": "2026-06-08T10:50:17.390Z",
+          "line": "User(topic): add_topic topic_id=1 label=\"create : folder\" category=bug",
+          "source_event_ids": [
+            "history_user_$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_50_17_390Z_2",
+          "created_at": "2026-06-08T10:50:17.390Z",
+          "line": "User(topic): update_topic topic_id=1 fields=[observed_result, expected_result]",
+          "source_event_ids": [
+            "history_user_$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_50_17_390Z_3",
+          "created_at": "2026-06-08T10:50:17.390Z",
+          "line": "User(topic): mark_blocking topic_id=1",
+          "source_event_ids": [
+            "history_user_$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_50_17_390Z_4",
+          "created_at": "2026-06-08T10:50:17.390Z",
+          "line": "User(lack_comprehension): lack_comprehension",
+          "source_event_ids": [
+            "history_user_$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_50_17_390Z_5",
+          "created_at": "2026-06-08T10:50:17.390Z",
+          "line": "Bot(topic): ask_more_info topic_id=1 label=\"create : folder\" fields=[platform]",
+          "source_event_ids": [
+            "history_user_$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_50_17_390Z_6",
+          "created_at": "2026-06-08T10:50:17.390Z",
+          "line": "Bot(topic): wait_more_info topic_id=1",
+          "source_event_ids": [
+            "history_user_$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$4rzjTfW-R5jBzIVMY1-qhmIazdYpgW_9h805ovi33jk:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_50_43_047Z_1",
+          "created_at": "2026-06-08T10:50:43.047Z",
+          "line": "User(topic): update_topic topic_id=1 fields=[platform]",
+          "source_event_ids": [
+            "history_user_$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_50_43_047Z_2",
+          "created_at": "2026-06-08T10:50:43.047Z",
+          "line": "User(topic): mark_blocking topic_id=1",
+          "source_event_ids": [
+            "history_user_$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_50_43_047Z_3",
+          "created_at": "2026-06-08T10:50:43.047Z",
+          "line": "Bot(topic): acknowledge topic_id=1 next_step=wait_for_support",
+          "source_event_ids": [
+            "history_user_$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_50_43_047Z_4",
+          "created_at": "2026-06-08T10:50:43.047Z",
+          "line": "Bot(topic): wait_for_support topic_id=1",
+          "source_event_ids": [
+            "history_user_$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$wa3Q6TWe6zyu4iEexsEVtrVz_IKbI1BWAWyXbenF6cE:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_52_25_753Z_1",
+          "created_at": "2026-06-08T10:52:25.753Z",
+          "line": "User(topic): update_topic topic_id=1 fields=[observed_result, trigger_action]",
+          "source_event_ids": [
+            "history_user_$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_52_25_753Z_2",
+          "created_at": "2026-06-08T10:52:25.753Z",
+          "line": "User(topic): tested_solution topic_id=1 action=\"use mouse to create folder\" outcome=worked",
+          "source_event_ids": [
+            "history_user_$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_52_25_753Z_3",
+          "created_at": "2026-06-08T10:52:25.753Z",
+          "line": "User(topic): mark_resolved topic_id=1",
+          "source_event_ids": [
+            "history_user_$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_52_25_753Z_4",
+          "created_at": "2026-06-08T10:52:25.753Z",
+          "line": "Bot(topic): acknowledge topic_id=1 next_step=wait_for_support",
+          "source_event_ids": [
+            "history_user_$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_52_25_753Z_5",
+          "created_at": "2026-06-08T10:52:25.753Z",
+          "line": "Bot(topic): wait_for_support topic_id=1",
+          "source_event_ids": [
+            "history_user_$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$H7w-mpw9Av13zKKQnNOxtILI1UFUcExot1NiiNC-n_Q:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_53_16_238Z_1",
+          "created_at": "2026-06-08T10:53:16.238Z",
+          "line": "User(topic): tested_solution topic_id=1 action=\"create a folder inside another folder\" outcome=worked",
+          "source_event_ids": [
+            "history_user_$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_53_16_238Z_2",
+          "created_at": "2026-06-08T10:53:16.238Z",
+          "line": "User(topic): mark_resolved topic_id=1",
+          "source_event_ids": [
+            "history_user_$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_53_16_238Z_3",
+          "created_at": "2026-06-08T10:53:16.238Z",
+          "line": "Bot(topic): acknowledge topic_id=1 next_step=wait_for_support",
+          "source_event_ids": [
+            "history_user_$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_53_16_238Z_4",
+          "created_at": "2026-06-08T10:53:16.238Z",
+          "line": "Bot(topic): wait_for_support topic_id=1",
+          "source_event_ids": [
+            "history_user_$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$-E2P3rqCzqiOhLZR9ngyhd6bPbWl_j6IU6ZS6tUsh5Q:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_53_46_856Z_1",
+          "created_at": "2026-06-08T10:53:46.856Z",
+          "line": "User(topic): update_topic topic_id=1 fields=[pre_problem_state]",
+          "source_event_ids": [
+            "history_user_$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_53_46_856Z_2",
+          "created_at": "2026-06-08T10:53:46.856Z",
+          "line": "User(topic): mark_resolved topic_id=1",
+          "source_event_ids": [
+            "history_user_$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_53_46_856Z_3",
+          "created_at": "2026-06-08T10:53:46.856Z",
+          "line": "User(signal): signal types=[waiting]",
+          "source_event_ids": [
+            "history_user_$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_53_46_856Z_4",
+          "created_at": "2026-06-08T10:53:46.856Z",
+          "line": "Bot(topic): acknowledge topic_id=1 next_step=wait_for_support",
+          "source_event_ids": [
+            "history_user_$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_53_46_856Z_5",
+          "created_at": "2026-06-08T10:53:46.856Z",
+          "line": "Bot(topic): wait_for_support topic_id=1",
+          "source_event_ids": [
+            "history_user_$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$aYoV8WhCFXiWOgmd8_yurLsAmBoJzCpcz_6KHZ6o01s:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_54_24_745Z_1",
+          "created_at": "2026-06-08T10:54:24.745Z",
+          "line": "User(signal): signal types=[waiting, time_sensitive]",
+          "source_event_ids": [
+            "history_user_$vJxM8E2VJwTjydqU-craB2o0Zo85wcI9klc-qUx1c_g",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$vJxM8E2VJwTjydqU-craB2o0Zo85wcI9klc-qUx1c_g:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_54_53_411Z_1",
+          "created_at": "2026-06-08T10:54:53.411Z",
+          "line": "User(scope_boundary): scope_boundary type=generic_out_of_scope",
+          "source_event_ids": [
+            "history_user_$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_54_53_411Z_2",
+          "created_at": "2026-06-08T10:54:53.411Z",
+          "line": "User(lack_comprehension): lack_comprehension",
+          "source_event_ids": [
+            "history_user_$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$yk7X1pEE9mEuG24ZRdQx2UyyvS4MZ4IKj7Gl8aHdQUo:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_55_34_270Z_1",
+          "created_at": "2026-06-08T10:55:34.270Z",
+          "line": "User(scope_boundary): scope_boundary type=generic_out_of_scope",
+          "source_event_ids": [
+            "history_user_$QdJlGMmv2Rq399nJES59XzRxbQKPMn-Cy3Dp0kLUY2o_$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY:1"
+          ]
+        },
+        {
+          "id": "compact_2026-06-08T10_55_34_270Z_2",
+          "created_at": "2026-06-08T10:55:34.270Z",
+          "line": "User(lack_comprehension): lack_comprehension",
+          "source_event_ids": [
+            "history_user_$QdJlGMmv2Rq399nJES59XzRxbQKPMn-Cy3Dp0kLUY2o_$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY",
+            "history_bot_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY:0_delivery:matrix:!UczopiqrrWazyuYXkP:stg.lin-saas.com:@gabolin:linagora.com:$9kNENNRh86zOoBgaFG53qhccPQ6D4wueY_SMX40TxxY:1"
+          ]
+        }
+      ],
+      "conversationHistoryContextLLM": "Bot(topic): wait_for_support topic_id=1\nUser(topic): update_topic topic_id=1 fields=[observed_result, trigger_action]\nUser(topic): tested_solution topic_id=1 action=\"use mouse to create folder\" outcome=worked\nUser(topic): mark_resolved topic_id=1\nBot(topic): acknowledge topic_id=1 next_step=wait_for_support\nBot(topic): wait_for_support topic_id=1\nUser(topic): tested_solution topic_id=1 action=\"create a folder inside another folder\" outcome=worked\nUser(topic): mark_resolved topic_id=1\nBot(topic): acknowledge topic_id=1 next_step=wait_for_support\nBot(topic): wait_for_support topic_id=1\nUser(topic): update_topic topic_id=1 fields=[pre_problem_state]\nUser(topic): mark_resolved topic_id=1\nUser(signal): signal types=[waiting]\nBot(topic): acknowledge topic_id=1 next_step=wait_for_support\nBot(topic): wait_for_support topic_id=1\nUser(signal): signal types=[waiting, time_sensitive]\nUser(scope_boundary): scope_boundary type=generic_out_of_scope\nUser(lack_comprehension): lack_comprehension\nUser(scope_boundary): scope_boundary type=generic_out_of_scope\nUser(lack_comprehension): lack_comprehension"
+    },
+    "createdAt": "2026-06-08T10:50:17.390Z",
+    "updatedAt": "2026-06-08T10:55:34.270Z"
+  }
+]

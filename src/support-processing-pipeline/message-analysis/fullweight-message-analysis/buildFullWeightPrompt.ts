@@ -84,6 +84,7 @@ Matches a topic from previous_analysis_output → matched_historical_topic = "ye
 When a matched topic is resolved: update observed_result to reflect the resolution (e.g. "now works"), update user_goal, set blocking_issue to "no". Do not duplicate values across fields — pre_problem_state and observed_result must never contain the same text.
 New distinct issue, request, or question → matched_historical_topic = "no", new id_topic (increment from highest in previous_analysis_output, or start at 1).
 Unclear → do not return as topic, set warning_comprehension = "yes".
+If the latest user message appears to answer a field requested in the recent compact interaction log, update the corresponding existing topic using matched_historical_topic="yes" and the referenced topic_id. Do not create a new topic for a missing field answer.
 
 segment_verbatims must contain the exact user message fragments that support this topic.
 Preserve the user's original wording and language. Do not translate, summarize, or rewrite.
@@ -288,8 +289,29 @@ function buildConversationHistoryContext(
   conversationHistory: ConversationHistory
 ): string {
   const conversationHistoryWithContext = conversationHistory as ConversationHistory & {
+    compactInteractionLogs?: unknown;
     contextLLM?: unknown;
   };
+  const compactInteractionLogs =
+    conversationHistoryWithContext.compactInteractionLogs;
+
+  if (Array.isArray(compactInteractionLogs) && compactInteractionLogs.length > 0) {
+    return compactInteractionLogs
+      .slice(-3)
+      .flatMap((log) => {
+        if (
+          typeof log === "object" &&
+          log !== null &&
+          typeof (log as { line?: unknown }).line === "string" &&
+          (log as { line: string }).line.trim() !== ""
+        ) {
+          return [`* ${(log as { line: string }).line.trim()}`];
+        }
+
+        return [];
+      })
+      .join("\n");
+  }
 
   if (
     typeof conversationHistoryWithContext.contextLLM === "string" &&
@@ -301,7 +323,19 @@ function buildConversationHistoryContext(
       console.log(conversationHistoryWithContext.contextLLM);
     }
 
-    return conversationHistoryWithContext.contextLLM;
+    return conversationHistoryWithContext.contextLLM
+      .split("\n")
+      .map((line) => {
+        return line.trim();
+      })
+      .filter((line) => {
+        return line !== "";
+      })
+      .slice(-3)
+      .map((line) => {
+        return `* ${line}`;
+      })
+      .join("\n");
   }
 
   if (process.env.SUPPORT_PROCESSING_DEBUG === "true") {
@@ -381,13 +415,13 @@ Analyze the latest user message using the following contexts.
 ${latestUserMessageContext}
 \`\`\`
 
-# Existing support topic knowledge
+# Existing support topics
 
 \`\`\`json
 ${toPrettyJson(supportTopicKnowledgeContext)}
 \`\`\`
 
-# Conversation history
+# Recent compact interaction log
 
 \`\`\`text
 ${conversationHistoryContext}

@@ -402,7 +402,15 @@ type ConversationHistoryEvent =
   | BotConversationHistoryEvent
   | SystemConversationHistoryEvent;
 
+export type CompactInteractionLog = {
+  id: string;
+  created_at: string;
+  line: string;
+  source_event_ids?: string[];
+};
+
 export type ConversationHistory = ConversationHistoryEvent[] & {
+  compactInteractionLogs?: CompactInteractionLog[];
   contextLLM?: string;
 };
 

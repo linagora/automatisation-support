@@ -65,6 +65,31 @@ function buildTopicResponseInput(
   };
 }
 
+function buildSignalResponseInput(
+  signalTypes: string[],
+  responseLanguage: ResponseProductionInput["responsePlan"]["responseLanguage"] = "french"
+): ResponseProductionInput {
+  return {
+    responsePlan: {
+      responseLanguage,
+      messagesPlan: {
+        securityGatePlanMessage: undefined,
+        suspiciousPlanMessage: undefined,
+        lackComprehensionPlanMessage: undefined,
+        scopeBoundaryPlanMessages: [],
+        topicPlanMessages: [],
+        signalPlanMessages: [
+          {
+            signal_verbatim: "Signal utilisateur",
+            signal_types: signalTypes
+          }
+        ],
+        handoverPlanMessages: []
+      }
+    }
+  };
+}
+
 function buildAttachments(
   statuses: ("analyzed" | "failed" | "refused" | "suspicious")[],
   category: keyof TurnAttachments = "images"
@@ -118,6 +143,53 @@ describe("runResponseProduction", function () {
     const output = runResponseProduction(buildTopicResponseInput());
 
     expect(output.messages[0].content).not.toContain("undefined");
+  });
+
+  it("renders churn intent with a dedicated dissatisfaction response", function () {
+    const output = runResponseProduction(
+      buildSignalResponseInput(["churn_intent"])
+    );
+
+    expect(output.messages[0].type).toBe("signal_response");
+    expect(output.messages[0].content).toContain(
+      "Je suis désolé que le service ne réponde plus à vos attentes."
+    );
+    expect(output.messages[0].content).toContain(
+      "le support peut reprendre la main"
+    );
+    expect(output.messages[0].content).not.toBe("C’est bien noté.");
+  });
+
+  it("renders negative feedback with an empathetic response", function () {
+    const output = runResponseProduction(
+      buildSignalResponseInput(["negative_feedback"])
+    );
+
+    expect(output.messages[0].content).toContain(
+      "Votre retour est bien pris en compte"
+    );
+    expect(output.messages[0].content).not.toContain("geste commercial");
+  });
+
+  it("groups multiple dissatisfaction signals into one non redundant response", function () {
+    const output = runResponseProduction(
+      buildSignalResponseInput(["disappointment", "churn_intent"])
+    );
+    const content = output.messages[0].content;
+
+    expect(content).toContain(
+      "Je suis désolé que le service ne réponde plus à vos attentes."
+    );
+    expect(content.match(/Je suis désolé/g)).toHaveLength(1);
+    expect(content).not.toBe("C’est bien noté.");
+  });
+
+  it("keeps thanks signal rendering unchanged", function () {
+    const output = runResponseProduction(
+      buildSignalResponseInput(["thanks_positive"])
+    );
+
+    expect(output.messages[0].content).toBe("Avec plaisir.");
   });
 
   it("adds a global acknowledgement for one analyzed image", function () {

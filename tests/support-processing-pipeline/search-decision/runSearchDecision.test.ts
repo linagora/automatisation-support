@@ -184,7 +184,7 @@ describe("runSearchDecision", function () {
     });
   });
 
-  it("asks for missing required fields before searching solutions", async function () {
+  it("does not ask trigger_action for a bug with explicit topic action and observed result", async function () {
     const output = await runSearchDecision(
       buildInput({
         turnUnderstandingDelta: {
@@ -216,11 +216,46 @@ describe("runSearchDecision", function () {
       {
         topic_id: 1,
         type: "ask_more_info",
-        missing_fields: ["trigger_action", "platform"],
+        missing_fields: ["platform"],
         optional_evidence_requested: BUG_VISUAL_EVIDENCE_REQUEST
       }
     ]);
     expect(output.detected.solutionLikelihoodResult).toBe("rag_not_relevant");
+  });
+
+  it("can ask trigger_action for a vague bug without useful action context", async function () {
+    const output = await runSearchDecision(
+      buildInput({
+        turnUnderstandingDelta: {
+          user_language: "french",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "no",
+              id_topic: 1,
+              topic_category: "bug",
+              topic_details: {
+                observed_result: "does not work"
+              },
+              user_goal: "Resolve vague issue",
+              blocking_issue: "yes"
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      })
+    );
+
+    expect(output.decision.topics).toEqual([
+      {
+        topic_id: 1,
+        type: "ask_more_info",
+        missing_fields: ["trigger_action", "platform"],
+        optional_evidence_requested: BUG_VISUAL_EVIDENCE_REQUEST
+      }
+    ]);
   });
 
   it("does not ask access_action or observed_result for an access security login issue with explicit action and error message", async function () {
@@ -436,6 +471,121 @@ describe("runSearchDecision", function () {
           segments_scope_boundary: [],
           segments_suspicious: [],
           attachments: buildAnalyzedImageAttachments()
+        }
+      })
+    );
+
+    expect(output.decision.topics[0]).not.toHaveProperty(
+      "optional_evidence_requested"
+    );
+  });
+
+  it("acknowledges a clear bug when platform is already present and keeps visual evidence optional", async function () {
+    const output = await runSearchDecision(
+      buildInput({
+        turnUnderstandingDelta: {
+          user_language: "french",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "no",
+              id_topic: 1,
+              topic_category: "bug",
+              tool_or_product: "Drive",
+              topic_action: "create",
+              topic_object: "folder",
+              segment_verbatims: [
+                "Sur le web, Drive affiche une erreur quand je crée un dossier."
+              ],
+              topic_details: {
+                observed_result: "error when creating a folder",
+                platform: "web"
+              },
+              user_goal: "Create a folder",
+              blocking_issue: "yes"
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      })
+    );
+
+    expect(output.decision.topics).toEqual([
+      {
+        topic_id: 1,
+        type: "solution_searching",
+        missing_fields: [],
+        optional_evidence_requested: BUG_VISUAL_EVIDENCE_REQUEST
+      }
+    ]);
+  });
+
+  it("does not request optional visual evidence for a VoiceOver accessibility bug", async function () {
+    const output = await runSearchDecision(
+      buildInput({
+        turnUnderstandingDelta: {
+          user_language: "french",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "no",
+              id_topic: 1,
+              topic_category: "bug",
+              tool_or_product: "Twake Chat",
+              topic_action: "send",
+              topic_object: "message",
+              segment_verbatims: [
+                "Avec VoiceOver sur iPhone, je ne sais pas quel bouton envoie le message."
+              ],
+              topic_details: {
+                observed_result: "cannot identify send button",
+                platform: "iPhone"
+              },
+              user_goal: "Send a message with VoiceOver",
+              blocking_issue: "yes"
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      })
+    );
+
+    expect(output.decision.topics[0]).not.toHaveProperty(
+      "optional_evidence_requested"
+    );
+  });
+
+  it("does not request optional visual evidence for unavailable connectors", async function () {
+    const output = await runSearchDecision(
+      buildInput({
+        turnUnderstandingDelta: {
+          user_language: "french",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "no",
+              id_topic: 1,
+              topic_category: "bug",
+              topic_action: "import",
+              topic_object: "documents",
+              segment_verbatims: [
+                "Les connecteurs banque et ENSAP sont indisponibles."
+              ],
+              topic_details: {
+                observed_result: "connectors unavailable",
+                platform: "web"
+              },
+              user_goal: "Import documents from connectors",
+              blocking_issue: "yes"
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
         }
       })
     );
@@ -691,6 +841,115 @@ describe("runSearchDecision", function () {
     expect(output.detected.solutionLikelihoodResult).toBe("rag_relevant");
   });
 
+  it("can ask for more context on a vague question FAQ", async function () {
+    const output = await runSearchDecision(
+      buildInput({
+        turnUnderstandingDelta: {
+          user_language: "french",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "no",
+              id_topic: 1,
+              topic_category: "question_faq",
+              tool_or_product: "Drive",
+              topic_details: {
+                question_intent: "how_to"
+              },
+              user_goal: "Ask how to do something in Drive",
+              blocking_issue: "no"
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      })
+    );
+
+    expect(output.decision.topics).toEqual([
+      {
+        topic_id: 1,
+        type: "ask_more_info",
+        missing_fields: ["feature_or_page"]
+      }
+    ]);
+  });
+
+  it("acknowledges a clear request instead of asking feature_or_page or additional_context", async function () {
+    const output = await runSearchDecision(
+      buildInput({
+        turnUnderstandingDelta: {
+          user_language: "french",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "no",
+              id_topic: 1,
+              topic_category: "request",
+              topic_action: "organize",
+              topic_object: "passwords",
+              segment_verbatims: [
+                "Est-ce que vous pouvez ajouter des dossiers pour organiser les mots de passe ?"
+              ],
+              topic_details: {
+                gap_observed: "ability to organize passwords into folders"
+              },
+              user_goal: "Add folders to organize passwords",
+              blocking_issue: "no"
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      })
+    );
+
+    expect(output.decision.topics).toEqual([
+      {
+        topic_id: 1,
+        type: "acknowledgement",
+        missing_fields: []
+      }
+    ]);
+  });
+
+  it("can ask for more context on a vague request", async function () {
+    const output = await runSearchDecision(
+      buildInput({
+        turnUnderstandingDelta: {
+          user_language: "french",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "no",
+              id_topic: 1,
+              topic_category: "request",
+              segment_verbatims: [
+                "Il faudrait améliorer ça."
+              ],
+              topic_details: {},
+              user_goal: "Improve something",
+              blocking_issue: "no"
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      })
+    );
+
+    expect(output.decision.topics).toEqual([
+      {
+        topic_id: 1,
+        type: "ask_more_info",
+        missing_fields: ["gap_observed", "feature_or_page"]
+      }
+    ]);
+  });
+
   it("uses historical topic details only for missing fields decisions", async function () {
     const output = await runSearchDecision(
       buildInput({
@@ -741,6 +1000,60 @@ describe("runSearchDecision", function () {
       }
     ]);
     expect(output.detected.solutionLikelihoodResult).toBe("rag_relevant");
+  });
+
+  it("does not request optional visual evidence for a resolved matched bug topic", async function () {
+    const output = await runSearchDecision(
+      buildInput({
+        supportTopicKnowledge: {
+          segments_topic: [
+            {
+              id_topic: 1,
+              topic_category: "bug",
+              tool_or_product: "Twake Drive",
+              topic_action: "create",
+              topic_object: "folder",
+              topic_details: {
+                platform: "mobile app",
+                trigger_action: "click on create folder",
+                expected_result: "folder should be created",
+                observed_result: "nothing happens"
+              },
+              user_goal: "Create a folder",
+              blocking_issue: "yes"
+            }
+          ]
+        },
+        turnUnderstandingDelta: {
+          user_language: "french",
+          segments_lack_comprehension: [],
+          segments_topic: [
+            {
+              matched_historical_topic: "yes",
+              id_topic: 1,
+              segment_verbatims: [
+                "Ça marche maintenant pour le dossier."
+              ],
+              topic_details: {
+                observed_result: "folder is now created"
+              },
+              blocking_issue: "no"
+            }
+          ],
+          segments_signal: [],
+          segments_scope_boundary: [],
+          segments_suspicious: []
+        }
+      })
+    );
+
+    expect(output.decision.topics).toEqual([
+      {
+        topic_id: 1,
+        type: "acknowledgement",
+        missing_fields: []
+      }
+    ]);
   });
 
   it("acknowledges instead of searching when handover is explicitly requested", async function () {
