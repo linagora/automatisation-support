@@ -1091,3 +1091,354 @@ LLM3 ne ré-analyse pas le fond : il écrit / merge / crée / reporte.
 La catégorie locale est produite par LLM2.
 La catégorie finale de l’objet est résolue par LLM3.
 ```
+```mermaid
+flowchart TD
+    %% =====================================================
+    %% LÉGENDE
+    %% =====================================================
+
+    LEGEND["Légende<br/><br/>🟦 Côté utilisateur<br/>Ce que vit, ressent et cherche l'utilisateur<br/><br/>🟨 Côté support humain<br/>Lecture, compréhension, qualification, décision<br/><br/>🟩 Actions support / entreprise<br/>Réponse, transmission, correction, suivi<br/><br/>🟪 Mémoire / contexte<br/>Historique, sujet existant, connaissances accumulées<br/><br/>⬜ Sortie / channel<br/>Message final adapté au canal"]:::legend
+
+    %% =====================================================
+    %% 1. CONTEXTE PRODUIT / SERVICE
+    %% =====================================================
+
+    COMPANY["Entreprise / compagnie<br/><br/>Propose un service ou produit<br/>à un utilisateur payant, gratuit,<br/>prospect ou ancien client."]:::company
+
+    SERVICE["Service / produit utilisé<br/><br/>Peut être :<br/>- fonctionnel et satisfaisant<br/>- difficile à comprendre<br/>- incomplet en fonctionnalités<br/>- dégradé ou buggué<br/>- mal communiqué<br/>- inadapté au besoin utilisateur"]:::company
+
+    COMPANY --> SERVICE
+
+    %% =====================================================
+    %% 2. TÊTE DE L'UTILISATEUR
+    %% =====================================================
+
+    subgraph USER_SIDE["Tête de l'utilisateur"]
+        direction TD
+
+        U1["L'utilisateur interagit avec le service<br/><br/>Il essaie d'utiliser une fonctionnalité,<br/>de comprendre une offre,<br/>de résoudre un problème,<br/>ou d'évaluer la qualité du produit."]:::user
+
+        U2{"Que vit l'utilisateur ?"}:::userDecision
+
+        U_BUG["Le service ne fonctionne pas correctement<br/><br/>Exemples :<br/>- bug<br/>- crash<br/>- action impossible<br/>- affichage incorrect<br/>- connexion impossible"]:::user
+
+        U_CLARITY["Le service manque de clarté<br/><br/>Exemples :<br/>- comment faire ?<br/>- est-ce possible ?<br/>- qu'est-ce que cette offre inclut ?<br/>- quelle est la différence entre deux produits ?"]:::user
+
+        U_FEATURE["Le service manque d'une fonctionnalité<br/><br/>Exemples :<br/>- demande de fonctionnalité<br/>- feature gap<br/>- besoin non couvert<br/>- comparaison avec un ancien produit"]:::user
+
+        U_FEEDBACK["L'utilisateur veut exprimer un retour<br/><br/>Exemples :<br/>- satisfaction<br/>- déception<br/>- frustration<br/>- intention de churn<br/>- remarque produit<br/>- remarque support"]:::user
+
+        U_REPORT["L'utilisateur veut juste signaler<br/><br/>Il ne demande pas forcément une solution immédiate,<br/>mais veut que le sujet soit pris en compte."]:::user
+
+        U_INTENTION["Intention utilisateur immédiate<br/><br/>L'utilisateur peut vouloir :<br/>- une solution<br/>- une information<br/>- une action du support<br/>- une prise en compte<br/>- un accusé de réception<br/>- exprimer un feedback<br/>- signaler un bug<br/>- être rassuré"]:::user
+
+        U_MESSAGE["Message envoyé au support<br/><br/>Le message peut contenir :<br/>- un ou plusieurs sujets<br/>- de la politesse<br/>- du contexte<br/>- des détails techniques<br/>- de la frustration<br/>- une question<br/>- une demande d'action<br/>- une information courte contextualisée<br/>- une demande hors périmètre"]:::user
+    end
+
+    SERVICE --> U1
+    U1 --> U2
+
+    U2 --> U_BUG
+    U2 --> U_CLARITY
+    U2 --> U_FEATURE
+    U2 --> U_FEEDBACK
+    U2 --> U_REPORT
+
+    U_BUG --> U_INTENTION
+    U_CLARITY --> U_INTENTION
+    U_FEATURE --> U_INTENTION
+    U_FEEDBACK --> U_INTENTION
+    U_REPORT --> U_INTENTION
+
+    U_INTENTION --> U_MESSAGE
+
+    %% =====================================================
+    %% 3. CHANNEL D'ENTRÉE
+    %% =====================================================
+
+    CHANNEL["Channel d'entrée<br/><br/>Le support reçoit le message via :<br/>- Twake Chat<br/>- Twake Mail<br/>- email<br/>- ticket<br/>- formulaire<br/>- autre canal textuel<br/><br/>Le fond du message reste similaire,<br/>mais la forme de réponse attendue change."]:::channel
+
+    U_MESSAGE --> CHANNEL
+
+    %% =====================================================
+    %% 4. TÊTE DU SUPPORT : PREMIÈRE LECTURE
+    %% =====================================================
+
+    subgraph SUPPORT_HEAD["Tête du support humain — lecture et compréhension"]
+        direction TD
+
+        S0["Le support reçoit le message<br/><br/>Objectif humain :<br/>comprendre ce que veut l'utilisateur,<br/>répondre correctement,<br/>maintenir la satisfaction client,<br/>et préserver la qualité du service."]:::support
+
+        S1["Lecture globale du message<br/><br/>Le support ne commence pas par remplir une base de données.<br/>Il lit d'abord pour comprendre :<br/>- de quoi parle l'utilisateur<br/>- s'il y a plusieurs sujets<br/>- si certains morceaux sont simples<br/>- si certains morceaux nécessitent du contexte"]:::support
+
+        S2["Repérage macro des segments de sens<br/><br/>Le support distingue les morceaux du message :<br/>- sujet support autonome<br/>- candidat support contextuel<br/>- politesse pure<br/>- hors périmètre<br/>- demande sensible<br/>- incompréhensible / inutilisable"]:::support
+
+        S3{"Famille du segment"}:::supportDecision
+
+        F_SUPPORT["support_relevant<br/><br/>Segment utile au support<br/>et compréhensible localement.<br/><br/>Exemples :<br/>- je ne peux plus me connecter<br/>- le paiement est refusé<br/>- je veux changer d'offre<br/>- est-ce que cette fonctionnalité existe ?<br/>- merci, ça marche maintenant"]:::support
+
+        F_CONTEXT["contextual_support_candidate<br/><br/>Segment court ou elliptique,<br/>potentiellement utile si le contexte le rattache.<br/><br/>Exemples :<br/>- Firefox<br/>- oui<br/>- non<br/>- ça ne marche toujours pas<br/>- aussi sur mobile"]:::support
+
+        F_POLITE["politeness_only<br/><br/>Politesse pure, uniquement si aucun contenu support exploitable.<br/><br/>Exemples :<br/>- merci<br/>- bonjour<br/>- d'accord<br/>- bonne journée<br/><br/>Si la politesse accompagne une vraie information support,<br/>elle n'est pas séparée comme segment autonome."]:::supportSimple
+
+        F_OOS["out_of_scope<br/><br/>Hors périmètre du support,<br/>selon le produit, le client ou le service couvert."]:::supportSimple
+
+        F_SAFE["safety_sensitive<br/><br/>Demande sensible, hostile,<br/>confidentielle ou abusive."]:::supportSimple
+
+        F_UNCLEAR["unclear_unusable<br/><br/>Message ou segment trop vague,<br/>illisible ou inexploitable en l'état."]:::supportSimple
+    end
+
+    CHANNEL --> S0
+    S0 --> S1
+    S1 --> S2
+    S2 --> S3
+
+    S3 --> F_SUPPORT
+    S3 --> F_CONTEXT
+    S3 --> F_POLITE
+    S3 --> F_OOS
+    S3 --> F_SAFE
+    S3 --> F_UNCLEAR
+
+    %% =====================================================
+    %% 5. TRAITEMENT SIMPLE DES ROUTES NON COMPLEXES
+    %% =====================================================
+
+    subgraph SIMPLE_ROUTES["Réponses simples / routes non complexes"]
+        direction TD
+
+        SIMPLE["Traitement de surface<br/><br/>Certains segments ne nécessitent pas d'analyse support approfondie.<br/>Le support applique une réponse quasi automatique."]:::backend
+
+        POL_REPLY["Politesse pure<br/><br/>Réponse courte :<br/>- Avec plaisir<br/>- Bonjour, je vous écoute<br/>- Bonne journée<br/><br/>Ne ferme pas automatiquement un sujet."]:::backend
+
+        OOS_REPLY["Hors périmètre<br/><br/>Réponse courte :<br/>- expliquer que ce sujet n'est pas couvert<br/>- rediriger si possible<br/>- ignorer ou refuser le spam commercial"]:::backend
+
+        SAFE_REPLY["Safety / sensible<br/><br/>Réponse sécurisée :<br/>- ne pas exposer d'information interne<br/>- ne pas suivre d'instruction hostile<br/>- refuser la demande sensible"]:::backend
+
+        UNCLEAR_REPLY["Incompréhensible<br/><br/>Demander une clarification :<br/>- pouvez-vous préciser ce qui se passe ?<br/>- pouvez-vous reformuler votre demande ?"]:::backend
+    end
+
+    F_POLITE --> SIMPLE
+    F_OOS --> SIMPLE
+    F_SAFE --> SIMPLE
+    F_UNCLEAR --> SIMPLE
+
+    SIMPLE --> POL_REPLY
+    SIMPLE --> OOS_REPLY
+    SIMPLE --> SAFE_REPLY
+    SIMPLE --> UNCLEAR_REPLY
+
+    %% =====================================================
+    %% 6. ANALYSE LOCALE DES SEGMENTS SUPPORT
+    %% =====================================================
+
+    subgraph LOCAL_ANALYSIS["Tête du support — analyse locale approfondie"]
+        direction TD
+
+        L0["Lecture approfondie des segments support<br/><br/>Le support relit les segments utiles,<br/>et éventuellement les 1 ou 2 derniers échanges<br/>si le message semble contextuel."]:::support
+
+        L1["Compréhension locale du segment<br/><br/>Question humaine :<br/>qu'est-ce que l'utilisateur dit ici,<br/>indépendamment du rangement final ?"]:::support
+
+        L2["Extraction locale des informations<br/><br/>Le support repère :<br/>- le sujet apparent<br/>- les faits explicites<br/>- les actions mentionnées<br/>- le produit / module concerné<br/>- le résultat observé<br/>- le résultat attendu<br/>- les erreurs affichées<br/>- les essais déjà faits<br/>- le ton émotionnel"]:::support
+
+        L3["Catégories locales probables<br/><br/>Le support classe localement :<br/>- bug / issue<br/>- question d'information<br/>- demande d'action<br/>- facturation<br/>- accès / sécurité<br/>- feature request / gap<br/>- feedback produit<br/>- feedback support<br/>- statut / retour de solution<br/>- correction<br/>- détail additionnel<br/>- support meta"]:::support
+
+        L4["Attente utilisateur locale<br/><br/>Le support identifie ce que l'utilisateur semble attendre :<br/>- une solution<br/>- une information<br/>- une action<br/>- une prise en compte<br/>- un accusé de réception<br/>- une transmission<br/>- une clarification<br/>- une réponse rassurante"]:::support
+
+        L5["Dépendance au contexte<br/><br/>Le support évalue :<br/>- le segment est complet seul<br/>- il est complet mais peut matcher un sujet existant<br/>- il nécessite le contexte pour être interprété<br/>- il nécessite le contexte pour être placé"]:::support
+    end
+
+    F_SUPPORT --> L0
+    F_CONTEXT --> L0
+
+    L0 --> L1 --> L2 --> L3 --> L4 --> L5
+
+    %% =====================================================
+    %% 7. CONTEXTE / MÉMOIRE SUPPORT
+    %% =====================================================
+
+    subgraph MEMORY["Mémoire / contexte support"]
+        direction TD
+
+        M0["Contexte conversationnel disponible<br/><br/>Le support peut relire :<br/>- derniers messages<br/>- questions déjà posées<br/>- réponses déjà données<br/>- solutions proposées<br/>- informations déjà collectées<br/>- sujets ouverts<br/>- sujets en attente utilisateur<br/>- sujets transmis au support humain"]:::memory
+
+        M1["Objets support existants<br/><br/>Chaque sujet peut avoir :<br/>- un identifiant<br/>- une catégorie<br/>- un résumé<br/>- des champs connus<br/>- des champs manquants<br/>- un statut<br/>- une dernière action support<br/>- une solution proposée"]:::memory
+
+        M2["Questions / attentes en cours<br/><br/>Exemples :<br/>- le bot a demandé le navigateur<br/>- le bot a demandé l'OS<br/>- le bot attend un retour sur une solution<br/>- le support a demandé une capture<br/>- un humain doit reprendre le sujet"]:::memory
+    end
+
+    L5 --> M0
+    M0 --> M1
+    M0 --> M2
+
+    %% =====================================================
+    %% 8. RÉSOLUTION CONTEXTUELLE : OÙ RANGER L'INFO ?
+    %% =====================================================
+
+    subgraph CONTEXT_RESOLUTION["Tête du support — résolution contextuelle"]
+        direction TD
+
+        C0["État global des connaissances<br/><br/>Le support combine :<br/>- ce que le message dit localement<br/>- ce qui est déjà connu<br/>- ce qui a été demandé avant<br/>- ce qui est en attente<br/>- le contexte du sujet"]:::support
+
+        C1{"Que faire de cette information ?"}:::supportDecision
+
+        C_NEW["Créer un nouveau sujet<br/><br/>Cas :<br/>- le segment est autonome<br/>- aucun sujet existant ne correspond clairement<br/>- l'utilisateur introduit un nouveau problème,<br/>une nouvelle demande ou un nouveau feedback"]:::support
+
+        C_UPDATE["Mettre à jour un sujet existant<br/><br/>Cas :<br/>- réponse à une question du bot<br/>- champ attendu fourni<br/>- détail additionnel<br/>- retour sur solution proposée<br/>- statut du problème<br/>- correction d'une info précédente"]:::support
+
+        C_UNRESOLVED["Ne pas écrire / reporter<br/><br/>Cas :<br/>- contexte ambigu<br/>- plusieurs sujets possibles<br/>- information trop vague<br/>- impossible de savoir où ranger l'information"]:::support
+
+        C_WRITE["Écriture des connaissances<br/><br/>Le support met à jour :<br/>- catégorie finale du sujet<br/>- champs connus<br/>- champs manquants<br/>- statut apparent<br/>- feedbacks importants<br/>- informations à transmettre<br/>- résumé support-facing"]:::support
+    end
+
+    M2 --> C0
+    L5 --> C0
+    C0 --> C1
+
+    C1 --> C_NEW
+    C1 --> C_UPDATE
+    C1 --> C_UNRESOLVED
+
+    C_NEW --> C_WRITE
+    C_UPDATE --> C_WRITE
+    C_UNRESOLVED --> C_WRITE
+
+    %% =====================================================
+    %% 9. DÉCISION : PEUT-ON RÉPONDRE ?
+    %% =====================================================
+
+    subgraph ANSWER_DECISION["Tête du support — décision de réponse"]
+        direction TD
+
+        D0["Objectif de réponse<br/><br/>Le support cherche à répondre à l'intention utilisateur,<br/>sauf si cette intention est hors périmètre ou dangereuse.<br/><br/>Question centrale :<br/>qu'est-ce que l'utilisateur attend,<br/>et que puis-je raisonnablement lui répondre ?"]:::support
+
+        D1["Évaluer la complétude du sujet<br/><br/>Le support vérifie :<br/>- ai-je assez d'informations ?<br/>- le sujet est-il clair ?<br/>- le produit / module est-il identifié ?<br/>- le résultat observé est-il clair ?<br/>- l'utilisateur attend-il une solution, une action ou une information ?"]:::support
+
+        D2{"Peut-on répondre maintenant ?"}:::supportDecision
+
+        D_NEED_INFO["Il manque des informations<br/><br/>Le support identifie précisément :<br/>- quelles informations manquent<br/>- pourquoi elles sont nécessaires<br/>- si l'utilisateur peut raisonnablement les fournir<br/>- combien de questions poser sans le surcharger"]:::support
+
+        D_CAN_ANSWER["On peut répondre directement<br/><br/>Cas :<br/>- question simple<br/>- information connue<br/>- problème suffisamment décrit<br/>- solution connue<br/>- prise en compte suffisante<br/>- feedback à reconnaître"]:::support
+
+        D_SEARCH["Il faut chercher une réponse<br/><br/>Cas :<br/>- besoin de documentation<br/>- base de connaissances<br/>- procédure interne<br/>- known issue<br/>- solution technique"]:::support
+
+        D_HANDOVER["Il faut transmettre / escalader<br/><br/>Cas :<br/>- action compte/facturation<br/>- bug à transmettre<br/>- demande produit<br/>- sujet sensible<br/>- besoin support humain<br/>- correction produit nécessaire"]:::support
+    end
+
+    C_WRITE --> D0 --> D1 --> D2
+
+    D2 --> D_NEED_INFO
+    D2 --> D_CAN_ANSWER
+    D2 --> D_SEARCH
+    D2 --> D_HANDOVER
+
+    %% =====================================================
+    %% 10. FORMULATION DE LA RÉPONSE
+    %% =====================================================
+
+    subgraph RESPONSE_BUILD["Tête du support — formulation de la réponse"]
+        direction TD
+
+        R0["Choisir le contenu de la réponse<br/><br/>Le support décide :<br/>- accuser réception<br/>- reformuler le sujet compris<br/>- répondre directement<br/>- demander les infos manquantes<br/>- indiquer la transmission<br/>- expliquer la limite du support<br/>- rassurer ou reconnaître le feedback"]:::support
+
+        R1["Si informations manquantes<br/><br/>Demander uniquement ce qui est nécessaire.<br/><br/>Questions :<br/>- claires<br/>- peu nombreuses<br/>- actionnables<br/>- adaptées à ce que l'utilisateur peut fournir"]:::support
+
+        R2["Si réponse disponible<br/><br/>Fournir :<br/>- information<br/>- solution<br/>- procédure<br/>- explication<br/>- next step<br/>- prise en compte"]:::support
+
+        R3["Si transmission nécessaire<br/><br/>Informer l'utilisateur :<br/>- sujet transmis<br/>- équipe concernée<br/>- délai ou prochaine étape si connu<br/>- besoin éventuel d'informations complémentaires"]:::support
+
+        R4["Adapter au channel<br/><br/>Chat : court, direct, conversationnel.<br/>Mail : structuré, phrases complètes.<br/>Ticket : clair, traçable, orienté support.<br/><br/>La compréhension ne change pas,<br/>mais le rendu change."]:::channel
+
+        R5["Réponse user-facing finale<br/><br/>Réponse lisible, naturelle,<br/>non technique côté interne,<br/>adaptée à l'intention utilisateur."]:::output
+    end
+
+    D_NEED_INFO --> R0
+    D_CAN_ANSWER --> R0
+    D_SEARCH --> R0
+    D_HANDOVER --> R0
+
+    R0 --> R1
+    R0 --> R2
+    R0 --> R3
+    R1 --> R4
+    R2 --> R4
+    R3 --> R4
+    R4 --> R5
+
+    %% =====================================================
+    %% 11. ACTIONS POST-TRAITEMENT
+    %% =====================================================
+
+    subgraph POST_ACTIONS["Actions support / entreprise après réponse"]
+        direction TD
+
+        P0["Actions post-traitement<br/><br/>Après ou en parallèle de la réponse,<br/>le support peut déclencher des actions internes."]:::company
+
+        P1["Transmettre aux bonnes équipes<br/><br/>Exemples :<br/>- support niveau 2<br/>- produit<br/>- technique<br/>- facturation<br/>- sécurité<br/>- équipe connecteurs<br/>- équipe accessibilité"]:::company
+
+        P2["Mettre en place une action corrective<br/><br/>Exemples :<br/>- corriger un bug<br/>- ouvrir un ticket interne<br/>- documenter un known issue<br/>- améliorer une FAQ<br/>- créer une demande produit<br/>- corriger une donnée compte"]:::company
+
+        P3["Mettre à jour le sujet<br/><br/>Le support conserve :<br/>- statut<br/>- historique<br/>- infos collectées<br/>- actions réalisées<br/>- prochaine étape<br/>- propriétaire interne"]:::company
+
+        P4["Informer l'utilisateur d'un update<br/><br/>Cas :<br/>- correction effectuée<br/>- bug transmis<br/>- demande prise en compte<br/>- besoin d'un retour utilisateur<br/>- nouvelle question support"]:::output
+    end
+
+    R5 --> P0
+    P0 --> P1
+    P0 --> P2
+    P0 --> P3
+    P3 --> P4
+
+    %% =====================================================
+    %% 12. BOUCLE DE RETOUR UTILISATEUR
+    %% =====================================================
+
+    subgraph LOOP["Boucle de retour utilisateur"]
+        direction TD
+
+        LOO1["L'utilisateur reçoit la réponse ou l'update"]:::user
+
+        LOO2{"Réaction utilisateur"}:::userDecision
+
+        LOO_OK["Le sujet semble résolu<br/><br/>L'utilisateur peut dire :<br/>- ça marche<br/>- c'est bon<br/>- merci, problème réglé"]:::user
+
+        LOO_MORE["L'utilisateur donne plus d'informations<br/><br/>Exemples :<br/>- navigateur<br/>- OS<br/>- capture<br/>- message d'erreur<br/>- contexte supplémentaire"]:::user
+
+        LOO_FAIL["La solution ne fonctionne pas<br/><br/>Exemples :<br/>- ça ne marche toujours pas<br/>- j'ai essayé mais ça échoue<br/>- c'est pire"]:::user
+
+        LOO_NEW["L'utilisateur introduit un nouveau sujet<br/><br/>Exemples :<br/>- autre problème<br/>- autre demande<br/>- nouveau feedback"]:::user
+
+        LOO_FEEDBACK["L'utilisateur exprime un feedback<br/><br/>Exemples :<br/>- merci<br/>- déception<br/>- frustration<br/>- churn<br/>- satisfaction"]:::user
+    end
+
+    P4 --> LOO1
+    LOO1 --> LOO2
+
+    LOO2 --> LOO_OK
+    LOO2 --> LOO_MORE
+    LOO2 --> LOO_FAIL
+    LOO2 --> LOO_NEW
+    LOO2 --> LOO_FEEDBACK
+
+    LOO_OK --> CHANNEL
+    LOO_MORE --> CHANNEL
+    LOO_FAIL --> CHANNEL
+    LOO_NEW --> CHANNEL
+    LOO_FEEDBACK --> CHANNEL
+
+    %% =====================================================
+    %% CLASSES
+    %% =====================================================
+
+    classDef user fill:#DBEAFE,stroke:#2563EB,stroke-width:2px,color:#111;
+    classDef userDecision fill:#BFDBFE,stroke:#1D4ED8,stroke-width:2px,color:#111;
+    classDef support fill:#FEF3C7,stroke:#D97706,stroke-width:2px,color:#111;
+    classDef supportDecision fill:#FDE68A,stroke:#B45309,stroke-width:2px,color:#111;
+    classDef supportSimple fill:#FFF7ED,stroke:#EA580C,stroke-width:2px,color:#111;
+    classDef backend fill:#DCFCE7,stroke:#16A34A,stroke-width:2px,color:#111;
+    classDef memory fill:#F3E8FF,stroke:#7E22CE,stroke-width:2px,color:#111;
+    classDef company fill:#E0F2FE,stroke:#0369A1,stroke-width:2px,color:#111;
+    classDef channel fill:#F3F4F6,stroke:#6B7280,stroke-width:2px,color:#111;
+    classDef output fill:#FFFFFF,stroke:#111827,stroke-width:2px,color:#111;
+    classDef legend fill:#FFF7ED,stroke:#EA580C,stroke-width:2px,color:#111;
+```
