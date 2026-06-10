@@ -7,7 +7,7 @@ import type {
 type TopicDelta = TurnUnderstandingDelta["segments_topic"][number];
 type TopicDetails = NonNullable<TopicDelta["topic_details"]>;
 type TopicResponse =
-  ResponsePlan["messagesPlan"]["topicPlanMessages"][number]["topics_responses"][number]["topic_response"];
+  NonNullable<ResponsePlan["messagesPlan"]["topicPlanMessages"][number]["topicActions"]>[number];
 
 function sanitizeLogIdPart(value: string): string {
   return value.replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -152,8 +152,8 @@ function getSolutionIds(topicResponse: TopicResponse): string[] {
 }
 
 function buildBotTopicResponseLogs(topicResponse: TopicResponse): string[] {
-  const topicId = topicResponse.title.topic_id;
-  const topicLabel = getTopicLabel(topicResponse.title);
+  const topicId = topicResponse.topic_id;
+  const topicLabel = topicResponse.topic_label;
   const mainResponse = topicResponse.main_response;
   const logs: string[] = [];
 
@@ -180,10 +180,18 @@ function buildBotLogs(responsePlan: ResponsePlan): string[] {
   const logs: string[] = [];
 
   for (const topicPlanMessage of responsePlan.messagesPlan.topicPlanMessages) {
-    for (const topicResponseWrapper of topicPlanMessage.topics_responses) {
-      logs.push(
-        ...buildBotTopicResponseLogs(topicResponseWrapper.topic_response)
-      );
+    for (const topicAction of topicPlanMessage.topicActions ?? []) {
+      logs.push(...buildBotTopicResponseLogs(topicAction));
+    }
+
+    for (const topicResponseWrapper of topicPlanMessage.topics_responses ?? []) {
+      const topicResponse = topicResponseWrapper.topic_response;
+      logs.push(...buildBotTopicResponseLogs({
+        topic_id: topicResponse.title.topic_id,
+        topic_label: getTopicLabel(topicResponse.title),
+        main_response: topicResponse.main_response,
+        next_step: topicResponse.next_step
+      }));
     }
   }
 

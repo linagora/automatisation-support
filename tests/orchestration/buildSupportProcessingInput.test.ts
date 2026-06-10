@@ -279,6 +279,8 @@ describe("buildSupportProcessingInput", function () {
               mimeType: "image/png",
               sizeInBytes: 1234,
               accessUrl: "https://files.example.org/capture-1.png",
+              url: "https://files.example.org/capture-1.png",
+              path: "data/attachments/matrix/capture-1.png",
               kind: "image"
             }
           ]
@@ -315,6 +317,8 @@ describe("buildSupportProcessingInput", function () {
         sizeInBytes: 1234,
         sizeBytes: 1234,
         accessUrl: "https://files.example.org/capture-1.png",
+        url: "https://files.example.org/capture-1.png",
+        path: "data/attachments/matrix/capture-1.png",
         mimeType: "image/png",
         type: "image",
         channel: "twake_chat",
@@ -331,6 +335,51 @@ describe("buildSupportProcessingInput", function () {
         type: "image",
         channel: "twake_chat",
         sentAt: "2026-06-05T10:00:03.000Z"
+      }
+    ]);
+  });
+
+  it("maps attachment-only buffered messages to latestUserAttachments", function () {
+    const input = buildSupportProcessingInput(buildMatchingResult({
+      messages: [
+        {
+          channel: "matrix",
+          roomId: "!room:example.org",
+          userId: "@user:example.org",
+          messageId: "$image",
+          createdAt: "2026-06-05T10:00:00.000Z",
+          attachments: [
+            {
+              id: "$image:attachment",
+              filename: "capture.png",
+              mimeType: "image/png",
+              sizeBytes: 1234,
+              path: "data/attachments/matrix/capture.png",
+              matrixMxcUrl: "mxc://matrix.example.org/media",
+              kind: "image"
+            }
+          ]
+        }
+      ]
+    }));
+
+    expect(input.latestUserMessage).toMatchObject({
+      id: "$image",
+      content: "",
+      sentAt: "2026-06-05T10:00:00.000Z"
+    });
+    expect(input.latestUserAttachments).toEqual([
+      {
+        id: "$image:attachment",
+        filename: "capture.png",
+        name: "capture.png",
+        sizeInBytes: 1234,
+        sizeBytes: 1234,
+        path: "data/attachments/matrix/capture.png",
+        mimeType: "image/png",
+        type: "image",
+        channel: "twake_chat",
+        sentAt: "2026-06-05T10:00:00.000Z"
       }
     ]);
   });

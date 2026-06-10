@@ -711,7 +711,22 @@ function getPreviouslyRequestedFieldsForTopic(
       conversationEvent.responsePlan.messagesPlan.topicPlanMessages;
 
     for (const topicPlanMessage of topicPlanMessages) {
-      for (const topicResponseWrapper of topicPlanMessage.topics_responses) {
+      for (const topicAction of topicPlanMessage.topicActions ?? []) {
+        if (topicAction.topic_id !== topicId) {
+          continue;
+        }
+
+        if (topicAction.main_response.type !== "ask_fields") {
+          continue;
+        }
+
+        for (const fieldName of
+          topicAction.main_response.details.fields_requested) {
+          previouslyRequestedFields.add(fieldName);
+        }
+      }
+
+      for (const topicResponseWrapper of topicPlanMessage.topics_responses ?? []) {
         const fieldsRequested = getFieldsRequestedFromTopicResponse(
           topicResponseWrapper.topic_response,
           topicId
@@ -749,7 +764,7 @@ function hasPreviouslyRequestedVisualEvidenceForTopic(
       conversationEvent.responsePlan.messagesPlan.topicPlanMessages;
 
     for (const topicPlanMessage of topicPlanMessages) {
-      for (const topicResponseWrapper of topicPlanMessage.topics_responses) {
+      for (const topicResponseWrapper of topicPlanMessage.topics_responses ?? []) {
         const topicResponse = topicResponseWrapper.topic_response;
 
         if (

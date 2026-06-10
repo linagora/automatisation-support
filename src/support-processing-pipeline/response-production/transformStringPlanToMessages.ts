@@ -6,6 +6,7 @@ type StringPlanToMessagesInput = {
 };
 
 type UserResponseMessageType =
+  | "global_response"
   | "security_gate"
   | "suspicious"
   | "lack_comprehension"
@@ -36,36 +37,14 @@ function addTopicMessages(
   topicPlanMessages: StringTopicPlanMessage[]
 ): void {
   for (const topicPlanMessage of topicPlanMessages) {
-    const lastTopicIndex = topicPlanMessage.topicsResponses.length - 1;
-
-    topicPlanMessage.topicsResponses.forEach((topicResponse, topicIndex) => {
-      const messageParts: string[] = [];
-
-      if (topicIndex === 0) {
-        messageParts.push(
-          topicPlanMessage.politenessOpening,
-          topicPlanMessage.topicRelationAcknowledgement,
-          ""
-        );
-      }
-
-      messageParts.push(topicResponse);
-
-      if (topicIndex === lastTopicIndex) {
-        messageParts.push(topicPlanMessage.politenessClosure);
-      }
-
-      const filteredMessageParts = messageParts.filter((messagePart) => {
-        return messagePart === "" || messagePart.trim() !== "";
-      });
-
-      if (filteredMessageParts.length > 0) {
+    for (const topicResponse of topicPlanMessage.topicsResponses) {
+      if (topicResponse.trim() !== "") {
         messages.push({
           type: "topic_response",
-          content: filteredMessageParts.join("\n")
+          content: topicResponse
         });
       }
-    });
+    }
   }
 }
 
@@ -76,6 +55,7 @@ function transformStringPlanToMessages(
   const { messagesPlan } = stringResponsePlan;
   const messages: UserResponseMessage[] = [];
 
+  addTextMessages(messages, "global_response", messagesPlan.globalMessages);
   addTextMessages(messages, "security_gate", [
     messagesPlan.securityGatePlanMessage
   ]);

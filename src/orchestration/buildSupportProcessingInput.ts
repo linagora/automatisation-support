@@ -101,13 +101,14 @@ function canConvertAttachment(
   attachment: MessagingAttachment
 ): attachment is MessagingAttachment & {
   filename: string;
-  sizeInBytes: number;
 } {
+  const sizeInBytes = attachment.sizeInBytes ?? attachment.sizeBytes;
+
   return (
     typeof attachment.filename === "string" &&
     attachment.filename.trim() !== "" &&
-    typeof attachment.sizeInBytes === "number" &&
-    Number.isFinite(attachment.sizeInBytes)
+    typeof sizeInBytes === "number" &&
+    Number.isFinite(sizeInBytes)
   );
 }
 
@@ -121,14 +122,22 @@ function toLatestUserAttachmentsFromMessage(
       return [];
     }
 
+    const sizeInBytes = attachment.sizeInBytes ?? attachment.sizeBytes;
+
+    if (sizeInBytes === undefined) {
+      return [];
+    }
+
     return [
       {
         id: attachment.id,
         filename: attachment.filename,
         name: attachment.filename,
-        sizeInBytes: attachment.sizeInBytes,
-        sizeBytes: attachment.sizeInBytes,
+        sizeInBytes,
+        sizeBytes: sizeInBytes,
         ...(attachment.accessUrl ? { accessUrl: attachment.accessUrl } : {}),
+        ...(attachment.url ? { url: attachment.url } : {}),
+        ...(attachment.path ? { path: attachment.path } : {}),
         ...(attachment.mimeType ? { mimeType: attachment.mimeType } : {}),
         ...(attachment.kind ? { type: attachment.kind } : {}),
         channel: toLatestUserMessageChannel(message.channel),

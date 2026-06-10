@@ -29,7 +29,7 @@ type SupportTopicKnowledgeForResponsePlan = {
   }[];
 };
 
-type TopicSegment = {
+export type TopicSegment = {
   matched_historical_topic: "yes" | "no";
   id_topic: number;
   topic_category?: TopicCategory;
@@ -37,8 +37,15 @@ type TopicSegment = {
   topic_action?: string;
   topic_object?: string;
   topic_label?: string;
+  segment_verbatims?: string[];
   topic_details?: TopicDetails;
   tested_solutions?: TestedSolution[];
+  tested_actions?: {
+    tested_action: string;
+    outcome_tested_action: string;
+  }[];
+  user_goal?: string;
+  blocking_issue?: "yes" | "no";
 };
 
 type TurnUnderstandingDeltaForResponsePlan = {
@@ -58,6 +65,7 @@ export type SecurityGateSummary = {
 
 export type SecurityGatePlanMessage = {
   gateFailed: unknown[];
+  securityMessages?: QuotedPlanMessage[];
 };
 
 export type SuspiciousPlanMessage = {
@@ -102,26 +110,56 @@ export type OptionalEvidenceRequest = {
   reason: "bug_visual_context_helpful";
 };
 
-export type DecisionSearchingSolutionForResponsePlan = {
-  topics: {
-    topic_id: number;
-    type: "ask_more_info" | "acknowledgement" | "solution_searching";
-    missing_fields?: string[];
-    optional_evidence_requested?: OptionalEvidenceRequest;
-  }[];
+export type ResponseAcknowledgementType =
+  | "none"
+  | "single_issue"
+  | "multiple_issues"
+  | "info_received"
+  | "resolved"
+  | "first_contact";
+
+export type ResponseSummaryType =
+  | "none"
+  | "single_issue"
+  | "multiple_issues";
+
+export type ResponseNextStepType =
+  | "none"
+  | "wait_user_info"
+  | "human_support"
+  | "no_automatic_answer";
+
+export type ResponsePlanTopicAction =
+  | {
+      topic_id: number;
+      topic_label: string;
+      main_response: TopicMainResponse;
+      next_step: TopicNextStep;
+    };
+
+export type ResponseQuestion = {
+  wording: string;
+  fields: string[];
+  appliesToTopicIds?: number[];
+  topicIds?: number[];
+};
+
+export type QuotedPlanMessage = {
+  segment_verbatim: string;
+  message: string;
 };
 
 export type TopicPlanMessage = {
-  politeness_opening:
+  topicActions?: ResponsePlanTopicAction[];
+  politeness_opening?:
     | "understanding_1"
     | "understanding_2"
     | "salutation_and_understanding_1"
     | "salutation_and_understanding_2";
-  topic_relation_acknowledgement: {
+  topic_relation_acknowledgement?: {
     no_matched_historical_topic_count: number;
     matched_historical_topic_count: number;
   };
-  attachments?: TurnAttachments;
   topics_responses: {
     topic_response: {
       title: {
@@ -141,19 +179,50 @@ export type TopicPlanMessage = {
       next_step: TopicNextStep;
     };
   }[];
-  politeness_closure:
+  politeness_closure?:
     | "thanks_for_cooperation1"
     | "thanks_for_cooperation2";
 };
 
+export type GlobalMessagesPlan = {
+  acknowledgement?: {
+    type: ResponseAcknowledgementType;
+    text?: string;
+  };
+  understoodSummary?: {
+    type: ResponseSummaryType;
+    lines: string[];
+  };
+  questions?: {
+    common: ResponseQuestion[];
+    specific: ResponseQuestion[];
+  };
+  nextStep?: {
+    type: ResponseNextStepType;
+  };
+  signalMessages?: string[];
+  scopeBoundaryMessages?: QuotedPlanMessage[];
+  securityMessages?: QuotedPlanMessage[];
+  lackComprehensionMessages?: QuotedPlanMessage[];
+  topicPlanMessages: TopicPlanMessage[];
+};
+
+export type DecisionSearchingSolutionForResponsePlan = {
+  topics: {
+    topic_id: number;
+    type: "ask_more_info" | "acknowledgement" | "solution_searching";
+    missing_fields?: string[];
+    optional_evidence_requested?: OptionalEvidenceRequest;
+  }[];
+};
+
 export type HandoverPlanMessage = UnknownRecord;
 
-export type MessagesPlan = {
+export type MessagesPlan = GlobalMessagesPlan & {
   securityGatePlanMessage?: SecurityGatePlanMessage;
   suspiciousPlanMessage?: SuspiciousPlanMessage;
   lackComprehensionPlanMessage?: LackComprehensionPlanMessage;
   scopeBoundaryPlanMessages: SegmentList;
-  topicPlanMessages: TopicPlanMessage[];
   signalPlanMessages: SegmentList;
   handoverPlanMessages: HandoverPlanMessage[];
 };

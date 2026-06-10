@@ -1,4 +1,5 @@
 import { createMatrixClient } from "./matrixClient";
+import { downloadMatrixEventAttachments } from "./downloadMatrixAttachments";
 import { mapMatrixEventToMessagingEvent } from "./mapMatrixEvent";
 
 import type {
@@ -178,7 +179,22 @@ async function listenMatrixEvents(params: {
         return;
       }
 
-      await params.onMessage(messagingEvent);
+      if ((messagingEvent.attachments ?? []).length > 0) {
+        console.log({
+          eventName: "matrix.attachment.received",
+          roomId,
+          messageId: messagingEvent.messageId,
+          attachmentCount: messagingEvent.attachments?.length ?? 0
+        });
+      }
+
+      const messagingEventWithDownloadedAttachments =
+        await downloadMatrixEventAttachments({
+          client,
+          messagingEvent
+        });
+
+      await params.onMessage(messagingEventWithDownloadedAttachments);
     }
   );
 

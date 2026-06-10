@@ -5,9 +5,16 @@ export type MessagingAttachment = {
   filename?: string;
   mimeType?: string;
   sizeInBytes?: number;
+  sizeBytes?: number;
   accessUrl?: string;
+  url?: string;
+  path?: string;
+  width?: number;
+  height?: number;
+  matrixMxcUrl?: string;
   kind?: "image" | "video" | "audio" | "other";
   rawAttachment?: unknown;
+  rawEvent?: unknown;
 };
 
 export type MessagingEvent = {

@@ -65,7 +65,11 @@ type SignalType =
   | "pricing_feedback"
   | "feature_loss_feedback"
   | "confirmation_without_new_field"
-  | "handover_request";
+  | "handover_request"
+  | "bot_identity_question"
+  | "support_team_question"
+  | "appreciation_positive"
+  | "concern_support_continuity";
 
 type ScopeBoundaryType =
   | "generic_out_of_scope"
@@ -527,6 +531,7 @@ type TopicPlanMessage = {
 export type UserResponse = {
   messages: {
     type:
+      | "global_response"
       | "security_gate"
       | "suspicious"
       | "lack_comprehension"

@@ -144,7 +144,7 @@ describe("InMemoryMessageBuffer", function () {
     buffer.dispose();
   });
 
-  it("ignores events without non-empty text content", async function () {
+  it("ignores events without text or attachments", async function () {
     const flushedMessages: BufferedMessages[] = [];
     const buffer = new InMemoryMessageBuffer({
       inactivityTimeoutMs: 1000,
@@ -164,6 +164,40 @@ describe("InMemoryMessageBuffer", function () {
 
     await vi.advanceTimersByTimeAsync(1000);
     expect(flushedMessages).toHaveLength(0);
+
+    buffer.dispose();
+  });
+
+  it("accepts attachment-only messages", async function () {
+    const flushedMessages: BufferedMessages[] = [];
+    const buffer = new InMemoryMessageBuffer({
+      inactivityTimeoutMs: 1000,
+      onFlush: (bufferedMessages) => {
+        flushedMessages.push(bufferedMessages);
+      },
+      now: () => new Date("2026-06-05T10:00:01.000Z")
+    });
+
+    const attachmentOnlyMessage = buildMessage({
+      messageId: "$image",
+      content: undefined,
+      attachments: [
+        {
+          id: "$image:attachment",
+          filename: "capture.png",
+          mimeType: "image/png",
+          sizeInBytes: 1234,
+          kind: "image"
+        }
+      ]
+    });
+
+    expect(buffer.addMessage(attachmentOnlyMessage)).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(flushedMessages).toHaveLength(1);
+    expect(flushedMessages[0].messages).toEqual([attachmentOnlyMessage]);
 
     buffer.dispose();
   });

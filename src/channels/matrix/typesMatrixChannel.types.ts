@@ -29,6 +29,14 @@ export type MatrixTextEvent = {
   content?: {
     msgtype?: string;
     body?: unknown;
+    url?: unknown;
+    filename?: unknown;
+    info?: {
+      mimetype?: unknown;
+      size?: unknown;
+      w?: unknown;
+      h?: unknown;
+    };
   };
 };
 
@@ -57,4 +65,12 @@ export type MatrixClientLike = {
   start: () => Promise<void>;
   stop?: () => Promise<void> | void;
   sendText: (roomId: string, content: string) => Promise<string | undefined>;
+  mxcToHttp?: (mxc: string) => string;
+  downloadContent?: (
+    mxcUrl: string,
+    allowRemote?: boolean
+  ) => Promise<{
+    data: Buffer;
+    contentType: string;
+  }>;
 };

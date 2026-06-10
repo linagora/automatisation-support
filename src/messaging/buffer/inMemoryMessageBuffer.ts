@@ -25,6 +25,14 @@ function hasTextContent(message: MessagingEvent): boolean {
   return typeof message.content === "string" && message.content.trim() !== "";
 }
 
+function hasAttachments(message: MessagingEvent): boolean {
+  return Array.isArray(message.attachments) && message.attachments.length > 0;
+}
+
+function hasBufferedContent(message: MessagingEvent): boolean {
+  return hasTextContent(message) || hasAttachments(message);
+}
+
 function buildGroupId(groupKey: MessageBufferGroupKey): string {
   return `${groupKey.channel}:${groupKey.roomId}:${groupKey.userId}`;
 }
@@ -57,7 +65,7 @@ class InMemoryMessageBuffer implements MessageBuffer {
   }
 
   addMessage(message: MessagingEvent): boolean {
-    if (!hasTextContent(message)) {
+    if (!hasBufferedContent(message)) {
       return false;
     }
 

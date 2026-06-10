@@ -35,6 +35,7 @@ type SupportInputContextSummary = {
     has_blocking_issue: boolean;
   }[];
   conversationHistoryLength: number;
+  attachmentsCount: number;
   latestUserMessagePreview: string;
 };
 
@@ -96,6 +97,7 @@ function buildSupportInputContextSummary(params: {
     supportTopicSummaries: supportTopics.map(buildTopicSummary),
     conversationHistoryLength:
       params.supportProcessingInput.conversationHistory.length,
+    attachmentsCount: params.supportProcessingInput.latestUserAttachments.length,
     latestUserMessagePreview: truncateForLog(
       params.supportProcessingInput.latestUserMessage.content
     )
@@ -126,6 +128,10 @@ async function runSupportAutomationTurn(params: {
         : {}),
       supportProcessingInput
     })
+  });
+  console.log({
+    eventName: "support.input.attachments_count",
+    attachments_count: supportProcessingInput.latestUserAttachments.length
   });
   const supportProcessingOutput = await runSupportProcessingPipeline(
     supportProcessingInput,

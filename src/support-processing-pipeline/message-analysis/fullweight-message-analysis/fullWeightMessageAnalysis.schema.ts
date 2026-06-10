@@ -18,7 +18,9 @@ const SIGNAL_TYPES = [
   "disappointment", "churn_intent", "waiting", "apology", "closure",
   "time_sensitive", "impolite", "complaint_without_actionable_detail",
   "communication_feedback", "pricing_feedback", "feature_loss_feedback",
-  "confirmation_without_new_field"
+  "confirmation_without_new_field", "bot_identity_question",
+  "support_team_question", "appreciation_positive",
+  "concern_support_continuity"
 ] as const;
 
 const SCOPE_BOUNDARY_TYPES = [

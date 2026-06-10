@@ -1,11 +1,18 @@
 import type {
+  MessagingAttachment,
   MessagingEvent
 } from "../../messaging/typesMessaging.types";
 import type {
   MatrixTextEvent
 } from "./typesMatrixChannel.types";
 
-function isMatrixTextEvent(event: unknown): event is MatrixTextEvent {
+const SUPPORTED_MESSAGE_TYPES = new Set([
+  "m.text",
+  "m.image",
+  "m.file"
+]);
+
+function isSupportedMatrixMessageEvent(event: unknown): event is MatrixTextEvent {
   if (typeof event !== "object" || event === null) {
     return false;
   }
@@ -14,7 +21,8 @@ function isMatrixTextEvent(event: unknown): event is MatrixTextEvent {
 
   return (
     candidate.type === "m.room.message" &&
-    candidate.content?.msgtype === "m.text"
+    typeof candidate.content?.msgtype === "string" &&
+    SUPPORTED_MESSAGE_TYPES.has(candidate.content.msgtype)
   );
 }
 
@@ -29,25 +37,95 @@ function getCreatedAt(event: MatrixTextEvent): string {
   return new Date().toISOString();
 }
 
+function toNumber(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  return value;
+}
+
+function getBody(event: MatrixTextEvent): string {
+  return typeof event.content?.body === "string"
+    ? event.content.body.trim()
+    : "";
+}
+
+function buildMatrixAttachment(event: MatrixTextEvent): MessagingAttachment | undefined {
+  const msgtype = event.content?.msgtype;
+  const matrixMxcUrl =
+    typeof event.content?.url === "string" ? event.content.url : undefined;
+
+  if (msgtype !== "m.image" && msgtype !== "m.file") {
+    return undefined;
+  }
+
+  if (!event.event_id || !matrixMxcUrl) {
+    return undefined;
+  }
+
+  const body = getBody(event);
+  const filename =
+    typeof event.content?.filename === "string" &&
+    event.content.filename.trim() !== ""
+      ? event.content.filename.trim()
+      : body;
+  const mimeType =
+    typeof event.content?.info?.mimetype === "string"
+      ? event.content.info.mimetype
+      : undefined;
+  const sizeInBytes = toNumber(event.content?.info?.size);
+  const width = toNumber(event.content?.info?.w);
+  const height = toNumber(event.content?.info?.h);
+
+  return {
+    id: `${event.event_id}:attachment`,
+    ...(filename ? { filename } : {}),
+    ...(mimeType ? { mimeType } : {}),
+    ...(sizeInBytes !== undefined
+      ? {
+          sizeInBytes,
+          sizeBytes: sizeInBytes
+        }
+      : {}),
+    matrixMxcUrl,
+    url: matrixMxcUrl,
+    kind: msgtype === "m.image" ? "image" : "other",
+    ...(width !== undefined ? { width } : {}),
+    ...(height !== undefined ? { height } : {}),
+    rawAttachment: event.content,
+    rawEvent: event
+  };
+}
+
 function mapMatrixEventToMessagingEvent(params: {
   roomId: string;
   event: unknown;
 }): MessagingEvent | undefined {
-  if (!isMatrixTextEvent(params.event)) {
+  if (!isSupportedMatrixMessageEvent(params.event)) {
     return undefined;
   }
 
-  const body =
-    typeof params.event.content?.body === "string"
-      ? params.event.content.body.trim()
-      : "";
+  const body = getBody(params.event);
+  const attachment = buildMatrixAttachment(params.event);
+  const attachments = attachment ? [attachment] : [];
 
   if (
     params.event.event_id === undefined ||
     params.event.sender === undefined ||
-    body === ""
+    (body === "" && attachments.length === 0)
   ) {
     return undefined;
+  }
+
+  if (attachments.length > 0) {
+    console.log({
+      eventName: "matrix.attachment.mapped",
+      roomId: params.roomId,
+      eventId: params.event.event_id,
+      attachmentCount: attachments.length,
+      msgtype: params.event.content?.msgtype
+    });
   }
 
   return {
@@ -55,7 +133,10 @@ function mapMatrixEventToMessagingEvent(params: {
     roomId: params.roomId,
     userId: params.event.sender,
     messageId: params.event.event_id,
-    content: body,
+    ...(params.event.content?.msgtype === "m.text" && body !== ""
+      ? { content: body }
+      : {}),
+    ...(attachments.length > 0 ? { attachments } : {}),
     createdAt: getCreatedAt(params.event),
     rawEvent: params.event
   };

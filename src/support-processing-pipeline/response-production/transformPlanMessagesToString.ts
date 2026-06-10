@@ -1,35 +1,10 @@
-import { dataBaseResponse } from "./dataBaseResponse";
-
 import type {
-  LackComprehensionPlanMessage,
   MessagesPlan,
-  SecurityGatePlanMessage,
-  SuspiciousPlanMessage,
-  TopicMainResponse,
-  TopicPlanMessage
+  QuotedPlanMessage,
+  ResponseQuestion,
+  TopicMainResponse
 } from "../response-plan/typesResponsePlan.types";
-import type {
-  TurnAttachments
-} from "../typesSupportProcessingPipeline.types";
-import type { LabelDatabase, ResponseLanguage } from "./dataBaseResponse";
-
-type ScopeBoundaryPlanMessage = {
-  signal_verbatim?: unknown;
-  scope_boundary_type?: unknown;
-};
-
-type SignalPlanMessage = {
-  signal_verbatim?: unknown;
-  signal_types?: unknown;
-};
-
-const DISSATISFACTION_SIGNAL_TYPES = [
-  "churn_intent",
-  "negative_feedback",
-  "disappointment"
-] as const;
-
-type HandoverPlanMessage = Record<string, unknown>;
+import type { ResponseLanguage } from "./dataBaseResponse";
 
 type StringTopicPlanMessage = {
   politenessOpening: string;
@@ -39,6 +14,7 @@ type StringTopicPlanMessage = {
 };
 
 type StringMessagesPlan = {
+  globalMessages: string[];
   securityGatePlanMessage?: string;
   suspiciousPlanMessage?: string;
   lackComprehensionPlanMessage?: string;
@@ -48,722 +24,297 @@ type StringMessagesPlan = {
   handoverPlanMessages: string[];
 };
 
-function interpolate(
-  template: string,
-  values: Record<string, string>
-): string {
-  let output = template;
+const NO_AUTOMATIC_ANSWER = [
+  "Aucune réponse automatique n’est disponible pour le moment.",
+  "Un membre du support prendra le relais."
+].join("\n");
+const BOT_IDENTITY_RESPONSE = [
+  "Je suis l’assistant du support. J’aide à qualifier votre demande pour que l’équipe humaine puisse vous répondre plus vite et avec les bonnes informations.",
+  "",
+  "Que puis-je faire pour vous ?"
+].join("\n");
 
-  for (const [key, value] of Object.entries(values)) {
-    output = output.replaceAll(`{${key}}`, value);
+function nonEmpty(value: string | undefined): value is string {
+  return typeof value === "string" && value.trim() !== "";
+}
+
+function uniqueByWording(questions: ResponseQuestion[]): ResponseQuestion[] {
+  const seen = new Set<string>();
+  const output: ResponseQuestion[] = [];
+
+  for (const question of questions) {
+    if (seen.has(question.wording)) {
+      continue;
+    }
+
+    seen.add(question.wording);
+    output.push(question);
   }
 
   return output;
 }
 
-function quoteVerbatim(value: unknown): string {
-  if (typeof value === "string" && value.trim() !== "") {
-    return `"${value}"`;
-  }
-
-  return "\"\"";
-}
-
-function getStringField(
-  value: unknown,
-  fieldName: string
-): string | undefined {
-  if (typeof value !== "object" || value === null) {
-    return undefined;
-  }
-
-  const record = value as Record<string, unknown>;
-  const fieldValue = record[fieldName];
-
-  if (typeof fieldValue === "string") {
-    return fieldValue;
-  }
-
-  return undefined;
-}
-
-function labelFromDatabase(
-  labels: LabelDatabase,
-  key: string | undefined
-): string {
-  if (key === undefined) {
-    return labels.default;
-  }
-
-  return labels[key] || labels.default;
-}
-
-function stringifyValue(value: unknown): string {
-  if (value === undefined) {
-    return "undefined";
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(stringifyValue).join(", ");
-  }
-
-  if (typeof value === "object" && value !== null) {
-    return JSON.stringify(value);
-  }
-
-  return "undefined";
-}
-
-function valueFromLabels(labels: LabelDatabase, key: unknown): string {
-  if (typeof key !== "string") {
-    return labels.default;
-  }
-
-  return labels[key] || labels.default;
-}
-
-function nonEmpty(value: string | undefined): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-function buildTopicDisplayLabel(
-  title: TopicPlanMessage["topics_responses"][number]["topic_response"]["title"]
-): string {
-  const structuredParts = [
-    title.tool_or_product,
-    title.topic_action,
-    title.topic_object
-  ].filter(nonEmpty);
-
-  if (structuredParts.length > 0) {
-    return structuredParts.map((part) => {
-      return part.trim();
-    }).join(" : ");
-  }
-
-  return "Sujet support";
-}
-
-function transformSecurityGatePlanMessage(
-  userLanguage: ResponseLanguage,
-  securityGatePlanMessage: SecurityGatePlanMessage
-): string {
-  const templates = dataBaseResponse[userLanguage].securityGate;
-
-  return securityGatePlanMessage.gateFailed
-    .map((gateFailed) => {
-      if (
-        gateFailed === "latestUserMessageSecurityDecision" ||
-        gateFailed === "attachmentAnalysisSecurityDecision"
-      ) {
-        return templates[gateFailed];
-      }
-
-      const checkName = getStringField(gateFailed, "checkName");
-
-      if (
-        checkName === "latestUserMessageSecurityDecision" ||
-        checkName === "attachmentAnalysisSecurityDecision"
-      ) {
-        return templates[checkName];
-      }
-
-      return templates.default;
-    })
-    .join(" ");
-}
-
-function transformSuspiciousPlanMessage(
-  userLanguage: ResponseLanguage,
-  suspiciousPlanMessage: SuspiciousPlanMessage
-): string {
-  const templates = dataBaseResponse[userLanguage].suspicious;
-
-  return suspiciousPlanMessage.segments_suspicious
-    .map((segment) => {
-      const checkName = getStringField(segment, "checkName");
-      const reason = labelFromDatabase(templates.labels, checkName);
-
-      return interpolate(templates.template, {
-        reason,
-        segment_verbatim: quoteVerbatim(getStringField(segment, "segment_verbatim"))
-      });
-    })
-    .join(" ");
-}
-
-function transformLackComprehensionPlanMessage(
-  userLanguage: ResponseLanguage,
-  lackComprehensionPlanMessage: LackComprehensionPlanMessage
-): string {
-  const templates = dataBaseResponse[userLanguage].lackComprehension;
-
-  return lackComprehensionPlanMessage.segments_lack_comprehension
-    .map((segment) => {
-      return interpolate(templates.template, {
-        segment_verbatim: quoteVerbatim(getStringField(segment, "segment_verbatim"))
-      });
-    })
-    .join(" ");
-}
-
-function transformScopeBoundaryPlanMessage(
-  userLanguage: ResponseLanguage,
-  scopeBoundaryPlanMessage: ScopeBoundaryPlanMessage
-): string {
-  const templates = dataBaseResponse[userLanguage].scopeBoundary;
-  const reason = labelFromDatabase(
-    templates.labels,
-    getStringField(scopeBoundaryPlanMessage, "scope_boundary_type")
-  );
-
-  return interpolate(templates.template, {
-    reason,
-    signal_verbatim: quoteVerbatim(scopeBoundaryPlanMessage.signal_verbatim)
-  });
-}
-
-function transformTopicMainResponse(
-  userLanguage: ResponseLanguage,
-  mainResponse: TopicMainResponse
-): string {
-  const templates = dataBaseResponse[userLanguage].topic;
-
-  if (mainResponse.type === "ask_fields") {
-    const requestedFieldMessages = mainResponse.details.fields_requested.map(
-      (field) => {
-        return formatRequestedField(userLanguage, field);
-      }
-    );
-
-    return [templates.askFields, ...requestedFieldMessages].join("\n");
-  }
-
-  if (mainResponse.type === "propose_solution") {
-    return interpolate(templates.proposeSolution, {
-      solutions: mainResponse.details.solutions
-        .map((solution) => {
-          return solution.solution;
-        })
-        .join(", ")
-    });
-  }
-
-  return templates.acknowledgement;
-}
-
-function transformOptionalEvidenceRequest(
-  userLanguage: ResponseLanguage,
-  optionalEvidenceRequest: TopicPlanMessage["topics_responses"][number]["topic_response"]["optional_evidence_requested"]
-): string | undefined {
-  if (
-    optionalEvidenceRequest?.reason !== "bug_visual_context_helpful" ||
-    !optionalEvidenceRequest.types.includes("screenshot") ||
-    !optionalEvidenceRequest.types.includes("video")
-  ) {
-    return undefined;
-  }
-
-  return userLanguage === "french"
-    ? "Si possible, vous pouvez aussi joindre une capture d’écran ou une courte vidéo pour aider le support."
-    : "If possible, you can also attach a screenshot or short video to help support.";
-}
-
-function formatRequestedField(
-  userLanguage: ResponseLanguage,
-  field: string
-): string {
-  const templates = dataBaseResponse[userLanguage].topic;
-  const label = capitalizeFirst(
-    templates.topicDetailsLabels[field] || field || templates.topicDetailsLabels.default
-  );
-  const description =
-    templates.topicDetailsDescriptions[field] ||
-    templates.topicDetailsDescriptions.default;
-  const separator = userLanguage === "french" ? " : " : ": ";
-
-  return `- ${label}${separator}${ensureFinalPeriod(description)}`;
-}
-
-function capitalizeFirst(value: string): string {
-  if (value.length === 0) {
-    return value;
-  }
-
-  return `${value[0].toUpperCase()}${value.slice(1)}`;
-}
-
-function ensureFinalPeriod(value: string): string {
-  return /[.!?]$/.test(value) ? value : `${value}.`;
-}
-
-function flattenAttachments(
-  attachments: TurnAttachments | undefined
-): TurnAttachments[keyof TurnAttachments] {
-  if (!attachments) {
-    return [];
-  }
-
-  return [
-    ...attachments.images,
-    ...attachments.videos,
-    ...attachments.other
-  ];
-}
-
-function hasAnalysisFailureStatus(status: string): boolean {
-  return status === "failed" || status === "refused";
-}
-
-function buildAttachmentAcknowledgement(
-  userLanguage: ResponseLanguage,
-  attachments: TurnAttachments | undefined
-): string | undefined {
-  const attachmentItems = flattenAttachments(attachments);
-
-  if (attachmentItems.length === 0) {
-    return undefined;
-  }
-
-  const hasAnalysisFailure = attachmentItems.some((attachmentItem) => {
-    return hasAnalysisFailureStatus(attachmentItem.status);
-  });
-  const allAnalyzed = attachmentItems.every((attachmentItem) => {
-    return attachmentItem.status === "analyzed";
-  });
-  const hasSuspicious = attachmentItems.some((attachmentItem) => {
-    return attachmentItem.status === "suspicious";
-  });
-
-  if (attachmentItems.length > 1) {
-    if (hasAnalysisFailure) {
-      return userLanguage === "french"
-        ? "J’ai aussi bien reçu les pièces jointes, mais certaines n’ont pas pu être analysées automatiquement."
-        : "I also received the attachments, but some could not be analyzed automatically.";
-    }
-
-    if (allAnalyzed) {
-      return userLanguage === "french"
-        ? "J’ai aussi bien reçu et analysé les pièces jointes."
-        : "I also received and analyzed the attachments.";
-    }
-
-    if (hasSuspicious) {
-      return userLanguage === "french"
-        ? "J’ai aussi bien reçu les pièces jointes."
-        : "I also received the attachments.";
-    }
-
-    return userLanguage === "french"
-      ? "J’ai aussi bien reçu les pièces jointes."
-      : "I also received the attachments.";
-  }
-
-  const [attachmentItem] = attachmentItems;
-  const isImage = attachments?.images.includes(attachmentItem) === true;
-  const isVideo = attachments?.videos.includes(attachmentItem) === true;
-
-  if (attachmentItem.status === "suspicious") {
-    return userLanguage === "french"
-      ? "J’ai aussi bien reçu la pièce jointe."
-      : "I also received the attachment.";
-  }
-
-  if (isImage) {
-    return attachmentItem.status === "analyzed"
-      ? userLanguage === "french"
-        ? "J’ai aussi bien reçu et analysé une capture d’écran."
-        : "I also received and analyzed a screenshot."
-      : userLanguage === "french"
-        ? "J’ai aussi bien reçu une capture d’écran, mais je n’ai pas pu l’analyser automatiquement."
-        : "I also received a screenshot, but I could not analyze it automatically.";
-  }
-
-  if (isVideo) {
-    return attachmentItem.status === "analyzed"
-      ? userLanguage === "french"
-        ? "J’ai aussi bien reçu et analysé une vidéo."
-        : "I also received and analyzed a video."
-      : userLanguage === "french"
-        ? "J’ai aussi bien reçu une vidéo, mais je n’ai pas pu l’analyser automatiquement."
-        : "I also received a video, but I could not analyze it automatically.";
-  }
-
-  return attachmentItem.status === "analyzed"
-    ? userLanguage === "french"
-      ? "J’ai aussi bien reçu et analysé la pièce jointe."
-      : "I also received and analyzed the attachment."
-    : userLanguage === "french"
-      ? "J’ai aussi bien reçu la pièce jointe, mais je n’ai pas pu l’analyser automatiquement."
-      : "I also received the attachment, but I could not analyze it automatically.";
-}
-
-function transformTopicRelationAcknowledgement(
-  userLanguage: ResponseLanguage,
-  topicPlanMessage: TopicPlanMessage
-): string {
-  const templates = dataBaseResponse[userLanguage].topic
-    .topicRelationAcknowledgement;
-  const {
-    no_matched_historical_topic_count: newTopicCount,
-    matched_historical_topic_count: ongoingTopicCount
-  } = topicPlanMessage.topic_relation_acknowledgement;
-  const parts: string[] = [];
-
-  if (newTopicCount === 1) {
-    parts.push(templates.newTopicSingular);
-  } else if (newTopicCount > 1) {
-    parts.push(
-      interpolate(templates.newTopicPlural, {
-        count: formatCount(userLanguage, newTopicCount)
-      })
-    );
-  }
-
-  if (ongoingTopicCount === 1) {
-    parts.push(templates.ongoingTopicSingular);
-  } else if (ongoingTopicCount > 1) {
-    parts.push(
-      interpolate(templates.ongoingTopicPlural, {
-        count: formatCount(userLanguage, ongoingTopicCount)
-      })
-    );
-  }
-
-  if (parts.length === 0) {
-    return "";
-  }
-
-  const topicAcknowledgement =
-    `${templates.prefix}${parts.join(templates.separator)}${templates.suffix}`;
-  const attachmentAcknowledgement = buildAttachmentAcknowledgement(
-    userLanguage,
-    topicPlanMessage.attachments
-  );
-
-  return [topicAcknowledgement, attachmentAcknowledgement]
-    .filter((part): part is string => part !== undefined && part.length > 0)
-    .join(" ");
-}
-
-function formatCount(userLanguage: ResponseLanguage, count: number): string {
-  if (userLanguage === "french") {
-    if (count === 1) {
-      return "un";
-    }
-
-    if (count === 2) {
-      return "deux";
-    }
-  }
-
-  if (userLanguage === "english") {
-    if (count === 1) {
-      return "one";
-    }
-
-    if (count === 2) {
-      return "two";
-    }
-  }
-
-  return String(count);
-}
-
-function transformTopicTitle(
-  userLanguage: ResponseLanguage,
-  topicResponse: TopicPlanMessage["topics_responses"][number]["topic_response"]
-): string {
-  const topicCategory = stringifyValue(topicResponse.title.topic_category);
-  const topicCategoryLabels = dataBaseResponse[userLanguage].topic
-    .topicCategoryLabels;
-  const topicStatusLabel = topicResponse.title.matched_historical_topic
-    ? valueFromLabels(
-        dataBaseResponse[userLanguage].topic.topicStatusLabels,
-        "previous"
-      )
-    : valueFromLabels(dataBaseResponse[userLanguage].topic.topicStatusLabels, "new");
-  const topicCategoryLabel =
-    topicCategoryLabels[topicCategory] || topicCategory.replaceAll("_", " ");
-  const topicLabel = buildTopicDisplayLabel(topicResponse.title);
-
-  return interpolate(dataBaseResponse[userLanguage].topic.title, {
-    topic_id: stringifyValue(topicResponse.title.topic_id),
-    topic_category: topicCategoryLabel,
-    topic_label: topicLabel,
-    topic_status: topicStatusLabel
-  });
-}
-
-function translateTopicDetailValue(
-  userLanguage: ResponseLanguage,
-  fieldName: string,
-  value: unknown
-): string {
-  const rawValue = stringifyValue(value);
-  const normalizedValue = rawValue.trim().toLowerCase();
-  const translations = dataBaseResponse[userLanguage].topic
-    .topicDetailValueTranslations;
-
-  return (
-    translations[`${fieldName}:${normalizedValue}`] ||
-    translations[normalizedValue] ||
-    rawValue
-  );
-}
-
-function transformUpdatedTopicDetails(
-  userLanguage: ResponseLanguage,
-  topicDetails: unknown
-): string[] {
-  if (typeof topicDetails !== "object" || topicDetails === null) {
-    return [];
-  }
-
-  const labels = dataBaseResponse[userLanguage].topic.topicDetailsLabels;
-
-  return Object.entries(topicDetails as Record<string, unknown>).map(
-    ([field, value]) => {
-      return `${valueFromLabels(labels, field)} (${translateTopicDetailValue(
-        userLanguage,
-        field,
-        value
-      )})`;
-    }
-  );
-}
-
-function transformTestedSolutions(
-  userLanguage: ResponseLanguage,
-  testedSolutions: unknown
-): string[] {
-  if (!Array.isArray(testedSolutions)) {
-    return [];
-  }
-
-  const templates = dataBaseResponse[userLanguage].topic;
-
-  return testedSolutions.map((testedSolution) => {
-    const action = getStringField(testedSolution, "action") || "undefined";
-    const outcome = valueFromLabels(
-      templates.testedSolutionOutcomeLabels,
-      getStringField(testedSolution, "outcome")
-    );
-
-    return interpolate(templates.testedSolution, {
-      action,
-      outcome
-    });
-  });
-}
-
-function transformUpdatedFieldsAcknowledgement(
-  userLanguage: ResponseLanguage,
-  updatedFieldsAcknowledgement: TopicPlanMessage["topics_responses"][number]["topic_response"]["updated_fields_acknowledgement"]
-): string | undefined {
-  const templates = dataBaseResponse[userLanguage].topic;
-  const updatedDetails = transformUpdatedTopicDetails(
-    userLanguage,
-    updatedFieldsAcknowledgement.topic_details
-  );
-  const testedSolutions = transformTestedSolutions(
-    userLanguage,
-    updatedFieldsAcknowledgement.tested_solutions
-  );
-  const messages: string[] = [];
-
-  if (updatedDetails.length > 0) {
-    messages.push(
-      interpolate(templates.updatedFieldsAcknowledgement, {
-        updated_fields: updatedDetails.join(", ")
-      })
-    );
-  }
-
-  messages.push(...testedSolutions);
-
-  return messages.length > 0 ? messages.join(" ") : undefined;
-}
-
-function transformNextStep(userLanguage: ResponseLanguage, nextStep: unknown): string {
-  return valueFromLabels(dataBaseResponse[userLanguage].topic.nextStep, nextStep);
-}
-
-function transformTopicResponse(
-  userLanguage: ResponseLanguage,
-  topicResponse: TopicPlanMessage["topics_responses"][number]["topic_response"]
-): string {
-  return [
-    transformTopicTitle(userLanguage, topicResponse),
-    transformUpdatedFieldsAcknowledgement(
-      userLanguage,
-      topicResponse.updated_fields_acknowledgement
-    ),
-    transformTopicMainResponse(userLanguage, topicResponse.main_response),
-    transformOptionalEvidenceRequest(
-      userLanguage,
-      topicResponse.optional_evidence_requested
-    ),
-    transformNextStep(userLanguage, topicResponse.next_step)
-  ].filter((part): part is string => {
-    return part !== undefined && part.length > 0;
+function renderBulletList(lines: string[]): string {
+  return lines.map((line, index) => {
+    const punctuation = index === lines.length - 1 ? "." : ";";
+    const trimmed = line.trim().replace(/[.;:]$/, "");
+
+    return `- ${trimmed}${punctuation}`;
   }).join("\n");
 }
 
-function transformTopicPlanMessage(
-  userLanguage: ResponseLanguage,
-  topicPlanMessage: TopicPlanMessage
-): StringTopicPlanMessage {
-  const templates = dataBaseResponse[userLanguage].topic;
+function renderQuestions(messagesPlan: MessagesPlan): string | undefined {
+  const questions = [
+    ...(messagesPlan.questions?.common ?? []),
+    ...(messagesPlan.questions?.specific ?? [])
+  ];
+  const visibleQuestions = uniqueByWording(questions).slice(0, 3);
 
-  return {
-    politenessOpening: valueFromLabels(
-      templates.politenessOpening,
-      topicPlanMessage.politeness_opening
-    ),
-    topicRelationAcknowledgement: transformTopicRelationAcknowledgement(
-      userLanguage,
-      topicPlanMessage
-    ),
-    topicsResponses: topicPlanMessage.topics_responses.map((topicResponse) => {
-      return transformTopicResponse(userLanguage, topicResponse.topic_response);
-    }),
-    politenessClosure: valueFromLabels(
-      templates.politenessClosure,
-      topicPlanMessage.politeness_closure
-    )
-  };
-}
-
-function transformSignalPlanMessages(
-  userLanguage: ResponseLanguage,
-  signalPlanMessages: SignalPlanMessage[]
-): string[] {
-  const templates = dataBaseResponse[userLanguage].signal;
-
-  if (signalPlanMessages.length === 0) {
-    return [];
+  if (visibleQuestions.length === 0) {
+    return undefined;
   }
 
-  const signalTypes = signalPlanMessages.flatMap((signalPlanMessage) => {
-    if (!Array.isArray(signalPlanMessage.signal_types)) {
+  return [
+    "Pour avancer, pouvez-vous préciser :",
+    renderBulletList(visibleQuestions.map((question) => question.wording))
+  ].join("\n");
+}
+
+function renderQuotedMessages(
+  messages: QuotedPlanMessage[] | undefined
+): string[] {
+  return (messages ?? []).map((message) => {
+    return [
+      `${message.message} :`,
+      `> ${message.segment_verbatim}`
+    ].join("\n");
+  });
+}
+
+function getSegmentVerbatim(value: unknown): string {
+  if (typeof value !== "object" || value === null) {
+    return "";
+  }
+
+  const record = value as Record<string, unknown>;
+  const raw = record.segment_verbatim ?? record.signal_verbatim;
+
+  return typeof raw === "string" ? raw.trim() : "";
+}
+
+function renderLegacyQuotedMessages(params: {
+  segments: unknown[];
+  message: string;
+}): string[] {
+  return params.segments.flatMap((segment) => {
+    const segmentVerbatim = getSegmentVerbatim(segment);
+
+    return segmentVerbatim
+      ? [`${params.message} :\n> ${segmentVerbatim}`]
+      : [];
+  });
+}
+
+function getLegacySignalTypes(messagesPlan: MessagesPlan): string[] {
+  return messagesPlan.signalPlanMessages.flatMap((signalPlanMessage) => {
+    if (typeof signalPlanMessage !== "object" || signalPlanMessage === null) {
       return [];
     }
 
-    return signalPlanMessage.signal_types.filter((signalType) => {
-      return typeof signalType === "string";
-    });
+    const signalTypes =
+      (signalPlanMessage as Record<string, unknown>).signal_types;
+
+    return Array.isArray(signalTypes)
+      ? signalTypes.filter((signalType): signalType is string => {
+          return typeof signalType === "string";
+        })
+      : [];
   });
-  const messages: string[] = [];
-
-  if (
-    signalTypes.includes("thanks_neutral") ||
-    signalTypes.includes("thanks_positive")
-  ) {
-    messages.push(templates.responses.thanks);
-  }
-
-  if (
-    DISSATISFACTION_SIGNAL_TYPES.some((signalType) => {
-      return signalTypes.includes(signalType);
-    })
-  ) {
-    messages.push(templates.responses.dissatisfaction);
-  }
-
-  if (signalTypes.includes("time_sensitive")) {
-    messages.push(templates.responses.timeSensitive);
-  }
-
-  if (messages.length === 0) {
-    messages.push(templates.responses.default);
-  }
-
-  return [messages.join(" ")];
 }
 
-function transformHandoverPlanMessage(
-  userLanguage: ResponseLanguage,
-  handoverPlanMessage: HandoverPlanMessage
-): string {
-  if (handoverPlanMessage !== undefined) {
-    return dataBaseResponse[userLanguage].handover.default;
+function renderLegacySignalMessages(messagesPlan: MessagesPlan): string[] {
+  if (messagesPlan.signalMessages !== undefined) {
+    return messagesPlan.signalMessages;
   }
 
-  return "";
+  const signalTypes = getLegacySignalTypes(messagesPlan);
+  const messages: string[] = [];
+  const hasTopicResponse = messagesPlan.topicPlanMessages.some(
+    (topicPlanMessage) => {
+      return (
+        (topicPlanMessage.topicActions?.length ?? 0) > 0 ||
+        topicPlanMessage.topics_responses.length > 0
+      );
+    }
+  );
+
+  if (signalTypes.includes("bot_identity_question")) {
+    messages.push(BOT_IDENTITY_RESPONSE);
+  }
+
+  if (
+    signalTypes.includes("thanks_positive") ||
+    signalTypes.includes("positive_feedback") ||
+    signalTypes.includes("appreciation_positive")
+  ) {
+    messages.push(
+      hasTopicResponse
+        ? "Votre retour sera également transmis à l’équipe support."
+        : "Merci pour votre retour, il sera transmis à l’équipe support."
+    );
+  }
+
+  if (
+    signalTypes.includes("negative_feedback") ||
+    signalTypes.includes("disappointment") ||
+    signalTypes.includes("churn_intent")
+  ) {
+    messages.push(
+      "Votre retour est bien pris en compte. Le support peut reprendre la main si nécessaire."
+    );
+  }
+
+  return messages;
+}
+
+function renderSummary(messagesPlan: MessagesPlan): string | undefined {
+  const summary = messagesPlan.understoodSummary;
+
+  if (!summary || summary.type === "none" || summary.lines.length === 0) {
+    return undefined;
+  }
+
+  if (summary.type === "multiple_issues") {
+    return renderBulletList(summary.lines);
+  }
+
+  return summary.lines[0];
+}
+
+function renderLegacyTopicSummary(messagesPlan: MessagesPlan): string | undefined {
+  const legacyTopicResponses = messagesPlan.topicPlanMessages.flatMap(
+    (topicPlanMessage) => topicPlanMessage.topics_responses
+  );
+
+  if (messagesPlan.understoodSummary !== undefined || legacyTopicResponses.length === 0) {
+    return undefined;
+  }
+
+  return legacyTopicResponses.length > 1
+    ? renderBulletList(
+        legacyTopicResponses.map(() => "une demande support")
+      )
+    : "une demande support";
+}
+
+function getFieldsRequested(mainResponse: TopicMainResponse): string[] {
+  if (mainResponse.type !== "ask_fields") {
+    return [];
+  }
+
+  return mainResponse.details.fields_requested;
+}
+
+function renderLegacyQuestions(messagesPlan: MessagesPlan): string | undefined {
+  if (messagesPlan.questions !== undefined) {
+    return undefined;
+  }
+
+  const fields = [
+    ...new Set(
+      messagesPlan.topicPlanMessages.flatMap((topicPlanMessage) => {
+        return topicPlanMessage.topics_responses.flatMap((topicResponse) => {
+          return getFieldsRequested(topicResponse.topic_response.main_response);
+        });
+      })
+    )
+  ];
+
+  if (fields.length === 0) {
+    return undefined;
+  }
+
+  return [
+    "Pour avancer, pouvez-vous préciser :",
+    renderBulletList(fields.slice(0, 3).map((field) => {
+      return field === "platform"
+        ? "la plateforme utilisée"
+        : field.replaceAll("_", " ");
+    }))
+  ].join("\n");
+}
+
+function renderNextStep(messagesPlan: MessagesPlan): string | undefined {
+  if (
+    messagesPlan.nextStep?.type === "no_automatic_answer" ||
+    messagesPlan.nextStep?.type === "human_support" ||
+    messagesPlan.handoverPlanMessages.length > 0
+  ) {
+    return NO_AUTOMATIC_ANSWER;
+  }
+
+  return undefined;
 }
 
 function transformPlanMessagesToStringMessages(
   userLanguage: ResponseLanguage,
   messagesPlan: MessagesPlan
 ): StringMessagesPlan {
-  const stringMessagesPlan: StringMessagesPlan = {
-    securityGatePlanMessage: undefined,
-    suspiciousPlanMessage: undefined,
-    lackComprehensionPlanMessage: undefined,
+  void userLanguage;
+
+  const acknowledgement = messagesPlan.acknowledgement?.text;
+  const summary = renderSummary(messagesPlan) ??
+    renderLegacyTopicSummary(messagesPlan);
+  const questions = renderQuestions(messagesPlan) ??
+    renderLegacyQuestions(messagesPlan);
+  const signalMessages = renderLegacySignalMessages(messagesPlan);
+  const quotedMessages = [
+    ...renderQuotedMessages(messagesPlan.scopeBoundaryMessages),
+    ...renderQuotedMessages(messagesPlan.securityMessages),
+    ...renderQuotedMessages(messagesPlan.lackComprehensionMessages),
+    ...renderLegacyQuotedMessages({
+      segments: messagesPlan.scopeBoundaryMessages === undefined
+        ? messagesPlan.scopeBoundaryPlanMessages
+        : [],
+      message:
+        "Cette partie ne relève pas du support et ne sera pas traitée ici"
+    }),
+    ...renderLegacyQuotedMessages({
+      segments: messagesPlan.securityMessages === undefined
+        ? messagesPlan.suspiciousPlanMessage?.segments_suspicious ?? []
+        : [],
+      message:
+        "Je ne peux pas fournir d’informations internes ou confidentielles"
+    }),
+    ...renderLegacyQuotedMessages({
+      segments: messagesPlan.lackComprehensionMessages === undefined
+        ? messagesPlan.lackComprehensionPlanMessage
+          ?.segments_lack_comprehension ?? []
+        : [],
+      message: "Je n’ai pas bien compris cette partie"
+    })
+  ];
+  const nextStep = renderNextStep(messagesPlan);
+  const globalMessage = [
+    acknowledgement,
+    summary,
+    questions,
+    ...signalMessages,
+    ...quotedMessages,
+    nextStep
+  ].filter(nonEmpty).join("\n\n");
+
+  return {
+    globalMessages: globalMessage ? [globalMessage] : [],
     scopeBoundaryPlanMessages: [],
     topicPlanMessages: [],
     signalPlanMessages: [],
     handoverPlanMessages: []
   };
-
-  if (messagesPlan.securityGatePlanMessage !== undefined) {
-    stringMessagesPlan.securityGatePlanMessage =
-      transformSecurityGatePlanMessage(
-        userLanguage,
-        messagesPlan.securityGatePlanMessage
-      );
-  }
-
-  if (messagesPlan.suspiciousPlanMessage !== undefined) {
-    stringMessagesPlan.suspiciousPlanMessage = transformSuspiciousPlanMessage(
-      userLanguage,
-      messagesPlan.suspiciousPlanMessage
-    );
-  }
-
-  if (messagesPlan.lackComprehensionPlanMessage !== undefined) {
-    stringMessagesPlan.lackComprehensionPlanMessage =
-      transformLackComprehensionPlanMessage(
-        userLanguage,
-        messagesPlan.lackComprehensionPlanMessage
-      );
-  }
-
-  stringMessagesPlan.scopeBoundaryPlanMessages =
-    messagesPlan.scopeBoundaryPlanMessages.map((scopeBoundaryPlanMessage) => {
-      return transformScopeBoundaryPlanMessage(
-        userLanguage,
-        scopeBoundaryPlanMessage
-      );
-    });
-
-  stringMessagesPlan.topicPlanMessages = messagesPlan.topicPlanMessages.map(
-    (topicPlanMessage) => {
-      return transformTopicPlanMessage(userLanguage, topicPlanMessage);
-    }
-  );
-
-  stringMessagesPlan.signalPlanMessages = transformSignalPlanMessages(
-    userLanguage,
-    messagesPlan.signalPlanMessages
-  );
-
-  stringMessagesPlan.handoverPlanMessages =
-    messagesPlan.handoverPlanMessages.map((handoverPlanMessage) => {
-      return transformHandoverPlanMessage(userLanguage, handoverPlanMessage);
-    });
-
-  return stringMessagesPlan;
 }
 
 export { transformPlanMessagesToStringMessages };
-export type { StringMessagesPlan, StringTopicPlanMessage };
+export type {
+  StringMessagesPlan,
+  StringTopicPlanMessage
+};
