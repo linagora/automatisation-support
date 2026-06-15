@@ -24,6 +24,7 @@
     "support:matrix": "tsx scripts/matrix/run-matrix-support-automation.ts",
     "support:matrix:check": "tsx scripts/matrix/check-matrix-config.ts",
     "support:debug:ticket-context": "tsx -r dotenv/config scripts/support/debug-ticket-context.ts",
+    "support:v2:text-dataset": "tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts",
     "matrix:send-test": "tsx scripts/matrix/send-test-matrix-message.ts",
     "matrix:listen": "tsx scripts/matrix/listen-matrix-messages.ts"
   },

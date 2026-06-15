@@ -26,12 +26,6 @@ flowchart TB
     %% 1. PREFLIGHT AND TURN PLAN
     %% =====================================================
 
-    T_RESPONSE_ACCUMULATOR_INIT["<b>responseAccumulator = initializeResponseAccumulator()</b><br/>
-    responseAccumulator = {<br/>
-    standardResponseFragments: []<br/>
-    supportResponse: undefined<br/>
-    }"]
-
     T_PROMPT_SECURITY_INPUT["<b>Prepare promptSecurityInput</b>"]
 
     subgraph PROMPT_SECURITY_DATA["promptSecuritySignals = detectSuspiciousPromptPatterns(promptSecurityInput)"]
@@ -103,14 +97,15 @@ flowchart TB
     subgraph TEXT_SURFACE_DATA["textSurfaceAnalysis = analyzeTextSurface(textSurfaceInput)"]
       direction TB
 
-      TEXT_SURFACE_ROLE["<b>Rôle :</b> segmenter et catégoriser rapidement le message utilisateur."]
+      TEXT_SURFACE_ROLE["<b>Rôle :</b> segmenter et catégoriser rapidement le message utilisateur ; standard_interaction et support_relevant peuvent coexister."]
 
       subgraph TEXT_SURFACE_IO[" "]
         direction LR
 
         TEXT_SURFACE_INPUTS["<b>Input</b><br/>
         latestUserMessage<br/>
-        turnAnalysisPlan"]
+        turnAnalysisPlan<br/>
+        recentInteractionContext"]
 
         TEXT_SURFACE_OUTPUTS["<b>Output</b><br/>
         textSurfaceAnalysis = {<br/>
@@ -121,7 +116,10 @@ flowchart TB
         category<br/>
         standardSubcategory?<br/>
         }]<br/>
-        }"]
+        }<br/><br/>
+        Les portions indépendantes sont séparées :<br/>
+        greeting / disappointment / support / urgency<br/>
+        peuvent former plusieurs segments distincts."]
 
         TEXT_SURFACE_INPUTS --> TEXT_SURFACE_OUTPUTS
       end
@@ -164,21 +162,24 @@ flowchart TB
     Disabled paths already resolved as empty results."]
 
     %% =====================================================
-    %% 3. STANDARD HANDLERS
+    %% 3. STANDARD RESPONSE FRAGMENTS
     %% =====================================================
 
-    T_STANDARD_INPUT["<b>Prepare standardHandlerInput</b>"]
+    T_STANDARD_INPUT["<b>Prepare standardFragmentsInput</b>"]
 
-    subgraph STANDARD_HANDLER_DATA["standardResponseFragments = buildStandardResponseFragments(standardHandlerInput)"]
+    subgraph STANDARD_HANDLER_DATA["standardResponseFragments = buildStandardResponseFragments(standardFragmentsInput)"]
       direction TB
 
-      STANDARD_ROLE["<b>Rôle :</b> produire les fragments de réponse déterministes correspondant aux cas standards."]
+      STANDARD_ROLE["<b>Rôle :</b> transformer déterministiquement les segments standards en formulations canoniques destinées au renderer."]
 
       subgraph STANDARD_IO[" "]
         direction LR
 
         STANDARD_INPUTS["<b>Input</b><br/>
         turnAnalysisPlan<br/>
+        latestUserMessage?<br/>
+        accountProfile?<br/>
+        recentInteractionContext?<br/>
         textSurfaceAnalysis?<br/>
         attachmentSurfaceAnalysis?"]
 
@@ -187,17 +188,16 @@ flowchart TB
         category<br/>
         standardSubcategory?<br/>
         content<br/>
-        }]"]
+        }]<br/><br/>
+        Aucun fragment pour support_relevant.<br/>
+        Ces fragments ne sont jamais envoyés<br/>
+        directement à l’utilisateur."]
 
         STANDARD_INPUTS --> STANDARD_OUTPUTS
       end
 
       STANDARD_ROLE ~~~ STANDARD_IO
     end
-
-    T_APPEND_STANDARD_FRAGMENTS["<b>Append standard fragments to responseAccumulator</b><br/>
-    responseAccumulator.standardResponseFragments<br/>
-    += standardResponseFragments"]
 
     T_DEEP_ANALYSIS_CHECK{"<b>Deep analysis needed?</b><br/>
     from textSurfaceAnalysis<br/>
@@ -217,7 +217,7 @@ flowchart TB
     subgraph SUPPORT_TEXT_DATA["textUnderstandings = analyzeSupportText(supportTextInput)"]
       direction TB
 
-      SUPPORT_TEXT_ROLE["<b>Rôle :</b> comprendre les segments support et en extraire les besoins, champs et faits utiles."]
+      SUPPORT_TEXT_ROLE["<b>Rôle :</b> comprendre localement les segments support : attente, besoins analytiques, catégorie large, faits, champs et actions testées."]
 
       subgraph SUPPORT_TEXT_IO[" "]
         direction LR
@@ -230,13 +230,19 @@ flowchart TB
 
         SUPPORT_TEXT_OUTPUTS["<b>Output</b><br/>
         textUnderstandings[] = [{<br/>
-        segmentId<br/>
+        understandingId<br/>
+        sourceSegmentId<br/>
+        sourceVerbatims[]<br/>
         summary<br/>
-        explicitUserRequest?<br/>
-        supportNeed?<br/>
-        extractedFields?<br/>
-        candidateFacts?<br/>
-        uncertainties?<br/>
+        primaryUserExpectation<br/>
+        explicitUserRequest? { request, evidence }<br/>
+        supportNeeds[]<br/>
+        broadCategoryHint?<br/>
+        contextDependency<br/>
+        contextualAnswer?<br/>
+        facts[]<br/>
+        testedActions[]<br/>
+        uncertainties[]<br/>
         }]"]
 
         SUPPORT_TEXT_INPUTS --> SUPPORT_TEXT_OUTPUTS
@@ -477,7 +483,6 @@ flowchart TB
         supportUnderstanding<br/>
         retrievedKnowledgeSynthesis?<br/>
         genericFieldKnowledge?<br/>
-        standardResponseFragments<br/>
         recentInteractionContext<br/>
         channel"]
 
@@ -499,21 +504,29 @@ flowchart TB
     %% 10. SUPPORT RESPONSE RENDERING
     %% =====================================================
 
-    T_SUPPORT_RESPONSE_INPUT["<b>Prepare supportResponseInput</b>"]
+    T_SUPPORT_RESPONSE_INPUT["<b>Prepare renderSupportResponseInput</b><br/>
+    Convergence point for standard-only<br/>
+    and deep-support branches."]
 
-    subgraph SUPPORT_RESPONSE_DATA["supportResponse = renderSupportResponse(supportResponseInput)"]
+    subgraph SUPPORT_RESPONSE_DATA["supportResponse = renderSupportResponse(renderSupportResponseInput)"]
       direction TB
 
-      SUPPORT_RESPONSE_ROLE["<b>Rôle :</b> transformer le plan structuré en réponse naturelle adaptée au canal."]
+      SUPPORT_RESPONSE_ROLE["<b>Rôle :</b> fusionner les formulations standards et, lorsqu’il existe, le plan support pour produire une réponse unique et naturelle adaptée au canal."]
 
       subgraph SUPPORT_RESPONSE_IO[" "]
         direction LR
 
         SUPPORT_RESPONSE_INPUTS["<b>Input</b><br/>
-        responsePlan<br/>
+        responsePlan?<br/>
+        standardResponseFragments<br/>
         textSurfaceAnalysis?<br/>
         accountProfile<br/>
-        channel"]
+        channel<br/><br/>
+        Standard-only : responsePlan absent.<br/>
+        Deep : responsePlan et fragments standards<br/>
+        peuvent être présents ensemble.<br/>
+        Plusieurs fragments standards sont lissés,<br/>
+        pas concaténés rigidement."]
 
         SUPPORT_RESPONSE_OUTPUTS["<b>Output</b><br/>
         supportResponse"]
@@ -524,10 +537,6 @@ flowchart TB
       SUPPORT_RESPONSE_ROLE ~~~ SUPPORT_RESPONSE_IO
     end
 
-    T_APPEND_SUPPORT_RESPONSE["<b>Append support response to responseAccumulator</b><br/>
-    responseAccumulator.supportResponse<br/>
-    = supportResponse"]
-
     %% =====================================================
     %% 11. USER RESPONSE BUILDING
     %% =====================================================
@@ -537,13 +546,13 @@ flowchart TB
     subgraph USER_RESPONSE_DATA["userResponse = buildUserResponse(userResponseInput)"]
       direction TB
 
-      USER_RESPONSE_ROLE["<b>Rôle :</b> construire l’output utilisateur à partir des fragments standards et de la réponse support."]
+      USER_RESPONSE_ROLE["<b>Rôle :</b> construire l’output utilisateur à partir de la réponse support rendue."]
 
       subgraph USER_RESPONSE_IO[" "]
         direction LR
 
         USER_RESPONSE_INPUTS["<b>Input</b><br/>
-        responseAccumulator"]
+        supportResponse"]
 
         USER_RESPONSE_OUTPUTS["<b>Output</b><br/>
         userResponse"]
@@ -573,7 +582,6 @@ flowchart TB
         turnAnalysisPlan<br/>
         supportUnderstanding?<br/>
         responsePlan?<br/>
-        responseAccumulator<br/>
         userResponse"]
 
         PATCHES_OUTPUTS["<b>Output</b><br/>
@@ -592,7 +600,6 @@ flowchart TB
     %% LINKS
     %% =====================================================
 
-    T_RESPONSE_ACCUMULATOR_INIT --> T_PROMPT_SECURITY_INPUT
     T_PROMPT_SECURITY_INPUT --> PROMPT_SECURITY_DATA
     PROMPT_SECURITY_DATA --> T_TURN_PLAN_INPUT
     T_TURN_PLAN_INPUT --> TURN_PLAN_DATA
@@ -613,11 +620,9 @@ flowchart TB
     T_WAIT_SURFACE --> T_STANDARD_INPUT
 
     T_STANDARD_INPUT --> STANDARD_HANDLER_DATA
-    STANDARD_HANDLER_DATA --> T_APPEND_STANDARD_FRAGMENTS
+    STANDARD_HANDLER_DATA --> T_DEEP_ANALYSIS_CHECK
 
-    T_APPEND_STANDARD_FRAGMENTS --> T_DEEP_ANALYSIS_CHECK
-
-    T_DEEP_ANALYSIS_CHECK -->|false| T_USER_RESPONSE_INPUT
+    T_DEEP_ANALYSIS_CHECK -->|false| T_SUPPORT_RESPONSE_INPUT
     T_DEEP_ANALYSIS_CHECK -->|true| T_DEEP_START
 
     T_DEEP_START -->|if support text segments| T_SUPPORT_TEXT_INPUT
@@ -650,8 +655,7 @@ flowchart TB
     T_RESPONSE_PLAN_INPUT --> RESPONSE_PLAN_DATA
     RESPONSE_PLAN_DATA --> T_SUPPORT_RESPONSE_INPUT
     T_SUPPORT_RESPONSE_INPUT --> SUPPORT_RESPONSE_DATA
-    SUPPORT_RESPONSE_DATA --> T_APPEND_SUPPORT_RESPONSE
-    T_APPEND_SUPPORT_RESPONSE --> T_USER_RESPONSE_INPUT
+    SUPPORT_RESPONSE_DATA --> T_USER_RESPONSE_INPUT
 
     T_USER_RESPONSE_INPUT --> USER_RESPONSE_DATA
     USER_RESPONSE_DATA --> T_PATCHES_INPUT
@@ -691,7 +695,7 @@ flowchart TB
 
   class PROMPT_SECURITY_OUTPUTS,TURN_PLAN_OUTPUTS,TEXT_SURFACE_OUTPUTS,ATTACHMENT_SURFACE_OUTPUTS,STANDARD_OUTPUTS,SUPPORT_TEXT_OUTPUTS,SUPPORT_ATTACHMENT_OUTPUTS,TOPIC_UPDATE_OUTPUTS,UNDERSTANDING_OUTPUTS,KNOWLEDGE_ENRICHMENT_OUTPUTS,RAG_OUTPUTS,RETRIEVED_KNOWLEDGE_SYNTHESIS_OUTPUTS,RESPONSE_PLAN_OUTPUTS,SUPPORT_RESPONSE_OUTPUTS,USER_RESPONSE_OUTPUTS,PATCHES_OUTPUTS outputBlock;
 
-  class T_RESPONSE_ACCUMULATOR_INIT,T_PROMPT_SECURITY_INPUT,T_TURN_PLAN_INPUT,T_ANALYZE_TURN,T_SURFACE_START,T_TEXT_SURFACE_INPUT,T_ATTACHMENT_SURFACE_INPUT,T_WAIT_SURFACE,T_STANDARD_INPUT,T_APPEND_STANDARD_FRAGMENTS,T_DEEP_ANALYSIS_CHECK,T_DEEP_START,T_SUPPORT_TEXT_INPUT,T_SUPPORT_ATTACHMENT_INPUT,T_WAIT_DEEP_RESULTS,T_TOPIC_UPDATE_INPUT,T_UNDERSTANDING_INPUT,T_KNOWLEDGE_ENRICHMENT_INPUT,T_RAG_ROUTE,T_GENERIC_FIELD_KNOWLEDGE,T_RAG_INPUT,T_RETRIEVED_KNOWLEDGE_SYNTHESIS_INPUT,T_RESPONSE_PLAN_INPUT,T_SUPPORT_RESPONSE_INPUT,T_APPEND_SUPPORT_RESPONSE,T_USER_RESPONSE_INPUT,T_PATCHES_INPUT,T_RETURN processingBlock;
+  class T_PROMPT_SECURITY_INPUT,T_TURN_PLAN_INPUT,T_ANALYZE_TURN,T_SURFACE_START,T_TEXT_SURFACE_INPUT,T_ATTACHMENT_SURFACE_INPUT,T_WAIT_SURFACE,T_STANDARD_INPUT,T_DEEP_ANALYSIS_CHECK,T_DEEP_START,T_SUPPORT_TEXT_INPUT,T_SUPPORT_ATTACHMENT_INPUT,T_WAIT_DEEP_RESULTS,T_TOPIC_UPDATE_INPUT,T_UNDERSTANDING_INPUT,T_KNOWLEDGE_ENRICHMENT_INPUT,T_RAG_ROUTE,T_GENERIC_FIELD_KNOWLEDGE,T_RAG_INPUT,T_RETRIEVED_KNOWLEDGE_SYNTHESIS_INPUT,T_RESPONSE_PLAN_INPUT,T_SUPPORT_RESPONSE_INPUT,T_USER_RESPONSE_INPUT,T_PATCHES_INPUT,T_RETURN processingBlock;
 
   class PROMPT_SECURITY_ROLE,TURN_PLAN_ROLE,TEXT_SURFACE_ROLE,ATTACHMENT_SURFACE_ROLE,STANDARD_ROLE,SUPPORT_TEXT_ROLE,SUPPORT_ATTACHMENT_ROLE,TOPIC_UPDATE_ROLE,UNDERSTANDING_ROLE,KNOWLEDGE_ENRICHMENT_ROLE,RAG_ROLE,RETRIEVED_KNOWLEDGE_SYNTHESIS_ROLE,RESPONSE_PLAN_ROLE,SUPPORT_RESPONSE_ROLE,USER_RESPONSE_ROLE,PATCHES_ROLE roleBlock;
 
@@ -739,20 +743,30 @@ flowchart TB
 ```
 
 Notes:
-- Text surface categories: `support_relevant | contextual_support_candidate | small_talk | out_of_scope | safety_sensitive | lack_comprehension`.
+- Text surface categories: `support_relevant | standard_interaction | out_of_scope | safety_sensitive | lack_comprehension`.
+- `analyzeTextSurface` can return `standard_interaction` and `support_relevant` in the same output; independent spans are segmented separately, for example greeting, disappointment, support issue, and urgency.
+- Isolated explicit handover requests are `standard_interaction / handover_request`; when a separable support problem is present, only the problem segment is `support_relevant`.
+- `recentInteractionContext` may help `analyzeTextSurface` route a short current answer, but it must not be used to extract facts, create fields, create topics, or rewrite the message.
 - `turnAnalysisPlan` carries `analyzeText`, `analyzeAttachments`, and `matchedPatternIds`; when both analysis flags are false, the turn follows the standard-only branch.
-- `responseAccumulator` only holds standard fragments and the optional support response; patches are still produced at the end by `buildSupportPatches`.
+- `planTurnAnalysis` enables text analysis when trimmed text exists unless the account is `suspicious` with matched security patterns.
+- `planTurnAnalysis` enables attachment surface analysis only when attachments exist and `accountTrustStatus.status` is `trusted` or `neutral`; attachments from `suspicious` accounts are not analyzed.
 - Phase 1 is surface-only: text runs `analyzeTextSurface`, attachments run `analyzeAttachmentSurface`, and no deep support analysis runs there.
-- `buildStandardResponseFragments` receives either the `no_analyze` turn result or the surface results and directly produces `standardResponseFragments`.
+- `buildStandardResponseFragments` always runs after enabled surface paths, is fully deterministic, produces canonical formulations for standard segments, never creates fragments for `support_relevant`, and never sends fragments directly to the user.
+- When text surface is skipped, `buildStandardResponseFragments` resolves language deterministically from known language hints or the current message before falling back to English.
 - `Deep analysis needed?` is evaluated directly from `textSurfaceAnalysis` and `attachmentSurfaceAnalysis`; the `no_analyze` branch naturally evaluates false.
+- When no deep analysis is needed, deep analysis, topic, knowledge, and `planSupportResponse` steps are skipped, then `renderSupportResponse` runs with no `responsePlan`.
 - Phase 2 is deep-only: text runs `analyzeSupportText` for support text segments from `textSurfaceAnalysis`, attachments run `analyzeSupportAttachments` only for selected attachments from `attachmentSurfaceAnalysis`.
+- `analyzeSupportText` makes one LLM call for all `support_relevant` text segments and may return multiple understanding units per macro-segment; context can disambiguate short answers, but facts and tested actions must stay evidenced in the current segment.
 - Attachment safety and eligibility are handled before full analysis by `planTurnAnalysis` and `analyzeAttachmentSurface`.
 - Fallback is handled by `buildStandardResponseFragments` when no standard or deep work is available from the current branch.
-- `proposeTopicUpdates` runs only after the deep analysis wait step and consumes `textSurfaceAnalysis`, `attachmentSurfaceAnalysis`, `textUnderstandings`, and `attachmentUnderstandings`.
+- `proposeTopicUpdates` runs only after the deep analysis wait step and consumes `textUnderstandings`, `attachmentUnderstandings`, `supportTopicKnowledge`, and `conversationHistory`.
 - `supportUnderstanding` is the deterministic consolidated object produced by `applyTopicUpdates`; downstream enrichment and response planning are based on this stable `SupportUnderstandingV2`.
 - `planKnowledgeEnrichment` decides whether retrieval is useful and prepares `retrievalRequests` per topic.
 - `synthesizeRetrievedKnowledge` runs only after retrieval and turns `knowledgeChunks` into structured `retrievedKnowledgeSynthesis`; when no retrieval runs, `genericFieldKnowledge` goes directly to `planSupportResponse`.
-- `planSupportResponse` receives `supportUnderstanding`, optional `retrievedKnowledgeSynthesis`, optional `genericFieldKnowledge`, and decides what response plan to build.
-- `recentInteractionContext` is provided by the previous step and is not rebuilt inside this pipeline; it is the only conversation context sent to surface/deep attachment analysis.
+- `planSupportResponse` receives `supportUnderstanding`, optional `retrievedKnowledgeSynthesis`, optional `genericFieldKnowledge`, `recentInteractionContext`, and `channel`; standard fragments stay separate until rendering.
+- Both standard-only and deep-support branches converge at `Prepare renderSupportResponseInput` before a single `renderSupportResponse` call.
+- `renderSupportResponse` runs in every branch. It receives optional `responsePlan`, `standardResponseFragments`, optional `textSurfaceAnalysis`, `accountProfile`, and `channel`, then produces the single rendered support response.
+- After `renderSupportResponse`, the pipeline runs `buildUserResponse({ supportResponse })`, `buildSupportPatches`, and returns `{ userResponse, patches }`.
+- `recentInteractionContext` is provided by the previous step and is not rebuilt inside this pipeline; it is sent to deep text and deep attachment analysis, and to response planning.
 - `extractableFieldCatalog` est une configuration interne, pas un input utilisateur du pipeline.
-- `candidateFacts` sert aux faits utiles non catalogués, pas au groupement de topics.
+- `facts` regroupe les champs catalogués et les faits ouverts avec evidence; les actions testées avec résultat restent dans `testedActions`.
