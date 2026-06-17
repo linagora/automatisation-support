@@ -27,6 +27,14 @@ function arrayOf(items: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
+function nonEmptyArrayOf(items: Record<string, unknown>): Record<string, unknown> {
+  return {
+    type: "array",
+    minItems: 1,
+    items
+  };
+}
+
 const stringSchema = {
   type: "string"
 } as const;
@@ -38,7 +46,7 @@ const nullableStringSchema = {
   ]
 } as const;
 
-const candidateFactValueSchema = {
+const primitiveOrNullSchema = {
   anyOf: [
     { type: "string" },
     { type: "number" },
@@ -55,12 +63,21 @@ const explicitUserRequestSchema = objectOf(
   ["request", "evidence"]
 );
 
+const noContextualAnswerSchema = objectOf(
+  {
+    type: { const: "none" },
+    value: { type: "null" },
+    evidence: { type: "null" }
+  },
+  ["type", "value", "evidence"]
+);
+
 const contextualAnswerSchema = objectOf(
   {
     type: {
       enum: ["affirmative", "negative", "value", "reference"]
     },
-    value: candidateFactValueSchema,
+    value: primitiveOrNullSchema,
     evidence: stringSchema
   },
   ["type", "value", "evidence"]
@@ -68,11 +85,9 @@ const contextualAnswerSchema = objectOf(
 
 const cataloguedFieldFactSchema = objectOf(
   {
-    type: {
-      const: "catalogued_field"
-    },
+    type: { const: "catalogued_field" },
     fieldName: stringSchema,
-    value: candidateFactValueSchema,
+    value: primitiveOrNullSchema,
     evidence: stringSchema
   },
   ["type", "fieldName", "value", "evidence"]
@@ -80,11 +95,9 @@ const cataloguedFieldFactSchema = objectOf(
 
 const openFactSchema = objectOf(
   {
-    type: {
-      const: "open_fact"
-    },
+    type: { const: "open_fact" },
     kind: stringSchema,
-    value: candidateFactValueSchema,
+    value: primitiveOrNullSchema,
     evidence: stringSchema,
     support: {
       enum: CANDIDATE_FACT_SUPPORT_VALUES
@@ -122,58 +135,98 @@ const uncertaintySchema = objectOf(
   ["reason", "detail", "evidence"]
 );
 
-const supportTextItemSchema = objectOf(
+const sharedItemProperties = {
+  sourceSegmentIds: nonEmptyArrayOf(stringSchema),
+  sourceVerbatims: nonEmptyArrayOf(stringSchema),
+  summary: stringSchema,
+  primaryUserExpectation: {
+    enum: PRIMARY_USER_EXPECTATIONS
+  },
+  explicitUserRequest: {
+    anyOf: [
+      explicitUserRequestSchema,
+      { type: "null" }
+    ]
+  },
+  supportNeeds: {
+    type: "array",
+    items: {
+      enum: SUPPORT_NEEDS
+    }
+  },
+  broadCategoryHint: {
+    anyOf: [
+      { enum: BROAD_CATEGORY_HINTS },
+      { type: "null" }
+    ]
+  },
+  facts: arrayOf(supportFactSchema),
+  testedActions: arrayOf(testedActionSchema),
+  uncertainties: arrayOf(uncertaintySchema)
+};
+
+const requiredItemProperties = [
+  "sourceSegmentIds",
+  "sourceVerbatims",
+  "summary",
+  "primaryUserExpectation",
+  "explicitUserRequest",
+  "supportNeeds",
+  "broadCategoryHint",
+  "contextDependency",
+  "contextualAnswer",
+  "facts",
+  "testedActions",
+  "uncertainties"
+];
+
+const standaloneItemSchema = objectOf(
   {
-    sourceSegmentId: stringSchema,
-    sourceVerbatims: arrayOf(stringSchema),
-    summary: stringSchema,
-    primaryUserExpectation: {
-      enum: PRIMARY_USER_EXPECTATIONS
-    },
-    explicitUserRequest: {
-      anyOf: [
-        explicitUserRequestSchema,
-        { type: "null" }
-      ]
-    },
-    supportNeeds: {
-      type: "array",
-      items: {
-        enum: SUPPORT_NEEDS
-      }
-    },
-    broadCategoryHint: {
-      anyOf: [
-        { enum: BROAD_CATEGORY_HINTS },
-        { type: "null" }
-      ]
-    },
+    ...sharedItemProperties,
     contextDependency: {
-      enum: CONTEXT_DEPENDENCIES
-    },
-    contextualAnswer: {
-      anyOf: [
-        contextualAnswerSchema,
-        { type: "null" }
+      enum: [
+        "standalone_complete",
+        "standalone_but_may_match_existing"
       ]
     },
-    facts: arrayOf(supportFactSchema),
-    testedActions: arrayOf(testedActionSchema),
-    uncertainties: arrayOf(uncertaintySchema)
+    contextualAnswer: noContextualAnswerSchema
+  },
+  requiredItemProperties
+);
+
+const contextDependentItemSchema = objectOf(
+  {
+    ...sharedItemProperties,
+    contextDependency: {
+      enum: [
+        "needs_context_to_interpret",
+        "needs_context_to_place"
+      ]
+    },
+    contextualAnswer: contextualAnswerSchema
+  },
+  requiredItemProperties
+);
+
+const supportTextItemSchema = {
+  oneOf: [
+    standaloneItemSchema,
+    contextDependentItemSchema
+  ]
+} as const;
+
+const supportResponseCueSchema = objectOf(
+  {
+    sourceSegmentIds: nonEmptyArrayOf(stringSchema),
+    relatedUnderstandingIds: nonEmptyArrayOf(stringSchema),
+    verbatim: stringSchema,
+    cueNote: stringSchema
   },
   [
-    "sourceSegmentId",
-    "sourceVerbatims",
-    "summary",
-    "primaryUserExpectation",
-    "explicitUserRequest",
-    "supportNeeds",
-    "broadCategoryHint",
-    "contextDependency",
-    "contextualAnswer",
-    "facts",
-    "testedActions",
-    "uncertainties"
+    "sourceSegmentIds",
+    "relatedUnderstandingIds",
+    "verbatim",
+    "cueNote"
   ]
 );
 
@@ -184,9 +237,10 @@ const supportTextAnalysisResponseFormat = {
     strict: true,
     schema: objectOf(
       {
-        items: arrayOf(supportTextItemSchema)
+        items: arrayOf(supportTextItemSchema),
+        supportResponseCues: arrayOf(supportResponseCueSchema)
       },
-      ["items"]
+      ["items", "supportResponseCues"]
     )
   }
 } as const;

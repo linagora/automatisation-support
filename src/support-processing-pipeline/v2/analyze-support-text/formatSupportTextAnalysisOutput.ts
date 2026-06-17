@@ -10,14 +10,8 @@ import {
 
 import type {
   ContextualAnswer,
-  ExtractableFieldDefinition,
   FormatSupportTextAnalysisOutputInput,
-  RawContextualAnswer,
-  RawExplicitUserRequest,
-  RawSupportFact,
-  RawSupportTextItem,
-  RawTestedAction,
-  RawTextUncertainty,
+  SupportResponseCue,
   SupportFact,
   SupportNeed,
   SupportTextSegment,
@@ -27,48 +21,70 @@ import type {
   TextUncertainty
 } from "./typesAnalyzeSupportText.types";
 
-const INVALID_SUPPORT_FACT_VALUE = Symbol("invalid_support_fact_value");
-
-type TextUnderstandingDraft = Omit<TextUnderstanding, "understandingId">;
-
-type RemovedSecondaryElement = {
-  sourceSegmentId?: string;
+type Draft = Omit<TextUnderstanding, "understandingId">;
+type Primitive = string | number | boolean;
+type Removed = {
+  sourceSegmentIds?: string[];
   unitIndex?: number;
   field: string;
   reason: string;
 };
+type Rejected = {
+  sourceSegmentIds?: string[];
+  unitIndex: number;
+  reason: string;
+};
+type SegmentDebug = {
+  segmentId: string;
+  fallbackUsed: boolean;
+  fallbackScope?: "global" | "local";
+  fallbackReason?: string;
+};
+type Debug = {
+  fallbackScope: "none" | "global" | "local";
+  validationReason?: string;
+  segments: SegmentDebug[];
+  rejectedUnits: Rejected[];
+  removedSecondaryElements: Removed[];
+};
+type DebugResult = {
+  result: SupportTextValidationResult;
+  debug: Debug;
+};
+type ItemResult =
+  | { ok: true; item: Draft; removed: Removed[] }
+  | { ok: false; sourceSegmentIds?: string[]; reason: string; removed: Removed[] };
+type CueResult =
+  | { ok: true; cue: Omit<SupportResponseCue, "cueId"> }
+  | { ok: false; sourceSegmentIds?: string[]; reason: string };
 
-type NormalizedItemResult =
-  | {
-      status: "valid";
-      item: TextUnderstandingDraft;
-      removedSecondaryElements: RemovedSecondaryElement[];
-    }
-  | {
-      status: "invalid_core";
-      sourceSegmentId?: string;
-      reason: string;
-      removedSecondaryElements: RemovedSecondaryElement[];
-    };
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+const isString = (value: unknown): value is string =>
+  typeof value === "string" && value.trim() !== "";
 
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim() !== "";
-}
+const isOneOf = <T extends string>(value: unknown, allowed: readonly T[]): value is T =>
+  typeof value === "string" && allowed.includes(value as T);
 
-function oneOf<TValue extends string>(
+const asPrimitive = (value: unknown): Primitive | undefined => {
+  if (typeof value === "string") return value.trim() ? value : undefined;
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  return typeof value === "boolean" ? value : undefined;
+};
+
+const containsExact = (
   value: unknown,
-  allowedValues: readonly TValue[]
-): value is TValue {
-  return typeof value === "string" && allowedValues.includes(value as TValue);
-}
+  segments: SupportTextSegment[]
+): value is string =>
+  isString(value) && segments.some((segment) => segment.verbatim.includes(value));
 
-function exactSubstringExists(value: string, segment: SupportTextSegment): boolean {
-  return segment.verbatim.includes(value);
-}
+const removal = (
+  sourceSegmentIds: string[],
+  unitIndex: number,
+  field: string,
+  reason: string
+): Removed => ({ sourceSegmentIds, unitIndex, field, reason });
 
 function buildFallbackTextUnderstanding(
   segment: SupportTextSegment,
@@ -76,871 +92,505 @@ function buildFallbackTextUnderstanding(
 ): TextUnderstanding {
   return {
     understandingId: `text_understanding_${understandingIndex}`,
-    sourceSegmentId: segment.segmentId,
+    sourceSegmentIds: [segment.segmentId],
     sourceVerbatims: [segment.verbatim],
     summary: segment.verbatim,
     primaryUserExpectation: "unclear",
     supportNeeds: [],
     contextDependency: "needs_context_to_interpret",
+    contextualAnswer: {
+      type: "reference",
+      value: null,
+      evidence: segment.verbatim
+    },
     facts: [],
     testedActions: [],
-    uncertainties: [
-      {
-        reason: "deep_analysis_failed",
-        detail: "The segment could not be analyzed reliably."
-      }
-    ]
+    uncertainties: [{
+      reason: "deep_analysis_failed",
+      detail: "The segment could not be analyzed reliably."
+    }]
   };
 }
 
-function assignUnderstandingIds(
-  items: TextUnderstandingDraft[]
-): TextUnderstanding[] {
-  return items.map((item, index) => {
-    return {
-      understandingId: `text_understanding_${index + 1}`,
-      ...item
-    };
-  });
-}
+const globalFallback = (segments: SupportTextSegment[]): TextUnderstanding[] =>
+  segments.map((segment, index) => buildFallbackTextUnderstanding(segment, index + 1));
 
-function buildGlobalFallback(
+function parseSourceSegmentIds(
+  raw: unknown,
   supportSegments: SupportTextSegment[]
-): TextUnderstanding[] {
-  return supportSegments.map((segment, index) => {
-    return buildFallbackTextUnderstanding(segment, index + 1);
-  });
-}
+): string[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
 
-function uniqueBy<TItem>(
-  items: TItem[],
-  keyFor: (item: TItem) => string
-): TItem[] {
+  const inputOrder = new Map(
+    supportSegments.map((segment, index) => [segment.segmentId, index])
+  );
   const seen = new Set<string>();
-  const output: TItem[] = [];
+  const ids: string[] = [];
 
-  for (const item of items) {
-    const key = keyFor(item);
+  for (const value of raw) {
+    if (!isString(value)) return undefined;
 
-    if (seen.has(key)) {
-      continue;
-    }
+    const id = value.trim();
+    if (!inputOrder.has(id) || seen.has(id)) return undefined;
 
-    seen.add(key);
-    output.push(item);
+    seen.add(id);
+    ids.push(id);
   }
 
-  return output;
+  return ids.sort((first, second) => {
+    return (inputOrder.get(first) ?? 0) - (inputOrder.get(second) ?? 0);
+  });
 }
 
-function normalizeSupportFactValue(
-  value: unknown
-):
-  | SupportFact["value"]
-  | undefined
-  | typeof INVALID_SUPPORT_FACT_VALUE {
-  if (value === undefined || value === null) {
+function parseExplicitRequest(
+  raw: unknown,
+  referencedSegments: SupportTextSegment[]
+) {
+  if (raw == null) return undefined;
+  if (
+    !isRecord(raw) ||
+    !isString(raw.request) ||
+    !containsExact(raw.evidence, referencedSegments)
+  ) {
     return undefined;
   }
 
-  if (typeof value === "string") {
-    return value.trim() !== "" ? value.trim() : INVALID_SUPPORT_FACT_VALUE;
-  }
-
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : INVALID_SUPPORT_FACT_VALUE;
-  }
-
-  if (typeof value === "boolean") {
-    return value;
-  }
-
-  return INVALID_SUPPORT_FACT_VALUE;
-}
-
-function evidenceOverlaps(firstEvidence: string, secondEvidence: string): boolean {
-  return firstEvidence.includes(secondEvidence) ||
-    secondEvidence.includes(firstEvidence);
-}
-
-function supportFactKey(fact: SupportFact): string {
-  if (fact.type === "catalogued_field") {
-    return [
-      fact.type,
-      fact.fieldName,
-      String(fact.value),
-      fact.evidence
-    ].join("\u0000");
-  }
-
-  return [
-    fact.type,
-    fact.kind,
-    String(fact.value),
-    fact.evidence,
-    fact.support
-  ].join("\u0000");
-}
-
-function removal(params: {
-  sourceSegmentId?: string;
-  unitIndex?: number;
-  field: string;
-  reason: string;
-}): RemovedSecondaryElement {
   return {
-    ...(params.sourceSegmentId ? { sourceSegmentId: params.sourceSegmentId } : {}),
-    ...(params.unitIndex !== undefined ? { unitIndex: params.unitIndex } : {}),
-    field: params.field,
-    reason: params.reason
+    request: raw.request.trim(),
+    evidence: raw.evidence
   };
 }
 
-function normalizeSourceVerbatims(params: {
-  rawValue: unknown;
-  segment: SupportTextSegment;
-  sourceSegmentId: string;
-  unitIndex: number;
-}): {
-  sourceVerbatims: string[];
-  removedSecondaryElements: RemovedSecondaryElement[];
-} {
-  const removedSecondaryElements: RemovedSecondaryElement[] = [];
+function parseContextualAnswer(
+  raw: unknown,
+  referencedSegments: SupportTextSegment[],
+  contextDependency: string
+): ContextualAnswer | undefined {
+  if (!isRecord(raw)) return undefined;
 
-  if (!Array.isArray(params.rawValue)) {
-    return {
-      sourceVerbatims: [],
-      removedSecondaryElements: [
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "sourceVerbatims",
-          reason: "not_array"
-        })
-      ]
-    };
+  const needsContext =
+    contextDependency === "needs_context_to_interpret" ||
+    contextDependency === "needs_context_to_place";
+
+  if (raw.type === "none") {
+    return !needsContext && raw.value === null && raw.evidence === null
+      ? { type: "none", value: null, evidence: null }
+      : undefined;
   }
-
-  const sourceVerbatims: string[] = [];
-
-  for (const rawVerbatim of params.rawValue) {
-    if (
-      !isNonEmptyString(rawVerbatim) ||
-      !exactSubstringExists(rawVerbatim, params.segment)
-    ) {
-      removedSecondaryElements.push(
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "sourceVerbatims",
-          reason: "invalid_source_verbatim"
-        })
-      );
-      continue;
-    }
-
-    sourceVerbatims.push(rawVerbatim);
-  }
-
-  return {
-    sourceVerbatims: uniqueBy(sourceVerbatims, (item) => item),
-    removedSecondaryElements
-  };
-}
-
-function normalizeExplicitUserRequest(params: {
-  rawValue: unknown;
-  segment: SupportTextSegment;
-  sourceSegmentId: string;
-  unitIndex: number;
-}): {
-  explicitUserRequest?: TextUnderstanding["explicitUserRequest"];
-  removedSecondaryElements: RemovedSecondaryElement[];
-} {
-  if (params.rawValue === undefined || params.rawValue === null) {
-    return { removedSecondaryElements: [] };
-  }
-
-  const rawRequest = params.rawValue as RawExplicitUserRequest;
 
   if (
-    !isRecord(rawRequest) ||
-    !isNonEmptyString(rawRequest.request) ||
-    !isNonEmptyString(rawRequest.evidence) ||
-    !exactSubstringExists(rawRequest.evidence, params.segment)
+    !needsContext ||
+    !isOneOf(raw.type, ["affirmative", "negative", "value", "reference"] as const) ||
+    !containsExact(raw.evidence, referencedSegments)
   ) {
-    return {
-      removedSecondaryElements: [
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "explicitUserRequest",
-          reason: "invalid_explicit_user_request"
-        })
-      ]
-    };
+    return undefined;
+  }
+
+  if (raw.type === "affirmative") {
+    return raw.value === true
+      ? { type: "affirmative", value: true, evidence: raw.evidence }
+      : undefined;
+  }
+
+  if (raw.type === "negative") {
+    return raw.value === false
+      ? { type: "negative", value: false, evidence: raw.evidence }
+      : undefined;
+  }
+
+  if (raw.value !== null && asPrimitive(raw.value) === undefined) {
+    return undefined;
   }
 
   return {
-    explicitUserRequest: {
-      request: rawRequest.request.trim(),
-      evidence: rawRequest.evidence
-    },
-    removedSecondaryElements: []
+    type: raw.type,
+    value: raw.value === null ? null : asPrimitive(raw.value),
+    evidence: raw.evidence
   };
 }
 
-function normalizeContextualAnswer(params: {
-  rawValue: unknown;
-  segment: SupportTextSegment;
-  sourceSegmentId: string;
-  unitIndex: number;
-}): {
-  contextualAnswer?: ContextualAnswer;
-  removedSecondaryElements: RemovedSecondaryElement[];
-} {
-  if (params.rawValue === undefined || params.rawValue === null) {
-    return { removedSecondaryElements: [] };
-  }
+function parseFacts(
+  raw: unknown,
+  referencedSegments: SupportTextSegment[],
+  allowedFields: Set<string>
+): SupportFact[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
 
-  const rawAnswer = params.rawValue as RawContextualAnswer;
-  const normalizedValue = normalizeSupportFactValue(rawAnswer.value);
-
-  if (
-    !isRecord(rawAnswer) ||
-    !oneOf(rawAnswer.type, ["affirmative", "negative", "value", "reference"] as const) ||
-    !isNonEmptyString(rawAnswer.evidence) ||
-    !exactSubstringExists(rawAnswer.evidence, params.segment) ||
-    normalizedValue === INVALID_SUPPORT_FACT_VALUE
-  ) {
-    return {
-      removedSecondaryElements: [
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "contextualAnswer",
-          reason: "invalid_contextual_answer"
-        })
-      ]
-    };
-  }
-
-  return {
-    contextualAnswer: {
-      type: rawAnswer.type,
-      ...(normalizedValue !== undefined ? { value: normalizedValue } : {}),
-      evidence: rawAnswer.evidence
-    },
-    removedSecondaryElements: []
-  };
-}
-
-function normalizeSupportNeeds(params: {
-  rawValue: unknown;
-  sourceSegmentId: string;
-  unitIndex: number;
-}): {
-  supportNeeds: SupportNeed[];
-  removedSecondaryElements: RemovedSecondaryElement[];
-} {
-  if (params.rawValue === undefined || params.rawValue === null) {
-    return { supportNeeds: [], removedSecondaryElements: [] };
-  }
-
-  if (!Array.isArray(params.rawValue)) {
-    return {
-      supportNeeds: [],
-      removedSecondaryElements: [
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "supportNeeds",
-          reason: "not_array"
-        })
-      ]
-    };
-  }
-
-  const removedSecondaryElements: RemovedSecondaryElement[] = [];
-  const supportNeeds: SupportNeed[] = [];
-
-  for (const item of params.rawValue) {
-    if (!oneOf(item, SUPPORT_NEEDS)) {
-      removedSecondaryElements.push(
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "supportNeeds",
-          reason: "invalid_support_need"
-        })
-      );
-      continue;
+  return raw.flatMap((fact): SupportFact[] => {
+    if (!isRecord(fact) || !containsExact(fact.evidence, referencedSegments)) {
+      return [];
     }
 
-    supportNeeds.push(item);
-  }
-
-  return {
-    supportNeeds: uniqueBy(supportNeeds, (item) => item),
-    removedSecondaryElements
-  };
-}
-
-function normalizeBroadCategoryHint(params: {
-  rawValue: unknown;
-  sourceSegmentId: string;
-  unitIndex: number;
-}): {
-  broadCategoryHint?: TextUnderstanding["broadCategoryHint"];
-  removedSecondaryElements: RemovedSecondaryElement[];
-} {
-  if (params.rawValue === undefined || params.rawValue === null) {
-    return { removedSecondaryElements: [] };
-  }
-
-  if (!oneOf(params.rawValue, BROAD_CATEGORY_HINTS)) {
-    return {
-      removedSecondaryElements: [
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "broadCategoryHint",
-          reason: "invalid_broad_category_hint"
-        })
-      ]
-    };
-  }
-
-  return {
-    broadCategoryHint: params.rawValue,
-    removedSecondaryElements: []
-  };
-}
-
-function normalizeTestedActions(params: {
-  rawValue: unknown;
-  segment: SupportTextSegment;
-  sourceSegmentId: string;
-  unitIndex: number;
-}): {
-  testedActions: TestedAction[];
-  removedSecondaryElements: RemovedSecondaryElement[];
-} {
-  if (params.rawValue === undefined || params.rawValue === null) {
-    return { testedActions: [], removedSecondaryElements: [] };
-  }
-
-  if (!Array.isArray(params.rawValue)) {
-    return {
-      testedActions: [],
-      removedSecondaryElements: [
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "testedActions",
-          reason: "not_array"
-        })
-      ]
-    };
-  }
-
-  const testedActions: TestedAction[] = [];
-  const removedSecondaryElements: RemovedSecondaryElement[] = [];
-
-  for (const rawAction of params.rawValue as RawTestedAction[]) {
-    if (
-      !isRecord(rawAction) ||
-      !isNonEmptyString(rawAction.label) ||
-      !oneOf(rawAction.outcome, TESTED_ACTION_OUTCOMES) ||
-      !isNonEmptyString(rawAction.evidence) ||
-      !exactSubstringExists(rawAction.evidence, params.segment)
-    ) {
-      removedSecondaryElements.push(
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "testedActions",
-          reason: "invalid_tested_action"
-        })
-      );
-      continue;
-    }
-
-    testedActions.push({
-      label: rawAction.label.trim(),
-      outcome: rawAction.outcome,
-      evidence: rawAction.evidence
-    });
-  }
-
-  return {
-    testedActions: uniqueBy(testedActions, (action) => {
-      return `${action.label}\u0000${action.outcome}\u0000${action.evidence}`;
-    }),
-    removedSecondaryElements
-  };
-}
-
-function normalizeSupportFacts(params: {
-  rawValue: unknown;
-  segment: SupportTextSegment;
-  sourceSegmentId: string;
-  unitIndex: number;
-  extractableFieldCatalog: ExtractableFieldDefinition[];
-  testedActions: TestedAction[];
-}): {
-  facts: SupportFact[];
-  removedSecondaryElements: RemovedSecondaryElement[];
-} {
-  if (params.rawValue === undefined || params.rawValue === null) {
-    return { facts: [], removedSecondaryElements: [] };
-  }
-
-  if (!Array.isArray(params.rawValue)) {
-    return {
-      facts: [],
-      removedSecondaryElements: [
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "facts",
-          reason: "not_array"
-        })
-      ]
-    };
-  }
-
-  const allowedFieldNames = new Set(
-    params.extractableFieldCatalog.map((field) => field.fieldName)
-  );
-  const facts: SupportFact[] = [];
-  const removedSecondaryElements: RemovedSecondaryElement[] = [];
-
-  for (const rawFact of params.rawValue as RawSupportFact[]) {
-    if (
-      !isRecord(rawFact) ||
-      !isNonEmptyString(rawFact.evidence) ||
-      !exactSubstringExists(rawFact.evidence, params.segment)
-    ) {
-      removedSecondaryElements.push(
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "facts",
-          reason: "invalid_fact_evidence"
-        })
-      );
-      continue;
-    }
-
-    if (rawFact.type === "catalogued_field") {
-      const normalizedValue = normalizeSupportFactValue(rawFact.value);
-
-      if (
-        !isNonEmptyString(rawFact.fieldName) ||
-        !allowedFieldNames.has(rawFact.fieldName.trim()) ||
-        normalizedValue === undefined ||
-        normalizedValue === INVALID_SUPPORT_FACT_VALUE
-      ) {
-        removedSecondaryElements.push(
-          removal({
-            sourceSegmentId: params.sourceSegmentId,
-            unitIndex: params.unitIndex,
-            field: "facts",
-            reason: "invalid_catalogued_fact"
-          })
-        );
-        continue;
-      }
-
-      facts.push({
+    if (fact.type === "catalogued_field") {
+      const fieldName = isString(fact.fieldName) ? fact.fieldName.trim() : undefined;
+      const value = asPrimitive(fact.value);
+      if (!fieldName || !allowedFields.has(fieldName) || value === undefined) return [];
+      return [{
         type: "catalogued_field",
-        fieldName: rawFact.fieldName.trim(),
-        value: normalizedValue,
-        evidence: rawFact.evidence
-      });
-      continue;
+        fieldName,
+        value,
+        evidence: fact.evidence
+      }];
     }
 
-    if (rawFact.type === "open_fact") {
-      const kind = isNonEmptyString(rawFact.kind)
-        ? rawFact.kind.trim()
-        : undefined;
-      const normalizedValue = normalizeSupportFactValue(rawFact.value);
-
-      if (
-        !kind ||
-        allowedFieldNames.has(kind) ||
-        !oneOf(rawFact.support, CANDIDATE_FACT_SUPPORT_VALUES) ||
-        normalizedValue === INVALID_SUPPORT_FACT_VALUE
-      ) {
-        removedSecondaryElements.push(
-          removal({
-            sourceSegmentId: params.sourceSegmentId,
-            unitIndex: params.unitIndex,
-            field: "facts",
-            reason: "invalid_open_fact"
-          })
-        );
-        continue;
-      }
-
-      facts.push({
+    if (fact.type === "open_fact") {
+      const kind = isString(fact.kind) ? fact.kind.trim() : undefined;
+      if (!kind || !isOneOf(fact.support, CANDIDATE_FACT_SUPPORT_VALUES)) return [];
+      if (fact.value != null && asPrimitive(fact.value) === undefined) return [];
+      const value = asPrimitive(fact.value);
+      return [{
         type: "open_fact",
         kind,
-        ...(normalizedValue !== undefined ? { value: normalizedValue } : {}),
-        evidence: rawFact.evidence,
-        support: rawFact.support
-      });
-      continue;
+        ...(value !== undefined ? { value } : {}),
+        evidence: fact.evidence,
+        support: fact.support
+      }];
     }
 
-    removedSecondaryElements.push(
-      removal({
-        sourceSegmentId: params.sourceSegmentId,
-        unitIndex: params.unitIndex,
-        field: "facts",
-        reason: "unknown_fact_type"
-      })
-    );
-  }
-
-  const uniqueFacts = uniqueBy(facts, supportFactKey);
-  const cataloguedFacts = uniqueFacts.filter((fact) => {
-    return fact.type === "catalogued_field";
+    return [];
   });
-
-  return {
-    facts: uniqueFacts.filter((fact) => {
-      if (fact.type === "catalogued_field") {
-        return true;
-      }
-
-      const duplicatesTestedAction = params.testedActions.some((action) => {
-        return evidenceOverlaps(fact.evidence, action.evidence);
-      });
-
-      if (duplicatesTestedAction) {
-        removedSecondaryElements.push(
-          removal({
-            sourceSegmentId: params.sourceSegmentId,
-            unitIndex: params.unitIndex,
-            field: "facts",
-            reason: "open_fact_duplicates_tested_action"
-          })
-        );
-        return false;
-      }
-
-      const duplicatesCataloguedFact = cataloguedFacts.some((cataloguedFact) => {
-        return evidenceOverlaps(fact.evidence, cataloguedFact.evidence);
-      });
-
-      if (duplicatesCataloguedFact) {
-        removedSecondaryElements.push(
-          removal({
-            sourceSegmentId: params.sourceSegmentId,
-            unitIndex: params.unitIndex,
-            field: "facts",
-            reason: "open_fact_duplicates_catalogued_fact"
-          })
-        );
-        return false;
-      }
-
-      return true;
-    }),
-    removedSecondaryElements
-  };
 }
 
-function normalizeUncertainties(params: {
-  rawValue: unknown;
-  segment: SupportTextSegment;
-  sourceSegmentId: string;
-  unitIndex: number;
-}): {
-  uncertainties: TextUncertainty[];
-  removedSecondaryElements: RemovedSecondaryElement[];
-} {
-  if (params.rawValue === undefined || params.rawValue === null) {
-    return { uncertainties: [], removedSecondaryElements: [] };
-  }
+function parseTestedActions(
+  raw: unknown,
+  referencedSegments: SupportTextSegment[]
+): TestedAction[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
 
-  if (!Array.isArray(params.rawValue)) {
-    return {
-      uncertainties: [],
-      removedSecondaryElements: [
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "uncertainties",
-          reason: "not_array"
-        })
-      ]
-    };
-  }
-
-  const uncertainties: TextUncertainty[] = [];
-  const removedSecondaryElements: RemovedSecondaryElement[] = [];
-
-  for (const rawUncertainty of params.rawValue as RawTextUncertainty[]) {
+  return raw.flatMap((action): TestedAction[] => {
     if (
-      !isRecord(rawUncertainty) ||
-      !isNonEmptyString(rawUncertainty.reason) ||
-      !TEXT_UNCERTAINTY_REASONS.includes(
-        rawUncertainty.reason as typeof TEXT_UNCERTAINTY_REASONS[number]
-      ) ||
-      !isNonEmptyString(rawUncertainty.detail)
+      !isRecord(action) ||
+      !isString(action.label) ||
+      !isOneOf(action.outcome, TESTED_ACTION_OUTCOMES) ||
+      !containsExact(action.evidence, referencedSegments)
     ) {
-      removedSecondaryElements.push(
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "uncertainties",
-          reason: "invalid_uncertainty"
-        })
-      );
-      continue;
+      return [];
     }
 
-    const evidence =
-      typeof rawUncertainty.evidence === "string"
-        ? rawUncertainty.evidence
-        : undefined;
+    return [{
+      label: action.label.trim(),
+      outcome: action.outcome,
+      evidence: action.evidence
+    }];
+  });
+}
 
-    if (evidence !== undefined && (
-      !isNonEmptyString(evidence) ||
-      !exactSubstringExists(evidence, params.segment)
-    )) {
-      removedSecondaryElements.push(
-        removal({
-          sourceSegmentId: params.sourceSegmentId,
-          unitIndex: params.unitIndex,
-          field: "uncertainties",
-          reason: "invalid_uncertainty_evidence"
-        })
-      );
-      continue;
+function parseUncertainties(
+  raw: unknown,
+  referencedSegments: SupportTextSegment[]
+): TextUncertainty[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+
+  return raw.flatMap((uncertainty): TextUncertainty[] => {
+    if (
+      !isRecord(uncertainty) ||
+      !isOneOf(uncertainty.reason, TEXT_UNCERTAINTY_REASONS) ||
+      !isString(uncertainty.detail) ||
+      (uncertainty.evidence != null &&
+        !containsExact(uncertainty.evidence, referencedSegments))
+    ) {
+      return [];
     }
 
-    uncertainties.push({
-      reason: rawUncertainty.reason as TextUncertainty["reason"],
-      detail: rawUncertainty.detail.trim(),
-      ...(evidence ? { evidence } : {})
-    });
-  }
-
-  return {
-    uncertainties,
-    removedSecondaryElements
-  };
+    return [{
+      reason: uncertainty.reason,
+      detail: uncertainty.detail.trim(),
+      ...(typeof uncertainty.evidence === "string"
+        ? { evidence: uncertainty.evidence }
+        : {})
+    }];
+  });
 }
 
 function normalizeItem(params: {
-  rawItem: RawSupportTextItem;
+  raw: Record<string, unknown>;
+  supportSegments: SupportTextSegment[];
   segmentById: Map<string, SupportTextSegment>;
-  extractableFieldCatalog: ExtractableFieldDefinition[];
+  allowedFields: Set<string>;
   unitIndex: number;
-}): NormalizedItemResult {
-  const removedSecondaryElements: RemovedSecondaryElement[] = [];
-  const sourceSegmentId = isNonEmptyString(params.rawItem.sourceSegmentId)
-    ? params.rawItem.sourceSegmentId.trim()
-    : undefined;
-
-  if (!sourceSegmentId) {
-    return {
-      status: "invalid_core",
-      reason: "invalid_source_segment_id",
-      removedSecondaryElements
-    };
-  }
-
-  const segment = params.segmentById.get(sourceSegmentId);
-
-  if (!segment) {
-    return {
-      status: "invalid_core",
-      sourceSegmentId,
-      reason: "unknown_source_segment_id",
-      removedSecondaryElements
-    };
-  }
-
-  const sourceVerbatimResult = normalizeSourceVerbatims({
-    rawValue: params.rawItem.sourceVerbatims,
-    segment,
-    sourceSegmentId,
-    unitIndex: params.unitIndex
-  });
-  removedSecondaryElements.push(
-    ...sourceVerbatimResult.removedSecondaryElements
+}): ItemResult {
+  const sourceSegmentIds = parseSourceSegmentIds(
+    params.raw.sourceSegmentIds,
+    params.supportSegments
   );
 
-  if (sourceVerbatimResult.sourceVerbatims.length === 0) {
+  if (!sourceSegmentIds) {
     return {
-      status: "invalid_core",
-      sourceSegmentId,
-      reason: "no_valid_source_verbatim",
-      removedSecondaryElements
+      ok: false,
+      reason: "invalid_source_segment_ids",
+      removed: []
     };
   }
 
-  const summary = isNonEmptyString(params.rawItem.summary)
-    ? params.rawItem.summary.trim()
-    : undefined;
+  const referencedSegments = sourceSegmentIds.map((id) => {
+    return params.segmentById.get(id);
+  });
 
-  if (!summary) {
+  if (referencedSegments.some((segment) => segment === undefined)) {
     return {
-      status: "invalid_core",
-      sourceSegmentId,
-      reason: "invalid_summary",
-      removedSecondaryElements
+      ok: false,
+      sourceSegmentIds,
+      reason: "unknown_source_segment_id",
+      removed: []
     };
   }
+
+  const segments = referencedSegments as SupportTextSegment[];
+
+  if (!Array.isArray(params.raw.sourceVerbatims)) {
+    return {
+      ok: false,
+      sourceSegmentIds,
+      reason: "source_verbatims_not_array",
+      removed: []
+    };
+  }
+
+  const sourceVerbatims = params.raw.sourceVerbatims.filter(
+    (value): value is string => containsExact(value, segments)
+  );
 
   if (
-    !oneOf(
-      params.rawItem.primaryUserExpectation,
-      PRIMARY_USER_EXPECTATIONS
-    )
+    sourceVerbatims.length === 0 ||
+    !isString(params.raw.summary) ||
+    !isOneOf(params.raw.primaryUserExpectation, PRIMARY_USER_EXPECTATIONS) ||
+    !isOneOf(params.raw.contextDependency, CONTEXT_DEPENDENCIES)
   ) {
     return {
-      status: "invalid_core",
-      sourceSegmentId,
-      reason: "invalid_primary_user_expectation",
-      removedSecondaryElements
+      ok: false,
+      sourceSegmentIds,
+      reason: "invalid_core_fields",
+      removed: []
     };
   }
 
-  if (!oneOf(params.rawItem.contextDependency, CONTEXT_DEPENDENCIES)) {
-    return {
-      status: "invalid_core",
-      sourceSegmentId,
-      reason: "invalid_context_dependency",
-      removedSecondaryElements
-    };
-  }
-
-  const explicitUserRequestResult = normalizeExplicitUserRequest({
-    rawValue: params.rawItem.explicitUserRequest,
-    segment,
-    sourceSegmentId,
-    unitIndex: params.unitIndex
-  });
-  const supportNeedsResult = normalizeSupportNeeds({
-    rawValue: params.rawItem.supportNeeds,
-    sourceSegmentId,
-    unitIndex: params.unitIndex
-  });
-  const broadCategoryHintResult = normalizeBroadCategoryHint({
-    rawValue: params.rawItem.broadCategoryHint,
-    sourceSegmentId,
-    unitIndex: params.unitIndex
-  });
-  const contextualAnswerResult = normalizeContextualAnswer({
-    rawValue: params.rawItem.contextualAnswer,
-    segment,
-    sourceSegmentId,
-    unitIndex: params.unitIndex
-  });
-  const testedActionsResult = normalizeTestedActions({
-    rawValue: params.rawItem.testedActions,
-    segment,
-    sourceSegmentId,
-    unitIndex: params.unitIndex
-  });
-  const factsResult = normalizeSupportFacts({
-    rawValue: params.rawItem.facts,
-    segment,
-    sourceSegmentId,
-    unitIndex: params.unitIndex,
-    extractableFieldCatalog: params.extractableFieldCatalog,
-    testedActions: testedActionsResult.testedActions
-  });
-  const uncertaintiesResult = normalizeUncertainties({
-    rawValue: params.rawItem.uncertainties,
-    segment,
-    sourceSegmentId,
-    unitIndex: params.unitIndex
-  });
-
-  removedSecondaryElements.push(
-    ...explicitUserRequestResult.removedSecondaryElements,
-    ...supportNeedsResult.removedSecondaryElements,
-    ...broadCategoryHintResult.removedSecondaryElements,
-    ...contextualAnswerResult.removedSecondaryElements,
-    ...testedActionsResult.removedSecondaryElements,
-    ...factsResult.removedSecondaryElements,
-    ...uncertaintiesResult.removedSecondaryElements
+  const contextualAnswer = parseContextualAnswer(
+    params.raw.contextualAnswer,
+    segments,
+    params.raw.contextDependency
   );
 
+  if (!contextualAnswer) {
+    return {
+      ok: false,
+      sourceSegmentIds,
+      reason: "invalid_contextual_consistency",
+      removed: []
+    };
+  }
+
+  const removed: Removed[] = [];
+  const markInvalid = (field: string, raw: unknown, parsed: unknown, reason: string) => {
+    if (raw != null && parsed === undefined) {
+      removed.push(removal(sourceSegmentIds, params.unitIndex, field, reason));
+    }
+  };
+
+  if (sourceVerbatims.length !== params.raw.sourceVerbatims.length) {
+    removed.push(removal(sourceSegmentIds, params.unitIndex, "sourceVerbatims", "invalid_item"));
+  }
+
+  const explicitUserRequest = parseExplicitRequest(
+    params.raw.explicitUserRequest,
+    segments
+  );
+  const supportNeeds = Array.isArray(params.raw.supportNeeds)
+    ? params.raw.supportNeeds.filter((value): value is SupportNeed => {
+        return isOneOf(value, SUPPORT_NEEDS);
+      })
+    : undefined;
+  const broadCategoryHint = isOneOf(params.raw.broadCategoryHint, BROAD_CATEGORY_HINTS)
+    ? params.raw.broadCategoryHint
+    : undefined;
+  const facts = parseFacts(params.raw.facts, segments, params.allowedFields);
+  const testedActions = parseTestedActions(params.raw.testedActions, segments);
+  const uncertainties = parseUncertainties(params.raw.uncertainties, segments);
+
+  markInvalid("explicitUserRequest", params.raw.explicitUserRequest, explicitUserRequest, "invalid_object");
+  markInvalid("supportNeeds", params.raw.supportNeeds, supportNeeds, "not_array");
+  markInvalid("broadCategoryHint", params.raw.broadCategoryHint, broadCategoryHint, "invalid_enum");
+  markInvalid("facts", params.raw.facts, facts, "not_array");
+  markInvalid("testedActions", params.raw.testedActions, testedActions, "not_array");
+  markInvalid("uncertainties", params.raw.uncertainties, uncertainties, "not_array");
+
   return {
-    status: "valid",
+    ok: true,
     item: {
-      sourceSegmentId,
-      sourceVerbatims: sourceVerbatimResult.sourceVerbatims,
-      summary,
-      primaryUserExpectation: params.rawItem.primaryUserExpectation,
-      ...(explicitUserRequestResult.explicitUserRequest
-        ? { explicitUserRequest: explicitUserRequestResult.explicitUserRequest }
-        : {}),
-      supportNeeds: supportNeedsResult.supportNeeds,
-      ...(broadCategoryHintResult.broadCategoryHint
-        ? { broadCategoryHint: broadCategoryHintResult.broadCategoryHint }
-        : {}),
-      contextDependency: params.rawItem.contextDependency,
-      ...(contextualAnswerResult.contextualAnswer
-        ? { contextualAnswer: contextualAnswerResult.contextualAnswer }
-        : {}),
-      facts: factsResult.facts,
-      testedActions: testedActionsResult.testedActions,
-      uncertainties: uncertaintiesResult.uncertainties
+      sourceSegmentIds,
+      sourceVerbatims,
+      summary: params.raw.summary.trim(),
+      primaryUserExpectation: params.raw.primaryUserExpectation,
+      ...(explicitUserRequest ? { explicitUserRequest } : {}),
+      supportNeeds: supportNeeds ?? [],
+      ...(broadCategoryHint ? { broadCategoryHint } : {}),
+      contextDependency: params.raw.contextDependency,
+      contextualAnswer,
+      facts: facts ?? [],
+      testedActions: testedActions ?? [],
+      uncertainties: uncertainties ?? []
     },
-    removedSecondaryElements
+    removed
   };
 }
 
-function formatSupportTextAnalysisOutput(
-  input: FormatSupportTextAnalysisOutputInput
-): SupportTextValidationResult {
-  return formatSupportTextAnalysisOutputWithDebug(input).result;
+const assignIds = (drafts: Draft[]): TextUnderstanding[] =>
+  drafts.map((draft, index) => ({
+    understandingId: `text_understanding_${index + 1}`,
+    ...draft
+  }));
+
+function normalizeCue(params: {
+  raw: unknown;
+  supportSegments: SupportTextSegment[];
+  segmentById: Map<string, SupportTextSegment>;
+  understandingIds: Set<string>;
+}): CueResult {
+  if (!isRecord(params.raw)) {
+    return {
+      ok: false,
+      reason: "cue_not_object"
+    };
+  }
+
+  const sourceSegmentIds = parseSourceSegmentIds(
+    params.raw.sourceSegmentIds,
+    params.supportSegments
+  );
+
+  if (!sourceSegmentIds) {
+    return {
+      ok: false,
+      reason: "invalid_cue_source_segment_ids"
+    };
+  }
+
+  const segments = sourceSegmentIds.flatMap((id) => {
+    const segment = params.segmentById.get(id);
+
+    return segment ? [segment] : [];
+  });
+
+  if (
+    segments.length !== sourceSegmentIds.length ||
+    !containsExact(params.raw.verbatim, segments) ||
+    !isString(params.raw.cueNote) ||
+    !Array.isArray(params.raw.relatedUnderstandingIds) ||
+    params.raw.relatedUnderstandingIds.length === 0
+  ) {
+    return {
+      ok: false,
+      sourceSegmentIds,
+      reason: "invalid_cue_core_fields"
+    };
+  }
+
+  const relatedUnderstandingIds: string[] = [];
+  const seenUnderstandingIds = new Set<string>();
+
+  for (const value of params.raw.relatedUnderstandingIds) {
+    if (!isString(value)) {
+      return {
+        ok: false,
+        sourceSegmentIds,
+        reason: "invalid_cue_understanding_ids"
+      };
+    }
+
+    const id = value.trim();
+
+    if (!params.understandingIds.has(id) || seenUnderstandingIds.has(id)) {
+      return {
+        ok: false,
+        sourceSegmentIds,
+        reason: "invalid_cue_understanding_ids"
+      };
+    }
+
+    seenUnderstandingIds.add(id);
+    relatedUnderstandingIds.push(id);
+  }
+
+  return {
+    ok: true,
+    cue: {
+      sourceSegmentIds,
+      relatedUnderstandingIds,
+      verbatim: params.raw.verbatim,
+      cueNote: params.raw.cueNote.trim()
+    }
+  };
 }
 
-type SupportTextSegmentDebug = {
-  segmentId: string;
-  fallbackUsed: boolean;
-  fallbackScope?: "global" | "local";
-  fallbackReason?: string;
-};
+function parseSupportResponseCues(params: {
+  raw: unknown;
+  supportSegments: SupportTextSegment[];
+  segmentById: Map<string, SupportTextSegment>;
+  textUnderstandings: TextUnderstanding[];
+}): {
+  supportResponseCues: SupportResponseCue[];
+  removed: Removed[];
+} {
+  if (params.raw == null) {
+    return {
+      supportResponseCues: [],
+      removed: []
+    };
+  }
 
-type SupportTextRejectedUnitDebug = {
-  sourceSegmentId?: string;
-  unitIndex: number;
-  reason: string;
-};
+  if (!Array.isArray(params.raw)) {
+    return {
+      supportResponseCues: [],
+      removed: [{
+        field: "supportResponseCues",
+        reason: "not_array"
+      }]
+    };
+  }
 
-type SupportTextFormatDebug = {
-  fallbackScope: "none" | "global" | "local";
-  validationReason?: string;
-  segments: SupportTextSegmentDebug[];
-  rejectedUnits: SupportTextRejectedUnitDebug[];
-  removedSecondaryElements: RemovedSecondaryElement[];
-};
+  const understandingIds = new Set(
+    params.textUnderstandings.map((understanding) => {
+      return understanding.understandingId;
+    })
+  );
+  const cues: SupportResponseCue[] = [];
+  const removed: Removed[] = [];
 
-type SupportTextDebugValidationResult = {
-  result: SupportTextValidationResult;
-  debug: SupportTextFormatDebug;
-};
+  params.raw.forEach((rawCue) => {
+    const result = normalizeCue({
+      raw: rawCue,
+      supportSegments: params.supportSegments,
+      segmentById: params.segmentById,
+      understandingIds
+    });
 
-function buildGlobalFallbackDebug(
-  supportSegments: SupportTextSegment[],
-  reason: string
-): SupportTextFormatDebug {
+    if (!result.ok) {
+      removed.push({
+        ...(result.sourceSegmentIds
+          ? { sourceSegmentIds: result.sourceSegmentIds }
+          : {}),
+        field: "supportResponseCues",
+        reason: result.reason
+      });
+      return;
+    }
+
+    cues.push({
+      cueId: `support_response_cue_${cues.length + 1}`,
+      ...result.cue
+    });
+  });
+
+  return {
+    supportResponseCues: cues,
+    removed
+  };
+}
+
+function globalDebug(segments: SupportTextSegment[], reason: string): Debug {
   return {
     fallbackScope: "global",
     validationReason: reason,
-    segments: supportSegments.map((segment) => ({
+    segments: segments.map((segment) => ({
       segmentId: segment.segmentId,
       fallbackUsed: true,
       fallbackScope: "global",
@@ -953,156 +603,138 @@ function buildGlobalFallbackDebug(
 
 function formatSupportTextAnalysisOutputWithDebug(
   input: FormatSupportTextAnalysisOutputInput
-): SupportTextDebugValidationResult {
+): DebugResult {
   if (input.rawSupportTextAnalysis.status !== "completed") {
     const reason = "llm_call_failed";
-
     return {
       result: {
         status: "invalid",
         reason,
-        textUnderstandings: buildGlobalFallback(input.supportSegments)
+        textUnderstandings: globalFallback(input.supportSegments),
+        supportResponseCues: []
       },
-      debug: buildGlobalFallbackDebug(input.supportSegments, reason)
+      debug: globalDebug(input.supportSegments, reason)
     };
   }
 
-  const parsedResponse = input.rawSupportTextAnalysis.parsedResponse;
-
-  if (!isRecord(parsedResponse) || !Array.isArray(parsedResponse.items)) {
+  const parsed = input.rawSupportTextAnalysis.parsedResponse;
+  if (!isRecord(parsed) || !Array.isArray(parsed.items)) {
     const reason = "invalid_json";
-
     return {
       result: {
         status: "invalid",
         reason,
-        textUnderstandings: buildGlobalFallback(input.supportSegments)
+        textUnderstandings: globalFallback(input.supportSegments),
+        supportResponseCues: []
       },
-      debug: buildGlobalFallbackDebug(input.supportSegments, reason)
+      debug: globalDebug(input.supportSegments, reason)
     };
   }
 
   const segmentById = new Map(
     input.supportSegments.map((segment) => [segment.segmentId, segment])
   );
-  const validDraftsBySegmentId = new Map<string, TextUnderstandingDraft[]>();
-  const rejectedUnits: SupportTextRejectedUnitDebug[] = [];
-  const removedSecondaryElements: RemovedSecondaryElement[] = [];
+  const allowedFields = new Set(
+    input.extractableFieldCatalog.map((field) => field.fieldName)
+  );
+  const drafts: Draft[] = [];
+  const coveredSegmentIds = new Set<string>();
+  const rejectedUnits: Rejected[] = [];
+  const removedSecondaryElements: Removed[] = [];
 
-  (parsedResponse.items as unknown[]).forEach((rawItem, index) => {
-    if (!isRecord(rawItem)) {
-      rejectedUnits.push({
-        unitIndex: index,
-        reason: "unit_not_object"
-      });
+  parsed.items.forEach((raw, unitIndex) => {
+    if (!isRecord(raw)) {
+      rejectedUnits.push({ unitIndex, reason: "unit_not_object" });
       return;
     }
 
-    const normalizedItem = normalizeItem({
-      rawItem,
+    const normalized = normalizeItem({
+      raw,
+      supportSegments: input.supportSegments,
       segmentById,
-      extractableFieldCatalog: input.extractableFieldCatalog,
-      unitIndex: index
+      allowedFields,
+      unitIndex
     });
+    removedSecondaryElements.push(...normalized.removed);
 
-    removedSecondaryElements.push(
-      ...normalizedItem.removedSecondaryElements
-    );
-
-    if (normalizedItem.status === "invalid_core") {
+    if (!normalized.ok) {
       rejectedUnits.push({
-        ...(normalizedItem.sourceSegmentId
-          ? { sourceSegmentId: normalizedItem.sourceSegmentId }
+        ...(normalized.sourceSegmentIds
+          ? { sourceSegmentIds: normalized.sourceSegmentIds }
           : {}),
-        unitIndex: index,
-        reason: normalizedItem.reason
+        unitIndex,
+        reason: normalized.reason
       });
       return;
     }
 
-    const existingDrafts =
-      validDraftsBySegmentId.get(normalizedItem.item.sourceSegmentId) ?? [];
-    existingDrafts.push(normalizedItem.item);
-    validDraftsBySegmentId.set(
-      normalizedItem.item.sourceSegmentId,
-      existingDrafts
-    );
+    drafts.push(normalized.item);
+    for (const sourceSegmentId of normalized.item.sourceSegmentIds) {
+      coveredSegmentIds.add(sourceSegmentId);
+    }
   });
 
+  const segments: SegmentDebug[] = [];
   let hasLocalFallback = false;
-  const segmentDebug: SupportTextSegmentDebug[] = [];
-  const orderedDrafts: TextUnderstandingDraft[] = [];
 
   for (const segment of input.supportSegments) {
-    const segmentDrafts = validDraftsBySegmentId.get(segment.segmentId) ?? [];
-
-    if (segmentDrafts.length === 0) {
-      hasLocalFallback = true;
-      segmentDebug.push({
-        segmentId: segment.segmentId,
-        fallbackUsed: true,
-        fallbackScope: "local",
-        fallbackReason: "missing_valid_understanding"
-      });
-      orderedDrafts.push({
-        sourceSegmentId: segment.segmentId,
-        sourceVerbatims: [segment.verbatim],
-        summary: segment.verbatim,
-        primaryUserExpectation: "unclear",
-        supportNeeds: [],
-        contextDependency: "needs_context_to_interpret",
-        facts: [],
-        testedActions: [],
-        uncertainties: [
-          {
-            reason: "deep_analysis_failed",
-            detail: "The segment could not be analyzed reliably."
-          }
-        ]
-      });
+    if (coveredSegmentIds.has(segment.segmentId)) {
+      segments.push({ segmentId: segment.segmentId, fallbackUsed: false });
       continue;
     }
 
-    segmentDebug.push({
+    hasLocalFallback = true;
+    const { understandingId: _ignored, ...fallback } =
+      buildFallbackTextUnderstanding(segment);
+    drafts.push(fallback);
+    segments.push({
       segmentId: segment.segmentId,
-      fallbackUsed: false
+      fallbackUsed: true,
+      fallbackScope: "local",
+      fallbackReason: "missing_valid_understanding"
     });
-    orderedDrafts.push(...segmentDrafts);
   }
 
-  const textUnderstandings = assignUnderstandingIds(orderedDrafts);
-
-  if (hasLocalFallback) {
-    const reason = "invalid_segment_item";
-
-    return {
-      result: {
-        status: "invalid",
-        reason,
-        textUnderstandings
-      },
-      debug: {
-        fallbackScope: "local",
-        validationReason: reason,
-        segments: segmentDebug,
-        rejectedUnits,
-        removedSecondaryElements
-      }
-    };
-  }
-
-  return {
-    result: {
-      status: "valid",
-      textUnderstandings
-    },
-    debug: {
-      fallbackScope: "none",
-      segments: segmentDebug,
-      rejectedUnits,
-      removedSecondaryElements
-    }
+  const textUnderstandings = assignIds(drafts);
+  const parsedCues = parseSupportResponseCues({
+    raw: parsed.supportResponseCues,
+    supportSegments: input.supportSegments,
+    segmentById,
+    textUnderstandings
+  });
+  removedSecondaryElements.push(...parsedCues.removed);
+  const debug: Debug = {
+    fallbackScope: hasLocalFallback ? "local" : "none",
+    ...(hasLocalFallback ? { validationReason: "invalid_segment_item" } : {}),
+    segments,
+    rejectedUnits,
+    removedSecondaryElements
   };
+
+  return hasLocalFallback
+    ? {
+        result: {
+          status: "invalid",
+          reason: "invalid_segment_item",
+          textUnderstandings,
+          supportResponseCues: parsedCues.supportResponseCues
+        },
+        debug
+      }
+    : {
+        result: {
+          status: "valid",
+          textUnderstandings,
+          supportResponseCues: parsedCues.supportResponseCues
+        },
+        debug
+      };
+}
+
+function formatSupportTextAnalysisOutput(
+  input: FormatSupportTextAnalysisOutputInput
+): SupportTextValidationResult {
+  return formatSupportTextAnalysisOutputWithDebug(input).result;
 }
 
 export {

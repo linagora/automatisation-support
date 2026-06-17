@@ -10,6 +10,17 @@ import {
   buildSupportExtractableFieldCatalog
 } from "../../../src/support-processing-pipeline/v2/analyze-support-text/supportExtractableFieldCatalog";
 
+export type DatasetExistingTopic = {
+  topicId: string;
+  title: string;
+  summary?: string;
+  status?: string;
+  broadCategoryHint?: string | null;
+  userGoal?: string | null;
+  blockingIssue?: "yes" | "no" | "unknown";
+  [key: string]: unknown;
+};
+
 export type TextAnalysisDatasetCase = {
   id: string;
   name: string;
@@ -18,6 +29,7 @@ export type TextAnalysisDatasetCase = {
   accountTrustStatus: AccountTrustStatus;
   recentInteractionContext: RecentInteractionContext;
   extractableFieldCatalog: ExtractableFieldDefinition[];
+  existingTopics: DatasetExistingTopic[];
 };
 
 const trustedAccountTrustStatus: AccountTrustStatus = {
@@ -51,6 +63,36 @@ const defaultRecentInteractionContext: RecentInteractionContext = {
 
 const defaultExtractableFieldCatalog = buildSupportExtractableFieldCatalog();
 
+const blockedAccountTopic: DatasetExistingTopic = {
+  topicId: "topic_1",
+  title: "Compte bloqué",
+  summary: "L'utilisateur indique que son compte est bloqué.",
+  status: "open",
+  broadCategoryHint: "access_security",
+  userGoal: "Récupérer l'accès à son compte.",
+  blockingIssue: "yes"
+};
+
+const billingTopic: DatasetExistingTopic = {
+  topicId: "topic_2",
+  title: "Problème de facturation",
+  summary: "L'utilisateur a un sujet ouvert lié à la facturation.",
+  status: "open",
+  broadCategoryHint: "billing",
+  userGoal: "Clarifier ou résoudre un problème de facturation.",
+  blockingIssue: "unknown"
+};
+
+const qualificationTopic: DatasetExistingTopic = {
+  topicId: "topic_1",
+  title: "Problème à qualifier",
+  summary: "Le support cherche à qualifier le domaine du problème signalé par l'utilisateur.",
+  status: "open",
+  broadCategoryHint: null,
+  userGoal: "Qualifier le problème pour orienter le traitement.",
+  blockingIssue: "unknown"
+};
+
 function buildMessage(id: string, content: string): LatestUserMessage {
   return {
     id,
@@ -67,6 +109,7 @@ function buildCase(params: {
   accountTrustStatus?: AccountTrustStatus;
   recentInteractionContext?: RecentInteractionContext;
   extractableFieldCatalogOverrides?: ExtractableFieldDefinition[];
+  existingTopics?: DatasetExistingTopic[];
 }): TextAnalysisDatasetCase {
   return {
     id: params.id,
@@ -78,7 +121,8 @@ function buildCase(params: {
       params.recentInteractionContext ?? defaultRecentInteractionContext,
     extractableFieldCatalog: params.extractableFieldCatalogOverrides
       ? buildSupportExtractableFieldCatalog(params.extractableFieldCatalogOverrides)
-      : defaultExtractableFieldCatalog
+      : defaultExtractableFieldCatalog,
+    existingTopics: params.existingTopics ?? []
   };
 }
 
@@ -107,19 +151,34 @@ export const textAnalysisDataset: TextAnalysisDatasetCase[] = [
     id: "handover-with-problem",
     name: "Handover request with separable support problem",
     content:
-      "Je veux parler à une personne du support. Mon compte est toujours bloqué."
+      "Je veux parler à une personne du support. Mon compte est toujours bloqué.",
+    existingTopics: [blockedAccountTopic]
   }),
   buildCase({
     id: "mixed",
     name: "Mixed greeting, feedback, support issue and urgency",
     content:
-      "Bonjour, je suis vraiment déçu, mon compte est toujours bloqué et c’est urgent."
+      "Bonjour, je suis vraiment déçu, mon compte est toujours bloqué et c’est urgent.",
+    existingTopics: [blockedAccountTopic]
   }),
   buildCase({
     id: "support-facts-tested-action",
     name: "Explicit support issue with facts and tested action",
     content:
-      "Sur le web, mon compte affiche l'erreur Token expired. J'ai déjà réessayé de me connecter et ça échoue toujours."
+      "Sur le web, mon compte affiche l'erreur Token expired. J'ai déjà réessayé de me connecter et ça échoue toujours.",
+    existingTopics: [blockedAccountTopic]
+  }),
+  buildCase({
+    id: "support-embedded-impolite-cue",
+    name: "Embedded impolite support cue",
+    content: "J’ai un putain de problème avec mon compte.",
+    existingTopics: [blockedAccountTopic]
+  }),
+  buildCase({
+    id: "support-embedded-frustration-cue",
+    name: "Embedded frustration support cue",
+    content: "Mon compte est encore bloqué, c’est vraiment insupportable.",
+    existingTopics: [blockedAccountTopic]
   }),
   buildCase({
     id: "short-context",
@@ -130,7 +189,8 @@ export const textAnalysisDataset: TextAnalysisDatasetCase[] = [
         "The user reported a blocked account on Twake.",
       previousBotResponseSummary:
         "The bot asked whether the account is still blocked."
-    }
+    },
+    existingTopics: [blockedAccountTopic]
   }),
   buildCase({
     id: "multi-support-needs",
@@ -143,6 +203,43 @@ export const textAnalysisDataset: TextAnalysisDatasetCase[] = [
     name: "One issue with trigger, error, environment and tested action",
     content:
       "Sur Firefox, quand j'ouvre la page Facturation, j'obtiens l'erreur 502. J'ai rafraîchi la page et ça échoue encore."
+  }),
+  buildCase({
+    id: "topic-continuation",
+    name: "LLM3 topic continuation",
+    content: "Mon compte est toujours bloqué.",
+    existingTopics: [blockedAccountTopic]
+  }),
+  buildCase({
+    id: "topic-new-billing",
+    name: "LLM3 new billing topic",
+    content: "J’ai reçu ma facture de mai deux fois.",
+    existingTopics: [blockedAccountTopic]
+  }),
+  buildCase({
+    id: "topic-two-subjects",
+    name: "LLM3 two support subjects with existing topics",
+    content:
+      "Mon compte est toujours bloqué. Et j’ai reçu ma facture de mai deux fois.",
+    existingTopics: [blockedAccountTopic, billingTopic]
+  }),
+  buildCase({
+    id: "topic-urgency",
+    name: "LLM3 linked urgency segment",
+    content: "Bonjour, mon compte est toujours bloqué et c’est urgent.",
+    existingTopics: [blockedAccountTopic]
+  }),
+  buildCase({
+    id: "topic-contextual-field-answer",
+    name: "LLM3 contextual answer to requested topic field",
+    content: "Oui pour la facturation.",
+    recentInteractionContext: {
+      previousUserMessageSummary:
+        "The user reported an issue, but the support topic was not qualified yet.",
+      previousBotResponseSummary:
+        "The bot asked whether the issue concerns billing for topic_1."
+    },
+    existingTopics: [qualificationTopic]
   }),
   buildCase({
     id: "out-of-scope",

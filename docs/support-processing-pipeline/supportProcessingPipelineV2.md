@@ -214,10 +214,10 @@ flowchart TB
 
     T_SUPPORT_TEXT_INPUT["<b>Prepare supportTextInput</b>"]
 
-    subgraph SUPPORT_TEXT_DATA["textUnderstandings = analyzeSupportText(supportTextInput)"]
+    subgraph SUPPORT_TEXT_DATA["{ textUnderstandings, supportResponseCues } = analyzeSupportText(supportTextInput)"]
       direction TB
 
-      SUPPORT_TEXT_ROLE["<b>Rôle :</b> comprendre localement les segments support : attente, besoins analytiques, catégorie large, faits, champs et actions testées."]
+      SUPPORT_TEXT_ROLE["<b>Rôle :</b> comprendre localement les segments support : attente, besoins analytiques, catégorie large, faits, champs, actions testées et signaux de réponse embedded."]
 
       subgraph SUPPORT_TEXT_IO[" "]
         direction LR
@@ -231,7 +231,7 @@ flowchart TB
         SUPPORT_TEXT_OUTPUTS["<b>Output</b><br/>
         textUnderstandings[] = [{<br/>
         understandingId<br/>
-        sourceSegmentId<br/>
+        sourceSegmentIds[]<br/>
         sourceVerbatims[]<br/>
         summary<br/>
         primaryUserExpectation<br/>
@@ -239,10 +239,17 @@ flowchart TB
         supportNeeds[]<br/>
         broadCategoryHint?<br/>
         contextDependency<br/>
-        contextualAnswer?<br/>
+        contextualAnswer<br/>
         facts[]<br/>
         testedActions[]<br/>
         uncertainties[]<br/>
+        }]<br/>
+        supportResponseCues[] = [{<br/>
+        cueId<br/>
+        sourceSegmentIds[]<br/>
+        relatedUnderstandingIds[]<br/>
+        verbatim<br/>
+        cueNote<br/>
         }]"]
 
         SUPPORT_TEXT_INPUTS --> SUPPORT_TEXT_OUTPUTS
@@ -295,31 +302,31 @@ flowchart TB
 
     T_TOPIC_UPDATE_INPUT["<b>Prepare topicUpdateInput</b>"]
 
-    subgraph TOPIC_UPDATE_DATA["topicUpdateProposal = proposeTopicUpdates(topicUpdateInput)"]
+    subgraph TOPIC_UPDATE_DATA["topicUpdateProposals = proposeTopicUpdates(topicUpdateInput)"]
       direction TB
 
-      TOPIC_UPDATE_ROLE["<b>Rôle :</b> proposer comment créer, rattacher, mettre à jour, fusionner ou différer les topics."]
+      TOPIC_UPDATE_ROLE["<b>Rôle :</b> réconcilier les understandings support avec les topics persistants, sans muter les topics ni générer de réponse."]
 
       subgraph TOPIC_UPDATE_IO[" "]
         direction LR
 
         TOPIC_UPDATE_INPUTS["<b>Input</b><br/>
         textUnderstandings<br/>
-        attachmentUnderstandings<br/>
         supportTopicKnowledge<br/>
-        conversationHistory"]
+        recentInteractionContext<br/>
+        latestUserMessageContent?"]
 
         TOPIC_UPDATE_OUTPUTS["<b>Output</b><br/>
-        topicUpdateProposal = {<br/>
-        topicUpdates[] = [{<br/>
-        action: create / attach / update / merge / defer<br/>
-        targetTopicIds?<br/>
-        sourceSegmentIds?<br/>
-        sourceAttachmentIndexes?<br/>
-        proposedChanges?<br/>
-        }]<br/>
-        deferredItems?<br/>
-        }"]
+        topicUpdateProposals[] = [{<br/>
+        proposalId<br/>
+        action: update_existing_topic / create_new_topic / no_topic_update / needs_review<br/>
+        fromUnderstandingIds[]<br/>
+        topicId?<br/>
+        selectedSourceVerbatims[]<br/>
+        updateIntent?<br/>
+        newTopic?<br/>
+        reason<br/>
+        }]"]
 
         TOPIC_UPDATE_INPUTS --> TOPIC_UPDATE_OUTPUTS
       end
@@ -328,31 +335,24 @@ flowchart TB
     end
 
     %% =====================================================
-    %% 6. SUPPORT UNDERSTANDING ASSEMBLY
+    %% 6. TOPIC COMMIT POSTPONED
     %% =====================================================
 
-    T_UNDERSTANDING_INPUT["<b>Prepare supportUnderstandingInput</b>"]
+    T_UNDERSTANDING_INPUT["<b>Skip topic commit</b>"]
 
-    subgraph UNDERSTANDING_DATA["supportUnderstanding = applyTopicUpdates(supportUnderstandingInput)"]
+    subgraph UNDERSTANDING_DATA["applyTopicUpdates postponed"]
       direction TB
 
-      UNDERSTANDING_ROLE["<b>Rôle :</b> appliquer déterministiquement les propositions et produire la compréhension consolidée du support."]
+      UNDERSTANDING_ROLE["<b>Rôle temporaire :</b> ne pas appliquer ni persister les propositions de topics avant le responsePlan."]
 
       subgraph UNDERSTANDING_IO[" "]
         direction LR
 
         UNDERSTANDING_INPUTS["<b>Input</b><br/>
-        supportTopicKnowledge<br/>
-        topicUpdateProposal<br/>
-        textUnderstandings<br/>
-        attachmentUnderstandings"]
+        topicUpdateProposals"]
 
         UNDERSTANDING_OUTPUTS["<b>Output</b><br/>
-        supportUnderstanding = {<br/>
-        topics<br/>
-        unresolvedItems<br/>
-        appliedTopicUpdates<br/>
-        }"]
+        no persisted topic mutation"]
 
         UNDERSTANDING_INPUTS --> UNDERSTANDING_OUTPUTS
       end
@@ -369,23 +369,27 @@ flowchart TB
     subgraph KNOWLEDGE_ENRICHMENT_DATA["knowledgeEnrichmentPlan = planKnowledgeEnrichment(knowledgeEnrichmentInput)"]
       direction TB
 
-      KNOWLEDGE_ENRICHMENT_ROLE["<b>Rôle :</b> déterminer si un enrichissement externe est utile et préparer les recherches par topic."]
+      KNOWLEDGE_ENRICHMENT_ROLE["<b>Rôle temporaire :</b> retourner un plan stable sans retrieval RAG."]
 
       subgraph KNOWLEDGE_ENRICHMENT_IO[" "]
         direction LR
 
         KNOWLEDGE_ENRICHMENT_INPUTS["<b>Input</b><br/>
-        supportUnderstanding<br/>
-        supportTopicKnowledge"]
+        textSurfaceAnalysis?<br/>
+        standardResponseFragments<br/>
+        textUnderstandings<br/>
+        supportResponseCues<br/>
+        topicUpdateProposals<br/>
+        supportTopicKnowledge<br/>
+        recentInteractionContext<br/>
+        latestUserMessage<br/>
+        extractableFieldCatalog"]
 
         KNOWLEDGE_ENRICHMENT_OUTPUTS["<b>Output</b><br/>
         knowledgeEnrichmentPlan = {<br/>
-        route: retrieve_knowledge / use_generic_fields<br/>
-        retrievalRequests?[] = [{<br/>
-        topicId<br/>
-        query<br/>
-        filters?<br/>
-        }]<br/>
+        route: no_retrieval<br/>
+        retrievalRequests: []<br/>
+        reason: rag_not_enabled_yet<br/>
         }"]
 
         KNOWLEDGE_ENRICHMENT_INPUTS --> KNOWLEDGE_ENRICHMENT_OUTPUTS
@@ -443,7 +447,6 @@ flowchart TB
         direction LR
 
         RETRIEVED_KNOWLEDGE_SYNTHESIS_INPUTS["<b>Input</b><br/>
-        supportUnderstanding<br/>
         knowledgeEnrichmentPlan<br/>
         knowledgeChunks"]
 
@@ -480,9 +483,17 @@ flowchart TB
         direction LR
 
         RESPONSE_PLAN_INPUTS["<b>Input</b><br/>
-        supportUnderstanding<br/>
-        retrievedKnowledgeSynthesis?<br/>
-        genericFieldKnowledge?<br/>
+        textSurfaceAnalysis?<br/>
+        standardResponseFragments<br/>
+        textUnderstandings<br/>
+        supportResponseCues<br/>
+        topicUpdateProposals<br/>
+        supportTopicKnowledge<br/>
+        knowledgeEnrichmentPlan<br/>
+        retrievedSupportKnowledge: []<br/>
+        synthesizedRetrievedKnowledge: null<br/>
+        genericFieldKnowledge<br/>
+        extractableFieldCatalog<br/>
         recentInteractionContext<br/>
         channel"]
 
@@ -580,7 +591,12 @@ flowchart TB
         PATCHES_INPUTS["<b>Input</b><br/>
         promptSecuritySignals<br/>
         turnAnalysisPlan<br/>
-        supportUnderstanding?<br/>
+        textUnderstandings?<br/>
+        supportResponseCues?<br/>
+        topicUpdateProposals?<br/>
+        knowledgeEnrichmentPlan?<br/>
+        retrievedSupportKnowledge?<br/>
+        synthesizedRetrievedKnowledge?<br/>
         responsePlan?<br/>
         userResponse"]
 
@@ -640,16 +656,7 @@ flowchart TB
     T_UNDERSTANDING_INPUT --> UNDERSTANDING_DATA
     UNDERSTANDING_DATA --> T_KNOWLEDGE_ENRICHMENT_INPUT
     T_KNOWLEDGE_ENRICHMENT_INPUT --> KNOWLEDGE_ENRICHMENT_DATA
-    KNOWLEDGE_ENRICHMENT_DATA --> T_RAG_ROUTE
-
-    T_RAG_ROUTE -->|false| T_GENERIC_FIELD_KNOWLEDGE
-    T_RAG_ROUTE -->|true| T_RAG_INPUT
-
-    T_RAG_INPUT --> RAG_DATA
-    RAG_DATA --> T_RETRIEVED_KNOWLEDGE_SYNTHESIS_INPUT
-    T_RETRIEVED_KNOWLEDGE_SYNTHESIS_INPUT --> RETRIEVED_KNOWLEDGE_SYNTHESIS_DATA
-
-    RETRIEVED_KNOWLEDGE_SYNTHESIS_DATA --> T_RESPONSE_PLAN_INPUT
+    KNOWLEDGE_ENRICHMENT_DATA -->|no_retrieval| T_GENERIC_FIELD_KNOWLEDGE
     T_GENERIC_FIELD_KNOWLEDGE --> T_RESPONSE_PLAN_INPUT
 
     T_RESPONSE_PLAN_INPUT --> RESPONSE_PLAN_DATA
@@ -672,7 +679,13 @@ flowchart TB
 
     NEXT_OUTPUTS["<b>Outputs produced by runSupportProcessingPipelineV2</b><br/>
     userResponse<br/>
-    patches"]
+    patches<br/>
+    textUnderstandings?<br/>
+    supportResponseCues?<br/>
+    topicUpdateProposals?<br/>
+    knowledgeEnrichmentPlan?<br/>
+    retrievedSupportKnowledge?<br/>
+    synthesizedRetrievedKnowledge?"]
   end
 
   PREVIOUS_STEP --> PIPELINE
@@ -750,23 +763,25 @@ Notes:
 - `turnAnalysisPlan` carries `analyzeText`, `analyzeAttachments`, and `matchedPatternIds`; when both analysis flags are false, the turn follows the standard-only branch.
 - `planTurnAnalysis` enables text analysis when trimmed text exists unless the account is `suspicious` with matched security patterns.
 - `planTurnAnalysis` enables attachment surface analysis only when attachments exist and `accountTrustStatus.status` is `trusted` or `neutral`; attachments from `suspicious` accounts are not analyzed.
-- Phase 1 is surface-only: text runs `analyzeTextSurface`, attachments run `analyzeAttachmentSurface`, and no deep support analysis runs there.
+- Phase 1 is surface-only: text runs `analyzeTextSurface` as LLM1 for routing and macro-segmentation only, attachments run `analyzeAttachmentSurface`, and no deep support analysis runs there.
 - `buildStandardResponseFragments` always runs after enabled surface paths, is fully deterministic, produces canonical formulations for standard segments, never creates fragments for `support_relevant`, and never sends fragments directly to the user.
 - When text surface is skipped, `buildStandardResponseFragments` resolves language deterministically from known language hints or the current message before falling back to English.
 - `Deep analysis needed?` is evaluated directly from `textSurfaceAnalysis` and `attachmentSurfaceAnalysis`; the `no_analyze` branch naturally evaluates false.
 - When no deep analysis is needed, deep analysis, topic, knowledge, and `planSupportResponse` steps are skipped, then `renderSupportResponse` runs with no `responsePlan`.
-- Phase 2 is deep-only: text runs `analyzeSupportText` for support text segments from `textSurfaceAnalysis`, attachments run `analyzeSupportAttachments` only for selected attachments from `attachmentSurfaceAnalysis`.
-- `analyzeSupportText` makes one LLM call for all `support_relevant` text segments and may return multiple understanding units per macro-segment; context can disambiguate short answers, but facts and tested actions must stay evidenced in the current segment.
+- Phase 2 is deep-only: text runs `analyzeSupportText` as LLM2 for support text segments from `textSurfaceAnalysis`, attachments run `analyzeSupportAttachments` only for selected attachments from `attachmentSurfaceAnalysis`.
+- `analyzeSupportText` makes one LLM call for all `support_relevant` text segments and may return multiple understanding units per macro-segment plus top-level `supportResponseCues` for embedded impolite, frustrated, urgent, pressured, or very negative wording; context can disambiguate short answers, but facts and tested actions must stay evidenced in the current segment.
+- `proposeTopicUpdates` is LLM3: it reconciles `TextUnderstanding[]` with persistent topics only, but it does not receive standard segments, extract facts, mutate topics, plan a response, or generate final topic ids.
+- Normal LLM3 shape is `1 understanding -> 1 topic proposal`; allowed exceptions are `N understandings -> 1 topic` when they describe the same persistent issue, or `1 understanding -> N proposals` only when the split is traceable through selected source verbatims. Otherwise LLM3 must use `needs_review`.
 - Attachment safety and eligibility are handled before full analysis by `planTurnAnalysis` and `analyzeAttachmentSurface`.
 - Fallback is handled by `buildStandardResponseFragments` when no standard or deep work is available from the current branch.
-- `proposeTopicUpdates` runs only after the deep analysis wait step and consumes `textUnderstandings`, `attachmentUnderstandings`, `supportTopicKnowledge`, and `conversationHistory`.
-- `supportUnderstanding` is the deterministic consolidated object produced by `applyTopicUpdates`; downstream enrichment and response planning are based on this stable `SupportUnderstandingV2`.
-- `planKnowledgeEnrichment` decides whether retrieval is useful and prepares `retrievalRequests` per topic.
-- `synthesizeRetrievedKnowledge` runs only after retrieval and turns `knowledgeChunks` into structured `retrievedKnowledgeSynthesis`; when no retrieval runs, `genericFieldKnowledge` goes directly to `planSupportResponse`.
-- `planSupportResponse` receives `supportUnderstanding`, optional `retrievedKnowledgeSynthesis`, optional `genericFieldKnowledge`, `recentInteractionContext`, and `channel`; standard fragments stay separate until rendering.
+- `proposeTopicUpdates` runs only after the deep analysis wait step and consumes `textUnderstandings`, `supportTopicKnowledge`, `recentInteractionContext`, and the latest message content for consistency only; it does not receive `supportResponseCues`.
+- `applyTopicUpdates` is temporarily skipped in the main V2 path; topic proposals are not applied or persisted before response planning.
+- `planKnowledgeEnrichment` is temporarily mocked and returns `route: "no_retrieval"`, `retrievalRequests: []`, and `reason: "rag_not_enabled_yet"`.
+- Retrieval and synthesis are skipped while `knowledgeEnrichmentPlan.route` is `no_retrieval`; the pipeline passes `retrievedSupportKnowledge: []` and `synthesizedRetrievedKnowledge: null` forward.
+- `planSupportResponse` receives the LLM1/LLM2/LLM3 outputs directly, including `standardResponseFragments`, `textUnderstandings`, `supportResponseCues`, and `topicUpdateProposals`, plus `supportTopicKnowledge`, recent context, generic field knowledge, and the empty/mock knowledge outputs; standard fragments stay available for planning and rendering.
 - Both standard-only and deep-support branches converge at `Prepare renderSupportResponseInput` before a single `renderSupportResponse` call.
 - `renderSupportResponse` runs in every branch. It receives optional `responsePlan`, `standardResponseFragments`, optional `textSurfaceAnalysis`, `accountProfile`, and `channel`, then produces the single rendered support response.
-- After `renderSupportResponse`, the pipeline runs `buildUserResponse({ supportResponse })`, `buildSupportPatches`, and returns `{ userResponse, patches }`.
+- After `renderSupportResponse`, the pipeline runs `buildUserResponse({ supportResponse })`, `buildSupportPatches`, and returns `{ userResponse, patches }` plus temporary debug/bridge outputs when produced, including `textUnderstandings`, `supportResponseCues`, `topicUpdateProposals`, and mock knowledge outputs.
 - `recentInteractionContext` is provided by the previous step and is not rebuilt inside this pipeline; it is sent to deep text and deep attachment analysis, and to response planning.
 - `extractableFieldCatalog` est une configuration interne, pas un input utilisateur du pipeline.
 - `facts` regroupe les champs catalogués et les faits ouverts avec evidence; les actions testées avec résultat restent dans `testedActions`.

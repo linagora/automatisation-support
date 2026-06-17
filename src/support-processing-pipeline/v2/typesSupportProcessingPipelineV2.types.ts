@@ -22,6 +22,10 @@ import type {
   TestedActionOutcome,
   TextUncertaintyReason
 } from "./analyze-support-text/supportTextAnalysis.taxonomy";
+import type {
+  ResponsePlanningPolicy,
+  SupportResponsePlan
+} from "./plan-support-response/typesPlanSupportResponse.types";
 
 export type {
   BroadCategoryHint,
@@ -86,11 +90,19 @@ export type SupportProcessingPipelineV2Input = {
   supportTopicKnowledge: SupportTopicKnowledge;
   conversationHistory: ConversationHistory;
   recentInteractionContext: RecentInteractionContext;
+  responsePlanningPolicy?: Partial<ResponsePlanningPolicy>;
 };
 
 export type SupportProcessingPipelineV2Output = {
   userResponse: UserResponse;
   patches: Patches;
+  textUnderstandings?: TextUnderstanding[];
+  supportResponseCues?: SupportResponseCue[];
+  topicUpdateProposals?: TopicUpdateProposal[];
+  knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
+  retrievedSupportKnowledge?: KnowledgeChunk[];
+  synthesizedRetrievedKnowledge?: RetrievedKnowledgeSynthesis | null;
+  responsePlan?: ResponsePlanV2;
 };
 
 export type PromptSecuritySignals = {
@@ -138,6 +150,14 @@ export type TestedAction = {
   evidence: string;
 };
 
+export type SupportResponseCue = {
+  cueId: string;
+  sourceSegmentIds: string[];
+  relatedUnderstandingIds: string[];
+  verbatim: string;
+  cueNote: string;
+};
+
 export type SupportFact =
   | {
       type: "catalogued_field";
@@ -154,8 +174,12 @@ export type SupportFact =
     };
 
 export type ContextualAnswer = {
+  type: "none";
+  value: null;
+  evidence: null;
+} | {
   type: "affirmative" | "negative" | "value" | "reference";
-  value?: string | number | boolean;
+  value?: string | number | boolean | null;
   evidence: string;
 };
 
@@ -169,7 +193,7 @@ export type TextUncertainty = {
 
 export type TextUnderstanding = {
   understandingId: string;
-  sourceSegmentId: string;
+  sourceSegmentIds: string[];
   sourceVerbatims: string[];
   summary: string;
   primaryUserExpectation: PrimaryUserExpectation;
@@ -180,7 +204,7 @@ export type TextUnderstanding = {
   supportNeeds: SupportNeed[];
   broadCategoryHint?: BroadCategoryHint;
   contextDependency: ContextDependency;
-  contextualAnswer?: ContextualAnswer;
+  contextualAnswer: ContextualAnswer;
   facts: SupportFact[];
   testedActions: TestedAction[];
   uncertainties: TextUncertainty[];
@@ -196,61 +220,74 @@ export type AttachmentUnderstanding = {
 };
 
 export type TopicUpdateAction =
-  | "create"
-  | "attach"
-  | "update"
-  | "merge";
+  | "update_existing_topic"
+  | "create_new_topic"
+  | "no_topic_update"
+  | "needs_review";
 
-export type ProposedTopicChanges = {
-  topicDraft?: {
-    topicCategory: TopicCategory;
-    summary: string;
-  };
-  summaryPatch?: string;
-  facts?: SupportFact[];
-  testedActions?: TestedAction[];
-  explicitUserRequestPatch?: string;
-  mergeRationale?: string;
+export type TopicUpdateRelationship =
+  | "continues_existing_issue"
+  | "adds_new_information"
+  | "answers_requested_field"
+  | "reports_test_result"
+  | "reports_resolution"
+  | "reports_partial_resolution"
+  | "corrects_previous_information"
+  | "reopens_or_persists_issue"
+  | "creates_distinct_topic"
+  | "unclear";
+
+export type TopicStatusHint =
+  | "open"
+  | "resolved"
+  | "partially_resolved"
+  | "unclear";
+
+export type BlockingIssueValue =
+  | "yes"
+  | "no"
+  | "unknown";
+
+export type TopicUpdateIntent = {
+  relationship: TopicUpdateRelationship;
+  blockingIssue: BlockingIssueValue;
+  statusHint: TopicStatusHint;
+  userGoal: string | null;
+  correctionNote: string | null;
 };
 
-export type TopicUpdateItem = {
-  action: TopicUpdateAction;
-  targetTopicIds?: SupportTopicId[];
-  sourceSegmentIds: string[];
-  sourceAttachmentIndexes: number[];
-  proposedChanges?: ProposedTopicChanges;
-};
-
-export type DeferredTopicItem = {
-  sourceSegmentIds: string[];
-  sourceAttachmentIndexes: number[];
-  reason:
-    | "ambiguous_topic"
-    | "missing_context"
-    | "conflicting_information"
-    | "insufficient_evidence"
-    | "proposal_failed";
-  detail: string;
+export type NewTopicDraft = {
+  title: string;
+  broadCategoryHint: string | null;
+  userGoal: string | null;
+  blockingIssue: BlockingIssueValue;
 };
 
 export type TopicUpdateProposal = {
-  topicUpdates: TopicUpdateItem[];
-  deferredItems: DeferredTopicItem[];
+  proposalId: string;
+  action: TopicUpdateAction;
+  fromUnderstandingIds: string[];
+  topicId: string | null;
+  selectedSourceVerbatims: string[];
+  updateIntent: TopicUpdateIntent | null;
+  newTopic: NewTopicDraft | null;
+  reason: string;
 };
 
 export type SupportUnderstandingV2 = {
   topics: Record<string, unknown>[];
   unresolvedItems: string[];
-  appliedTopicUpdates: TopicUpdateProposal["topicUpdates"];
+  appliedTopicUpdates: TopicUpdateProposal[];
 };
 
 export type KnowledgeEnrichmentPlan = {
-  route: "retrieve_knowledge" | "use_generic_fields";
-  retrievalRequests?: {
+  route: "no_retrieval" | "retrieve_knowledge" | "use_generic_fields";
+  retrievalRequests: {
     topicId: SupportTopicId;
     query: string;
     filters?: Record<string, string | number | boolean | string[]>;
   }[];
+  reason?: string;
 };
 
 export type KnowledgeChunk = {
@@ -274,12 +311,7 @@ export type RetrievedKnowledgeSynthesis = {
   }[];
 };
 
-export type ResponsePlanV2 = {
-  topicPlans: Record<string, unknown>[];
-  informationRequests?: string[];
-  evidenceRequests?: string[];
-  handover?: boolean;
-};
+export type ResponsePlanV2 = SupportResponsePlan;
 
 export type DetectSuspiciousPromptPatternsInput = {
   latestUserMessage: LatestUserMessage;
@@ -320,6 +352,11 @@ export type AnalyzeSupportTextInput = {
   extractableFieldCatalog: ExtractableFieldDefinition[];
 };
 
+export type AnalyzeSupportTextOutput = {
+  textUnderstandings: TextUnderstanding[];
+  supportResponseCues: SupportResponseCue[];
+};
+
 export type AnalyzeSupportAttachmentsInput = {
   turnAnalysisPlan: TurnAnalysisPlan;
   attachmentSurfaceAnalysis: AttachmentSurfaceAnalysis;
@@ -330,22 +367,30 @@ export type AnalyzeSupportAttachmentsInput = {
 };
 
 export type ProposeTopicUpdatesInput = {
+  existingTopics?: unknown[];
   textUnderstandings: TextUnderstanding[];
-  attachmentUnderstandings: AttachmentUnderstanding[];
   supportTopicKnowledge: SupportTopicKnowledge;
-  conversationHistory: ConversationHistory;
+  recentInteractionContext: RecentInteractionContext;
+  latestUserMessageContent?: string | null;
 };
 
 export type ApplyTopicUpdatesInput = {
   supportTopicKnowledge: SupportTopicKnowledge;
-  topicUpdateProposal: TopicUpdateProposal;
+  topicUpdateProposals: TopicUpdateProposal[];
   textUnderstandings: TextUnderstanding[];
   attachmentUnderstandings: AttachmentUnderstanding[];
 };
 
 export type PlanKnowledgeEnrichmentInput = {
-  supportUnderstanding: SupportUnderstandingV2;
+  textSurfaceAnalysis?: TextSurfaceAnalysis;
+  standardResponseFragments: StandardResponseFragment[];
+  textUnderstandings: TextUnderstanding[];
+  supportResponseCues: SupportResponseCue[];
+  topicUpdateProposals: TopicUpdateProposal[];
   supportTopicKnowledge: SupportTopicKnowledge;
+  recentInteractionContext: RecentInteractionContext;
+  latestUserMessage: LatestUserMessage;
+  extractableFieldCatalog: ExtractableFieldDefinition[];
 };
 
 export type RetrieveSupportKnowledgeInput = {
@@ -353,24 +398,44 @@ export type RetrieveSupportKnowledgeInput = {
 };
 
 export type SynthesizeRetrievedKnowledgeInput = {
-  supportUnderstanding: SupportUnderstandingV2;
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
   knowledgeChunks: KnowledgeChunk[];
 };
 
 export type PlanSupportResponseInput = {
-  supportUnderstanding: SupportUnderstandingV2;
-  retrievedKnowledgeSynthesis?: RetrievedKnowledgeSynthesis;
-  genericFieldKnowledge?: GenericFieldKnowledge;
+  latestUserMessageContent: string;
+  textSurfaceAnalysis?: TextSurfaceAnalysis;
+  standardResponseFragments: StandardResponseFragment[];
+  textUnderstandings: TextUnderstanding[];
+  supportResponseCues: SupportResponseCue[];
+  topicUpdateProposals: TopicUpdateProposal[];
+  supportTopicKnowledge: SupportTopicKnowledge;
+  existingTopics?: unknown[];
+  knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
+  retrievedSupportKnowledge: KnowledgeChunk[];
+  synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null;
+  genericFieldKnowledge: GenericFieldKnowledge;
+  extractableFieldCatalog: ExtractableFieldDefinition[];
   recentInteractionContext: RecentInteractionContext;
+  responsePlanningPolicy?: Partial<ResponsePlanningPolicy>;
   channel: Channel;
 };
 
 export type RenderSupportResponseInput = {
-  responsePlan?: ResponsePlanV2;
+  latestUserMessageContent: string;
+  responsePlan?: ResponsePlanV2 | null;
   standardResponseFragments: StandardResponseFragment[];
   textSurfaceAnalysis?: TextSurfaceAnalysis;
-  accountProfile: AccountProfile;
+  supportResponseCues?: SupportResponseCue[];
+  textUnderstandings?: TextUnderstanding[];
+  topicUpdateProposals?: TopicUpdateProposal[];
+  existingTopics?: unknown[];
+  knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
+  retrievedSupportKnowledge?: KnowledgeChunk[];
+  synthesizedRetrievedKnowledge?: RetrievedKnowledgeSynthesis | null;
+  recentInteractionContext?: RecentInteractionContext;
+  responsePlanningPolicy?: Partial<ResponsePlanningPolicy>;
+  accountProfile?: AccountProfile;
   channel: Channel;
 };
 
@@ -381,7 +446,12 @@ export type BuildUserResponseInput = {
 export type BuildSupportPatchesInput = {
   promptSecuritySignals: PromptSecuritySignals;
   turnAnalysisPlan: TurnAnalysisPlan;
-  supportUnderstanding?: SupportUnderstandingV2;
+  textUnderstandings?: TextUnderstanding[];
+  supportResponseCues?: SupportResponseCue[];
+  topicUpdateProposals?: TopicUpdateProposal[];
+  knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
+  retrievedSupportKnowledge?: KnowledgeChunk[];
+  synthesizedRetrievedKnowledge?: RetrievedKnowledgeSynthesis | null;
   responsePlan?: ResponsePlanV2;
   userResponse: UserResponse;
 };
@@ -406,7 +476,7 @@ export type SupportProcessingPipelineV2Steps = {
   >;
   analyzeSupportText?: PipelineStep<
     AnalyzeSupportTextInput,
-    TextUnderstanding[]
+    AnalyzeSupportTextOutput
   >;
   analyzeSupportAttachments?: PipelineStep<
     AnalyzeSupportAttachmentsInput,
@@ -414,7 +484,7 @@ export type SupportProcessingPipelineV2Steps = {
   >;
   proposeTopicUpdates?: PipelineStep<
     ProposeTopicUpdatesInput,
-    TopicUpdateProposal
+    TopicUpdateProposal[]
   >;
   applyTopicUpdates?: PipelineStep<
     ApplyTopicUpdatesInput,

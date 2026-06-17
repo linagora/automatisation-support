@@ -15,10 +15,10 @@ import type {
   PromptSecuritySignals,
   ResponsePlanV2,
   StandardResponseFragment,
+  SupportResponseCue,
   SupportProcessingPipelineV2Input,
   SupportProcessingProgressEvent,
   SupportProcessingPipelineV2Steps,
-  SupportUnderstandingV2,
   TextSurfaceAnalysis,
   TextUnderstanding,
   TopicUpdateProposal,
@@ -151,16 +151,31 @@ const deepAttachmentSurface: AttachmentSurfaceAnalysis = [
 const textUnderstandings: TextUnderstanding[] = [
   {
     understandingId: "text_understanding_1",
-    sourceSegmentId: "seg_support",
+    sourceSegmentIds: ["seg_support"],
     sourceVerbatims: ["Login issue"],
     summary: "Login issue",
     primaryUserExpectation: "wants_solution",
     supportNeeds: ["possible_account_or_access_action"],
     broadCategoryHint: "access_security",
     contextDependency: "standalone_but_may_match_existing",
+    contextualAnswer: {
+      type: "none",
+      value: null,
+      evidence: null
+    },
     facts: [],
     testedActions: [],
     uncertainties: []
+  }
+];
+
+const supportResponseCues: SupportResponseCue[] = [
+  {
+    cueId: "support_response_cue_1",
+    sourceSegmentIds: ["seg_support"],
+    relatedUnderstandingIds: ["text_understanding_1"],
+    verbatim: "je n'arrive pas",
+    cueNote: "strong frustration"
   }
 ];
 
@@ -172,39 +187,34 @@ const attachmentUnderstandings: AttachmentUnderstanding[] = [
   }
 ];
 
-const topicUpdateProposal: TopicUpdateProposal = {
-  topicUpdates: [
-    {
-      action: "create",
-      sourceSegmentIds: ["seg_support"],
-      sourceAttachmentIndexes: []
-    }
-  ],
-  deferredItems: []
-};
-
-const supportUnderstanding: SupportUnderstandingV2 = {
-  topics: [
-    {
-      topicId: 1
-    }
-  ],
-  unresolvedItems: [],
-  appliedTopicUpdates: topicUpdateProposal.topicUpdates
-};
+const topicUpdateProposals: TopicUpdateProposal[] = [
+  {
+    proposalId: "topic_update_proposal_1",
+    action: "create_new_topic",
+    fromUnderstandingIds: ["text_understanding_1"],
+    topicId: null,
+    selectedSourceVerbatims: ["Login issue"],
+    updateIntent: {
+      relationship: "creates_distinct_topic",
+      blockingIssue: "yes",
+      statusHint: "open",
+      userGoal: "Resolve login issue",
+      correctionNote: null
+    },
+    newTopic: {
+      title: "Login issue",
+      broadCategoryHint: "access_security",
+      userGoal: "Resolve login issue",
+      blockingIssue: "yes"
+    },
+    reason: "The login issue is not covered by an existing topic."
+  }
+];
 
 const noRagPlan: KnowledgeEnrichmentPlan = {
-  route: "use_generic_fields"
-};
-
-const ragPlan: KnowledgeEnrichmentPlan = {
-  route: "retrieve_knowledge",
-  retrievalRequests: [
-    {
-      topicId: 1,
-      query: "login issue"
-    }
-  ]
+  route: "no_retrieval",
+  retrievalRequests: [],
+  reason: "rag_not_enabled_yet"
 };
 
 const knowledgeChunks: KnowledgeChunk[] = [
@@ -297,10 +307,15 @@ function buildSteps(
     analyzeTextSurface: vi.fn(async () => standardOnlyTextSurface),
     analyzeAttachmentSurface: vi.fn(async () => noDeepAttachmentSurface),
     buildStandardResponseFragments: vi.fn(async () => []),
-    analyzeSupportText: vi.fn(async () => textUnderstandings),
+    analyzeSupportText: vi.fn(async () => ({
+      textUnderstandings,
+      supportResponseCues
+    })),
     analyzeSupportAttachments: vi.fn(async () => attachmentUnderstandings),
-    proposeTopicUpdates: vi.fn(async () => topicUpdateProposal),
-    applyTopicUpdates: vi.fn(async () => supportUnderstanding),
+    proposeTopicUpdates: vi.fn(async () => topicUpdateProposals),
+    applyTopicUpdates: vi.fn(async () => {
+      throw new Error("applyTopicUpdates should not run in the temporary V2 flow");
+    }),
     planKnowledgeEnrichment: vi.fn(async () => noRagPlan),
     retrieveSupportKnowledge: vi.fn(async () => knowledgeChunks),
     synthesizeRetrievedKnowledge: vi.fn(
@@ -382,7 +397,7 @@ describe("runSupportProcessingPipelineV2", function () {
       analyzeTextSurface: vi.fn(async () => supportTextSurface)
     });
 
-    await runSupportProcessingPipelineV2(buildInput(), steps);
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
 
     expect(steps.analyzeSupportText).toHaveBeenCalled();
     expect(steps.analyzeSupportAttachments).not.toHaveBeenCalled();
@@ -395,10 +410,18 @@ describe("runSupportProcessingPipelineV2", function () {
     });
     expect(steps.proposeTopicUpdates).toHaveBeenCalledWith({
       textUnderstandings,
-      attachmentUnderstandings: [],
       supportTopicKnowledge: buildInput().supportTopicKnowledge,
-      conversationHistory: buildInput().conversationHistory
+      recentInteractionContext: buildInput().recentInteractionContext,
+      latestUserMessageContent: buildInput().latestUserMessage.content
     });
+    expect(steps.proposeTopicUpdates).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        supportResponseCues: expect.anything()
+      })
+    );
+    expect(output.supportResponseCues).toEqual(supportResponseCues);
+    expect(output.topicUpdateProposals).toEqual(topicUpdateProposals);
+    expect(output.topicUpdateProposals?.[0]?.topicId).toBeNull();
   });
 
   it("runs attachment deep analysis when attachment surface selects it", async function () {
@@ -417,9 +440,9 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.analyzeSupportAttachments).toHaveBeenCalled();
     expect(steps.proposeTopicUpdates).toHaveBeenCalledWith({
       textUnderstandings: [],
-      attachmentUnderstandings,
       supportTopicKnowledge: buildInput().supportTopicKnowledge,
-      conversationHistory: buildInput().conversationHistory
+      recentInteractionContext: buildInput().recentInteractionContext,
+      latestUserMessageContent: buildInput().latestUserMessage.content
     });
   });
 
@@ -452,62 +475,49 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.analyzeSupportAttachments).toHaveBeenCalled();
   });
 
-  it("retrieves and synthesizes knowledge on the RAG branch", async function () {
+  it("moves from topic proposals to mocked knowledge without applying topic updates", async function () {
     const steps = buildSteps({
       planTurnAnalysis: vi.fn(async () => ({
         analyzeText: true,
         analyzeAttachments: false,
         matchedPatternIds: []
       })),
-      analyzeTextSurface: vi.fn(async () => supportTextSurface),
-      planKnowledgeEnrichment: vi.fn(async () => ragPlan)
+      analyzeTextSurface: vi.fn(async () => supportTextSurface)
     });
 
-    await runSupportProcessingPipelineV2(buildInput(), steps);
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
 
-    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledWith({
-      knowledgeEnrichmentPlan: ragPlan
-    });
-    expect(steps.synthesizeRetrievedKnowledge).toHaveBeenCalledWith({
-      supportUnderstanding,
-      knowledgeEnrichmentPlan: ragPlan,
-      knowledgeChunks
-    });
-    expect(steps.planSupportResponse).toHaveBeenCalledWith(
-      expect.objectContaining({
-        retrievedKnowledgeSynthesis
-      })
-    );
-    expect(steps.planSupportResponse).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        standardResponseFragments: expect.anything()
-      })
-    );
-  });
-
-  it("uses generic field knowledge without RAG on the non-RAG branch", async function () {
-    const steps = buildSteps({
-      planTurnAnalysis: vi.fn(async () => ({
-        analyzeText: true,
-        analyzeAttachments: false,
-        matchedPatternIds: []
-      })),
-      analyzeTextSurface: vi.fn(async () => supportTextSurface),
-      planKnowledgeEnrichment: vi.fn(async () => noRagPlan)
-    });
-
-    await runSupportProcessingPipelineV2(buildInput(), steps);
-
+    expect(steps.applyTopicUpdates).not.toHaveBeenCalled();
+    expect(output.topicUpdateProposals).toEqual(topicUpdateProposals);
+    expect(output.knowledgeEnrichmentPlan).toEqual(noRagPlan);
+    expect(output.retrievedSupportKnowledge).toEqual([]);
+    expect(output.synthesizedRetrievedKnowledge).toBeNull();
     expect(steps.retrieveSupportKnowledge).not.toHaveBeenCalled();
     expect(steps.synthesizeRetrievedKnowledge).not.toHaveBeenCalled();
+    expect(steps.planKnowledgeEnrichment).toHaveBeenCalledWith({
+      textSurfaceAnalysis: supportTextSurface,
+      standardResponseFragments: [],
+      textUnderstandings,
+      supportResponseCues,
+      topicUpdateProposals,
+      supportTopicKnowledge: buildInput().supportTopicKnowledge,
+      recentInteractionContext: buildInput().recentInteractionContext,
+      latestUserMessage: buildInput().latestUserMessage,
+      extractableFieldCatalog: []
+    });
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
-        genericFieldKnowledge: {}
-      })
-    );
-    expect(steps.planSupportResponse).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        standardResponseFragments: expect.anything()
+        textSurfaceAnalysis: supportTextSurface,
+        standardResponseFragments: [],
+        textUnderstandings,
+        supportResponseCues,
+        topicUpdateProposals,
+        supportTopicKnowledge: buildInput().supportTopicKnowledge,
+        knowledgeEnrichmentPlan: noRagPlan,
+        retrievedSupportKnowledge: [],
+        synthesizedRetrievedKnowledge: null,
+        genericFieldKnowledge: {},
+        extractableFieldCatalog: []
       })
     );
   });
@@ -695,6 +705,14 @@ describe("runSupportProcessingPipelineV2", function () {
       status: "skipped"
     });
     expect(progressEvents).toContainEqual({
+      step: "applyTopicUpdates",
+      status: "skipped"
+    });
+    expect(progressEvents).toContainEqual({
+      step: "planKnowledgeEnrichment",
+      status: "completed"
+    });
+    expect(progressEvents).toContainEqual({
       step: "retrieveSupportKnowledge",
       status: "skipped"
     });
@@ -709,50 +727,6 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(progressEvents).toContainEqual({
       step: "renderSupportResponse",
       status: "completed"
-    });
-  });
-
-  it("reports progress for deep analysis with RAG", async function () {
-    const progressEvents: SupportProcessingProgressEvent[] = [];
-    const steps = buildSteps({
-      planTurnAnalysis: vi.fn(async () => ({
-        analyzeText: true,
-        analyzeAttachments: false,
-        matchedPatternIds: []
-      })),
-      analyzeTextSurface: vi.fn(async () => supportTextSurface),
-      planKnowledgeEnrichment: vi.fn(async () => ragPlan)
-    });
-
-    await runSupportProcessingPipelineV2(buildInput(), steps, {
-      reportProgress: (event) => {
-        progressEvents.push(event);
-      }
-    });
-
-    expect(progressEvents).toContainEqual({
-      step: "retrieveSupportKnowledge",
-      status: "started"
-    });
-    expect(progressEvents).toContainEqual({
-      step: "retrieveSupportKnowledge",
-      status: "completed"
-    });
-    expect(progressEvents).toContainEqual({
-      step: "synthesizeRetrievedKnowledge",
-      status: "started"
-    });
-    expect(progressEvents).toContainEqual({
-      step: "synthesizeRetrievedKnowledge",
-      status: "completed"
-    });
-    expect(progressEvents).not.toContainEqual({
-      step: "retrieveSupportKnowledge",
-      status: "skipped"
-    });
-    expect(progressEvents).not.toContainEqual({
-      step: "synthesizeRetrievedKnowledge",
-      status: "skipped"
     });
   });
 

@@ -1,5 +1,6 @@
 import type {
   AnalyzeSupportTextInput,
+  AnalyzeSupportTextOutput,
   BroadCategoryHint,
   ContextDependency,
   ExtractableFieldDefinition,
@@ -8,6 +9,7 @@ import type {
   ContextualAnswer,
   SupportFact,
   SupportNeed,
+  SupportResponseCue,
   TestedAction,
   TextSurfaceAnalysis,
   TextUnderstanding,
@@ -46,7 +48,7 @@ export type RawSupportTextAnalysis = {
 };
 
 export type RawSupportTextItem = {
-  sourceSegmentId?: unknown;
+  sourceSegmentIds?: unknown;
   sourceVerbatims?: unknown;
   summary?: unknown;
   primaryUserExpectation?: unknown;
@@ -58,6 +60,13 @@ export type RawSupportTextItem = {
   facts?: unknown;
   testedActions?: unknown;
   uncertainties?: unknown;
+};
+
+export type RawSupportResponseCue = {
+  sourceSegmentIds?: unknown;
+  relatedUnderstandingIds?: unknown;
+  verbatim?: unknown;
+  cueNote?: unknown;
 };
 
 export type RawExplicitUserRequest = {
@@ -102,15 +111,18 @@ export type SupportTextValidationResult =
   | {
       status: "valid";
       textUnderstandings: TextUnderstanding[];
+      supportResponseCues: SupportResponseCue[];
     }
   | {
       status: "invalid";
       reason: string;
       textUnderstandings: TextUnderstanding[];
+      supportResponseCues: SupportResponseCue[];
     };
 
 export type {
   AnalyzeSupportTextInput,
+  AnalyzeSupportTextOutput,
   BroadCategoryHint,
   ContextDependency,
   ExtractableFieldDefinition,
@@ -119,6 +131,7 @@ export type {
   ContextualAnswer,
   SupportFact,
   SupportNeed,
+  SupportResponseCue,
   TestedAction,
   TextSurfaceAnalysis,
   TextUnderstanding,

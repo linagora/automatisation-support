@@ -98,16 +98,15 @@ describe("analyzeTextSurface", function () {
     expect(serializedPrompt).toContain("prompt_injection_attempt");
     expect(serializedPrompt).toContain("support_relevant");
     expect(serializedPrompt).toContain("safety_sensitive");
-    expect(serializedPrompt).toContain("Do not extract");
+    expect(serializedPrompt).toContain("Do not extract facts");
     expect(serializedPrompt).toContain("facts");
-    expect(serializedPrompt).toContain("fields");
     expect(serializedPrompt).toContain("topics");
     expect(serializedPrompt).toContain("solutions");
-    expect(serializedPrompt).toContain("split it into sequential segments");
-    expect(serializedPrompt).toContain("routing role changes");
+    expect(serializedPrompt).toContain("exact sequential verbatim segments");
+    expect(serializedPrompt).toContain("routing role");
     expect(serializedPrompt).toContain("Recent interaction context");
     expect(serializedPrompt).toContain("asked for confirmation");
-    expect(serializedPrompt).toContain("ordered and non-overlapping");
+    expect(serializedPrompt).toContain("sequential, non-overlapping");
     expect(serializedPrompt).toContain("standard_interaction");
     expect(serializedPrompt).not.toContain("Never return both");
     expect(serializedPrompt).not.toContain("absorb related greetings");
@@ -701,5 +700,74 @@ describe("analyzeTextSurface", function () {
         }
       ]
     });
+  });
+
+  it("keeps embedded impolite wording inside the support segment", function () {
+    const message = "J'ai un putain de problème avec mes mails";
+    const output = formatTextSurfaceAnalysisOutput({
+      latestUserMessageContent: message,
+      rawTextSurfaceAnalysis: completed({
+        userLanguage: "French",
+        segments: [
+          {
+            verbatim: message,
+            category: "support_relevant",
+            standardSubcategory: null
+          }
+        ]
+      })
+    });
+
+    expect(output).toEqual({
+      status: "valid",
+      analysis: {
+        userLanguage: "French",
+        segments: [
+          {
+            segmentId: "text_segment_1",
+            verbatim: message,
+            category: "support_relevant"
+          }
+        ]
+      }
+    });
+  });
+
+  it("allows cleanly separable impolite wording before support content", function () {
+    const output = formatTextSurfaceAnalysisOutput({
+      latestUserMessageContent: "Putain, j'ai un problème avec mes mails",
+      rawTextSurfaceAnalysis: completed({
+        userLanguage: "French",
+        segments: [
+          {
+            verbatim: "Putain,",
+            category: "standard_interaction",
+            standardSubcategory: "impolite"
+          },
+          {
+            verbatim: "j'ai un problème avec mes mails",
+            category: "support_relevant",
+            standardSubcategory: null
+          }
+        ]
+      })
+    });
+
+    expect(output.status).toBe("valid");
+    if (output.status === "valid") {
+      expect(output.analysis.segments).toEqual([
+        {
+          segmentId: "text_segment_1",
+          verbatim: "Putain,",
+          category: "standard_interaction",
+          standardSubcategory: "impolite"
+        },
+        {
+          segmentId: "text_segment_2",
+          verbatim: "j'ai un problème avec mes mails",
+          category: "support_relevant"
+        }
+      ]);
+    }
   });
 });

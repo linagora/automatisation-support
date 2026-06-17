@@ -9,9 +9,9 @@ import {
 } from "./requestSupportTextAnalysis";
 
 import type {
+  AnalyzeSupportTextOutput,
   AnalyzeSupportTextInput,
-  SupportTextSegment,
-  TextUnderstanding
+  SupportTextSegment
 } from "./typesAnalyzeSupportText.types";
 
 function selectSupportSegments(
@@ -26,11 +26,14 @@ function selectSupportSegments(
 
 async function analyzeSupportText(
   input: AnalyzeSupportTextInput
-): Promise<TextUnderstanding[]> {
+): Promise<AnalyzeSupportTextOutput> {
   const supportSegments = selectSupportSegments(input);
 
   if (supportSegments.length === 0) {
-    return [];
+    return {
+      textUnderstandings: [],
+      supportResponseCues: []
+    };
   }
 
   const prompt = buildAnalyzeSupportTextPrompt({
@@ -47,7 +50,10 @@ async function analyzeSupportText(
     rawSupportTextAnalysis
   });
 
-  return formattedOutput.textUnderstandings;
+  return {
+    textUnderstandings: formattedOutput.textUnderstandings,
+    supportResponseCues: formattedOutput.supportResponseCues
+  };
 }
 
 export {

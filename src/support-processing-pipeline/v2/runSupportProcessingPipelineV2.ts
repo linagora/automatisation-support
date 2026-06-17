@@ -13,6 +13,18 @@ import {
 import {
   analyzeSupportText
 } from "./analyze-support-text/analyzeSupportText";
+import {
+  proposeTopicUpdates
+} from "./propose-topic-updates/proposeTopicUpdates";
+import {
+  planKnowledgeEnrichment
+} from "./plan-knowledge-enrichment/planKnowledgeEnrichment";
+import {
+  planSupportResponse
+} from "./plan-support-response/planSupportResponse";
+import {
+  renderSupportResponse
+} from "./response-renderer/renderSupportResponse";
 
 import type {
   AttachmentSurfaceAnalysis,
@@ -25,15 +37,16 @@ import type {
   RenderSupportResponseInput,
   ResponsePlanV2,
   StandardResponseFragment,
+  SupportResponseCue,
   SupportProcessingPipelineV2Runtime,
   SupportProcessingPipelineV2Input,
   SupportProcessingPipelineV2Output,
   SupportProcessingPipelineV2Steps,
   SupportProcessingStepName,
-  SupportUnderstandingV2,
   TextSurfaceAnalysis,
   TextUnderstanding,
-  TopicUpdateProposal
+  TopicUpdateProposal,
+  UserResponse
 } from "./typesSupportProcessingPipelineV2.types";
 
 type MaybePromise<T> = T | Promise<T>;
@@ -123,6 +136,45 @@ async function skipSteps(
   }
 }
 
+type RenderedSupportResponseOutput =
+  Awaited<ReturnType<typeof renderSupportResponse>>["renderedResponse"];
+
+function mapRenderedPurposeToUserMessageType(
+  purpose: string
+): UserResponse["messages"][number]["type"] {
+  if (purpose === "handover") {
+    return "handover";
+  }
+
+  if (purpose === "standard_only") {
+    return "signal_response";
+  }
+
+  if (purpose === "safety_or_boundary") {
+    return "scope_boundary";
+  }
+
+  return "topic_response";
+}
+
+function convertRenderedSupportResponseToUserMessages(
+  renderedResponse: RenderedSupportResponseOutput
+): UserResponse["messages"] {
+  if (renderedResponse.renderedMessages.length === 0) {
+    return [{
+      type: "topic_response",
+      content: renderedResponse.finalResponseText
+    }];
+  }
+
+  return renderedResponse.renderedMessages.map((message) => {
+    return {
+      type: mapRenderedPurposeToUserMessageType(message.purpose),
+      content: message.content
+    };
+  });
+}
+
 async function runSupportProcessingPipelineV2(
   inputSupportProcessingPipeline: SupportProcessingPipelineV2Input,
   steps: SupportProcessingPipelineV2Steps = {},
@@ -158,15 +210,17 @@ async function runSupportProcessingPipelineV2(
       "analyzeSupportAttachments"
     ),
     proposeTopicUpdates: resolveStep(
-      steps.proposeTopicUpdates,
+      steps.proposeTopicUpdates ||
+        (async (input) => {
+          const result = await proposeTopicUpdates(input);
+
+          return result.topicUpdateProposals;
+        }),
       "proposeTopicUpdates"
     ),
-    applyTopicUpdates: resolveStep(
-      steps.applyTopicUpdates,
-      "applyTopicUpdates"
-    ),
+    applyTopicUpdates: resolveStep(steps.applyTopicUpdates, "applyTopicUpdates"),
     planKnowledgeEnrichment: resolveStep(
-      steps.planKnowledgeEnrichment,
+      steps.planKnowledgeEnrichment || planKnowledgeEnrichment,
       "planKnowledgeEnrichment"
     ),
     retrieveSupportKnowledge: resolveStep(
@@ -178,11 +232,55 @@ async function runSupportProcessingPipelineV2(
       "synthesizeRetrievedKnowledge"
     ),
     planSupportResponse: resolveStep(
-      steps.planSupportResponse,
+      steps.planSupportResponse ||
+        (async (input) => {
+          const result = await planSupportResponse({
+            latestUserMessageContent: input.latestUserMessageContent,
+            textSurfaceAnalysis: input.textSurfaceAnalysis ?? null,
+            standardResponseFragments: input.standardResponseFragments,
+            supportResponseCues: input.supportResponseCues,
+            textUnderstandings: input.textUnderstandings,
+            topicUpdateProposals: input.topicUpdateProposals,
+            existingTopics: input.existingTopics ??
+              input.supportTopicKnowledge.segments_topic,
+            knowledgeEnrichmentPlan: input.knowledgeEnrichmentPlan,
+            retrievedSupportKnowledge: input.retrievedSupportKnowledge,
+            synthesizedRetrievedKnowledge:
+              input.synthesizedRetrievedKnowledge,
+            recentInteractionContext: input.recentInteractionContext,
+            extractableFieldCatalog: input.extractableFieldCatalog,
+            responsePlanningPolicy: input.responsePlanningPolicy
+          });
+
+          return result.responsePlan;
+        }),
       "planSupportResponse"
     ),
     renderSupportResponse: resolveStep(
-      steps.renderSupportResponse,
+      steps.renderSupportResponse ||
+        (async (input) => {
+          const result = await renderSupportResponse({
+            latestUserMessageContent: input.latestUserMessageContent,
+            responsePlan: input.responsePlan ?? null,
+            textSurfaceAnalysis: input.textSurfaceAnalysis,
+            standardResponseFragments: input.standardResponseFragments,
+            supportResponseCues: input.supportResponseCues ?? [],
+            textUnderstandings: input.textUnderstandings ?? [],
+            topicUpdateProposals: input.topicUpdateProposals ?? [],
+            existingTopics: input.existingTopics ?? [],
+            knowledgeEnrichmentPlan: input.knowledgeEnrichmentPlan,
+            retrievedSupportKnowledge: input.retrievedSupportKnowledge ?? [],
+            synthesizedRetrievedKnowledge:
+              input.synthesizedRetrievedKnowledge ?? null,
+            recentInteractionContext: input.recentInteractionContext,
+            responsePlanningPolicy: input.responsePlanningPolicy,
+            channel: input.channel
+          });
+
+          return convertRenderedSupportResponseToUserMessages(
+            result.renderedResponse
+          );
+        }),
       "renderSupportResponse"
     ),
     buildUserResponse: resolveStep(
@@ -201,8 +299,8 @@ async function runSupportProcessingPipelineV2(
     accountTrustStatus,
     accountProfile,
     supportTopicKnowledge,
-    conversationHistory,
-    recentInteractionContext
+    recentInteractionContext,
+    responsePlanningPolicy
   } = inputSupportProcessingPipeline;
 
   const extractableFieldCatalog: ExtractableFieldDefinition[] = [];
@@ -273,8 +371,18 @@ async function runSupportProcessingPipelineV2(
   const runTextDeepAnalysis = shouldRunDeepTextAnalysis(textSurfaceAnalysis);
   const runAttachmentDeepAnalysis =
     shouldRunDeepAttachmentAnalysis(attachmentSurfaceAnalysis);
-  let supportUnderstanding: SupportUnderstandingV2 | undefined;
   let responsePlan: ResponsePlanV2 | undefined;
+  let textUnderstandings: TextUnderstanding[] | undefined;
+  let supportResponseCues: SupportResponseCue[] | undefined;
+  let topicUpdateProposals: TopicUpdateProposal[] | undefined;
+  let knowledgeEnrichmentPlan:
+    | Awaited<ReturnType<typeof planKnowledgeEnrichment>>
+    | undefined;
+  let retrievedSupportKnowledge: KnowledgeChunk[] | undefined;
+  let synthesizedRetrievedKnowledge:
+    | RetrievedKnowledgeSynthesis
+    | null
+    | undefined;
 
   if (!runTextDeepAnalysis && !runAttachmentDeepAnalysis) {
     await skipSteps(runtime, [
@@ -288,7 +396,7 @@ async function runSupportProcessingPipelineV2(
       "planSupportResponse"
     ]);
   } else {
-    const [textUnderstandings, attachmentUnderstandings] = await Promise.all([
+    const [analyzedSupportText] = await Promise.all([
       runTextDeepAnalysis
         ? runStep(
             runtime,
@@ -302,7 +410,10 @@ async function runSupportProcessingPipelineV2(
             }
           )
         : skipStep(runtime, "analyzeSupportText").then(
-            () => [] satisfies TextUnderstanding[]
+            () => ({
+              textUnderstandings: [] satisfies TextUnderstanding[],
+              supportResponseCues: [] satisfies SupportResponseCue[]
+            })
           ),
       runAttachmentDeepAnalysis
         ? runStep(
@@ -322,45 +433,42 @@ async function runSupportProcessingPipelineV2(
             () => [] satisfies AttachmentUnderstanding[]
           )
     ]);
+    textUnderstandings = analyzedSupportText.textUnderstandings;
+    supportResponseCues = analyzedSupportText.supportResponseCues;
 
-    const topicUpdateProposal: TopicUpdateProposal = await runStep(
+    topicUpdateProposals = await runStep(
       runtime,
       "proposeTopicUpdates",
       pipelineSteps.proposeTopicUpdates,
       {
         textUnderstandings,
-        attachmentUnderstandings,
         supportTopicKnowledge,
-        conversationHistory
+        recentInteractionContext,
+        latestUserMessageContent: latestUserMessage.content
       }
     );
 
-    supportUnderstanding = await runStep(
-      runtime,
-      "applyTopicUpdates",
-      pipelineSteps.applyTopicUpdates,
-      {
-        supportTopicKnowledge,
-        topicUpdateProposal,
-        textUnderstandings,
-        attachmentUnderstandings
-      }
-    );
+    await skipStep(runtime, "applyTopicUpdates");
 
-    const knowledgeEnrichmentPlan = await runStep(
+    knowledgeEnrichmentPlan = await runStep(
       runtime,
       "planKnowledgeEnrichment",
       pipelineSteps.planKnowledgeEnrichment,
       {
-        supportUnderstanding,
-        supportTopicKnowledge
+        ...(textSurfaceAnalysis ? { textSurfaceAnalysis } : {}),
+        standardResponseFragments,
+        textUnderstandings,
+        supportResponseCues,
+        topicUpdateProposals,
+        supportTopicKnowledge,
+        recentInteractionContext,
+        latestUserMessage,
+        extractableFieldCatalog
       }
     );
 
-    let retrievedKnowledgeSynthesis: RetrievedKnowledgeSynthesis | undefined;
-
     if (knowledgeEnrichmentPlan.route === "retrieve_knowledge") {
-      const knowledgeChunks: KnowledgeChunk[] = await runStep(
+      retrievedSupportKnowledge = await runStep(
         runtime,
         "retrieveSupportKnowledge",
         pipelineSteps.retrieveSupportKnowledge,
@@ -369,17 +477,18 @@ async function runSupportProcessingPipelineV2(
         }
       );
 
-      retrievedKnowledgeSynthesis = await runStep(
+      synthesizedRetrievedKnowledge = await runStep(
         runtime,
         "synthesizeRetrievedKnowledge",
         pipelineSteps.synthesizeRetrievedKnowledge,
         {
-          supportUnderstanding,
           knowledgeEnrichmentPlan,
-          knowledgeChunks
+          knowledgeChunks: retrievedSupportKnowledge
         }
       );
     } else {
+      retrievedSupportKnowledge = [];
+      synthesizedRetrievedKnowledge = null;
       await skipSteps(runtime, [
         "retrieveSupportKnowledge",
         "synthesizeRetrievedKnowledge"
@@ -391,20 +500,52 @@ async function runSupportProcessingPipelineV2(
       "planSupportResponse",
       pipelineSteps.planSupportResponse,
       {
-        supportUnderstanding,
-        ...(retrievedKnowledgeSynthesis
-          ? { retrievedKnowledgeSynthesis }
-          : { genericFieldKnowledge }),
+        latestUserMessageContent: latestUserMessage.content,
+        ...(textSurfaceAnalysis ? { textSurfaceAnalysis } : {}),
+        standardResponseFragments,
+        textUnderstandings,
+        supportResponseCues,
+        topicUpdateProposals,
+        supportTopicKnowledge,
+        existingTopics: supportTopicKnowledge.segments_topic,
+        knowledgeEnrichmentPlan,
+        retrievedSupportKnowledge: retrievedSupportKnowledge ?? [],
+        synthesizedRetrievedKnowledge: synthesizedRetrievedKnowledge ?? null,
+        genericFieldKnowledge,
+        extractableFieldCatalog,
         recentInteractionContext,
+        responsePlanningPolicy,
         channel: latestUserMessage.channel
       }
     );
   }
 
   const renderSupportResponseInput: RenderSupportResponseInput = {
-    ...(responsePlan ? { responsePlan } : {}),
+    latestUserMessageContent: latestUserMessage.content,
+    responsePlan: responsePlan ?? null,
     standardResponseFragments,
     ...(textSurfaceAnalysis ? { textSurfaceAnalysis } : {}),
+    ...(typeof supportResponseCues !== "undefined"
+      ? { supportResponseCues }
+      : {}),
+    ...(typeof textUnderstandings !== "undefined"
+      ? { textUnderstandings }
+      : {}),
+    ...(typeof topicUpdateProposals !== "undefined"
+      ? { topicUpdateProposals }
+      : {}),
+    existingTopics: supportTopicKnowledge.segments_topic,
+    ...(typeof knowledgeEnrichmentPlan !== "undefined"
+      ? { knowledgeEnrichmentPlan }
+      : {}),
+    ...(typeof retrievedSupportKnowledge !== "undefined"
+      ? { retrievedSupportKnowledge }
+      : {}),
+    ...(typeof synthesizedRetrievedKnowledge !== "undefined"
+      ? { synthesizedRetrievedKnowledge }
+      : {}),
+    recentInteractionContext,
+    responsePlanningPolicy,
     accountProfile,
     channel: latestUserMessage.channel
   };
@@ -431,7 +572,24 @@ async function runSupportProcessingPipelineV2(
     {
       promptSecuritySignals,
       turnAnalysisPlan,
-      supportUnderstanding,
+      ...(typeof textUnderstandings !== "undefined"
+        ? { textUnderstandings }
+        : {}),
+      ...(typeof supportResponseCues !== "undefined"
+        ? { supportResponseCues }
+        : {}),
+      ...(typeof topicUpdateProposals !== "undefined"
+        ? { topicUpdateProposals }
+        : {}),
+      ...(typeof knowledgeEnrichmentPlan !== "undefined"
+        ? { knowledgeEnrichmentPlan }
+        : {}),
+      ...(typeof retrievedSupportKnowledge !== "undefined"
+        ? { retrievedSupportKnowledge }
+        : {}),
+      ...(typeof synthesizedRetrievedKnowledge !== "undefined"
+        ? { synthesizedRetrievedKnowledge }
+        : {}),
       responsePlan,
       userResponse
     }
@@ -439,7 +597,28 @@ async function runSupportProcessingPipelineV2(
 
   return {
     userResponse,
-    patches
+    patches,
+    ...(typeof textUnderstandings !== "undefined"
+      ? { textUnderstandings }
+      : {}),
+    ...(typeof supportResponseCues !== "undefined"
+      ? { supportResponseCues }
+      : {}),
+    ...(typeof topicUpdateProposals !== "undefined"
+      ? { topicUpdateProposals }
+      : {}),
+    ...(typeof knowledgeEnrichmentPlan !== "undefined"
+      ? { knowledgeEnrichmentPlan }
+      : {}),
+    ...(typeof retrievedSupportKnowledge !== "undefined"
+      ? { retrievedSupportKnowledge }
+      : {}),
+    ...(typeof synthesizedRetrievedKnowledge !== "undefined"
+      ? { synthesizedRetrievedKnowledge }
+      : {}),
+    ...(typeof responsePlan !== "undefined"
+      ? { responsePlan }
+      : {})
   };
 }
 
