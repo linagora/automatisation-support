@@ -1,9 +1,6 @@
 import {
-  KNOWLEDGE_STATUS_VALUES,
-  PLANNED_MESSAGE_ROLE_VALUES,
-  QUESTION_PRIORITY_VALUES,
-  RESPONSE_MODE_VALUES,
-  RESPONSE_STRATEGY_VALUES
+  ALLOWED_RESPONSE_MOVE_VALUES,
+  KNOWLEDGE_MODE_VALUES
 } from "./planSupportResponse.taxonomy";
 
 function objectOf(
@@ -33,6 +30,10 @@ const numberSchema = {
   type: "number"
 } as const;
 
+const booleanSchema = {
+  type: "boolean"
+} as const;
+
 const nullableStringSchema = {
   anyOf: [
     { type: "string" },
@@ -42,93 +43,70 @@ const nullableStringSchema = {
 
 const stringArraySchema = arrayOf(stringSchema);
 
-const plannedMessageSchema = objectOf(
+const knowledgeGateSchema = objectOf(
   {
-    messageOrder: numberSchema,
-    messageRole: {
-      enum: PLANNED_MESSAGE_ROLE_VALUES
+    knowledgeMode: {
+      enum: KNOWLEDGE_MODE_VALUES
     },
-    relatedTopicIds: stringArraySchema,
-    relatedProposalIds: stringArraySchema,
-    relatedUnderstandingIds: stringArraySchema,
-    goal: stringSchema,
-    instructionsToRenderer: stringSchema,
-    mustMention: stringArraySchema,
-    mustAsk: stringArraySchema,
-    mustAvoid: stringArraySchema,
-    knowledgeStatus: {
-      enum: KNOWLEDGE_STATUS_VALUES
-    },
-    internalRationale: stringSchema
+    solutionAllowed: booleanSchema,
+    allowedMoves: arrayOf({
+      enum: ALLOWED_RESPONSE_MOVE_VALUES
+    }),
+    reason: stringSchema
   },
   [
-    "messageOrder",
-    "messageRole",
-    "relatedTopicIds",
-    "relatedProposalIds",
-    "relatedUnderstandingIds",
-    "goal",
-    "instructionsToRenderer",
-    "mustMention",
-    "mustAsk",
-    "mustAvoid",
-    "knowledgeStatus",
-    "internalRationale"
+    "knowledgeMode",
+    "solutionAllowed",
+    "allowedMoves",
+    "reason"
   ]
 );
 
-const plannedQuestionSchema = objectOf(
+const questionDecisionSchema = objectOf(
   {
-    questionId: stringSchema,
-    appliesToTopicIds: stringArraySchema,
+    shouldAskQuestion: booleanSchema,
+    plannedQuestionCount: numberSchema,
     fieldNames: stringArraySchema,
-    wordingInstruction: stringSchema,
-    reason: stringSchema,
-    priority: {
-      enum: QUESTION_PRIORITY_VALUES
-    }
+    questionInstruction: nullableStringSchema,
+    reason: stringSchema
   },
   [
-    "questionId",
-    "appliesToTopicIds",
+    "shouldAskQuestion",
+    "plannedQuestionCount",
     "fieldNames",
-    "wordingInstruction",
-    "reason",
-    "priority"
+    "questionInstruction",
+    "reason"
+  ]
+);
+
+const rendererTaskSchema = objectOf(
+  {
+    targetLanguage: stringSchema,
+    prompt: stringSchema,
+    questionFieldNames: stringArraySchema,
+    forbiddenClaims: stringArraySchema
+  },
+  [
+    "targetLanguage",
+    "prompt",
+    "questionFieldNames",
+    "forbiddenClaims"
   ]
 );
 
 const supportResponsePlanSchema = objectOf(
   {
     responsePlanId: stringSchema,
-    responseStrategy: {
-      enum: RESPONSE_STRATEGY_VALUES
-    },
-    responseMode: {
-      enum: RESPONSE_MODE_VALUES
-    },
-    rendererInstructions: stringSchema,
-    plannedMessages: arrayOf(plannedMessageSchema),
-    commonQuestions: arrayOf(plannedQuestionSchema),
-    topicSpecificQuestions: arrayOf(plannedQuestionSchema),
-    globalMustInclude: stringArraySchema,
-    globalMustAvoid: stringArraySchema,
-    standardHandlingInstructions: nullableStringSchema,
-    cueHandlingInstructions: nullableStringSchema,
+    knowledgeGate: knowledgeGateSchema,
+    questionDecision: questionDecisionSchema,
+    rendererTask: rendererTaskSchema,
     internalRationale: stringSchema
   },
   [
     "responsePlanId",
-    "responseStrategy",
-    "responseMode",
-    "rendererInstructions",
-    "plannedMessages",
-    "commonQuestions",
-    "topicSpecificQuestions",
-    "globalMustInclude",
-    "globalMustAvoid",
-    "standardHandlingInstructions",
-    "cueHandlingInstructions",
+    "knowledgeGate",
+    "questionDecision",
+    "rendererTask",
     "internalRationale"
   ]
 );

@@ -25,6 +25,12 @@ import {
 import {
   renderSupportResponse
 } from "./response-renderer/renderSupportResponse";
+import {
+  buildSupportPatchesV2
+} from "./build-support-patches/buildSupportPatchesV2";
+import {
+  buildUserResponseV2
+} from "./build-user-response/buildUserResponseV2";
 
 import type {
   AttachmentSurfaceAnalysis,
@@ -45,8 +51,7 @@ import type {
   SupportProcessingStepName,
   TextSurfaceAnalysis,
   TextUnderstanding,
-  TopicUpdateProposal,
-  UserResponse
+  TopicUpdateProposal
 } from "./typesSupportProcessingPipelineV2.types";
 
 type MaybePromise<T> = T | Promise<T>;
@@ -134,45 +139,6 @@ async function skipSteps(
   for (const stepName of stepNames) {
     await skipStep(runtime, stepName);
   }
-}
-
-type RenderedSupportResponseOutput =
-  Awaited<ReturnType<typeof renderSupportResponse>>["renderedResponse"];
-
-function mapRenderedPurposeToUserMessageType(
-  purpose: string
-): UserResponse["messages"][number]["type"] {
-  if (purpose === "handover") {
-    return "handover";
-  }
-
-  if (purpose === "standard_only") {
-    return "signal_response";
-  }
-
-  if (purpose === "safety_or_boundary") {
-    return "scope_boundary";
-  }
-
-  return "topic_response";
-}
-
-function convertRenderedSupportResponseToUserMessages(
-  renderedResponse: RenderedSupportResponseOutput
-): UserResponse["messages"] {
-  if (renderedResponse.renderedMessages.length === 0) {
-    return [{
-      type: "topic_response",
-      content: renderedResponse.finalResponseText
-    }];
-  }
-
-  return renderedResponse.renderedMessages.map((message) => {
-    return {
-      type: mapRenderedPurposeToUserMessageType(message.purpose),
-      content: message.content
-    };
-  });
 }
 
 async function runSupportProcessingPipelineV2(
@@ -277,18 +243,16 @@ async function runSupportProcessingPipelineV2(
             channel: input.channel
           });
 
-          return convertRenderedSupportResponseToUserMessages(
-            result.renderedResponse
-          );
+          return result.renderedResponse;
         }),
       "renderSupportResponse"
     ),
     buildUserResponse: resolveStep(
-      steps.buildUserResponse,
+      steps.buildUserResponse || buildUserResponseV2,
       "buildUserResponse"
     ),
     buildSupportPatches: resolveStep(
-      steps.buildSupportPatches,
+      steps.buildSupportPatches || buildSupportPatchesV2,
       "buildSupportPatches"
     )
   };
@@ -550,7 +514,7 @@ async function runSupportProcessingPipelineV2(
     channel: latestUserMessage.channel
   };
 
-  const supportResponse = await runStep(
+  const renderedSupportResponse = await runStep(
     runtime,
     "renderSupportResponse",
     pipelineSteps.renderSupportResponse,
@@ -562,7 +526,7 @@ async function runSupportProcessingPipelineV2(
     "buildUserResponse",
     pipelineSteps.buildUserResponse,
     {
-      supportResponse
+      renderedSupportResponse
     }
   );
   const patches = await runStep(
@@ -572,6 +536,7 @@ async function runSupportProcessingPipelineV2(
     {
       promptSecuritySignals,
       turnAnalysisPlan,
+      supportTopicKnowledge,
       ...(typeof textUnderstandings !== "undefined"
         ? { textUnderstandings }
         : {}),

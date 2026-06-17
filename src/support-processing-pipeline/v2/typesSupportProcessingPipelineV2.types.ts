@@ -26,6 +26,9 @@ import type {
   ResponsePlanningPolicy,
   SupportResponsePlan
 } from "./plan-support-response/typesPlanSupportResponse.types";
+import type {
+  RenderedSupportResponse
+} from "./response-renderer/typesRenderSupportResponse.types";
 
 export type {
   BroadCategoryHint,
@@ -440,12 +443,13 @@ export type RenderSupportResponseInput = {
 };
 
 export type BuildUserResponseInput = {
-  supportResponse: UserResponse["messages"];
+  renderedSupportResponse: RenderedSupportResponse;
 };
 
 export type BuildSupportPatchesInput = {
   promptSecuritySignals: PromptSecuritySignals;
   turnAnalysisPlan: TurnAnalysisPlan;
+  supportTopicKnowledge: SupportTopicKnowledge;
   textUnderstandings?: TextUnderstanding[];
   supportResponseCues?: SupportResponseCue[];
   topicUpdateProposals?: TopicUpdateProposal[];
@@ -505,7 +509,7 @@ export type SupportProcessingPipelineV2Steps = {
   planSupportResponse?: PipelineStep<PlanSupportResponseInput, ResponsePlanV2>;
   renderSupportResponse?: PipelineStep<
     RenderSupportResponseInput,
-    UserResponse["messages"]
+    RenderedSupportResponse
   >;
   buildUserResponse?: PipelineStep<BuildUserResponseInput, UserResponse>;
   buildSupportPatches?: PipelineStep<BuildSupportPatchesInput, Patches>;

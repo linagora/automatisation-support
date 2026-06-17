@@ -1,6 +1,6 @@
 export {
   DEFAULT_RESPONSE_PLANNING_POLICY,
-  RESPONSE_FIELD_GUIDANCE_CATALOG,
+  QUESTION_SELECTION_HINTS,
   buildPlanSupportResponsePrompt
 } from "./buildPlanSupportResponsePrompt";
 export {
@@ -21,17 +21,15 @@ export type {
   BuildPlanSupportResponsePromptInput,
   FormatPlanSupportResponseOutput,
   FormatPlanSupportResponseOutputInput,
-  KnowledgeStatus,
+  AllowedResponseMove,
+  KnowledgeGate,
+  KnowledgeMode,
   PlanSupportResponseInput,
   PlanSupportResponsePrompt,
-  PlannedMessageRole,
-  PlannedQuestion,
-  PlannedResponseMessage,
-  QuestionPriority,
+  QuestionDecision,
   RawPlanSupportResponse,
   RequestPlanSupportResponseInput,
-  ResponseMode,
   ResponsePlanningPolicy,
-  ResponseStrategy,
+  RendererTask,
   SupportResponsePlan
 } from "./typesPlanSupportResponse.types";

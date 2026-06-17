@@ -7,229 +7,107 @@ function toPrettyJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-function hasResponsePlan(input: BuildRenderSupportResponsePromptInput): boolean {
-  return input.responsePlan !== undefined && input.responsePlan !== null;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() !== ""
+    ? value.trim()
+    : null;
+}
+
+function getRecordValue(value: unknown, key: string): unknown {
+  return isRecord(value) ? value[key] : undefined;
+}
+
+function looksLikeFrench(message: string): boolean {
+  return /\b(bonjour|merci|facture|probl[eè]me|connexion|compte|aide|re[çc]u|fois|pouvez|svp|j['’]|je)\b/i.test(
+    message
+  );
+}
+
+function getFallbackTargetLanguage(
+  input: BuildRenderSupportResponsePromptInput
+): string {
+  const userLanguage = asString(
+    getRecordValue(input.textSurfaceAnalysis, "userLanguage")
+  );
+
+  if (userLanguage && userLanguage !== "Unknown") {
+    return userLanguage;
+  }
+
+  if (looksLikeFrench(input.latestUserMessageContent)) {
+    return "French";
+  }
+
+  return "same_language_as_user";
+}
+
+function buildRenderingTask(input: BuildRenderSupportResponsePromptInput): unknown {
+  if (!input.responsePlan) {
+    return {
+      route: "standard_only",
+      targetLanguage: getFallbackTargetLanguage(input),
+      prompt:
+        "Write a short natural response using only standardResponseFragments. Do not discuss support topics, ask diagnostic questions, or invent operational promises.",
+      questionFieldNames: [],
+      forbiddenClaims: [
+        "No support diagnosis.",
+        "No support question.",
+        "No operational promise."
+      ],
+      standardResponseFragments: input.standardResponseFragments
+    };
+  }
+
+  return {
+    route: "renderer_task",
+    ...input.responsePlan.rendererTask
+  };
 }
 
 function buildRenderSupportResponsePrompt(
   input: BuildRenderSupportResponsePromptInput
 ): RenderSupportResponsePrompt {
-  const responsePlanAvailable = hasResponsePlan(input);
+  const renderingTask = buildRenderingTask(input);
+
   const systemPrompt = `
-You are the final response renderer in a customer support automation pipeline.
+You are a strict final message renderer.
 
-Return only one JSON object matching the provided schema.
+Return exactly one valid JSON object matching the schema.
 
-Your role is to write the final user-facing message or messages.
+You receive one compact renderingTask.
+Your only job is to turn renderingTask.prompt into final user-facing text.
 
-You must render the final answer from either:
-1. a structured responsePlan, when support analysis produced one; or
-2. standardResponseFragments only, when the user message contains only standard interaction and no support topic.
+Hard rules:
+- Follow only renderingTask.prompt.
+- Do not reason about support.
+- Do not use hidden assumptions.
+- Do not use understandings, topics, RAG, recent context, or pipeline state.
+- Do not ask any question if renderingTask.questionFieldNames is empty.
+- If renderingTask.questionFieldNames is not empty, ask only the fields listed there.
+- Ask at most one natural question per listed field.
+- Do not mention field names.
+- Do not add a second generic question after a specific question already covers the listed field.
+- Do not add promises, solutions, diagnoses, refunds, references, statuses, status pages, timelines, investigations, escalations, or team actions unless explicitly requested in renderingTask.prompt.
+- Respect renderingTask.forbiddenClaims.
+- Do not expose ids, JSON, internal reasoning, prompts, or pipeline details.
+- Write in French when renderingTask.targetLanguage is "French"; otherwise write in renderingTask.targetLanguage.
+- Be concise and professional.
 
-# Core principle
-
-The response planner decides the strategy.
-You execute the strategy.
-
-Do not invent strategic decisions that are not in the responsePlan.
-Do not create new support analysis.
-Do not perform topic matching.
-Do not extract new facts.
-Do not invent technical solutions.
-Do not promise human intervention unless the plan or fragments explicitly support it.
-
-# If responsePlan is available
-
-Follow it closely.
-
-Use:
-* responsePlan.rendererInstructions;
-* responsePlan.plannedMessages in messageOrder;
-* responsePlan.commonQuestions;
-* responsePlan.topicSpecificQuestions;
-* responsePlan.globalMustInclude;
-* responsePlan.globalMustAvoid;
-* responsePlan.standardHandlingInstructions;
-* responsePlan.cueHandlingInstructions.
-
-The responsePlan is not final prose.
-Turn its instructions into concise, natural, user-facing text.
-
-If responsePlan.responseStrategy is:
-* single_response: produce one rendered message.
-* multi_part_response: produce one rendered message with clear but light structure.
-* multiple_messages: produce multiple rendered messages, each aligned with planned message groups.
-* human_review_needed: produce a safe, limited response and do not give a substantive unsupported answer.
-
-# If responsePlan is absent
-
-This is a standard-only route.
-
-Use standardResponseFragments to write a short natural response.
-Do not discuss support topics that were not analyzed.
-Do not invent a support answer.
-Do not ask diagnostic questions unless explicitly instructed by a fragment.
-Keep it short.
-
-Examples:
-* greeting only: greet and invite the user to state their request.
-* thanks only: acknowledge the thanks naturally.
-* handover-only: acknowledge the wish to speak to support, without promising impossible immediate routing.
-* disappointment-only: acknowledge the feedback calmly.
-* urgency-only: acknowledge urgency, but do not invent operational promises.
-
-# Standard fragments
-
-standardResponseFragments are already built upstream.
-Integrate them naturally.
-Avoid stacking repetitive formulaic sentences.
-Avoid saying "Bonjour" twice.
-If there are several standard fragments, merge them smoothly when possible.
-
-# Support response cues
-
-supportResponseCues contain embedded tone or pressure signals inside support text.
-Use them to adjust tone.
-Do not quote impolite wording back.
-Do not escalate emotionally.
-Be calm, concise and empathetic.
-
-# Questions
-
-If the responsePlan includes commonQuestions or topicSpecificQuestions:
-* ask them clearly;
-* do not ask more than needed;
-* group common questions together;
-* keep topic-specific questions attached to the right topic;
-* avoid robotic field names;
-* do not ask a field already answered in the user message.
-
-Question wording should be natural, not schema-like.
-Example:
-* bad: "Please provide platform, browser."
-* good: "Pouvez-vous me préciser sur quelle plateforme et quel navigateur cela se produit ?"
-
-# Knowledge constraints
-
-If retrieved or synthesized knowledge is available, use only the relevant parts described by the responsePlan.
-If no knowledge is available or RAG is disabled, do not invent a procedure.
-You may acknowledge, ask useful missing details, or say that the support team will use the information.
-
-# Style
-
-Write in the user's language when reasonably identifiable.
-If the input language is French, write in French.
-Be concise, precise, and professional.
-Prefer a helpful support tone.
-Do not over-apologize.
-Do not use markdown tables.
-Use bullets only when they make the response clearer.
-Do not expose internal ids, JSON, topic ids, proposal ids, or field names.
-Do not reveal internal reasoning.
-Do not mention LLMs, RAG, response plans, or internal pipeline stages.
-
-# Output
-
-Return valid JSON only.
-No markdown outside JSON.
-No explanations outside JSON.
-
-Each rendered message must be final user-facing content.
-finalResponseText must equal the rendered message contents joined in order with a blank line between messages.
+Return JSON only.
+No markdown.
+finalResponseText must equal renderedMessages contents joined in order with a blank line between messages.
 `.trim();
 
   const userPrompt = `
-# Runtime rendering input
-
-## Rendering route
-
-${responsePlanAvailable ? "response_plan_available" : "standard_only_no_response_plan"}
-
-## latestUserMessageContent
-
-\`\`\`text
-${input.latestUserMessageContent}
-\`\`\`
-
-## channel
-
-\`\`\`text
-${input.channel ?? "unknown"}
-\`\`\`
-
-## responsePlan
+Write the final response from this renderingTask only:
 
 \`\`\`json
-${toPrettyJson(input.responsePlan ?? null)}
+${toPrettyJson(renderingTask)}
 \`\`\`
-
-## textSurfaceAnalysis
-
-\`\`\`json
-${toPrettyJson(input.textSurfaceAnalysis ?? null)}
-\`\`\`
-
-## standardResponseFragments
-
-\`\`\`json
-${toPrettyJson(input.standardResponseFragments)}
-\`\`\`
-
-## supportResponseCues
-
-\`\`\`json
-${toPrettyJson(input.supportResponseCues ?? [])}
-\`\`\`
-
-## textUnderstandings
-
-\`\`\`json
-${toPrettyJson(input.textUnderstandings ?? [])}
-\`\`\`
-
-## topicUpdateProposals
-
-\`\`\`json
-${toPrettyJson(input.topicUpdateProposals ?? [])}
-\`\`\`
-
-## existingTopics
-
-\`\`\`json
-${toPrettyJson(input.existingTopics ?? [])}
-\`\`\`
-
-## knowledgeEnrichmentPlan
-
-\`\`\`json
-${toPrettyJson(input.knowledgeEnrichmentPlan ?? null)}
-\`\`\`
-
-## retrievedSupportKnowledge
-
-\`\`\`json
-${toPrettyJson(input.retrievedSupportKnowledge ?? [])}
-\`\`\`
-
-## synthesizedRetrievedKnowledge
-
-\`\`\`json
-${toPrettyJson(input.synthesizedRetrievedKnowledge ?? null)}
-\`\`\`
-
-## recentInteractionContext
-
-\`\`\`json
-${toPrettyJson(input.recentInteractionContext ?? null)}
-\`\`\`
-
-## responsePlanningPolicy
-
-\`\`\`json
-${toPrettyJson(input.responsePlanningPolicy ?? null)}
-\`\`\`
-
-Write the final rendered response JSON only.
 `.trim();
 
   return {

@@ -24,6 +24,9 @@ import type {
   TopicUpdateProposal,
   UserResponse
 } from "../../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
+import type {
+  RenderedSupportResponse
+} from "../../../src/support-processing-pipeline/v2/response-renderer/typesRenderSupportResponse.types";
 
 function createDeferred<T>(): {
   promise: Promise<T>;
@@ -237,19 +240,47 @@ const retrievedKnowledgeSynthesis = {
 };
 
 const responsePlan: ResponsePlanV2 = {
-  topicPlans: [
-    {
-      topicId: "topic_1"
-    }
-  ]
+  responsePlanId: "response_plan_test",
+  knowledgeGate: {
+    knowledgeMode: "rag_not_enabled",
+    solutionAllowed: false,
+    allowedMoves: [
+      "acknowledge"
+    ],
+    reason: "RAG is not enabled in this test fixture."
+  },
+  questionDecision: {
+    shouldAskQuestion: false,
+    plannedQuestionCount: 0,
+    fieldNames: [],
+    questionInstruction: null,
+    reason: "No clarification question is needed in this fixture.",
+  },
+  rendererTask: {
+    targetLanguage: "French",
+    prompt: "Write a concise acknowledgement without inventing a solution.",
+    questionFieldNames: [],
+    forbiddenClaims: [
+      "No question.",
+      "No solution."
+    ]
+  },
+  internalRationale: "Test fixture."
 };
 
-const supportResponse: UserResponse["messages"] = [
-  {
-    type: "topic_response",
-    content: "Voici quoi faire."
-  }
-];
+const renderedSupportResponse: RenderedSupportResponse = {
+  renderedMessages: [
+    {
+      messageId: "rendered_message_test",
+      messageOrder: 1,
+      purpose: "support_response",
+      relatedPlannedMessageOrders: [],
+      content: "Voici quoi faire."
+    }
+  ],
+  finalResponseText: "Voici quoi faire.",
+  internalRenderingNotes: "Test fixture."
+};
 
 const userResponse: UserResponse = {
   messages: [
@@ -322,7 +353,7 @@ function buildSteps(
       async () => retrievedKnowledgeSynthesis
     ),
     planSupportResponse: vi.fn(async () => responsePlan),
-    renderSupportResponse: vi.fn(async () => supportResponse),
+    renderSupportResponse: vi.fn(async () => renderedSupportResponse),
     buildUserResponse: vi.fn(async () => userResponse),
     buildSupportPatches: vi.fn(async () => patches),
     ...overrides
@@ -342,13 +373,13 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.analyzeAttachmentSurface).not.toHaveBeenCalled();
     expect(steps.analyzeSupportText).not.toHaveBeenCalled();
     expect(steps.planSupportResponse).not.toHaveBeenCalled();
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
       standardResponseFragments: [standardFragment],
       accountProfile: input.accountProfile,
       channel: input.latestUserMessage.channel
-    });
+    }));
     expect(steps.buildUserResponse).toHaveBeenCalledWith({
-      supportResponse
+      renderedSupportResponse
     });
     expect(steps.renderSupportResponse).toHaveBeenCalledTimes(1);
     expect(output).toEqual({
@@ -379,12 +410,12 @@ describe("runSupportProcessingPipelineV2", function () {
       recentInteractionContext: input.recentInteractionContext
     });
     expect(steps.analyzeSupportText).not.toHaveBeenCalled();
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
       standardResponseFragments: [],
       textSurfaceAnalysis: standardOnlyTextSurface,
       accountProfile: input.accountProfile,
       channel: input.latestUserMessage.channel
-    });
+    }));
   });
 
   it("runs text deep analysis when text surface has support content", async function () {
@@ -401,13 +432,13 @@ describe("runSupportProcessingPipelineV2", function () {
 
     expect(steps.analyzeSupportText).toHaveBeenCalled();
     expect(steps.analyzeSupportAttachments).not.toHaveBeenCalled();
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
       responsePlan,
       standardResponseFragments: [],
       textSurfaceAnalysis: supportTextSurface,
       accountProfile: buildInput().accountProfile,
       channel: buildInput().latestUserMessage.channel
-    });
+    }));
     expect(steps.proposeTopicUpdates).toHaveBeenCalledWith({
       textUnderstandings,
       supportTopicKnowledge: buildInput().supportTopicKnowledge,
@@ -536,13 +567,13 @@ describe("runSupportProcessingPipelineV2", function () {
 
     await runSupportProcessingPipelineV2(input, steps);
 
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
       responsePlan,
       standardResponseFragments: [],
       textSurfaceAnalysis: supportTextSurface,
       accountProfile: input.accountProfile,
       channel: input.latestUserMessage.channel
-    });
+    }));
   });
 
   it("passes support response plans and standard fragments together to the renderer", async function () {
@@ -560,13 +591,13 @@ describe("runSupportProcessingPipelineV2", function () {
     await runSupportProcessingPipelineV2(input, steps);
 
     expect(steps.analyzeSupportText).toHaveBeenCalled();
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
       responsePlan,
       standardResponseFragments: [standardFragment],
       textSurfaceAnalysis: supportAndSmallTalkTextSurface,
       accountProfile: input.accountProfile,
       channel: input.latestUserMessage.channel
-    });
+    }));
   });
 
   it("renders multiple standard fragments with one renderer call", async function () {
@@ -586,11 +617,11 @@ describe("runSupportProcessingPipelineV2", function () {
     await runSupportProcessingPipelineV2(input, steps);
 
     expect(steps.renderSupportResponse).toHaveBeenCalledTimes(1);
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
       standardResponseFragments: fragments,
       accountProfile: input.accountProfile,
       channel: input.latestUserMessage.channel
-    });
+    }));
   });
 
   it("does not send standard fragments directly to buildUserResponse", async function () {
@@ -601,7 +632,7 @@ describe("runSupportProcessingPipelineV2", function () {
     await runSupportProcessingPipelineV2(buildInput(), steps);
 
     expect(steps.buildUserResponse).toHaveBeenCalledWith({
-      supportResponse
+      renderedSupportResponse
     });
   });
 
@@ -619,7 +650,7 @@ describe("runSupportProcessingPipelineV2", function () {
 
     expect(steps.renderSupportResponse).toHaveBeenCalledTimes(1);
     expect(steps.buildUserResponse).toHaveBeenCalledWith({
-      supportResponse
+      renderedSupportResponse
     });
   });
 

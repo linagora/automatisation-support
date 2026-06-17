@@ -4,37 +4,6 @@ import type {
 
 type JsonLike = unknown;
 
-export type ResponseStrategy =
-  | "single_response"
-  | "multi_part_response"
-  | "multiple_messages"
-  | "human_review_needed";
-
-export type ResponseMode =
-  | "answer_support_request"
-  | "ask_clarifying_questions"
-  | "confirm_information_received"
-  | "provide_next_steps"
-  | "acknowledge_and_wait"
-  | "handover_or_escalation"
-  | "mixed";
-
-export type PlannedMessageRole =
-  | "support_answer"
-  | "clarification_request"
-  | "standard_acknowledgement"
-  | "handover_response"
-  | "follow_up"
-  | "safety_or_boundary";
-
-export type KnowledgeStatus =
-  | "no_knowledge_needed"
-  | "knowledge_missing"
-  | "knowledge_available"
-  | "rag_not_enabled";
-
-export type QuestionPriority = "high" | "medium" | "low";
-
 export type ResponsePlanningPolicy = {
   supportStrictness: "low" | "standard" | "high";
   botAutonomy: "low" | "standard" | "high";
@@ -44,42 +13,46 @@ export type ResponsePlanningPolicy = {
   maxTotalQuestions: number;
 };
 
-export type PlannedResponseMessage = {
-  messageOrder: number;
-  messageRole: PlannedMessageRole;
-  relatedTopicIds: string[];
-  relatedProposalIds: string[];
-  relatedUnderstandingIds: string[];
-  goal: string;
-  instructionsToRenderer: string;
-  mustMention: string[];
-  mustAsk: string[];
-  mustAvoid: string[];
-  knowledgeStatus: KnowledgeStatus;
-  internalRationale: string;
+export type KnowledgeMode =
+  | "knowledge_available"
+  | "knowledge_missing"
+  | "rag_not_enabled";
+
+export type AllowedResponseMove =
+  | "acknowledge"
+  | "ask_missing_fields"
+  | "answer_with_knowledge"
+  | "standard_acknowledgement"
+  | "handover_acknowledgement"
+  | "safety_or_boundary";
+
+export type KnowledgeGate = {
+  knowledgeMode: KnowledgeMode;
+  solutionAllowed: boolean;
+  allowedMoves: AllowedResponseMove[];
+  reason: string;
 };
 
-export type PlannedQuestion = {
-  questionId: string;
-  appliesToTopicIds: string[];
+export type QuestionDecision = {
+  shouldAskQuestion: boolean;
+  plannedQuestionCount: number;
   fieldNames: string[];
-  wordingInstruction: string;
+  questionInstruction: string | null;
   reason: string;
-  priority: QuestionPriority;
+};
+
+export type RendererTask = {
+  targetLanguage: string;
+  prompt: string;
+  questionFieldNames: string[];
+  forbiddenClaims: string[];
 };
 
 export type SupportResponsePlan = {
   responsePlanId: string;
-  responseStrategy: ResponseStrategy;
-  responseMode: ResponseMode;
-  rendererInstructions: string;
-  plannedMessages: PlannedResponseMessage[];
-  commonQuestions: PlannedQuestion[];
-  topicSpecificQuestions: PlannedQuestion[];
-  globalMustInclude: string[];
-  globalMustAvoid: string[];
-  standardHandlingInstructions: string | null;
-  cueHandlingInstructions: string | null;
+  knowledgeGate: KnowledgeGate;
+  questionDecision: QuestionDecision;
+  rendererTask: RendererTask;
   internalRationale: string;
 };
 
@@ -118,42 +91,33 @@ export type RawPlanSupportResponse = {
   };
 };
 
-export type RawPlannedResponseMessage = {
-  messageOrder?: unknown;
-  messageRole?: unknown;
-  relatedTopicIds?: unknown;
-  relatedProposalIds?: unknown;
-  relatedUnderstandingIds?: unknown;
-  goal?: unknown;
-  instructionsToRenderer?: unknown;
-  mustMention?: unknown;
-  mustAsk?: unknown;
-  mustAvoid?: unknown;
-  knowledgeStatus?: unknown;
-  internalRationale?: unknown;
+export type RawKnowledgeGate = {
+  knowledgeMode?: unknown;
+  solutionAllowed?: unknown;
+  allowedMoves?: unknown;
+  reason?: unknown;
 };
 
-export type RawPlannedQuestion = {
-  questionId?: unknown;
-  appliesToTopicIds?: unknown;
+export type RawQuestionDecision = {
+  shouldAskQuestion?: unknown;
+  plannedQuestionCount?: unknown;
   fieldNames?: unknown;
-  wordingInstruction?: unknown;
+  questionInstruction?: unknown;
   reason?: unknown;
-  priority?: unknown;
+};
+
+export type RawRendererTask = {
+  targetLanguage?: unknown;
+  prompt?: unknown;
+  questionFieldNames?: unknown;
+  forbiddenClaims?: unknown;
 };
 
 export type RawSupportResponsePlan = {
   responsePlanId?: unknown;
-  responseStrategy?: unknown;
-  responseMode?: unknown;
-  rendererInstructions?: unknown;
-  plannedMessages?: unknown;
-  commonQuestions?: unknown;
-  topicSpecificQuestions?: unknown;
-  globalMustInclude?: unknown;
-  globalMustAvoid?: unknown;
-  standardHandlingInstructions?: unknown;
-  cueHandlingInstructions?: unknown;
+  knowledgeGate?: unknown;
+  questionDecision?: unknown;
+  rendererTask?: unknown;
   internalRationale?: unknown;
 };
 

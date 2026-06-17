@@ -166,6 +166,7 @@ The title must be short, specific, and based on the understanding summary or sou
 The broadCategoryHint should reuse the understanding broadCategoryHint when available.
 
 The userGoal should describe what the user likely wants for this topic.
+Do not infer a refund, duplicate payment, duplicate charge, or correction action from duplicate-invoice wording alone. If the user only says they received an invoice twice, describe the goal neutrally as understanding or handling the duplicate invoice.
 
 The blockingIssue should reflect whether the user appears blocked by the issue.
 

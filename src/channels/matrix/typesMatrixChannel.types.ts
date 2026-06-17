@@ -65,6 +65,20 @@ export type MatrixClientLike = {
   start: () => Promise<void>;
   stop?: () => Promise<void> | void;
   sendText: (roomId: string, content: string) => Promise<string | undefined>;
+  sendMessage?: (
+    roomId: string,
+    content: Record<string, unknown>
+  ) => Promise<string>;
+  setTyping?: (
+    roomId: string,
+    typing: boolean,
+    timeout?: number
+  ) => Promise<unknown>;
+  redactEvent?: (
+    roomId: string,
+    eventId: string,
+    reason?: string | null
+  ) => Promise<string>;
   mxcToHttp?: (mxc: string) => string;
   downloadContent?: (
     mxcUrl: string,

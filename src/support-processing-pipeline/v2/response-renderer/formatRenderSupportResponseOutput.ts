@@ -79,8 +79,8 @@ function buildFallbackText(input: FormatRenderSupportResponseOutputInput): strin
     return [...new Set(standardContents)].join(" ");
   }
 
-  if (input.input.responsePlan?.rendererInstructions) {
-    return "Votre demande est bien prise en compte. L’équipe support utilisera les informations fournies pour vous répondre.";
+  if (input.input.responsePlan?.rendererTask) {
+    return "Votre message est bien pris en compte.";
   }
 
   return "Votre message est bien pris en compte.";
