@@ -1,6 +1,9 @@
 import type {
   LLMMessage
 } from "../../../llm/llm-client";
+import type {
+  TopicEvidence
+} from "../typesSupportProcessingPipelineV2.types";
 
 type JsonLike = unknown;
 
@@ -57,19 +60,14 @@ export type SupportResponsePlan = {
 };
 
 export type BuildPlanSupportResponsePromptInput = {
-  latestUserMessageContent: string;
-  textSurfaceAnalysis: JsonLike;
-  standardResponseFragments: JsonLike[];
-  supportResponseCues: JsonLike[];
-  textUnderstandings: JsonLike[];
-  topicUpdateProposals: JsonLike[];
-  existingTopics: JsonLike[];
-  knowledgeEnrichmentPlan: JsonLike;
-  retrievedSupportKnowledge: JsonLike[];
-  synthesizedRetrievedKnowledge: JsonLike | null;
-  recentInteractionContext: JsonLike;
-  extractableFieldCatalog?: JsonLike;
+  topicUserMessageContent: string;
+  topicEvidence: TopicEvidence;
+  targetLanguage?: string;
+  selectedCatalogKnowledge: JsonLike;
+  topicKnowledgeEnrichmentPlan: JsonLike;
+  topicRetrievedKnowledgeSynthesis?: JsonLike | null;
   responsePlanningPolicy?: Partial<ResponsePlanningPolicy>;
+  channel?: string;
 };
 
 export type PlanSupportResponseInput = BuildPlanSupportResponsePromptInput;

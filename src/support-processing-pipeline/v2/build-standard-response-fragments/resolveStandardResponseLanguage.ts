@@ -62,7 +62,7 @@ function detectLocalLanguageFromMessage(
     .toLowerCase();
 
   if (
-    /\b(bonjour|merci|remerci|compte|bloque|probleme|support|humain|urgent|erreur|echec|connexion|connecter|facture|paiement)\b/u
+    /\b(bonjour|merci|remerci|compte|bloque|probleme|support|humain|urgent|erreur|echec|connexion|connecter|facture|paiement|oui|non|normalement|semaine derniere|derniere fois|mot de passe|ca marche|ca ne marche pas)\b/u
       .test(normalizedContent) ||
     /[àâçéèêëîïôûùüÿœ]/iu.test(content)
   ) {

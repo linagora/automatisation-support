@@ -4,18 +4,24 @@ import type {
 
 function field(
   fieldName: ExtractableFieldDefinition["fieldName"],
-  description: string
+  description: string,
+  askableByUser: boolean = true
 ): ExtractableFieldDefinition {
   return {
     fieldName,
-    description
+    description,
+    askableByUser
   };
 }
 
 const SUPPORT_IDENTITY_AND_ACCOUNT_FIELDS: ExtractableFieldDefinition[] = [
   field("user_identifier", "Login, username or user id."),
   field("account_identifier", "Account, tenant or customer id."),
-  field("account_status", "Account/access status: blocked, suspended, active, pending.")
+  field(
+    "account_status",
+    "Account/access status: blocked, suspended, active, pending.",
+    false
+  )
 ];
 
 const SUPPORT_ORGANIZATION_AND_PRODUCT_FIELDS: ExtractableFieldDefinition[] = [
@@ -100,7 +106,11 @@ const SUPPORT_MIGRATION_FIELDS: ExtractableFieldDefinition[] = [
 
 const SUPPORT_REFERENCE_FIELDS: ExtractableFieldDefinition[] = [
   field("provided_url", "URL, link, domain, callback URL, webhook URL or page address."),
-  field("reference_id", "Ticket, invoice, order, transaction, email or request id.")
+  field("reference_id", "Ticket, invoice, order, transaction, email or request id."),
+  field(
+    "visual_evidence",
+    "Screenshot, photo or video showing the relevant issue, only when visual evidence is materially useful."
+  )
 ];
 
 const DEFAULT_SUPPORT_EXTRACTABLE_FIELD_CATALOG: ExtractableFieldDefinition[] = [

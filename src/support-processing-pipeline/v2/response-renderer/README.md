@@ -2,28 +2,26 @@
 
 Final rendering step for the V2 support-processing pipeline.
 
-This LLM does not decide the support strategy. It turns the structured `responsePlan`
-into final user-facing message(s).
+This LLM does not decide the support strategy. It turns structured
+`topicResponsePlans` and standard rendering instructions into final
+user-facing message(s).
 
-It also supports a temporary `standard-only` route:
-when no support topic exists and `responsePlan` is absent, it can render a short
-natural answer from `standardResponseFragments` only.
+It also supports a `standard-only` route when `topicResponsePlans` is empty.
 
 ## Responsibilities
 
 - Write concise final customer-facing content.
-- Follow `responsePlan` when present.
-- Respect planned message order.
+- Follow every topic response plan.
 - Ask questions naturally when planned.
-- Integrate standard fragments without repetition.
-- Adjust tone from `supportResponseCues`.
+- Integrate standard rendering instructions without copying them literally.
+- Merge duplicate questions while preserving distinct planned requests.
 - Return one or several rendered messages.
 
 ## Non-responsibilities
 
 - No topic matching.
 - No fact extraction.
-- No support strategy decision when a `responsePlan` exists.
+- No support strategy decision.
 - No invented technical solution.
 - No RAG retrieval.
 - No persistence.
@@ -41,18 +39,8 @@ For support routes:
 ```ts
 const renderResult = await renderSupportResponse({
   latestUserMessageContent,
-  responsePlan,
-  textSurfaceAnalysis,
   standardResponseFragments,
-  supportResponseCues,
-  textUnderstandings,
-  topicUpdateProposals,
-  existingTopics,
-  knowledgeEnrichmentPlan,
-  retrievedSupportKnowledge,
-  synthesizedRetrievedKnowledge,
-  recentInteractionContext,
-  responsePlanningPolicy,
+  topicResponsePlans: [supportResponsePlan],
   channel
 });
 ```
@@ -62,9 +50,8 @@ For standard-only routes:
 ```ts
 const renderResult = await renderSupportResponse({
   latestUserMessageContent,
-  responsePlan: null,
   standardResponseFragments,
-  supportResponseCues: [],
+  topicResponsePlans: [],
   channel
 });
 ```

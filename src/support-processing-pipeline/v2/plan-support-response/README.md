@@ -8,35 +8,33 @@ Chemin cible conseillé :
 src/support-processing-pipeline/v2/plan-support-response/
 ```
 
-Rôle : produire un plan de réponse structuré pour le renderer, sans rédiger la réponse finale.
+Rôle : produire un plan de réponse strict pour un seul topic, sans rédiger la
+réponse finale. Le renderer fusionne ensuite zéro, un ou plusieurs
+`topicResponsePlans`.
 
 Entrées principales :
-- `textSurfaceAnalysis`
-- `standardResponseFragments`
-- `supportResponseCues`
-- `textUnderstandings`
-- `topicUpdateProposals`
-- `existingTopics`
-- `knowledgeEnrichmentPlan`
-- `retrievedSupportKnowledge`
-- `synthesizedRetrievedKnowledge`
-- `recentInteractionContext`
-- `extractableFieldCatalog`
+- `topicUserMessageContent`
+- `targetLanguage`
+- `topicEvidence`
+- `selectedCatalogKnowledge`
+- `topicKnowledgeEnrichmentPlan`
+- `topicRetrievedKnowledgeSynthesis`
 - `responsePlanningPolicy`
 
 Sortie principale :
 - `SupportResponsePlan`
 
-Le planner remplace conceptuellement la combinaison V1 `runSearchDecision` + `runResponsePlan`, mais avec une logique plus souple :
+Le planner ne sélectionne pas le topic, le catalogue ou les connaissances. Il
+reçoit uniquement les données déjà réduites pour sa branche :
 - pas de questions robotiques ;
-- questions communes vs spécifiques ;
-- prise en compte standard fragments et support response cues ;
+- une question décisive plutôt que plusieurs questions faibles ;
+- prise en compte des attachments liés au topic ;
 - prudence si RAG absent ;
 - instructions structurées pour le renderer ;
 - rationale interne pour debug.
 
 Notes d’intégration :
-- brancher après `planKnowledgeEnrichment` mock / RAG ;
+- brancher après la sélection catalogue et l’enrichissement knowledge du topic ;
 - ne pas appeler pour les cas purement standard-only ;
-- transporter `responsePlan.responsePlan` vers le renderer ;
+- transporter chaque `responsePlan.responsePlan` dans `topicResponsePlans` ;
 - le formatter retourne aussi `validation` pour debug.

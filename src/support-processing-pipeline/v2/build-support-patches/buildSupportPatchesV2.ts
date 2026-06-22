@@ -294,6 +294,10 @@ function buildResponsePlanPatch(responsePlan: ResponsePlanV2 | undefined): Respo
 }
 
 function buildSupportPatchesV2(input: BuildSupportPatchesInput): Patches {
+  // TODO V2 cleanup: remove legacy responsePlan once downstream consumers use
+  // topicResponsePlans.
+  const legacyResponsePlan =
+    input.responsePlan ?? input.topicResponsePlans?.[0];
   const {
     segmentsTopic,
     reviewProposals
@@ -324,7 +328,7 @@ function buildSupportPatchesV2(input: BuildSupportPatchesInput): Patches {
       }
     },
     responsePatch: {
-      responsePlan: buildResponsePlanPatch(input.responsePlan)
+      responsePlan: buildResponsePlanPatch(legacyResponsePlan)
     },
     metadataPatch: {
       generatedAt,

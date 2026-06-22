@@ -3,7 +3,6 @@ import type {
 } from "../../../llm/llm-client";
 
 import type {
-  ResponsePlanningPolicy,
   SupportResponsePlan
 } from "../plan-support-response/typesPlanSupportResponse.types";
 
@@ -34,24 +33,9 @@ export type RenderedSupportResponse = {
 
 export type RenderSupportResponseInput = {
   latestUserMessageContent: string;
-
-  responsePlan?: SupportResponsePlan | null;
-
-  textSurfaceAnalysis?: JsonLike;
+  targetLanguage?: string;
   standardResponseFragments: JsonLike[];
-  supportResponseCues?: JsonLike[];
-
-  textUnderstandings?: JsonLike[];
-  topicUpdateProposals?: JsonLike[];
-  existingTopics?: JsonLike[];
-
-  knowledgeEnrichmentPlan?: JsonLike;
-  retrievedSupportKnowledge?: JsonLike[];
-  synthesizedRetrievedKnowledge?: JsonLike | null;
-
-  recentInteractionContext?: JsonLike;
-  responsePlanningPolicy?: Partial<ResponsePlanningPolicy>;
-
+  topicResponsePlans: SupportResponsePlan[];
   channel?: string;
 };
 

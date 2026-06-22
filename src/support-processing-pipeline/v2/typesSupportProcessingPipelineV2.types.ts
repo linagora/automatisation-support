@@ -61,6 +61,7 @@ export type SupportProcessingStepName =
   | "proposeTopicUpdates"
   | "applyTopicUpdates"
   | "planKnowledgeEnrichment"
+  | "selectCatalogKnowledgeForTopic"
   | "retrieveSupportKnowledge"
   | "synthesizeRetrievedKnowledge"
   | "planSupportResponse"
@@ -105,6 +106,11 @@ export type SupportProcessingPipelineV2Output = {
   knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
   retrievedSupportKnowledge?: KnowledgeChunk[];
   synthesizedRetrievedKnowledge?: RetrievedKnowledgeSynthesis | null;
+  topicKnowledgeEnrichmentPlans?: TopicKnowledgeEnrichmentPlanResult[];
+  topicRetrievedSupportKnowledge?: TopicRetrievedSupportKnowledgeResult[];
+  topicRetrievedKnowledgeSyntheses?: TopicRetrievedKnowledgeSynthesisResult[];
+  topicResponsePlans?: ResponsePlanV2[];
+  /** @deprecated Use topicResponsePlans. */
   responsePlan?: ResponsePlanV2;
 };
 
@@ -139,12 +145,15 @@ export type AttachmentSurfaceAnalysis = {
 export type StandardResponseFragment = {
   category: SurfaceCategory;
   standardSubcategory?: StandardSubcategory;
+  sourceSegmentId?: string;
+  sourceVerbatim?: string;
   content: string;
 };
 
 export type ExtractableFieldDefinition = {
   fieldName: string;
   description: string;
+  askableByUser?: boolean;
 };
 
 export type TestedAction = {
@@ -270,6 +279,7 @@ export type TopicUpdateProposal = {
   proposalId: string;
   action: TopicUpdateAction;
   fromUnderstandingIds: string[];
+  relatedAttachmentIndexes?: number[];
   topicId: string | null;
   selectedSourceVerbatims: string[];
   updateIntent: TopicUpdateIntent | null;
@@ -385,60 +395,88 @@ export type ApplyTopicUpdatesInput = {
 };
 
 export type PlanKnowledgeEnrichmentInput = {
-  textSurfaceAnalysis?: TextSurfaceAnalysis;
-  standardResponseFragments: StandardResponseFragment[];
-  textUnderstandings: TextUnderstanding[];
-  supportResponseCues: SupportResponseCue[];
-  topicUpdateProposals: TopicUpdateProposal[];
-  supportTopicKnowledge: SupportTopicKnowledge;
-  recentInteractionContext: RecentInteractionContext;
-  latestUserMessage: LatestUserMessage;
+  topicEvidence: TopicEvidence;
   extractableFieldCatalog: ExtractableFieldDefinition[];
+  recentInteractionContext?: RecentInteractionContext;
+  targetLanguage?: string;
 };
 
-export type RetrieveSupportKnowledgeInput = {
+export type TopicEvidence = {
+  proposalId: string;
+  topicId: string | null;
+  topicSourceVerbatims: string[];
+  relatedUnderstandingIds: string[];
+  relatedTextUnderstandings: TextUnderstanding[];
+  relatedAttachmentUnderstandings: AttachmentUnderstanding[];
+  relatedSupportResponseCues: SupportResponseCue[];
+  existingTopic?: unknown;
+};
+
+export type SelectCatalogKnowledgeForTopicInput = {
+  topicUserMessageContent: string;
+  topicEvidence: TopicEvidence;
+  extractableFieldCatalog: ExtractableFieldDefinition[];
+  recentInteractionContext?: unknown;
+  targetLanguage?: string;
+};
+
+export type SelectedCatalogKnowledgeForTopic = {
+  selectedFields: ExtractableFieldDefinition[];
+  selectedGenericKnowledge: unknown[];
+  scopeReason: string;
+  rejectedFieldNames: string[];
+  warnings?: string[];
+};
+
+export type TopicKnowledgeBranchContext = {
+  topicEvidence: TopicEvidence;
+  selectedCatalogKnowledge: SelectedCatalogKnowledgeForTopic;
+  topicKnowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
+};
+
+export type RetrieveSupportKnowledgeInput = TopicKnowledgeBranchContext & {
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
 };
 
-export type SynthesizeRetrievedKnowledgeInput = {
+export type SynthesizeRetrievedKnowledgeInput = TopicKnowledgeBranchContext & {
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
   knowledgeChunks: KnowledgeChunk[];
 };
 
+export type TopicKnowledgeEnrichmentPlanResult = {
+  proposalId: string;
+  topicId: string | null;
+  plan: KnowledgeEnrichmentPlan;
+};
+
+export type TopicRetrievedSupportKnowledgeResult = {
+  proposalId: string;
+  topicId: string | null;
+  knowledgeChunks: KnowledgeChunk[];
+};
+
+export type TopicRetrievedKnowledgeSynthesisResult = {
+  proposalId: string;
+  topicId: string | null;
+  synthesis: RetrievedKnowledgeSynthesis | null;
+};
+
 export type PlanSupportResponseInput = {
-  latestUserMessageContent: string;
-  textSurfaceAnalysis?: TextSurfaceAnalysis;
-  standardResponseFragments: StandardResponseFragment[];
-  textUnderstandings: TextUnderstanding[];
-  supportResponseCues: SupportResponseCue[];
-  topicUpdateProposals: TopicUpdateProposal[];
-  supportTopicKnowledge: SupportTopicKnowledge;
-  existingTopics?: unknown[];
-  knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
-  retrievedSupportKnowledge: KnowledgeChunk[];
-  synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null;
-  genericFieldKnowledge: GenericFieldKnowledge;
-  extractableFieldCatalog: ExtractableFieldDefinition[];
-  recentInteractionContext: RecentInteractionContext;
+  topicUserMessageContent: string;
+  topicEvidence: TopicEvidence;
+  targetLanguage?: string;
+  selectedCatalogKnowledge: unknown;
+  topicKnowledgeEnrichmentPlan: unknown;
+  topicRetrievedKnowledgeSynthesis?: unknown | null;
   responsePlanningPolicy?: Partial<ResponsePlanningPolicy>;
-  channel: Channel;
+  channel?: Channel;
 };
 
 export type RenderSupportResponseInput = {
   latestUserMessageContent: string;
-  responsePlan?: ResponsePlanV2 | null;
+  targetLanguage?: string;
   standardResponseFragments: StandardResponseFragment[];
-  textSurfaceAnalysis?: TextSurfaceAnalysis;
-  supportResponseCues?: SupportResponseCue[];
-  textUnderstandings?: TextUnderstanding[];
-  topicUpdateProposals?: TopicUpdateProposal[];
-  existingTopics?: unknown[];
-  knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
-  retrievedSupportKnowledge?: KnowledgeChunk[];
-  synthesizedRetrievedKnowledge?: RetrievedKnowledgeSynthesis | null;
-  recentInteractionContext?: RecentInteractionContext;
-  responsePlanningPolicy?: Partial<ResponsePlanningPolicy>;
-  accountProfile?: AccountProfile;
+  topicResponsePlans: ResponsePlanV2[];
   channel: Channel;
 };
 
@@ -456,6 +494,11 @@ export type BuildSupportPatchesInput = {
   knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
   retrievedSupportKnowledge?: KnowledgeChunk[];
   synthesizedRetrievedKnowledge?: RetrievedKnowledgeSynthesis | null;
+  topicKnowledgeEnrichmentPlans?: TopicKnowledgeEnrichmentPlanResult[];
+  topicRetrievedSupportKnowledge?: TopicRetrievedSupportKnowledgeResult[];
+  topicRetrievedKnowledgeSyntheses?: TopicRetrievedKnowledgeSynthesisResult[];
+  topicResponsePlans?: ResponsePlanV2[];
+  /** @deprecated Use topicResponsePlans. */
   responsePlan?: ResponsePlanV2;
   userResponse: UserResponse;
 };
@@ -497,6 +540,10 @@ export type SupportProcessingPipelineV2Steps = {
   planKnowledgeEnrichment?: PipelineStep<
     PlanKnowledgeEnrichmentInput,
     KnowledgeEnrichmentPlan
+  >;
+  selectCatalogKnowledgeForTopic?: PipelineStep<
+    SelectCatalogKnowledgeForTopicInput,
+    SelectedCatalogKnowledgeForTopic
   >;
   retrieveSupportKnowledge?: PipelineStep<
     RetrieveSupportKnowledgeInput,

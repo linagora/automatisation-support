@@ -5,6 +5,9 @@ import { join } from "node:path";
 import {
   runSupportProcessingPipelineV2
 } from "../../../src/support-processing-pipeline/v2/runSupportProcessingPipelineV2";
+import {
+  buildTopicResponsePlanDebug
+} from "../../../src/support-processing-pipeline/v2/responsePlanIds";
 
 import type {
   AttachmentSurfaceAnalysis,
@@ -220,6 +223,17 @@ const noRagPlan: KnowledgeEnrichmentPlan = {
   reason: "rag_not_enabled_yet"
 };
 
+const ragPlan: KnowledgeEnrichmentPlan = {
+  route: "retrieve_knowledge",
+  retrievalRequests: [
+    {
+      topicId: 1,
+      query: "login password error"
+    }
+  ],
+  reason: "Topic requires support knowledge."
+};
+
 const knowledgeChunks: KnowledgeChunk[] = [
   {
     topicId: 1,
@@ -266,6 +280,11 @@ const responsePlan: ResponsePlanV2 = {
     ]
   },
   internalRationale: "Test fixture."
+};
+
+const expectedTopicResponsePlan: ResponsePlanV2 = {
+  ...responsePlan,
+  responsePlanId: "response_plan_topic_update_proposal_1"
 };
 
 const renderedSupportResponse: RenderedSupportResponse = {
@@ -348,6 +367,33 @@ function buildSteps(
       throw new Error("applyTopicUpdates should not run in the temporary V2 flow");
     }),
     planKnowledgeEnrichment: vi.fn(async () => noRagPlan),
+    selectCatalogKnowledgeForTopic: vi.fn(async () => ({
+      selectedFields: [
+        {
+          fieldName: "access_action",
+          description: "Access action.",
+          askableByUser: true
+        },
+        {
+          fieldName: "auth_method",
+          description: "Authentication method.",
+          askableByUser: true
+        },
+        {
+          fieldName: "account_status",
+          description: "Internal account status.",
+          askableByUser: false
+        },
+        {
+          fieldName: "error_message",
+          description: "Exact error.",
+          askableByUser: true
+        }
+      ],
+      selectedGenericKnowledge: [],
+      scopeReason: "test_catalog_selection",
+      rejectedFieldNames: []
+    })),
     retrieveSupportKnowledge: vi.fn(async () => knowledgeChunks),
     synthesizeRetrievedKnowledge: vi.fn(
       async () => retrievedKnowledgeSynthesis
@@ -375,7 +421,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.planSupportResponse).not.toHaveBeenCalled();
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
       standardResponseFragments: [standardFragment],
-      accountProfile: input.accountProfile,
+      topicResponsePlans: [],
       channel: input.latestUserMessage.channel
     }));
     expect(steps.buildUserResponse).toHaveBeenCalledWith({
@@ -412,8 +458,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.analyzeSupportText).not.toHaveBeenCalled();
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
       standardResponseFragments: [],
-      textSurfaceAnalysis: standardOnlyTextSurface,
-      accountProfile: input.accountProfile,
+      topicResponsePlans: [],
       channel: input.latestUserMessage.channel
     }));
   });
@@ -433,10 +478,8 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.analyzeSupportText).toHaveBeenCalled();
     expect(steps.analyzeSupportAttachments).not.toHaveBeenCalled();
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
-      responsePlan,
+      topicResponsePlans: [expectedTopicResponsePlan],
       standardResponseFragments: [],
-      textSurfaceAnalysis: supportTextSurface,
-      accountProfile: buildInput().accountProfile,
       channel: buildInput().latestUserMessage.channel
     }));
     expect(steps.proposeTopicUpdates).toHaveBeenCalledWith({
@@ -523,34 +566,809 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(output.knowledgeEnrichmentPlan).toEqual(noRagPlan);
     expect(output.retrievedSupportKnowledge).toEqual([]);
     expect(output.synthesizedRetrievedKnowledge).toBeNull();
+    expect(output.topicResponsePlans).toEqual([expectedTopicResponsePlan]);
+    expect(output.responsePlan).toEqual(expectedTopicResponsePlan);
     expect(steps.retrieveSupportKnowledge).not.toHaveBeenCalled();
     expect(steps.synthesizeRetrievedKnowledge).not.toHaveBeenCalled();
     expect(steps.planKnowledgeEnrichment).toHaveBeenCalledWith({
-      textSurfaceAnalysis: supportTextSurface,
-      standardResponseFragments: [],
-      textUnderstandings,
-      supportResponseCues,
-      topicUpdateProposals,
-      supportTopicKnowledge: buildInput().supportTopicKnowledge,
+      topicEvidence: expect.objectContaining({
+        proposalId: topicUpdateProposals[0].proposalId,
+        topicSourceVerbatims: ["Login issue"],
+        relatedUnderstandingIds: ["text_understanding_1"],
+        relatedTextUnderstandings: textUnderstandings,
+        relatedAttachmentUnderstandings: [],
+        relatedSupportResponseCues: supportResponseCues
+      }),
       recentInteractionContext: buildInput().recentInteractionContext,
-      latestUserMessage: buildInput().latestUserMessage,
-      extractableFieldCatalog: []
+      targetLanguage: "French",
+      extractableFieldCatalog: expect.arrayContaining([
+        expect.objectContaining({
+          fieldName: "account_status",
+          askableByUser: false
+        }),
+        expect.objectContaining({
+          fieldName: "visual_evidence"
+        })
+      ])
     });
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
-        textSurfaceAnalysis: supportTextSurface,
-        standardResponseFragments: [],
-        textUnderstandings,
-        supportResponseCues,
-        topicUpdateProposals,
-        supportTopicKnowledge: buildInput().supportTopicKnowledge,
-        knowledgeEnrichmentPlan: noRagPlan,
-        retrievedSupportKnowledge: [],
-        synthesizedRetrievedKnowledge: null,
-        genericFieldKnowledge: {},
-        extractableFieldCatalog: []
+        topicUserMessageContent: "Login issue",
+        targetLanguage: "French",
+        topicEvidence: expect.objectContaining({
+          proposalId: topicUpdateProposals[0].proposalId,
+          topicSourceVerbatims: ["Login issue"],
+          relatedTextUnderstandings: textUnderstandings,
+          relatedAttachmentUnderstandings: []
+        }),
+        topicKnowledgeEnrichmentPlan: noRagPlan,
+        topicRetrievedKnowledgeSynthesis: null,
+        selectedCatalogKnowledge: expect.objectContaining({
+          selectedFields: expect.arrayContaining([
+            expect.objectContaining({ fieldName: "access_action" }),
+            expect.objectContaining({ fieldName: "auth_method" }),
+            expect.objectContaining({ fieldName: "account_status" }),
+            expect.objectContaining({ fieldName: "error_message" })
+          ]),
+          selectedGenericKnowledge: []
+        })
       })
     );
+  });
+
+  it("plans every actionable topic with its related evidence", async function () {
+    const unrelatedUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      understandingId: "text_understanding_2",
+      sourceSegmentIds: ["seg_support_2"],
+      sourceVerbatims: ["Un autre problème"],
+      summary: "Un autre problème"
+    };
+    const proposals: TopicUpdateProposal[] = [
+      {
+        ...topicUpdateProposals[0],
+        relatedAttachmentIndexes: [1]
+      },
+      {
+        ...topicUpdateProposals[0],
+        proposalId: "topic_update_proposal_2",
+        fromUnderstandingIds: ["text_understanding_2"],
+        selectedSourceVerbatims: ["Un autre problème"]
+      }
+    ];
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: true,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      analyzeAttachmentSurface: vi.fn(async () => deepAttachmentSurface),
+      analyzeSupportText: vi.fn(async () => ({
+        textUnderstandings: [
+          ...textUnderstandings,
+          unrelatedUnderstanding
+        ],
+        supportResponseCues
+      })),
+      proposeTopicUpdates: vi.fn(async () => proposals),
+      selectCatalogKnowledgeForTopic: vi.fn(async (selectionInput) => {
+        if (
+          selectionInput.topicEvidence.proposalId ===
+          proposals[0].proposalId
+        ) {
+          return {
+            selectedFields: [
+              {
+                fieldName: "visual_evidence",
+                description: "Related screenshot.",
+                askableByUser: true
+              }
+            ],
+            selectedGenericKnowledge: [],
+            scopeReason: "Attachment linked to first topic.",
+            rejectedFieldNames: []
+          };
+        }
+
+        return {
+          selectedFields: [
+            {
+              fieldName: "error_message",
+              description: "Exact error.",
+              askableByUser: true
+            }
+          ],
+          selectedGenericKnowledge: [],
+          scopeReason: "Second topic needs its error.",
+          rejectedFieldNames: []
+        };
+      })
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.planKnowledgeEnrichment).toHaveBeenCalledTimes(2);
+    expect(steps.selectCatalogKnowledgeForTopic).toHaveBeenCalledTimes(2);
+    expect(steps.planKnowledgeEnrichment).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        topicEvidence: expect.objectContaining({
+          proposalId: proposals[0].proposalId,
+          relatedTextUnderstandings: [textUnderstandings[0]]
+        })
+      })
+    );
+    expect(steps.planKnowledgeEnrichment).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        topicEvidence: expect.objectContaining({
+          proposalId: proposals[1].proposalId,
+          relatedTextUnderstandings: [unrelatedUnderstanding]
+        })
+      })
+    );
+    expect(steps.planSupportResponse).toHaveBeenCalledTimes(2);
+    expect(steps.planSupportResponse).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        topicUserMessageContent: "Login issue",
+        topicEvidence: expect.objectContaining({
+          proposalId: proposals[0].proposalId,
+          relatedTextUnderstandings: [textUnderstandings[0]],
+          relatedAttachmentUnderstandings: attachmentUnderstandings
+        }),
+        selectedCatalogKnowledge: expect.objectContaining({
+          selectedFields: expect.arrayContaining([
+            expect.objectContaining({ fieldName: "visual_evidence" })
+          ])
+        })
+      })
+    );
+    expect(steps.planSupportResponse).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        topicUserMessageContent: "Un autre problème",
+        topicEvidence: expect.objectContaining({
+          proposalId: proposals[1].proposalId,
+          relatedTextUnderstandings: [unrelatedUnderstanding],
+          relatedAttachmentUnderstandings: []
+        }),
+        selectedCatalogKnowledge: expect.objectContaining({
+          selectedFields: [
+            expect.objectContaining({ fieldName: "error_message" })
+          ]
+        })
+      })
+    );
+    const topicResponsePlans = output.topicResponsePlans ?? [];
+
+    expect(topicResponsePlans).toHaveLength(2);
+    const [firstTopicResponsePlan, secondTopicResponsePlan] =
+      topicResponsePlans;
+
+    expect(firstTopicResponsePlan.responsePlanId).toBe(
+      "response_plan_topic_update_proposal_1"
+    );
+    expect(secondTopicResponsePlan.responsePlanId).toBe(
+      "response_plan_topic_update_proposal_2"
+    );
+    expect(firstTopicResponsePlan.responsePlanId).not.toBe(
+      secondTopicResponsePlan.responsePlanId
+    );
+    expect(firstTopicResponsePlan.responsePlanId).not.toBe("");
+    expect(secondTopicResponsePlan.responsePlanId).not.toBe("");
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicResponsePlans
+      })
+    );
+    expect(buildTopicResponsePlanDebug(firstTopicResponsePlan)).toEqual({
+      responsePlanId: firstTopicResponsePlan.responsePlanId
+    });
+    expect(buildTopicResponsePlanDebug(secondTopicResponsePlan)).toEqual({
+      responsePlanId: secondTopicResponsePlan.responsePlanId
+    });
+    expect(output.responsePlan).toEqual(firstTopicResponsePlan);
+  });
+
+  it("isolates access and billing evidence across topic-only branches", async function () {
+    const accessUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      sourceVerbatims: ["Mon compte est toujours bloqué."],
+      summary: "Blocked account"
+    };
+    const billingUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      understandingId: "text_understanding_2",
+      sourceSegmentIds: ["seg_support_2"],
+      sourceVerbatims: ["J’ai aussi reçu ma facture deux fois."],
+      summary: "Duplicate invoice",
+      supportNeeds: ["possible_billing_or_payment_action"],
+      broadCategoryHint: "billing"
+    };
+    const accessProposal: TopicUpdateProposal = {
+      ...topicUpdateProposals[0],
+      selectedSourceVerbatims: ["Mon compte est toujours bloqué."]
+    };
+    const billingProposal: TopicUpdateProposal = {
+      ...topicUpdateProposals[0],
+      proposalId: "topic_update_proposal_2",
+      fromUnderstandingIds: ["text_understanding_2"],
+      selectedSourceVerbatims: ["J’ai aussi reçu ma facture deux fois."],
+      newTopic: {
+        ...topicUpdateProposals[0].newTopic!,
+        title: "Facture reçue deux fois",
+        broadCategoryHint: "billing",
+        userGoal: "Clarifier la double facturation"
+      }
+    };
+    const mixedInput = buildInput();
+    mixedInput.latestUserMessage.content =
+      "Mon compte est toujours bloqué. Et j’ai aussi reçu ma facture deux fois.";
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async (): Promise<TextSurfaceAnalysis> => ({
+        userLanguage: "French",
+        segments: [
+          {
+            segmentId: "seg_support",
+            verbatim: "Mon compte est toujours bloqué.",
+            category: "support_relevant"
+          },
+          {
+            segmentId: "seg_support_2",
+            verbatim: "J’ai aussi reçu ma facture deux fois.",
+            category: "support_relevant"
+          }
+        ]
+      })),
+      analyzeSupportText: vi.fn(async () => ({
+        textUnderstandings: [accessUnderstanding, billingUnderstanding],
+        supportResponseCues: []
+      })),
+      proposeTopicUpdates: vi.fn(async () => [
+        accessProposal,
+        billingProposal
+      ]),
+      selectCatalogKnowledgeForTopic: vi.fn(async (selectionInput) => ({
+        selectedFields:
+          selectionInput.topicEvidence.proposalId ===
+            accessProposal.proposalId
+            ? [{
+                fieldName: "account_status",
+                description: "Internal account status.",
+                askableByUser: false
+              }]
+            : [{
+                fieldName: "duplicate_billing_impact",
+                description: "Duplicate document versus duplicate charge.",
+                askableByUser: true
+              }],
+        selectedGenericKnowledge: [],
+        scopeReason: "Topic-only test selection.",
+        rejectedFieldNames: []
+      }))
+    });
+
+    await runSupportProcessingPipelineV2(mixedInput, steps);
+
+    const selectorInputs = vi.mocked(
+      steps.selectCatalogKnowledgeForTopic
+    ).mock.calls.map(([selectionInput]) => selectionInput);
+    const plannerInputs = vi.mocked(
+      steps.planSupportResponse
+    ).mock.calls.map(([plannerInput]) => plannerInput);
+    const accessSelectorInput = selectorInputs.find((selectionInput) => {
+      return selectionInput.topicEvidence.proposalId ===
+        accessProposal.proposalId;
+    });
+    const billingSelectorInput = selectorInputs.find((selectionInput) => {
+      return selectionInput.topicEvidence.proposalId ===
+        billingProposal.proposalId;
+    });
+    const accessPlannerInput = plannerInputs.find((plannerInput) => {
+      return plannerInput.topicEvidence.proposalId ===
+        accessProposal.proposalId;
+    });
+    const billingPlannerInput = plannerInputs.find((plannerInput) => {
+      return plannerInput.topicEvidence.proposalId ===
+        billingProposal.proposalId;
+    });
+
+    expect(accessSelectorInput).toEqual(expect.objectContaining({
+      topicUserMessageContent: "Mon compte est toujours bloqué.",
+      topicEvidence: expect.objectContaining({
+        topicSourceVerbatims: ["Mon compte est toujours bloqué."],
+        relatedUnderstandingIds: ["text_understanding_1"],
+        relatedTextUnderstandings: [accessUnderstanding]
+      })
+    }));
+    expect(JSON.stringify(accessSelectorInput)).not.toContain("facture");
+    expect(billingSelectorInput).toEqual(expect.objectContaining({
+      topicUserMessageContent: "J’ai aussi reçu ma facture deux fois.",
+      topicEvidence: expect.objectContaining({
+        topicSourceVerbatims: ["J’ai aussi reçu ma facture deux fois."],
+        relatedUnderstandingIds: ["text_understanding_2"],
+        relatedTextUnderstandings: [billingUnderstanding]
+      })
+    }));
+    expect(JSON.stringify(billingSelectorInput)).not.toContain("compte");
+    expect(accessPlannerInput?.selectedCatalogKnowledge).toEqual(
+      expect.objectContaining({
+        selectedFields: [
+          expect.objectContaining({ fieldName: "account_status" })
+        ]
+      })
+    );
+    expect(JSON.stringify(accessPlannerInput)).not.toContain("facture");
+    expect(billingPlannerInput?.selectedCatalogKnowledge).toEqual(
+      expect.objectContaining({
+        selectedFields: [
+          expect.objectContaining({ fieldName: "duplicate_billing_impact" })
+        ]
+      })
+    );
+    expect(JSON.stringify(billingPlannerInput)).not.toContain("compte");
+  });
+
+  it("does not silently rebuild topic verbatims when the proposal has none", async function () {
+    const proposalWithoutVerbatims: TopicUpdateProposal = {
+      ...topicUpdateProposals[0],
+      selectedSourceVerbatims: []
+    };
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      proposeTopicUpdates: vi.fn(async () => [proposalWithoutVerbatims])
+    });
+
+    await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.selectCatalogKnowledgeForTopic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicUserMessageContent: "",
+        topicEvidence: expect.objectContaining({
+          topicSourceVerbatims: [],
+          relatedTextUnderstandings: textUnderstandings
+        })
+      })
+    );
+    expect(steps.planSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicUserMessageContent: "",
+        topicEvidence: expect.objectContaining({
+          topicSourceVerbatims: []
+        })
+      })
+    );
+  });
+
+  it("starts actionable topic branches in parallel", async function () {
+    const firstPlan = createDeferred<KnowledgeEnrichmentPlan>();
+    const secondPlan = createDeferred<KnowledgeEnrichmentPlan>();
+    const proposals: TopicUpdateProposal[] = [
+      topicUpdateProposals[0],
+      {
+        ...topicUpdateProposals[0],
+        proposalId: "topic_update_proposal_2"
+      }
+    ];
+    let planCallCount = 0;
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      proposeTopicUpdates: vi.fn(async () => proposals),
+      planKnowledgeEnrichment: vi.fn(() => {
+        planCallCount += 1;
+
+        return planCallCount === 1
+          ? firstPlan.promise
+          : secondPlan.promise;
+      })
+    });
+
+    const runPromise = runSupportProcessingPipelineV2(buildInput(), steps);
+
+    await vi.waitFor(() => {
+      expect(steps.planKnowledgeEnrichment).toHaveBeenCalledTimes(2);
+    });
+    expect(steps.planSupportResponse).not.toHaveBeenCalled();
+
+    firstPlan.resolve(noRagPlan);
+    secondPlan.resolve(noRagPlan);
+    await runPromise;
+
+    expect(steps.planSupportResponse).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses the temporary catalog fallback when topic selection fails", async function () {
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      selectCatalogKnowledgeForTopic: vi.fn(async () => {
+        throw new Error("selector unavailable");
+      })
+    });
+
+    await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.planSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedCatalogKnowledge: expect.objectContaining({
+          scopeReason: "temporary_topic_catalog_selection",
+          selectedFields: expect.arrayContaining([
+            expect.objectContaining({ fieldName: "access_action" }),
+            expect.objectContaining({
+              fieldName: "account_status",
+              askableByUser: false
+            })
+          ])
+        })
+      })
+    );
+  });
+
+  it("runs retrieval and synthesis for one topic that requests RAG", async function () {
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      planKnowledgeEnrichment: vi.fn(async () => ragPlan)
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledTimes(1);
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledWith(
+      expect.objectContaining({
+        knowledgeEnrichmentPlan: ragPlan,
+        topicKnowledgeEnrichmentPlan: ragPlan,
+        topicEvidence: expect.objectContaining({
+          proposalId: topicUpdateProposals[0].proposalId,
+          relatedTextUnderstandings: textUnderstandings
+        }),
+        selectedCatalogKnowledge: expect.objectContaining({
+          scopeReason: "test_catalog_selection"
+        })
+      })
+    );
+    expect(steps.synthesizeRetrievedKnowledge).toHaveBeenCalledTimes(1);
+    expect(steps.synthesizeRetrievedKnowledge).toHaveBeenCalledWith(
+      expect.objectContaining({
+        knowledgeEnrichmentPlan: ragPlan,
+        knowledgeChunks,
+        topicEvidence: expect.objectContaining({
+          proposalId: topicUpdateProposals[0].proposalId
+        })
+      })
+    );
+    expect(steps.planSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicRetrievedKnowledgeSynthesis: retrievedKnowledgeSynthesis
+      })
+    );
+    expect(output.topicRetrievedSupportKnowledge).toEqual([
+      {
+        proposalId: topicUpdateProposals[0].proposalId,
+        topicId: null,
+        knowledgeChunks
+      }
+    ]);
+    expect(output.topicRetrievedKnowledgeSyntheses).toEqual([
+      {
+        proposalId: topicUpdateProposals[0].proposalId,
+        topicId: null,
+        synthesis: retrievedKnowledgeSynthesis
+      }
+    ]);
+  });
+
+  it("runs RAG only for the topic whose enrichment plan requests it", async function () {
+    const secondUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      understandingId: "text_understanding_2",
+      summary: "Second issue"
+    };
+    const proposals: TopicUpdateProposal[] = [
+      topicUpdateProposals[0],
+      {
+        ...topicUpdateProposals[0],
+        proposalId: "topic_update_proposal_2",
+        fromUnderstandingIds: ["text_understanding_2"]
+      }
+    ];
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      analyzeSupportText: vi.fn(async () => ({
+        textUnderstandings: [
+          ...textUnderstandings,
+          secondUnderstanding
+        ],
+        supportResponseCues
+      })),
+      proposeTopicUpdates: vi.fn(async () => proposals),
+      planKnowledgeEnrichment: vi.fn(async (planInput) => {
+        return planInput.topicEvidence.proposalId ===
+          proposals[1].proposalId
+          ? ragPlan
+          : noRagPlan;
+      })
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledTimes(1);
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicEvidence: expect.objectContaining({
+          proposalId: proposals[1].proposalId,
+          relatedTextUnderstandings: [secondUnderstanding]
+        })
+      })
+    );
+    expect(steps.synthesizeRetrievedKnowledge).toHaveBeenCalledTimes(1);
+    expect(output.topicRetrievedKnowledgeSyntheses).toEqual([
+      {
+        proposalId: proposals[0].proposalId,
+        topicId: null,
+        synthesis: null
+      },
+      {
+        proposalId: proposals[1].proposalId,
+        topicId: null,
+        synthesis: retrievedKnowledgeSynthesis
+      }
+    ]);
+
+    const plannerCalls = vi.mocked(steps.planSupportResponse).mock.calls;
+    const firstTopicPlannerInput = plannerCalls.find(([plannerInput]) => {
+      return plannerInput.topicEvidence.proposalId ===
+        proposals[0].proposalId;
+    })?.[0];
+    const secondTopicPlannerInput = plannerCalls.find(([plannerInput]) => {
+      return plannerInput.topicEvidence.proposalId ===
+        proposals[1].proposalId;
+    })?.[0];
+
+    expect(firstTopicPlannerInput?.topicRetrievedKnowledgeSynthesis).toBeNull();
+    expect(secondTopicPlannerInput?.topicRetrievedKnowledgeSynthesis).toEqual(
+      retrievedKnowledgeSynthesis
+    );
+  });
+
+  it("supports multiple retrieve_knowledge topics in parallel without mixing syntheses", async function () {
+    const secondUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      understandingId: "text_understanding_2",
+      summary: "Billing issue",
+      broadCategoryHint: "billing"
+    };
+    const proposals: TopicUpdateProposal[] = [
+      topicUpdateProposals[0],
+      {
+        ...topicUpdateProposals[0],
+        proposalId: "topic_update_proposal_2",
+        fromUnderstandingIds: ["text_understanding_2"]
+      }
+    ];
+    const firstRetrieval = createDeferred<KnowledgeChunk[]>();
+    const secondRetrieval = createDeferred<KnowledgeChunk[]>();
+    const firstChunks: KnowledgeChunk[] = [
+      {
+        topicId: 1,
+        sourceId: "access_doc",
+        content: "Access knowledge",
+        score: 0.9
+      }
+    ];
+    const secondChunks: KnowledgeChunk[] = [
+      {
+        topicId: 2,
+        sourceId: "billing_doc",
+        content: "Billing knowledge",
+        score: 0.8
+      }
+    ];
+    const firstSynthesis = {
+      topics: [
+        {
+          topicId: 1,
+          relevantFacts: ["Access fact"],
+          sourceReferences: ["access_doc"]
+        }
+      ]
+    };
+    const secondSynthesis = {
+      topics: [
+        {
+          topicId: 2,
+          relevantFacts: ["Billing fact"],
+          sourceReferences: ["billing_doc"]
+        }
+      ]
+    };
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      analyzeSupportText: vi.fn(async () => ({
+        textUnderstandings: [
+          ...textUnderstandings,
+          secondUnderstanding
+        ],
+        supportResponseCues
+      })),
+      proposeTopicUpdates: vi.fn(async () => proposals),
+      planKnowledgeEnrichment: vi.fn(async () => ragPlan),
+      retrieveSupportKnowledge: vi.fn((retrievalInput) => {
+        return retrievalInput.topicEvidence.proposalId ===
+          proposals[0].proposalId
+          ? firstRetrieval.promise
+          : secondRetrieval.promise;
+      }),
+      synthesizeRetrievedKnowledge: vi.fn(async (synthesisInput) => {
+        return synthesisInput.topicEvidence.proposalId ===
+          proposals[0].proposalId
+          ? firstSynthesis
+          : secondSynthesis;
+      })
+    });
+
+    const runPromise = runSupportProcessingPipelineV2(buildInput(), steps);
+
+    await vi.waitFor(() => {
+      expect(steps.retrieveSupportKnowledge).toHaveBeenCalledTimes(2);
+    });
+    expect(steps.synthesizeRetrievedKnowledge).not.toHaveBeenCalled();
+
+    firstRetrieval.resolve(firstChunks);
+    secondRetrieval.resolve(secondChunks);
+    const output = await runPromise;
+
+    expect(steps.synthesizeRetrievedKnowledge).toHaveBeenCalledTimes(2);
+    expect(output.topicRetrievedKnowledgeSyntheses).toEqual([
+      {
+        proposalId: proposals[0].proposalId,
+        topicId: null,
+        synthesis: firstSynthesis
+      },
+      {
+        proposalId: proposals[1].proposalId,
+        topicId: null,
+        synthesis: secondSynthesis
+      }
+    ]);
+
+    const plannerCalls = vi.mocked(steps.planSupportResponse).mock.calls;
+
+    expect(plannerCalls).toEqual(expect.arrayContaining([
+      [
+        expect.objectContaining({
+          topicEvidence: expect.objectContaining({
+            proposalId: proposals[0].proposalId
+          }),
+          topicRetrievedKnowledgeSynthesis: firstSynthesis
+        })
+      ],
+      [
+        expect.objectContaining({
+          topicEvidence: expect.objectContaining({
+            proposalId: proposals[1].proposalId
+          }),
+          topicRetrievedKnowledgeSynthesis: secondSynthesis
+        })
+      ]
+    ]));
+  });
+
+  it("forwards multiple retrieval requests for one topic and synthesizes merged chunks", async function () {
+    const multiRequestPlan: KnowledgeEnrichmentPlan = {
+      route: "retrieve_knowledge",
+      retrievalRequests: [
+        {
+          topicId: 1,
+          query: "access error"
+        },
+        {
+          topicId: 1,
+          query: "password reset"
+        }
+      ],
+      reason: "Two knowledge queries are useful."
+    };
+    const mergedChunks: KnowledgeChunk[] = [
+      ...knowledgeChunks,
+      {
+        topicId: 1,
+        sourceId: "doc_2",
+        content: "Password reset knowledge",
+        score: 0.8
+      }
+    ];
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      planKnowledgeEnrichment: vi.fn(async () => multiRequestPlan),
+      retrieveSupportKnowledge: vi.fn(async () => mergedChunks)
+    });
+
+    await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledWith(
+      expect.objectContaining({
+        knowledgeEnrichmentPlan: multiRequestPlan,
+        topicKnowledgeEnrichmentPlan: multiRequestPlan
+      })
+    );
+    expect(steps.synthesizeRetrievedKnowledge).toHaveBeenCalledWith(
+      expect.objectContaining({
+        knowledgeChunks: mergedChunks
+      })
+    );
+  });
+
+  it("renders no topic plans when no proposal is actionable", async function () {
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      proposeTopicUpdates: vi.fn(async () => {
+        return [
+          {
+          ...topicUpdateProposals[0],
+          action: "needs_review"
+          }
+        ] satisfies TopicUpdateProposal[];
+      })
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.planKnowledgeEnrichment).not.toHaveBeenCalled();
+    expect(steps.selectCatalogKnowledgeForTopic).not.toHaveBeenCalled();
+    expect(steps.planSupportResponse).not.toHaveBeenCalled();
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicResponsePlans: []
+      })
+    );
+    expect(output.topicResponsePlans).toEqual([]);
+    expect(output).not.toHaveProperty("responsePlan");
   });
 
   it("passes support response plans and empty standard fragments to the renderer on support-only turns", async function () {
@@ -568,10 +1386,8 @@ describe("runSupportProcessingPipelineV2", function () {
     await runSupportProcessingPipelineV2(input, steps);
 
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
-      responsePlan,
+      topicResponsePlans: [expectedTopicResponsePlan],
       standardResponseFragments: [],
-      textSurfaceAnalysis: supportTextSurface,
-      accountProfile: input.accountProfile,
       channel: input.latestUserMessage.channel
     }));
   });
@@ -592,10 +1408,8 @@ describe("runSupportProcessingPipelineV2", function () {
 
     expect(steps.analyzeSupportText).toHaveBeenCalled();
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
-      responsePlan,
+      topicResponsePlans: [expectedTopicResponsePlan],
       standardResponseFragments: [standardFragment],
-      textSurfaceAnalysis: supportAndSmallTalkTextSurface,
-      accountProfile: input.accountProfile,
       channel: input.latestUserMessage.channel
     }));
   });
@@ -619,7 +1433,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.renderSupportResponse).toHaveBeenCalledTimes(1);
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
       standardResponseFragments: fragments,
-      accountProfile: input.accountProfile,
+      topicResponsePlans: [],
       channel: input.latestUserMessage.channel
     }));
   });
@@ -673,6 +1487,33 @@ describe("runSupportProcessingPipelineV2", function () {
     }
   });
 
+  it("includes a multi-topic dataset case and exposes per-topic debug plan ids", function () {
+    const root = process.cwd();
+    const datasetSource = readFileSync(
+      join(
+        root,
+        "scripts/support-processing-pipeline/v2/textAnalysisDataset.ts"
+      ),
+      "utf8"
+    );
+    const runnerSource = readFileSync(
+      join(
+        root,
+        "scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts"
+      ),
+      "utf8"
+    );
+
+    expect(datasetSource).toContain('id: "multi-topic-access-billing"');
+    expect(datasetSource).toContain(
+      "Mon compte est toujours bloqué. Et j’ai aussi reçu ma facture deux fois."
+    );
+    expect(runnerSource).toContain("topicCatalogSelections");
+    expect(runnerSource).toContain("topicResponsePlan?:");
+    expect(runnerSource).toContain("buildTopicResponsePlanDebug");
+    expect(runnerSource).toContain("retrievedChunkCount");
+  });
+
   it("reports progress for the no-analysis route", async function () {
     const progressEvents: SupportProcessingProgressEvent[] = [];
     const steps = buildSteps();
@@ -697,6 +1538,7 @@ describe("runSupportProcessingPipelineV2", function () {
       { step: "proposeTopicUpdates", status: "skipped" },
       { step: "applyTopicUpdates", status: "skipped" },
       { step: "planKnowledgeEnrichment", status: "skipped" },
+      { step: "selectCatalogKnowledgeForTopic", status: "skipped" },
       { step: "retrieveSupportKnowledge", status: "skipped" },
       { step: "synthesizeRetrievedKnowledge", status: "skipped" },
       { step: "planSupportResponse", status: "skipped" },

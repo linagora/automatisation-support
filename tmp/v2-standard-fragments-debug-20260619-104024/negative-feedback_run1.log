@@ -1,0 +1,137 @@
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case negative-feedback --until render --debug
+
+
+============================================================
+CASE negative-feedback — Negative feedback only
+UNTIL render
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_negative-feedback",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Je suis vraiment déçu par le support."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 53
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2848, image_tokens≈0, output_tokens=1200, total_tokens≈4048
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2449, completion_tokens=57, total_tokens=2506
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈1035, image_tokens≈0, output_tokens=2500, total_tokens≈3535
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=946, completion_tokens=157, total_tokens=1103
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "French",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Je suis vraiment déçu par le support.",
+      "category": "standard_interaction",
+      "standardSubcategory": "disappointment"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[
+  {
+    "category": "standard_interaction",
+    "standardSubcategory": "disappointment",
+    "sourceSegmentId": "text_segment_1",
+    "sourceVerbatim": "Je suis vraiment déçu par le support.",
+    "content": "Acknowledge the user's disappointment empathetically. If no concrete support issue is present, invite the user to explain what happened or what needs to be fixed. Do not invent a resolution."
+  }
+]
+
+5. textUnderstandings
+"SKIPPED"
+
+6. supportResponseCues
+"SKIPPED"
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+{
+  "route": "no_retrieval",
+  "retrievalRequests": [],
+  "reason": "rag_not_enabled_yet"
+}
+
+9. retrievedSupportKnowledge
+[]
+
+10. synthesizedRetrievedKnowledge
+null
+
+11. responsePlan
+"SKIPPED"
+
+12. renderedSupportResponse
+{
+  "renderedMessages": [
+    {
+      "messageId": "rendered_message_1",
+      "messageOrder": 1,
+      "purpose": "standard_only",
+      "relatedPlannedMessageOrders": [],
+      "content": "Nous sommes désolés d'apprendre que vous êtes déçu de notre support. Pouvez-vous nous expliquer ce qui s'est passé ou ce qui doit être résolu ?"
+    }
+  ],
+  "finalResponseText": "Nous sommes désolés d'apprendre que vous êtes déçu de notre support. Pouvez-vous nous expliquer ce qui s'est passé ou ce qui doit être résolu ?",
+  "internalRenderingNotes": "Acknowledged disappointment and invited user to explain the issue."
+}
+
+FINAL RESPONSE TEXT
+Nous sommes désolés d'apprendre que vous êtes déçu de notre support. Pouvez-vous nous expliquer ce qui s'est passé ou ce qui doit être résolu ?
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"French\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Je suis vraiment déçu par le support.\",\n      \"category\": \"standard_interaction\",\n      \"standardSubcategory\": \"disappointment\"\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": false,
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": []
+  },
+  "topicUpdates": {
+    "callPerformed": false,
+    "skippedReason": "no_text_understandings"
+  }
+}

@@ -61,8 +61,15 @@ import {
   planSupportResponse
 } from "../../../src/support-processing-pipeline/v2/plan-support-response/planSupportResponse";
 import {
+  selectCatalogKnowledgeForTopic
+} from "../../../src/support-processing-pipeline/v2/select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic";
+import {
   renderSupportResponse
 } from "../../../src/support-processing-pipeline/v2/response-renderer/renderSupportResponse";
+import {
+  assignTopicResponsePlanIds,
+  buildTopicResponsePlanDebug
+} from "../../../src/support-processing-pipeline/v2/responsePlanIds";
 import {
   proposeTopicUpdates
 } from "../../../src/support-processing-pipeline/v2/propose-topic-updates/proposeTopicUpdates";
@@ -75,10 +82,12 @@ import type {
   KnowledgeChunk,
   KnowledgeEnrichmentPlan,
   RetrievedKnowledgeSynthesis,
+  SelectedCatalogKnowledgeForTopic,
   StandardResponseFragment,
   SupportResponseCue,
   TextSurfaceAnalysis,
-  TextUnderstanding
+  TextUnderstanding,
+  TopicEvidence
 } from "../../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
 import type {
   TopicUpdateProposal
@@ -119,12 +128,51 @@ type CaseRunOutput = {
   retrievedSupportKnowledge: KnowledgeChunk[] | "SKIPPED";
   synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null | "SKIPPED";
   responsePlan: SupportResponsePlan | "SKIPPED";
+  topicResponsePlans?: SupportResponsePlan[] | "SKIPPED";
   renderedSupportResponse: RenderedSupportResponse | "SKIPPED";
   debug?: {
     textSurface?: TextSurfaceDebugInfo;
     supportText?: SupportTextDebugInfo;
     topicUpdates?: TopicUpdatesDebugInfo;
+    topicCatalogSelections?: TopicCatalogSelectionDebugInfo[];
   };
+};
+
+type TopicCatalogSelectionDebugInfo = {
+  proposalId: string;
+  topicId: string | null;
+  topicSourceVerbatims: string[];
+  relatedUnderstandingIds: string[];
+  selectedFields: {
+    fieldName: string;
+    label?: string;
+    askableByUser?: boolean;
+    category?: unknown;
+    broadCategoryHint?: unknown;
+  }[];
+  selectedGenericKnowledge: unknown[];
+  rejectedFieldNames: string[];
+  warnings: string[];
+  scopeReason: string;
+  topicKnowledgeEnrichmentRoute: KnowledgeEnrichmentPlan["route"];
+  retrievedChunkCount: number;
+  topicRetrievedKnowledgeSynthesis: RetrievedKnowledgeSynthesis | null;
+  topicResponsePlan?: {
+    responsePlanId: string;
+  };
+};
+
+type TopicDatasetBranch = {
+  topicUpdateProposal: TopicUpdateProposal;
+  topicEvidence: TopicEvidence;
+  existingTopic?: unknown;
+  relatedTextUnderstandings: TextUnderstanding[];
+  relatedSupportResponseCues: SupportResponseCue[];
+  selectedCatalogKnowledge: SelectedCatalogKnowledgeForTopic;
+  topicKnowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
+  topicRetrievedSupportKnowledge: KnowledgeChunk[];
+  topicRetrievedKnowledgeSynthesis: RetrievedKnowledgeSynthesis | null;
+  topicResponsePlan?: SupportResponsePlan;
 };
 
 type TextSurfaceDebugInfo = {
@@ -168,6 +216,67 @@ type TopicUpdatesDebugInfo = {
   callPerformed: boolean;
   skippedReason?: string;
 };
+
+function compactSelectedField(field: unknown): TopicCatalogSelectionDebugInfo[
+  "selectedFields"
+][number] | null {
+  if (typeof field !== "object" || field === null || Array.isArray(field)) {
+    return null;
+  }
+
+  const record = field as Record<string, unknown>;
+
+  if (typeof record.fieldName !== "string") {
+    return null;
+  }
+
+  return {
+    fieldName: record.fieldName,
+    ...(typeof record.label === "string" ? { label: record.label } : {}),
+    ...(typeof record.askableByUser === "boolean"
+      ? { askableByUser: record.askableByUser }
+      : {}),
+    ...(record.category !== undefined ? { category: record.category } : {}),
+    ...(record.broadCategoryHint !== undefined
+      ? { broadCategoryHint: record.broadCategoryHint }
+      : {})
+  };
+}
+
+function buildTopicCatalogSelectionsDebug(
+  branches: TopicDatasetBranch[]
+): TopicCatalogSelectionDebugInfo[] {
+  return branches.map((branch) => {
+    const topicResponsePlan =
+      buildTopicResponsePlanDebug(branch.topicResponsePlan);
+
+    return {
+      proposalId: branch.topicUpdateProposal.proposalId,
+      topicId: branch.topicUpdateProposal.topicId,
+      topicSourceVerbatims: branch.topicEvidence.topicSourceVerbatims,
+      relatedUnderstandingIds: branch.topicEvidence.relatedUnderstandingIds,
+      selectedFields: branch.selectedCatalogKnowledge.selectedFields.flatMap(
+        (field) => {
+          const compactField = compactSelectedField(field);
+
+          return compactField ? [compactField] : [];
+        }
+      ),
+      selectedGenericKnowledge:
+        branch.selectedCatalogKnowledge.selectedGenericKnowledge,
+      rejectedFieldNames:
+        branch.selectedCatalogKnowledge.rejectedFieldNames,
+      warnings: branch.selectedCatalogKnowledge.warnings ?? [],
+      scopeReason: branch.selectedCatalogKnowledge.scopeReason,
+      topicKnowledgeEnrichmentRoute:
+        branch.topicKnowledgeEnrichmentPlan.route,
+      retrievedChunkCount: branch.topicRetrievedSupportKnowledge.length,
+      topicRetrievedKnowledgeSynthesis:
+        branch.topicRetrievedKnowledgeSynthesis,
+      ...(topicResponsePlan ? { topicResponsePlan } : {})
+    };
+  });
+}
 
 function getArgValue(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
@@ -565,54 +674,159 @@ async function runTopicUpdatesStage(params: {
   };
 }
 
-function runKnowledgeStage(params: {
+function isActionableTopicUpdateProposal(
+  proposal: TopicUpdateProposal
+): boolean {
+  return proposal.action === "create_new_topic" ||
+    proposal.action === "update_existing_topic";
+}
+
+function findExistingTopic(
+  proposal: TopicUpdateProposal,
+  existingTopics: unknown[]
+): unknown | undefined {
+  if (proposal.topicId === null) {
+    return undefined;
+  }
+
+  return existingTopics.find((topic) => {
+    if (typeof topic !== "object" || topic === null) {
+      return false;
+    }
+
+    const record = topic as Record<string, unknown>;
+    const topicId = record.id_topic ?? record.topicId ?? record.id;
+
+    return String(topicId) === proposal.topicId;
+  });
+}
+
+function buildDatasetTopicEvidence(params: {
+  proposal: TopicUpdateProposal;
+  existingTopic?: unknown;
+  textUnderstandings: TextUnderstanding[];
+  supportResponseCues: SupportResponseCue[];
+}): TopicEvidence {
+  const relatedUnderstandingIds = new Set(
+    params.proposal.fromUnderstandingIds
+  );
+  const relatedTextUnderstandings = params.textUnderstandings.filter(
+    (understanding) => {
+      return relatedUnderstandingIds.has(understanding.understandingId);
+    }
+  );
+  const relatedSupportResponseCues = params.supportResponseCues.filter((cue) => {
+    return cue.relatedUnderstandingIds.length > 0 &&
+      cue.relatedUnderstandingIds.every((understandingId) => {
+        return relatedUnderstandingIds.has(understandingId);
+      });
+  });
+  const topicSourceVerbatims = Array.from(new Set(
+    params.proposal.selectedSourceVerbatims
+  ));
+
+  return {
+    proposalId: params.proposal.proposalId,
+    topicId: params.proposal.topicId,
+    topicSourceVerbatims,
+    relatedUnderstandingIds: params.proposal.fromUnderstandingIds,
+    relatedTextUnderstandings,
+    relatedAttachmentUnderstandings: [],
+    relatedSupportResponseCues,
+    ...(params.existingTopic ? { existingTopic: params.existingTopic } : {})
+  };
+}
+
+async function runKnowledgeStage(params: {
   testCase: TextAnalysisDatasetCase;
   textSurfaceAnalysis: TextSurfaceAnalysis | undefined;
   standardResponseFragments: StandardResponseFragment[];
   textUnderstandings: TextUnderstanding[] | undefined;
   supportResponseCues: SupportResponseCue[] | undefined;
   topicUpdateProposals: TopicUpdateProposal[] | undefined;
-}): {
+}): Promise<{
+  topicBranches: TopicDatasetBranch[];
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
   retrievedSupportKnowledge: KnowledgeChunk[];
   synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null;
-} {
-  const knowledgeEnrichmentPlan = planKnowledgeEnrichment({
-    ...(params.textSurfaceAnalysis
-      ? { textSurfaceAnalysis: params.textSurfaceAnalysis }
-      : {}),
-    standardResponseFragments: params.standardResponseFragments,
-    textUnderstandings: params.textUnderstandings ?? [],
-    supportResponseCues: params.supportResponseCues ?? [],
-    topicUpdateProposals: params.topicUpdateProposals ?? [],
-    supportTopicKnowledge: {
-      segments_topic: params.testCase.existingTopics
-    },
-    recentInteractionContext: params.testCase.recentInteractionContext,
-    latestUserMessage: params.testCase.latestUserMessage,
-    extractableFieldCatalog: params.testCase.extractableFieldCatalog
-  });
+}> {
+  const actionableProposals = (params.topicUpdateProposals ?? []).filter(
+    isActionableTopicUpdateProposal
+  );
+  const topicBranches = await Promise.all(
+    actionableProposals.map(async (topicUpdateProposal) => {
+      const existingTopic = findExistingTopic(
+        topicUpdateProposal,
+        params.testCase.existingTopics
+      );
+      const topicEvidence = buildDatasetTopicEvidence({
+        proposal: topicUpdateProposal,
+        ...(existingTopic ? { existingTopic } : {}),
+        textUnderstandings: params.textUnderstandings ?? [],
+        supportResponseCues: params.supportResponseCues ?? []
+      });
+      const topicUserMessageContent =
+        topicEvidence.topicSourceVerbatims.join(" ").trim();
+      const [
+        selectedCatalogKnowledge,
+        topicKnowledgeEnrichmentPlan
+      ] = await Promise.all([
+        selectCatalogKnowledgeForTopic({
+          topicUserMessageContent,
+          topicEvidence,
+          extractableFieldCatalog: params.testCase.extractableFieldCatalog,
+          recentInteractionContext: params.testCase.recentInteractionContext,
+          ...(params.textSurfaceAnalysis?.userLanguage
+            ? { targetLanguage: params.textSurfaceAnalysis.userLanguage }
+            : {})
+        }),
+        Promise.resolve(planKnowledgeEnrichment({
+          topicEvidence,
+          extractableFieldCatalog: params.testCase.extractableFieldCatalog,
+          recentInteractionContext: params.testCase.recentInteractionContext,
+          ...(params.textSurfaceAnalysis?.userLanguage
+            ? { targetLanguage: params.textSurfaceAnalysis.userLanguage }
+            : {})
+        }))
+      ]);
+
+      return {
+        topicUpdateProposal,
+        topicEvidence,
+        ...(existingTopic ? { existingTopic } : {}),
+        relatedTextUnderstandings: topicEvidence.relatedTextUnderstandings,
+        relatedSupportResponseCues:
+          topicEvidence.relatedSupportResponseCues,
+        selectedCatalogKnowledge,
+        topicKnowledgeEnrichmentPlan,
+        topicRetrievedSupportKnowledge: [],
+        topicRetrievedKnowledgeSynthesis: null
+      };
+    })
+  );
+  const firstBranch = topicBranches[0];
 
   return {
-    knowledgeEnrichmentPlan,
-    retrievedSupportKnowledge: [],
-    synthesizedRetrievedKnowledge: null
+    topicBranches,
+    knowledgeEnrichmentPlan: firstBranch?.topicKnowledgeEnrichmentPlan ?? {
+      route: "no_retrieval",
+      retrievalRequests: [],
+      reason: "no_actionable_topic"
+    },
+    retrievedSupportKnowledge:
+      firstBranch?.topicRetrievedSupportKnowledge ?? [],
+    synthesizedRetrievedKnowledge:
+      firstBranch?.topicRetrievedKnowledgeSynthesis ?? null
   };
 }
 
 async function runResponsePlanStage(params: {
   testCase: TextAnalysisDatasetCase;
   textSurfaceAnalysis: TextSurfaceAnalysis | undefined;
-  standardResponseFragments: StandardResponseFragment[];
-  textUnderstandings: TextUnderstanding[] | undefined;
-  supportResponseCues: SupportResponseCue[] | undefined;
-  topicUpdateProposals: TopicUpdateProposal[] | undefined;
-  knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
-  retrievedSupportKnowledge: KnowledgeChunk[];
-  synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null;
-}): Promise<SupportResponsePlan | undefined> {
-  if (!params.textUnderstandings || params.textUnderstandings.length === 0) {
-    return undefined;
+  topicBranches: TopicDatasetBranch[];
+}): Promise<TopicDatasetBranch[]> {
+  if (params.topicBranches.length === 0) {
+    return [];
   }
 
   assertPresetEnvConfigured({
@@ -620,35 +834,46 @@ async function runResponsePlanStage(params: {
     prefix: "LLM_FULL"
   });
 
-  const result = await planSupportResponse({
-    latestUserMessageContent: params.testCase.latestUserMessage.content,
-    textSurfaceAnalysis: params.textSurfaceAnalysis ?? null,
-    standardResponseFragments: params.standardResponseFragments,
-    supportResponseCues: params.supportResponseCues ?? [],
-    textUnderstandings: params.textUnderstandings,
-    topicUpdateProposals: params.topicUpdateProposals ?? [],
-    existingTopics: params.testCase.existingTopics,
-    knowledgeEnrichmentPlan: params.knowledgeEnrichmentPlan,
-    retrievedSupportKnowledge: params.retrievedSupportKnowledge,
-    synthesizedRetrievedKnowledge: params.synthesizedRetrievedKnowledge,
-    recentInteractionContext: params.testCase.recentInteractionContext,
-    extractableFieldCatalog: params.testCase.extractableFieldCatalog
-  });
+  const plannedBranches = await Promise.all(
+    params.topicBranches.map(async (branch) => {
+      const result = await planSupportResponse({
+        topicUserMessageContent:
+          branch.topicEvidence.topicSourceVerbatims.join(" ").trim(),
+        topicEvidence: branch.topicEvidence,
+        ...(params.textSurfaceAnalysis?.userLanguage
+          ? { targetLanguage: params.textSurfaceAnalysis.userLanguage }
+          : {}),
+        selectedCatalogKnowledge: branch.selectedCatalogKnowledge,
+        topicKnowledgeEnrichmentPlan: branch.topicKnowledgeEnrichmentPlan,
+        topicRetrievedKnowledgeSynthesis:
+          branch.topicRetrievedKnowledgeSynthesis,
+        channel: params.testCase.latestUserMessage.channel
+      });
 
-  return result.responsePlan;
+      return {
+        ...branch,
+        topicResponsePlan: result.responsePlan
+      };
+    })
+  );
+  const topicResponsePlans = assignTopicResponsePlanIds(
+    plannedBranches.map((branch) => ({
+      proposalId: branch.topicUpdateProposal.proposalId,
+      responsePlan: branch.topicResponsePlan
+    }))
+  );
+
+  return plannedBranches.map((branch, index) => ({
+    ...branch,
+    topicResponsePlan: topicResponsePlans[index]
+  }));
 }
 
 async function runRenderStage(params: {
   testCase: TextAnalysisDatasetCase;
   textSurfaceAnalysis: TextSurfaceAnalysis | undefined;
   standardResponseFragments: StandardResponseFragment[];
-  textUnderstandings: TextUnderstanding[] | undefined;
-  supportResponseCues: SupportResponseCue[] | undefined;
-  topicUpdateProposals: TopicUpdateProposal[] | undefined;
-  knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan | undefined;
-  retrievedSupportKnowledge: KnowledgeChunk[] | undefined;
-  synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null | undefined;
-  responsePlan: SupportResponsePlan | undefined;
+  topicResponsePlans: SupportResponsePlan[];
 }): Promise<RenderedSupportResponse> {
   assertPresetEnvConfigured({
     presetName: "fullWeightMessageAnalysis",
@@ -657,18 +882,11 @@ async function runRenderStage(params: {
 
   const result = await renderSupportResponse({
     latestUserMessageContent: params.testCase.latestUserMessage.content,
-    responsePlan: params.responsePlan ?? null,
-    textSurfaceAnalysis: params.textSurfaceAnalysis,
+    ...(params.textSurfaceAnalysis?.userLanguage
+      ? { targetLanguage: params.textSurfaceAnalysis.userLanguage }
+      : {}),
     standardResponseFragments: params.standardResponseFragments,
-    supportResponseCues: params.supportResponseCues ?? [],
-    textUnderstandings: params.textUnderstandings ?? [],
-    topicUpdateProposals: params.topicUpdateProposals ?? [],
-    existingTopics: params.testCase.existingTopics,
-    knowledgeEnrichmentPlan: params.knowledgeEnrichmentPlan,
-    retrievedSupportKnowledge: params.retrievedSupportKnowledge ?? [],
-    synthesizedRetrievedKnowledge:
-      params.synthesizedRetrievedKnowledge ?? null,
-    recentInteractionContext: params.testCase.recentInteractionContext,
+    topicResponsePlans: params.topicResponsePlans,
     channel: params.testCase.latestUserMessage.channel
   });
 
@@ -871,10 +1089,11 @@ async function runCase(
   }
 
   const {
+    topicBranches,
     knowledgeEnrichmentPlan,
     retrievedSupportKnowledge,
     synthesizedRetrievedKnowledge
-  } = runKnowledgeStage({
+  } = await runKnowledgeStage({
     testCase,
     textSurfaceAnalysis,
     standardResponseFragments,
@@ -904,24 +1123,24 @@ async function runCase(
             debug: {
               textSurface: textSurfaceDebug,
               supportText: supportTextDebug,
-              topicUpdates: topicUpdatesDebug
+              topicUpdates: topicUpdatesDebug,
+              topicCatalogSelections:
+                buildTopicCatalogSelectionsDebug(topicBranches)
             }
           }
         : {})
     };
   }
 
-  const responsePlan = await runResponsePlanStage({
+  const plannedTopicBranches = await runResponsePlanStage({
     testCase,
     textSurfaceAnalysis,
-    standardResponseFragments,
-    textUnderstandings,
-    supportResponseCues,
-    topicUpdateProposals,
-    knowledgeEnrichmentPlan,
-    retrievedSupportKnowledge,
-    synthesizedRetrievedKnowledge
+    topicBranches
   });
+  const topicResponsePlans = plannedTopicBranches.flatMap((branch) => {
+    return branch.topicResponsePlan ? [branch.topicResponsePlan] : [];
+  });
+  const responsePlan = topicResponsePlans[0];
 
   if (!shouldRunStage(options.until, "render")) {
     return {
@@ -938,13 +1157,16 @@ async function runCase(
       retrievedSupportKnowledge,
       synthesizedRetrievedKnowledge,
       responsePlan: responsePlan ?? "SKIPPED",
+      topicResponsePlans,
       renderedSupportResponse: "SKIPPED",
       ...(options.debug
         ? {
             debug: {
               textSurface: textSurfaceDebug,
               supportText: supportTextDebug,
-              topicUpdates: topicUpdatesDebug
+              topicUpdates: topicUpdatesDebug,
+              topicCatalogSelections:
+                buildTopicCatalogSelectionsDebug(plannedTopicBranches)
             }
           }
         : {})
@@ -955,13 +1177,7 @@ async function runCase(
     testCase,
     textSurfaceAnalysis,
     standardResponseFragments,
-    textUnderstandings,
-    supportResponseCues,
-    topicUpdateProposals,
-    knowledgeEnrichmentPlan,
-    retrievedSupportKnowledge,
-    synthesizedRetrievedKnowledge,
-    responsePlan
+    topicResponsePlans
   });
 
   return {
@@ -978,13 +1194,16 @@ async function runCase(
     retrievedSupportKnowledge,
     synthesizedRetrievedKnowledge,
     responsePlan: responsePlan ?? "SKIPPED",
+    topicResponsePlans,
     renderedSupportResponse,
     ...(options.debug
       ? {
           debug: {
             textSurface: textSurfaceDebug,
             supportText: supportTextDebug,
-            topicUpdates: topicUpdatesDebug
+            topicUpdates: topicUpdatesDebug,
+            topicCatalogSelections:
+              buildTopicCatalogSelectionsDebug(plannedTopicBranches)
           }
         }
       : {})
@@ -1028,7 +1247,11 @@ async function runAndLogCase(
       output.synthesizedRetrievedKnowledge
     );
     logSection("11. responsePlan", output.responsePlan);
-    logSection("12. renderedSupportResponse", output.renderedSupportResponse);
+    logSection(
+      "12. topicResponsePlans",
+      output.topicResponsePlans ?? "SKIPPED"
+    );
+    logSection("13. renderedSupportResponse", output.renderedSupportResponse);
 
     if (output.renderedSupportResponse !== "SKIPPED") {
       console.log("\nFINAL RESPONSE TEXT");
@@ -1080,3 +1303,11 @@ main().catch((error) => {
   console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;
 });
+
+export {
+  buildTopicCatalogSelectionsDebug
+};
+
+export type {
+  TopicDatasetBranch
+};

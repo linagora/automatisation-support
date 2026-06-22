@@ -108,6 +108,14 @@ describe("analyzeTextSurface", function () {
     expect(serializedPrompt).toContain("asked for confirmation");
     expect(serializedPrompt).toContain("sequential, non-overlapping");
     expect(serializedPrompt).toContain("standard_interaction");
+    expect(serializedPrompt).toContain("support_process_question");
+    expect(serializedPrompt).toContain("unsupported_standard_question");
+    expect(serializedPrompt).toContain(
+      "Do not classify support process timing questions as \"waiting\"."
+    );
+    expect(serializedPrompt).toContain(
+      "If the message is understandable but no standard subcategory fits well"
+    );
     expect(serializedPrompt).not.toContain("Never return both");
     expect(serializedPrompt).not.toContain("absorb related greetings");
     const removedCategory = [
@@ -119,6 +127,12 @@ describe("analyzeTextSurface", function () {
     expect(serializedPrompt).not.toContain(removedCategory);
     expect(JSON.stringify(textSurfaceAnalysisResponseFormat)).not.toContain(
       removedCategory
+    );
+    expect(JSON.stringify(textSurfaceAnalysisResponseFormat)).toContain(
+      "support_process_question"
+    );
+    expect(JSON.stringify(textSurfaceAnalysisResponseFormat)).toContain(
+      "unsupported_standard_question"
     );
   });
 
@@ -449,6 +463,88 @@ describe("analyzeTextSurface", function () {
       expect(output.analysis.segments[0]).toMatchObject({
         category: "standard_interaction",
         standardSubcategory: "handover_request"
+      });
+    }
+  });
+
+  it.each([
+    "Dans combien de temps ma demande va être prise par un humain ?",
+    "Quand est-ce qu’un humain va me répondre ?",
+    "Est-ce que ma demande a été transmise au support ?"
+  ])(
+    "accepts support process question as standard_interaction: %s",
+    function (message) {
+      const output = formatTextSurfaceAnalysisOutput({
+        latestUserMessageContent: message,
+        rawTextSurfaceAnalysis: completed({
+          userLanguage: "French",
+          segments: [
+            {
+              verbatim: message,
+              category: "standard_interaction",
+              standardSubcategory: "support_process_question"
+            }
+          ]
+        })
+      });
+
+      expect(output.status).toBe("valid");
+      if (output.status === "valid") {
+        expect(output.analysis.segments[0]).toMatchObject({
+          category: "standard_interaction",
+          standardSubcategory: "support_process_question"
+        });
+      }
+    }
+  );
+
+  it("accepts a clear unsupported standard question", function () {
+    const message =
+      "Tu peux me confirmer une information que tu ne peux pas vérifier ici ?";
+    const output = formatTextSurfaceAnalysisOutput({
+      latestUserMessageContent: message,
+      rawTextSurfaceAnalysis: completed({
+        userLanguage: "French",
+        segments: [
+          {
+            verbatim: message,
+            category: "standard_interaction",
+            standardSubcategory: "unsupported_standard_question"
+          }
+        ]
+      })
+    });
+
+    expect(output.status).toBe("valid");
+    if (output.status === "valid") {
+      expect(output.analysis.segments[0]).toMatchObject({
+        category: "standard_interaction",
+        standardSubcategory: "unsupported_standard_question"
+      });
+    }
+  });
+
+  it("keeps genuinely incomprehensible text in lack_comprehension", function () {
+    const message = "??? zblorp";
+    const output = formatTextSurfaceAnalysisOutput({
+      latestUserMessageContent: message,
+      rawTextSurfaceAnalysis: completed({
+        userLanguage: "Unknown",
+        segments: [
+          {
+            verbatim: message,
+            category: "lack_comprehension",
+            standardSubcategory: "unclear_message"
+          }
+        ]
+      })
+    });
+
+    expect(output.status).toBe("valid");
+    if (output.status === "valid") {
+      expect(output.analysis.segments[0]).toMatchObject({
+        category: "lack_comprehension",
+        standardSubcategory: "unclear_message"
       });
     }
   });

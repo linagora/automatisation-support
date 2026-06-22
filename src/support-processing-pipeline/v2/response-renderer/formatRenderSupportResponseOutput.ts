@@ -56,7 +56,7 @@ function enumValue<TValues extends readonly string[]>(
     : undefined;
 }
 
-function getStandardFragmentContents(value: unknown): string[] {
+function getStandardFragmentSubcategories(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -66,24 +66,44 @@ function getStandardFragmentContents(value: unknown): string[] {
       return [];
     }
 
-    return isString(fragment.content) ? [fragment.content.trim()] : [];
+    return isString(fragment.standardSubcategory)
+      ? [fragment.standardSubcategory.trim()]
+      : [];
   });
 }
 
 function buildFallbackText(input: FormatRenderSupportResponseOutputInput): string {
-  const standardContents = getStandardFragmentContents(
+  const standardSubcategories = getStandardFragmentSubcategories(
     input.input.standardResponseFragments
   );
+  const useFrench = input.input.topicResponsePlans.some((plan) => {
+    return plan.rendererTask.targetLanguage === "French";
+  }) || input.input.targetLanguage === "French" ||
+    /\b(bonjour|merci|probl[eè]me|aide|je|j['’]|oui|non|normalement|semaine derni[eè]re|derni[eè]re fois|mot de passe|[çc]a marche|[çc]a ne marche pas)\b/i.test(
+      input.input.latestUserMessageContent
+    );
 
-  if (standardContents.length > 0) {
-    return [...new Set(standardContents)].join(" ");
+  if (standardSubcategories.includes("handover_request")) {
+    return useFrench
+      ? "Votre demande va être transmise à l’équipe support. Je reste disponible en attendant si vous souhaitez ajouter du contexte ou obtenir une première aide."
+      : "Your request will be passed on to the support team. I remain available in the meantime if you want to add context or get initial help.";
   }
 
-  if (input.input.responsePlan?.rendererTask) {
-    return "Votre message est bien pris en compte.";
+  if (standardSubcategories.includes("greeting")) {
+    return useFrench
+      ? "Bonjour, je suis l’assistant du support. Comment puis-je vous aider ?"
+      : "Hello, I’m the support assistant. How can I help?";
   }
 
-  return "Votre message est bien pris en compte.";
+  if (standardSubcategories.includes("unclear_message")) {
+    return useFrench
+      ? "Je n’ai pas bien compris votre demande. Pouvez-vous la reformuler ?"
+      : "I did not fully understand your request. Could you rephrase it?";
+  }
+
+  return useFrench
+    ? "Merci pour votre message."
+    : "Thank you for your message.";
 }
 
 function buildFallbackResponse(

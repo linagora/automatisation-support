@@ -224,6 +224,13 @@ export const textAnalysisDataset: TextAnalysisDatasetCase[] = [
     existingTopics: [blockedAccountTopic, billingTopic]
   }),
   buildCase({
+    id: "multi-topic-access-billing",
+    name: "Multi-topic access and duplicate invoice with standard opening",
+    content:
+      "Bonjour, je suis déçu. Mon compte est toujours bloqué. Et j’ai aussi reçu ma facture deux fois.",
+    existingTopics: [blockedAccountTopic, billingTopic]
+  }),
+  buildCase({
     id: "topic-urgency",
     name: "LLM3 linked urgency segment",
     content: "Bonjour, mon compte est toujours bloqué et c’est urgent.",

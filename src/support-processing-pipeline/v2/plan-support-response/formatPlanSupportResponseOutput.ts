@@ -366,11 +366,11 @@ function sanitizeNoSolutionPlan(params: {
 }
 
 function sanitizeDuplicateInvoiceOnlyPlan(params: {
-  latestUserMessageContent: string;
+  topicUserMessageContent: string;
   questionDecision: QuestionDecision;
   rendererTask: RendererTask;
 }): void {
-  if (!isDuplicateInvoiceOnly(params.latestUserMessageContent)) {
+  if (!isDuplicateInvoiceOnly(params.topicUserMessageContent)) {
     return;
   }
 
@@ -408,6 +408,183 @@ function sanitizeDuplicateInvoiceOnlyPlan(params: {
     "No case processing claim.",
     "No team action."
   ]);
+}
+
+function getNonAskableFieldNames(input: unknown): Set<string> {
+  if (!isRecord(input) || !isRecord(input.selectedCatalogKnowledge)) {
+    return new Set();
+  }
+
+  const selectedFields = input.selectedCatalogKnowledge.selectedFields;
+
+  if (!Array.isArray(selectedFields)) {
+    return new Set();
+  }
+
+  return new Set(selectedFields.flatMap((field) => {
+    if (
+      !isRecord(field) ||
+      field.askableByUser !== false ||
+      !isString(field.fieldName)
+    ) {
+      return [];
+    }
+
+    return [field.fieldName.trim()];
+  }));
+}
+
+function sanitizeNonAskableQuestions(params: {
+  input: unknown;
+  questionDecision: QuestionDecision;
+  rendererTask: RendererTask;
+}): void {
+  const nonAskableFieldNames = getNonAskableFieldNames(params.input);
+
+  if (nonAskableFieldNames.size === 0) {
+    return;
+  }
+
+  params.questionDecision.fieldNames =
+    params.questionDecision.fieldNames.filter((fieldName) => {
+      return !nonAskableFieldNames.has(fieldName);
+    });
+  params.rendererTask.questionFieldNames =
+    params.rendererTask.questionFieldNames.filter((fieldName) => {
+      return !nonAskableFieldNames.has(fieldName);
+    });
+
+  if (params.questionDecision.fieldNames.length === 0) {
+    params.questionDecision.shouldAskQuestion = false;
+    params.questionDecision.plannedQuestionCount = 0;
+    params.questionDecision.questionInstruction = null;
+    params.rendererTask.questionFieldNames = [];
+    addPromptGuard(
+      params.rendererTask,
+      "Do not ask the user for fields that require internal support or system verification."
+    );
+    return;
+  }
+
+  params.questionDecision.plannedQuestionCount =
+    params.questionDecision.fieldNames.length;
+}
+
+function getStringValues(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    return isString(item) ? [item.trim()] : [];
+  });
+}
+
+function getAlreadyAnsweredOrUnavailableFieldNames(input: unknown): Set<string> {
+  if (!isRecord(input)) {
+    return new Set();
+  }
+
+  const fieldNames = new Set<string>();
+  const topicEvidence = isRecord(input.topicEvidence)
+    ? input.topicEvidence
+    : {};
+  const relatedTextUnderstandings = topicEvidence.relatedTextUnderstandings;
+
+  if (Array.isArray(relatedTextUnderstandings)) {
+    for (const understanding of relatedTextUnderstandings) {
+      if (!isRecord(understanding) || !Array.isArray(understanding.facts)) {
+        continue;
+      }
+
+      for (const fact of understanding.facts) {
+        if (
+          isRecord(fact) &&
+          fact.type === "catalogued_field" &&
+          isString(fact.fieldName)
+        ) {
+          fieldNames.add(fact.fieldName.trim());
+        }
+      }
+    }
+  }
+
+  const relatedAttachmentUnderstandings =
+    topicEvidence.relatedAttachmentUnderstandings;
+
+  if (Array.isArray(relatedAttachmentUnderstandings)) {
+    for (const attachment of relatedAttachmentUnderstandings) {
+      if (!isRecord(attachment) || !isRecord(attachment.extractedFields)) {
+        continue;
+      }
+
+      for (const fieldName of Object.keys(attachment.extractedFields)) {
+        fieldNames.add(fieldName);
+      }
+    }
+  }
+
+  if (isRecord(topicEvidence.existingTopic)) {
+    const existingTopic = topicEvidence.existingTopic;
+
+    for (const fieldName of [
+      ...getStringValues(existingTopic.refusedFields),
+      ...getStringValues(existingTopic.refused_fields),
+      ...getStringValues(existingTopic.declinedFields),
+      ...getStringValues(existingTopic.declined_fields),
+      ...getStringValues(existingTopic.unavailableFields),
+      ...getStringValues(existingTopic.unavailable_fields),
+      ...getStringValues(existingTopic.impossibleFields),
+      ...getStringValues(existingTopic.impossible_fields)
+    ]) {
+      fieldNames.add(fieldName);
+    }
+
+    if (isRecord(existingTopic.knownFacts)) {
+      for (const fieldName of Object.keys(existingTopic.knownFacts)) {
+        fieldNames.add(fieldName);
+      }
+    }
+  }
+
+  return fieldNames;
+}
+
+function sanitizeAlreadyAnsweredQuestions(params: {
+  input: unknown;
+  questionDecision: QuestionDecision;
+  rendererTask: RendererTask;
+}): void {
+  const unavailableFieldNames =
+    getAlreadyAnsweredOrUnavailableFieldNames(params.input);
+
+  if (unavailableFieldNames.size === 0) {
+    return;
+  }
+
+  params.questionDecision.fieldNames =
+    params.questionDecision.fieldNames.filter((fieldName) => {
+      return !unavailableFieldNames.has(fieldName);
+    });
+  params.rendererTask.questionFieldNames =
+    params.rendererTask.questionFieldNames.filter((fieldName) => {
+      return !unavailableFieldNames.has(fieldName);
+    });
+
+  if (params.questionDecision.fieldNames.length === 0) {
+    params.questionDecision.shouldAskQuestion = false;
+    params.questionDecision.plannedQuestionCount = 0;
+    params.questionDecision.questionInstruction = null;
+    params.rendererTask.questionFieldNames = [];
+    addPromptGuard(
+      params.rendererTask,
+      "Do not ask again for information already provided, refused, or unavailable."
+    );
+    return;
+  }
+
+  params.questionDecision.plannedQuestionCount =
+    params.questionDecision.fieldNames.length;
 }
 
 function normalizeQuestionFields(params: {
@@ -488,7 +665,17 @@ function formatPlanSupportResponseOutput(
     rendererTask
   });
   sanitizeDuplicateInvoiceOnlyPlan({
-    latestUserMessageContent: input.input.latestUserMessageContent,
+    topicUserMessageContent: input.input.topicUserMessageContent,
+    questionDecision,
+    rendererTask
+  });
+  sanitizeNonAskableQuestions({
+    input: input.input,
+    questionDecision,
+    rendererTask
+  });
+  sanitizeAlreadyAnsweredQuestions({
+    input: input.input,
     questionDecision,
     rendererTask
   });
