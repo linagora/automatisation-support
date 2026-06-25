@@ -10,6 +10,9 @@ import type {
   UserResponse
 } from "../typesSupportProcessingPipeline.types";
 import type {
+  ConversationScopeKey
+} from "../../messaging/conversationScope";
+import type {
   TextSurfaceCategory,
   TextSurfaceStandardSubcategory
 } from "./analyze-text-surface/textSurfaceAnalysis.taxonomy";
@@ -83,9 +86,11 @@ export type SupportProcessingPipelineV2Runtime = {
 export type RecentInteractionContext = {
   previousUserMessageSummary?: string;
   previousBotResponseSummary?: string;
+  previousBotQuestionFieldNames?: string[];
 };
 
 export type SupportProcessingPipelineV2Input = {
+  conversationScope?: ConversationScopeKey;
   latestUserMessage: LatestUserMessage;
   latestUserAttachments: LatestUserAttachment[];
   accountTrustStatus: AccountTrustStatus;
@@ -314,6 +319,15 @@ export type KnowledgeChunk = {
 export type GenericFieldKnowledge = Record<string, never>;
 
 export type RetrievedKnowledgeSynthesis = {
+  relevantFacts?: string[];
+  applicableInstructions?: string[];
+  possibleFields?: FieldName[];
+  unresolvedPoints?: string[];
+  sourceReferences?: string[];
+  limitations?: string[];
+  recommendedFirstAnswer?: string;
+  ifUserConfirmsNotificationsEnabled?: string;
+  doNotClaim?: string[];
   topics: {
     topicId: SupportTopicId;
     relevantFacts: string[];

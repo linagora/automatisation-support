@@ -23,6 +23,13 @@ import {
   planKnowledgeEnrichment
 } from "./plan-knowledge-enrichment/planKnowledgeEnrichment";
 import {
+  retrieveSupportKnowledge
+} from "./retrieve-support-knowledge/retrieveSupportKnowledge";
+import {
+  enrichSelectedCatalogKnowledgeWithSynthesis,
+  synthesizeRetrievedKnowledge
+} from "./synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
+import {
   selectCatalogKnowledgeForTopic
 } from "./select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic";
 import {
@@ -329,11 +336,11 @@ async function runSupportProcessingPipelineV2(
       "selectCatalogKnowledgeForTopic"
     ),
     retrieveSupportKnowledge: resolveStep(
-      steps.retrieveSupportKnowledge,
+      steps.retrieveSupportKnowledge || retrieveSupportKnowledge,
       "retrieveSupportKnowledge"
     ),
     synthesizeRetrievedKnowledge: resolveStep(
-      steps.synthesizeRetrievedKnowledge,
+      steps.synthesizeRetrievedKnowledge || synthesizeRetrievedKnowledge,
       "synthesizeRetrievedKnowledge"
     ),
     planSupportResponse: resolveStep(
@@ -653,6 +660,12 @@ async function runSupportProcessingPipelineV2(
               "synthesizeRetrievedKnowledge"
             ]);
           }
+          const plannerSelectedCatalogKnowledge =
+            enrichSelectedCatalogKnowledgeWithSynthesis({
+              selectedCatalogKnowledge,
+              extractableFieldCatalog,
+              synthesis: topicRetrievedKnowledgeSynthesis
+            });
 
           const topicResponsePlan = await runStep(
             runtime,
@@ -664,7 +677,7 @@ async function runSupportProcessingPipelineV2(
               ...(textSurfaceAnalysis?.userLanguage
                 ? { targetLanguage: textSurfaceAnalysis.userLanguage }
                 : {}),
-              selectedCatalogKnowledge,
+              selectedCatalogKnowledge: plannerSelectedCatalogKnowledge,
               topicKnowledgeEnrichmentPlan,
               topicRetrievedKnowledgeSynthesis,
               responsePlanningPolicy,
@@ -675,6 +688,7 @@ async function runSupportProcessingPipelineV2(
           return {
             topicUpdateProposal,
             topicEvidence,
+            selectedCatalogKnowledge: plannerSelectedCatalogKnowledge,
             topicKnowledgeEnrichmentPlan,
             topicRetrievedSupportKnowledge,
             topicRetrievedKnowledgeSynthesis,

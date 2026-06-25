@@ -87,6 +87,27 @@ describe("buildCompactInteractionLogsFromTurn", function () {
     );
   });
 
+  it("does not describe a non-blocking unresolved bug as resolved", function () {
+    const logs = buildCompactInteractionLogsFromTurn({
+      generatedAt: "2026-06-05T10:00:05.000Z",
+      turnUnderstandingDelta: buildDelta({
+        segments_topic: [
+          {
+            matched_historical_topic: "yes",
+            id_topic: 4,
+            segment_verbatims: ["I still do not receive notifications."],
+            blocking_issue: "no"
+          }
+        ]
+      }),
+      responsePlan: buildResponsePlan()
+    });
+    const lines = logs.map((log) => log.line);
+
+    expect(lines).toContain("User(topic): mark_non_blocking topic_id=4");
+    expect(lines).not.toContain("User(topic): mark_resolved topic_id=4");
+  });
+
   it("logs bot ask_fields responses", function () {
     const logs = buildCompactInteractionLogsFromTurn({
       generatedAt: "2026-06-05T10:00:05.000Z",

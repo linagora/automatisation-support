@@ -6,6 +6,9 @@ import type {
   JsonTicket
 } from "./typesJsonRepositories.types";
 import type {
+  ConversationScopeKey
+} from "../../messaging/conversationScope";
+import type {
   CompactInteractionLog,
   ConversationHistory
 } from "../../support-processing-pipeline/typesSupportProcessingPipeline.types";
@@ -37,6 +40,34 @@ class JsonTicketRepository {
 
   constructor(filePath = path.resolve("data/tickets.json")) {
     this.store = new JsonFileStore<JsonTicket>(filePath);
+  }
+
+  async findActiveByConversationScope(
+    scope: ConversationScopeKey
+  ): Promise<JsonTicket | undefined> {
+    const tickets = await this.store.readAll();
+    const ticket = tickets.find((candidate) => {
+      const metadataChannel = candidate.metadata?.channel;
+      const candidateChannel =
+        candidate.channel ??
+        (metadataChannel === "matrix" || metadataChannel === "twake_chat"
+          ? metadataChannel
+          : undefined);
+      const metadataThreadId = candidate.metadata?.threadId;
+      const candidateThreadId =
+        candidate.threadId ??
+        (typeof metadataThreadId === "string" ? metadataThreadId : null);
+
+      return (
+        candidateChannel === scope.channel &&
+        candidate.roomId === scope.roomId &&
+        candidateThreadId === scope.threadId &&
+        candidate.userId === scope.userId &&
+        candidate.status === "active"
+      );
+    });
+
+    return ticket ? this.hydrateConversationHistory(ticket) : undefined;
   }
 
   async findActiveByRoomAndUser(

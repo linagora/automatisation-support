@@ -36,7 +36,15 @@ const SUPPORT_TECHNICAL_ENVIRONMENT_FIELDS: ExtractableFieldDefinition[] = [
   field("operating_system", "Operating system, with version if provided."),
   field("browser", "Browser or webview, with version if provided."),
   field("app_version", "App, client, plugin or extension version."),
-  field("device", "Device model, hardware or device category.")
+  field("device", "Device model, hardware or device category."),
+  field(
+    "notification_permission_status",
+    "Whether the operating system permission to display notifications is granted."
+  ),
+  field(
+    "notification_channel_status",
+    "Whether the relevant application notification channel is enabled."
+  )
 ];
 
 const SUPPORT_OBSERVED_BEHAVIOR_FIELDS: ExtractableFieldDefinition[] = [

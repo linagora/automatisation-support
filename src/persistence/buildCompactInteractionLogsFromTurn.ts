@@ -104,7 +104,7 @@ function buildUserTopicLogs(topic: TopicDelta): string[] {
   if (topic.blocking_issue === "yes") {
     logs.push(`User(topic): mark_blocking topic_id=${topic.id_topic}`);
   } else if (topic.blocking_issue === "no") {
-    logs.push(`User(topic): mark_resolved topic_id=${topic.id_topic}`);
+    logs.push(`User(topic): mark_non_blocking topic_id=${topic.id_topic}`);
   }
 
   return logs;

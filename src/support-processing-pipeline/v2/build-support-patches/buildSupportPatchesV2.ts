@@ -4,6 +4,7 @@ import type {
   Patches,
   ResponsePlanV2,
   TextUnderstanding,
+  TopicRetrievedSupportKnowledgeResult,
   TopicUpdateProposal,
   TopicStatusHint
 } from "../typesSupportProcessingPipelineV2.types";
@@ -158,6 +159,7 @@ function buildNewTopicSegment(params: {
   proposal: TopicUpdateProposal;
   understandings: TextUnderstanding[];
   idTopic: number;
+  linkedKnowledgeIds: string[];
 }): TopicSegment | undefined {
   if (!params.proposal.newTopic) {
     return undefined;
@@ -168,6 +170,9 @@ function buildNewTopicSegment(params: {
     id_topic: params.idTopic,
     topic_category: toTopicCategory(params.proposal.newTopic.broadCategoryHint),
     topic_label: params.proposal.newTopic.title,
+    ...(params.linkedKnowledgeIds.length > 0
+      ? { linkedKnowledgeIds: params.linkedKnowledgeIds }
+      : {}),
     segment_verbatims: selectedVerbatims({
       proposal: params.proposal,
       understandings: params.understandings
@@ -185,6 +190,7 @@ function isResolvedStatus(statusHint: TopicStatusHint): boolean {
 function buildExistingTopicSegment(params: {
   proposal: TopicUpdateProposal;
   understandings: TextUnderstanding[];
+  linkedKnowledgeIds: string[];
 }): TopicSegment | undefined {
   const idTopic = parseTopicId(params.proposal.topicId);
 
@@ -197,6 +203,9 @@ function buildExistingTopicSegment(params: {
   return {
     matched_historical_topic: "yes",
     id_topic: idTopic,
+    ...(params.linkedKnowledgeIds.length > 0
+      ? { linkedKnowledgeIds: params.linkedKnowledgeIds }
+      : {}),
     segment_verbatims: selectedVerbatims({
       proposal: params.proposal,
       understandings: params.understandings
@@ -205,18 +214,34 @@ function buildExistingTopicSegment(params: {
     ...(params.proposal.updateIntent.userGoal
       ? { user_goal: params.proposal.updateIntent.userGoal }
       : {}),
-    blocking_issue:
-      params.proposal.updateIntent.blockingIssue === "unknown" &&
-      isResolvedStatus(params.proposal.updateIntent.statusHint)
-        ? "no"
-        : toBlockingIssue(params.proposal.updateIntent.blockingIssue)
+    ...(params.proposal.updateIntent.blockingIssue !== "unknown"
+      ? {
+          blocking_issue: toBlockingIssue(
+            params.proposal.updateIntent.blockingIssue
+          )
+        }
+      : isResolvedStatus(params.proposal.updateIntent.statusHint)
+        ? { blocking_issue: "no" as const }
+        : {})
   };
+}
+
+function buildLinkedKnowledgeIdsByProposal(
+  results: TopicRetrievedSupportKnowledgeResult[] | undefined
+): Map<string, string[]> {
+  return new Map((results ?? []).map((result) => {
+    return [
+      result.proposalId,
+      [...new Set(result.knowledgeChunks.map((chunk) => chunk.sourceId))]
+    ];
+  }));
 }
 
 function topicUpdateProposalsToDeltaSegments(params: {
   topicUpdateProposals: TopicUpdateProposal[] | undefined;
   textUnderstandings: TextUnderstanding[] | undefined;
   supportTopicKnowledge: SupportTopicKnowledge;
+  topicRetrievedSupportKnowledge?: TopicRetrievedSupportKnowledgeResult[];
 }): {
   segmentsTopic: TopicSegment[];
   reviewProposals: TopicUpdateProposal[];
@@ -225,6 +250,9 @@ function topicUpdateProposalsToDeltaSegments(params: {
   const understandingsById = getUnderstandingsById(params.textUnderstandings);
   const segmentsTopic: TopicSegment[] = [];
   const reviewProposals: TopicUpdateProposal[] = [];
+  const linkedKnowledgeIdsByProposal = buildLinkedKnowledgeIdsByProposal(
+    params.topicRetrievedSupportKnowledge
+  );
   let nextTopicId = getNextTopicId({
     proposals: topicUpdateProposals,
     supportTopicKnowledge: params.supportTopicKnowledge
@@ -240,7 +268,9 @@ function topicUpdateProposalsToDeltaSegments(params: {
       const segment = buildNewTopicSegment({
         proposal,
         understandings,
-        idTopic: nextTopicId
+        idTopic: nextTopicId,
+        linkedKnowledgeIds:
+          linkedKnowledgeIdsByProposal.get(proposal.proposalId) ?? []
       });
 
       if (segment) {
@@ -253,7 +283,9 @@ function topicUpdateProposalsToDeltaSegments(params: {
     if (proposal.action === "update_existing_topic") {
       const segment = buildExistingTopicSegment({
         proposal,
-        understandings
+        understandings,
+        linkedKnowledgeIds:
+          linkedKnowledgeIdsByProposal.get(proposal.proposalId) ?? []
       });
 
       if (segment) {
@@ -304,7 +336,8 @@ function buildSupportPatchesV2(input: BuildSupportPatchesInput): Patches {
   } = topicUpdateProposalsToDeltaSegments({
     topicUpdateProposals: input.topicUpdateProposals,
     textUnderstandings: input.textUnderstandings,
-    supportTopicKnowledge: input.supportTopicKnowledge
+    supportTopicKnowledge: input.supportTopicKnowledge,
+    topicRetrievedSupportKnowledge: input.topicRetrievedSupportKnowledge
   });
   const generatedAt = new Date().toISOString();
 

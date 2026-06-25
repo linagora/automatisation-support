@@ -1,109 +1,123 @@
 [
   {
-    "messageId": "$beYOynZARYaDdFLEGupIBhYI7pkcecFJC1PFssNzo_g",
+    "messageId": "$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU",
     "channel": "matrix",
     "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
     "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
     "direction": "incoming",
-    "content": "Je voudrai parler à un humain svp",
-    "providerMessageId": "$beYOynZARYaDdFLEGupIBhYI7pkcecFJC1PFssNzo_g",
-    "createdAt": "2026-06-18T15:04:14.395Z",
+    "content": "I do not receive notifications on Android when I get a new email.",
+    "providerMessageId": "$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU",
+    "createdAt": "2026-06-22T14:20:23.600Z",
     "metadata": {
       "source": "support-automation-turn"
     }
   },
   {
-    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$beYOynZARYaDdFLEGupIBhYI7pkcecFJC1PFssNzo_g:0",
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU:0",
     "channel": "matrix",
     "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
     "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
     "direction": "outgoing",
-    "content": "Je vais transmettre votre demande à notre équipe de support. En attendant, je reste à votre disposition si vous souhaitez partager plus de détails ou obtenir une première réponse plus rapidement.",
-    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$beYOynZARYaDdFLEGupIBhYI7pkcecFJC1PFssNzo_g:0",
-    "createdAt": "2026-06-18T15:04:26.545Z",
+    "content": "I understand that you're not receiving email notifications on your Android device. Normally, you should receive a push notification when a new email arrives, provided that notifications are allowed both by Android and by the app's settings. Could you please check if you've granted the notification permission to the app, especially if you're using Android 13 or later?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU:0",
+    "createdAt": "2026-06-22T14:21:19.556Z",
     "metadata": {
       "source": "support-automation-turn",
-      "userResponseMessageType": "signal_response"
+      "userResponseMessageType": "topic_response"
     }
   },
   {
-    "messageId": "$FMGa9sYUoGi-8rzPrr710jeWqXDW09IofWKlNSiPAyo",
-    "channel": "matrix",
-    "roomId": "!DMqrUKXgzUMLgnuiQA:linagora.com",
-    "userId": "@qvalmori:linagora.com",
-    "direction": "incoming",
-    "content": "> <@supporttest:stg.lin-saas.com> Je suis vraiment désolé d'apprendre cela. Pouvez-vous m'expliquer ce qui s'est passé ?\n\nJe t'explique, t'es très con voilà tout. Désolé.",
-    "providerMessageId": "$FMGa9sYUoGi-8rzPrr710jeWqXDW09IofWKlNSiPAyo",
-    "createdAt": "2026-06-18T15:04:34.746Z",
-    "metadata": {
-      "source": "support-automation-turn"
-    }
-  },
-  {
-    "messageId": "delivery:matrix:!DMqrUKXgzUMLgnuiQA:linagora.com:@qvalmori:linagora.com:$FMGa9sYUoGi-8rzPrr710jeWqXDW09IofWKlNSiPAyo:0",
-    "channel": "matrix",
-    "roomId": "!DMqrUKXgzUMLgnuiQA:linagora.com",
-    "userId": "@qvalmori:linagora.com",
-    "direction": "outgoing",
-    "content": "Je suis désolé que vous soyez mécontent. Pouvez-vous m'en dire plus sur le problème que vous rencontrez ? Je reste à votre disposition pour vous aider.",
-    "providerMessageId": "delivery:matrix:!DMqrUKXgzUMLgnuiQA:linagora.com:@qvalmori:linagora.com:$FMGa9sYUoGi-8rzPrr710jeWqXDW09IofWKlNSiPAyo:0",
-    "createdAt": "2026-06-18T15:04:47.102Z",
-    "metadata": {
-      "source": "support-automation-turn",
-      "userResponseMessageType": "signal_response"
-    }
-  },
-  {
-    "messageId": "$l3XSRiyEvT9Mt39kAujkWxgAXirkmPONgBRGtnPhtEw",
-    "channel": "matrix",
-    "roomId": "!DMqrUKXgzUMLgnuiQA:linagora.com",
-    "userId": "@qvalmori:linagora.com",
-    "direction": "incoming",
-    "content": "Regarde là https://github.com/linagora/tmail-flutter/issues/4322",
-    "providerMessageId": "$l3XSRiyEvT9Mt39kAujkWxgAXirkmPONgBRGtnPhtEw",
-    "createdAt": "2026-06-18T15:05:53.592Z",
-    "metadata": {
-      "source": "support-automation-turn"
-    }
-  },
-  {
-    "messageId": "delivery:matrix:!DMqrUKXgzUMLgnuiQA:linagora.com:@qvalmori:linagora.com:$l3XSRiyEvT9Mt39kAujkWxgAXirkmPONgBRGtnPhtEw:0",
-    "channel": "matrix",
-    "roomId": "!DMqrUKXgzUMLgnuiQA:linagora.com",
-    "userId": "@qvalmori:linagora.com",
-    "direction": "outgoing",
-    "content": "Je ne peux pas traiter ce lien en toute sécurité. Pouvez-vous décrire votre problème de manière sûre pour que je puisse mieux vous aider ?",
-    "providerMessageId": "delivery:matrix:!DMqrUKXgzUMLgnuiQA:linagora.com:@qvalmori:linagora.com:$l3XSRiyEvT9Mt39kAujkWxgAXirkmPONgBRGtnPhtEw:0",
-    "createdAt": "2026-06-18T15:06:11.602Z",
-    "metadata": {
-      "source": "support-automation-turn",
-      "userResponseMessageType": "signal_response"
-    }
-  },
-  {
-    "messageId": "$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM",
+    "messageId": "$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE",
     "channel": "matrix",
     "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket__UVpXMmPrGnzGPNMaEb_linagora_com__gabolin_linagora_com_2026-06-18T15_06_32_001Z",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
     "direction": "incoming",
-    "content": "Oui j’ai un problème je reçoit pas encore mes mails sur IOS de mon twake chat",
-    "providerMessageId": "$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM",
-    "createdAt": "2026-06-18T15:05:07.863Z",
+    "content": "Yes, notifications are enabled in Android settings and the permission is granted. I still do not receive notifications.",
+    "providerMessageId": "$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE",
+    "createdAt": "2026-06-22T14:23:37.115Z",
     "metadata": {
       "source": "support-automation-turn"
     }
   },
   {
-    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM:0",
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE:0",
     "channel": "matrix",
     "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket__UVpXMmPrGnzGPNMaEb_linagora_com__gabolin_linagora_com_2026-06-18T15_06_32_001Z",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
     "direction": "outgoing",
-    "content": "Je comprends que vous rencontrez des problèmes avec la réception de vos mails sur iOS via Twake Chat. Je suis là pour vous aider.",
-    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM:0",
-    "createdAt": "2026-06-18T15:06:32.001Z",
+    "content": "Thank you for confirming that notifications are enabled in your Android settings. Normally, you should receive a push notification when a new email arrives, provided the mobile app is installed and notifications are allowed by both Android and the app's notification settings. Could you please check if the relevant application notification channel is enabled?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE:0",
+    "createdAt": "2026-06-22T14:24:05.695Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "direction": "incoming",
+    "content": "Yes, the notification channel is enabled too.",
+    "providerMessageId": "$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk",
+    "createdAt": "2026-06-22T14:26:27.914Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "direction": "outgoing",
+    "content": "Thank you for confirming that the notification channel is enabled. Normally, you should receive a push notification when a new email arrives, provided the mobile app is installed and notifications are allowed by both Android and the app's settings. To help us better understand the issue, could you please let us know which version of the app you are currently using?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk:0",
+    "createdAt": "2026-06-22T14:27:17.160Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "direction": "incoming",
+    "content": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.",
+    "providerMessageId": "$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8",
+    "createdAt": "2026-06-22T14:28:28.498Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "direction": "outgoing",
+    "content": "Thank you for reaching out. Normally, you should receive a push notification for each new email if notifications are enabled for the app and allowed by your Android device. Could you please let us know if this issue occurs with every new email or only in some cases?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8:0",
+    "createdAt": "2026-06-22T14:29:26.279Z",
     "metadata": {
       "source": "support-automation-turn",
       "userResponseMessageType": "topic_response"

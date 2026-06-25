@@ -44,6 +44,11 @@ import type {
   MatrixChannelConfig,
   MatrixDeliveryResult
 } from "./typesMatrixChannel.types";
+import {
+  getBufferedMessagesConversationScope,
+  getMessageConversationScope,
+  serializeConversationScopeKey
+} from "../../messaging/conversationScope";
 
 const DEFAULT_MATRIX_BUFFER_INACTIVITY_MS = 2000;
 const DEFAULT_MATRIX_BUFFER_MAX_WAIT_MS = 30000;
@@ -93,13 +98,6 @@ type RunMatrixSupportAutomationV2Params = {
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
-}
-
-function buildBufferKey(params: {
-  roomId: string;
-  userId: string;
-}): string {
-  return `${params.roomId}\u0000${params.userId}`;
 }
 
 function buildTurnId(bufferedMessages: BufferedMessages): string {
@@ -191,7 +189,9 @@ async function runMatrixSupportAutomationV2(
   async function processBufferedMessages(
     bufferedMessages: BufferedMessages
   ): Promise<MatrixSupportAutomationV2RunRecord> {
-    const bufferKey = buildBufferKey(bufferedMessages);
+    const bufferKey = serializeConversationScopeKey(
+      getBufferedMessagesConversationScope(bufferedMessages)
+    );
     const turnId = activeBufferTurnIdsByKey.get(bufferKey) ??
       buildTurnId(bufferedMessages);
     const progressContext = {
@@ -223,6 +223,7 @@ async function runMatrixSupportAutomationV2(
         ticketRepository,
         userRepository,
         messageRepository,
+        persist: !dryRun,
         steps: params.steps,
         progressReporter,
         progressContext
@@ -329,6 +330,7 @@ async function runMatrixSupportAutomationV2(
 
   const listenerHandle = await listenEvents({
     config: params.config,
+    downloadAttachments: !dryRun,
     onMessage: async (event: MessagingEvent) => {
       if (shouldIgnoreHistoricalMessage({
         event,
@@ -350,9 +352,11 @@ async function runMatrixSupportAutomationV2(
         return;
       }
 
-      const existingMessage = await messageRepository.findByMessageId(
-        event.messageId
-      );
+      const existingMessage =
+        await messageRepository.findByChannelAndMessageId(
+          event.channel,
+          event.messageId
+        );
 
       if (existingMessage !== undefined) {
         logWarn({
@@ -392,10 +396,9 @@ async function runMatrixSupportAutomationV2(
         }
       });
 
-      const bufferKey = buildBufferKey({
-        roomId: event.roomId,
-        userId: event.userId
-      });
+      const bufferKey = serializeConversationScopeKey(
+        getMessageConversationScope(event)
+      );
 
       if (!activeBufferTurnIdsByKey.has(bufferKey)) {
         activeBufferTurnIdsByKey.set(bufferKey, event.messageId);

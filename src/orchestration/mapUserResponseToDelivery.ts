@@ -44,6 +44,9 @@ function mapUserResponseToDelivery(params: {
         }),
         channel: params.matchingResult.channel,
         roomId: params.matchingResult.roomId,
+        ...(params.matchingResult.threadId
+          ? { threadId: params.matchingResult.threadId }
+          : {}),
         userId: params.matchingResult.userId,
         content: message.content,
         metadata: {

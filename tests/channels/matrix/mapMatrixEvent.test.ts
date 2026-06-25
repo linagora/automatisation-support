@@ -31,6 +31,39 @@ describe("mapMatrixEventToMessagingEvent", function () {
     });
   });
 
+  it("maps Matrix thread and reply relations to the conversation scope metadata", function () {
+    const event = {
+      event_id: "$event_thread_reply",
+      sender: "@user:example.org",
+      type: "m.room.message",
+      origin_server_ts: 1780653600000,
+      content: {
+        msgtype: "m.text",
+        body: "Oui",
+        "m.relates_to": {
+          rel_type: "m.thread",
+          event_id: "$thread_root",
+          "m.in_reply_to": {
+            event_id: "$previous_message"
+          }
+        }
+      }
+    };
+
+    expect(mapMatrixEventToMessagingEvent({
+      roomId: "!room:example.org",
+      event
+    })).toMatchObject({
+      channel: "matrix",
+      roomId: "!room:example.org",
+      threadId: "$thread_root",
+      replyToMessageId: "$previous_message",
+      userId: "@user:example.org",
+      messageId: "$event_thread_reply",
+      content: "Oui"
+    });
+  });
+
   it("maps a Matrix image message to MessagingEvent attachments", function () {
     const event = {
       event_id: "$image_1",

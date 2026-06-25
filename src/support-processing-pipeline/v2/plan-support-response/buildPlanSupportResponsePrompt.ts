@@ -230,9 +230,11 @@ function compactExistingTopic(topic: unknown): unknown {
     summary: topic.summary,
     status: topic.status,
     broadCategoryHint: topic.broadCategoryHint ?? topic.topic_category,
-    userGoal: topic.userGoal,
-    blockingIssue: topic.blockingIssue,
-    knownFacts: topic.knownFacts,
+    userGoal: topic.userGoal ?? topic.user_goal,
+    blockingIssue: topic.blockingIssue ?? topic.blocking_issue,
+    knownFacts: topic.knownFacts ?? topic.topic_details,
+    linkedKnowledgeIds:
+      topic.linkedKnowledgeIds ?? topic.linked_knowledge_ids,
     missingFields: topic.missingFields,
     previousMediaEvidence:
       topic.previousMediaEvidence ??
@@ -402,7 +404,12 @@ function compactTopicRetrievedKnowledgeSynthesis(value: unknown): unknown | null
     possibleFields: getValue(value, "possibleFields") ?? [],
     unresolvedPoints: getValue(value, "unresolvedPoints") ?? [],
     sourceReferences: getValue(value, "sourceReferences") ?? [],
-    limitations: getValue(value, "limitations") ?? []
+    limitations: getValue(value, "limitations") ?? [],
+    recommendedFirstAnswer:
+      getValue(value, "recommendedFirstAnswer") ?? null,
+    ifUserConfirmsNotificationsEnabled:
+      getValue(value, "ifUserConfirmsNotificationsEnabled") ?? null,
+    doNotClaim: getValue(value, "doNotClaim") ?? []
   };
 }
 
@@ -560,6 +567,15 @@ Do not ask fields whose askableByUser value is false.
 Do not ask fields the user already refused, declined, or said they cannot provide.
 Treat a contextual negative answer such as "no" or "non" as an answer to the previously asked field, not as missing information.
 
+For a persistent Android notification issue, when
+notification_permission_status is already granted and the latest topic evidence
+still reports missing notifications:
+- do not ask again whether notifications are enabled or permission is granted;
+- apply topicRetrievedKnowledgeSynthesis.ifUserConfirmsNotificationsEnabled
+  when available;
+- prioritize the next decisive technical fields such as operating_system
+  version, device, app_version, and frequency, within the question limits.
+
 7. Select decisive question(s).
 Before choosing acknowledgement only, verify that no selected field is both missing and decisive.
 Ask in one response all fields that are clearly decisive now, within policy.maxQuestionsPerTopic.
@@ -583,6 +599,10 @@ If knowledgeMode is not "knowledge_available":
 If knowledgeMode is "knowledge_available":
 - solutionAllowed may be true only if the answer is directly supported by selectedGenericKnowledge or topicRetrievedKnowledgeSynthesis.
 - rendererTask.prompt may include an answer only when directly supported.
+- Treat recommendedFirstAnswer as supported response guidance, not as text that
+  must be copied verbatim.
+- Carry every doNotClaim and limitation into rendererTask.forbiddenClaims or
+  equally strict renderer instructions.
 
 # Question rules
 

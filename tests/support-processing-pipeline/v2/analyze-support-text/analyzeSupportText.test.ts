@@ -80,6 +80,10 @@ const extractableFieldCatalog: ExtractableFieldDefinition[] = [
   {
     fieldName: "billing_date_or_period",
     description: "Billing period explicitly mentioned."
+  },
+  {
+    fieldName: "notification_permission_status",
+    description: "Whether Android notification permission is granted."
   }
 ];
 
@@ -221,6 +225,54 @@ describe("analyzeSupportText", function () {
         responseFormat: supportTextAnalysisResponseFormat
       })
     );
+  });
+
+  it("maps an unambiguous contextual yes to the previously asked notification field", async function () {
+    callLLMMock.mockResolvedValue({
+      success: true,
+      content: JSON.stringify({
+        items: [
+          {
+            ...standaloneItem({
+              sourceSegmentIds: ["text_segment_1"],
+              sourceVerbatims: ["Yes"],
+              summary: "The user confirms the requested setting."
+            }),
+            contextDependency: "needs_context_to_interpret",
+            contextualAnswer: {
+              type: "affirmative",
+              value: true,
+              evidence: "Yes"
+            }
+          }
+        ],
+        supportResponseCues: []
+      })
+    });
+
+    const output = await analyzeSupportText({
+      ...buildInput(buildTextSurfaceAnalysis([
+        {
+          segmentId: "text_segment_1",
+          verbatim: "Yes",
+          category: "support_relevant"
+        }
+      ])),
+      recentInteractionContext: {
+        previousBotResponseSummary:
+          "The bot asked whether notification permission is granted.",
+        previousBotQuestionFieldNames: [
+          "notification_permission_status"
+        ]
+      }
+    });
+
+    expect(output.textUnderstandings[0]?.facts).toContainEqual({
+      type: "catalogued_field",
+      fieldName: "notification_permission_status",
+      value: "granted",
+      evidence: "Yes"
+    });
   });
 
   it("builds a prompt that distinguishes trigger actions from tested actions", function () {

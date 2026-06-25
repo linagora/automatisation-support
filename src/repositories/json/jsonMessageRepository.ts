@@ -5,6 +5,9 @@ import { JsonFileStore } from "./jsonFileStore";
 import type {
   JsonStoredMessage
 } from "./typesJsonRepositories.types";
+import type {
+  MessagingChannel
+} from "../../messaging/typesMessaging.types";
 
 class JsonMessageRepository {
   private readonly store: JsonFileStore<JsonStoredMessage>;
@@ -44,6 +47,17 @@ class JsonMessageRepository {
 
     return messages.find((message) => {
       return message.messageId === messageId;
+    });
+  }
+
+  async findByChannelAndMessageId(
+    channel: MessagingChannel,
+    messageId: string
+  ): Promise<JsonStoredMessage | undefined> {
+    const messages = await this.store.readAll();
+
+    return messages.find((message) => {
+      return message.channel === channel && message.messageId === messageId;
     });
   }
 

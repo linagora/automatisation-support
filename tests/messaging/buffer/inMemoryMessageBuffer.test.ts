@@ -65,6 +65,7 @@ describe("InMemoryMessageBuffer", function () {
       {
         channel: "matrix",
         roomId: "!room:example.org",
+        threadId: null,
         userId: "@user:example.org",
         messages: [buildMessage()],
         firstMessageAt: "2026-06-05T10:00:00.000Z",
@@ -109,6 +110,88 @@ describe("InMemoryMessageBuffer", function () {
     expect(flushedMessages[0].lastMessageAt).toBe("2026-06-05T10:00:01.000Z");
     expect(flushedMessages[1].messages.map((message) => message.messageId))
       .toEqual(["$message-3"]);
+
+    buffer.dispose();
+  });
+
+  it("keeps rooms, users, threads, and channels in separate groups", function () {
+    const buffer = new InMemoryMessageBuffer({
+      inactivityTimeoutMs: 10_000,
+      onFlush: () => undefined
+    });
+    const scopedMessages = [
+      buildMessage({
+        messageId: "$room_two",
+        roomId: "!room-two:example.org"
+      }),
+      buildMessage({
+        messageId: "$user_two",
+        userId: "@user-two:example.org"
+      }),
+      buildMessage({
+        messageId: "$thread_one",
+        threadId: "$thread-one"
+      }),
+      buildMessage({
+        messageId: "$thread_two",
+        threadId: "$thread-two"
+      }),
+      buildMessage({
+        channel: "twake_chat",
+        messageId: "$other_channel"
+      })
+    ];
+
+    for (const message of scopedMessages) {
+      buffer.addMessage(message);
+    }
+
+    const flushedMessages = buffer.flushAll();
+
+    expect(flushedMessages).toHaveLength(5);
+    expect(flushedMessages.map((group) => ({
+      channel: group.channel,
+      roomId: group.roomId,
+      threadId: group.threadId,
+      userId: group.userId,
+      messageIds: group.messages.map((message) => message.messageId)
+    }))).toEqual(expect.arrayContaining([
+      {
+        channel: "matrix",
+        roomId: "!room-two:example.org",
+        threadId: null,
+        userId: "@user:example.org",
+        messageIds: ["$room_two"]
+      },
+      {
+        channel: "matrix",
+        roomId: "!room:example.org",
+        threadId: null,
+        userId: "@user-two:example.org",
+        messageIds: ["$user_two"]
+      },
+      {
+        channel: "matrix",
+        roomId: "!room:example.org",
+        threadId: "$thread-one",
+        userId: "@user:example.org",
+        messageIds: ["$thread_one"]
+      },
+      {
+        channel: "matrix",
+        roomId: "!room:example.org",
+        threadId: "$thread-two",
+        userId: "@user:example.org",
+        messageIds: ["$thread_two"]
+      },
+      {
+        channel: "twake_chat",
+        roomId: "!room:example.org",
+        threadId: null,
+        userId: "@user:example.org",
+        messageIds: ["$other_channel"]
+      }
+    ]));
 
     buffer.dispose();
   });

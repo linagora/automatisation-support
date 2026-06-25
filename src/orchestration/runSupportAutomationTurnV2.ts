@@ -46,6 +46,7 @@ async function runSupportAutomationTurnV2(params: {
   ticketRepository: JsonTicketRepository;
   userRepository: JsonUserRepository;
   messageRepository: JsonMessageRepository;
+  persist?: boolean;
   steps?: SupportProcessingPipelineV2Steps;
   progressReporter?: SupportProgressReporter;
   progressContext?: ProgressContext;
@@ -84,14 +85,21 @@ async function runSupportAutomationTurnV2(params: {
     userResponse: supportProcessingOutput.userResponse,
     matchingResult
   });
-  const persistenceResult = await applySupportPatches({
-    matchingResult,
-    supportProcessingOutput,
-    deliveryMessages,
-    ticketRepository: params.ticketRepository,
-    userRepository: params.userRepository,
-    messageRepository: params.messageRepository
-  });
+  const persistenceResult = params.persist === false
+    ? {
+        storedIncomingMessageIds: [],
+        storedOutgoingMessageIds: [],
+        patchStatus: "skipped" as const,
+        warnings: ["persistence disabled for dry-run"]
+      }
+    : await applySupportPatches({
+        matchingResult,
+        supportProcessingOutput,
+        deliveryMessages,
+        ticketRepository: params.ticketRepository,
+        userRepository: params.userRepository,
+        messageRepository: params.messageRepository
+      });
 
   return {
     matchingResult,

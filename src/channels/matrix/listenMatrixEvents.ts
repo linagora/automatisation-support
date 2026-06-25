@@ -14,6 +14,7 @@ import type {
 
 async function listenMatrixEvents(params: {
   config: MatrixChannelConfig;
+  downloadAttachments?: boolean;
   onMessage: (event: MessagingEvent) => void | Promise<void>;
   onTyping?: (event: MessagingTypingEvent) => void | Promise<void>;
 }): Promise<{ stop: () => Promise<void> | void }> {
@@ -189,10 +190,12 @@ async function listenMatrixEvents(params: {
       }
 
       const messagingEventWithDownloadedAttachments =
-        await downloadMatrixEventAttachments({
-          client,
-          messagingEvent
-        });
+        params.downloadAttachments === false
+          ? messagingEvent
+          : await downloadMatrixEventAttachments({
+              client,
+              messagingEvent
+            });
 
       await params.onMessage(messagingEventWithDownloadedAttachments);
     }

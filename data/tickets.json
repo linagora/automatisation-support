@@ -1,7 +1,9 @@
 [
   {
-    "ticketId": "ticket__UVpXMmPrGnzGPNMaEb_linagora_com__gabolin_linagora_com_2026-06-18T15_06_32_001Z",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "channel": "matrix",
     "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
     "userId": "@gabolin:linagora.com",
     "status": "active",
     "supportTopicKnowledge": {
@@ -9,22 +11,36 @@
         {
           "id_topic": 1,
           "topic_category": "bug",
-          "topic_label": "Problème de réception des emails sur iOS pour Twake Chat",
-          "segment_verbatims": [
-            "Oui j’ai un problème je reçoit pas encore mes mails sur IOS de mon twake chat"
+          "topic_label": "Email notifications not received on Android",
+          "linkedKnowledgeIds": [
+            "android_push_notification_not_received"
           ],
-          "topic_details": {},
-          "user_goal": "Résoudre le problème de réception des emails sur iOS pour Twake Chat",
+          "segment_verbatims": [
+            "I do not receive notifications on Android when I get a new email.",
+            "I still do not receive notifications.",
+            "Yes, the notification channel is enabled too.",
+            "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+          ],
+          "topic_details": {
+            "platform": "mobile app",
+            "operating_system": "Android 14",
+            "notification_permission_status": "granted",
+            "notification_channel_status": "enabled",
+            "app_version": "0.29.0",
+            "device": "Pixel 7"
+          },
+          "user_goal": "resolve email notification issue on Android",
           "blocking_issue": "no"
         }
       ]
     },
     "conversationHistory": [
       {
-        "id": "history_user_$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM",
-        "message_id": "$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM",
-        "created_at": "2026-06-18T15:05:07.863Z",
+        "id": "history_user_$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU",
+        "message_id": "$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU",
+        "created_at": "2026-06-22T14:20:23.600Z",
         "role": "user",
+        "summary": "I do not receive notifications on Android when I get a new email.",
         "turnUnderstandingDelta": {
           "user_language": "unknown",
           "segments_lack_comprehension": [],
@@ -33,12 +49,18 @@
               "matched_historical_topic": "no",
               "id_topic": 1,
               "topic_category": "bug",
-              "topic_label": "Problème de réception des emails sur iOS pour Twake Chat",
-              "segment_verbatims": [
-                "Oui j’ai un problème je reçoit pas encore mes mails sur IOS de mon twake chat"
+              "topic_label": "Email notifications not received on Android",
+              "linkedKnowledgeIds": [
+                "android_push_notification_not_received"
               ],
-              "topic_details": {},
-              "user_goal": "Résoudre le problème de réception des emails sur iOS pour Twake Chat",
+              "segment_verbatims": [
+                "I do not receive notifications on Android when I get a new email."
+              ],
+              "topic_details": {
+                "platform": "mobile app",
+                "operating_system": "Android"
+              },
+              "user_goal": "resolve email notification issue on Android",
               "blocking_issue": "no"
             }
           ],
@@ -48,12 +70,13 @@
         }
       },
       {
-        "id": "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM:0",
-        "message_id": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM:0",
-        "created_at": "2026-06-18T15:06:32.001Z",
+        "id": "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU:0",
+        "message_id": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU:0",
+        "created_at": "2026-06-22T14:21:19.556Z",
         "role": "bot",
+        "summary": "I understand that you're not receiving email notifications on your Android device. Normally, you should receive a push notification when a new email arrives, provided that notifications are allowed both by Android and by the app's settings. Could you please check if you've granted the notification permission to the app, especially if you're using Android 13 or later?",
         "responsePlan": {
-          "responseLanguage": "french",
+          "responseLanguage": "same_as_user",
           "messagesPlan": {
             "scopeBoundaryPlanMessages": [],
             "topicPlanMessages": [],
@@ -62,54 +85,309 @@
           },
           "metadata": {
             "v2ResponsePlan": {
-              "responsePlanId": "response_plan_1",
+              "responsePlanId": "response_plan_topic_update_proposal_1",
               "knowledgeGate": {
-                "knowledgeMode": "rag_not_enabled",
-                "solutionAllowed": false,
+                "knowledgeMode": "knowledge_available",
+                "solutionAllowed": true,
                 "allowedMoves": [
+                  "answer_with_knowledge",
                   "acknowledge",
                   "ask_missing_fields"
                 ],
-                "reason": "The knowledge mode is set to rag_not_enabled, so no solution or diagnosis is allowed."
+                "reason": "The knowledge mode is set to 'knowledge_available' and the selected catalog knowledge and topic retrieved knowledge synthesis provide relevant information to address the user's issue with email notifications on Android."
               },
               "questionDecision": {
-                "shouldAskQuestion": false,
-                "plannedQuestionCount": 0,
-                "fieldNames": [],
-                "questionInstruction": null,
-                "reason": "All necessary information is already provided in the user's message. The user has reported the feature (email notifications), the platform (iOS), and the observed result (not receiving emails). No additional fields are needed from the selected catalog."
+                "shouldAskQuestion": true,
+                "plannedQuestionCount": 1,
+                "fieldNames": [
+                  "notification_permission_status"
+                ],
+                "questionInstruction": "Ask the user whether the notification permission has been granted to the app, as this is a decisive field for diagnosing the issue with email notifications on Android.",
+                "reason": "The user has already provided the platform (Android) and the observed result (not receiving notifications). The next decisive field to check is the notification permission status, as it is directly related to the issue and can help determine the next steps."
               },
               "rendererTask": {
-                "targetLanguage": "French",
-                "prompt": "Acknowledge the user's issue and inform them that you understand the problem. Do not ask any questions as all necessary information is already provided. Do not make any promises or claims about solutions, investigations, or timelines. Keep the response concise and empathetic. Do not add a solution, diagnosis, procedure, refund, reference, status page, timeline, investigation promise, resolution promise, escalation claim, or team action. Do not ask any question.",
-                "questionFieldNames": [],
+                "targetLanguage": "English",
+                "prompt": "Acknowledge the user's issue with not receiving email notifications on Android. Explain that the expected behavior is to receive a push notification when a new email arrives, if the mobile app is installed and notifications are allowed by Android and by the app's notification settings. Ask the user whether the notification permission has been granted to the app, especially if they are using Android 13 or later. Do not promise a resolution timeline or claim that a support team is already investigating. Do not blame the user or state that the phone is misconfigured. Do not ask for logs first unless the basic notification permissions and app/device details have already been checked. Ask exactly 1 natural question(s), and do not add any separate rephrasing or follow-up question. Do not mention field names.",
+                "questionFieldNames": [
+                  "notification_permission_status"
+                ],
                 "forbiddenClaims": [
-                  "solution",
-                  "diagnosis",
-                  "refund",
-                  "investigation_promise",
-                  "escalation_claim",
-                  "human_notification",
-                  "team_action",
-                  "timeline",
-                  "resolution_promise",
-                  "status_page",
-                  "reference_number",
-                  "No solution.",
-                  "No diagnosis.",
-                  "No procedure.",
-                  "No refund.",
-                  "No reference number.",
-                  "No status page.",
-                  "No timeline.",
-                  "No investigation promise.",
-                  "No resolution promise.",
-                  "No escalation claim.",
-                  "No team action.",
-                  "No question."
+                  "Do not say that the issue is fixed.",
+                  "Do not say that a fix is already available.",
+                  "Do not promise a resolution timeline.",
+                  "Do not claim that a support team is already investigating.",
+                  "Do not blame the user or state that the phone is misconfigured.",
+                  "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+                  "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
                 ]
               },
-              "internalRationale": "The user has clearly stated the problem: they are not receiving email notifications on iOS for Twake Chat. The selected catalog knowledge does not provide any specific fields that are missing or necessary to ask at this stage. Therefore, the best course of action is to acknowledge the issue and proceed without asking further questions. No visual evidence is requested as the issue can be understood without it."
+              "internalRationale": "The user is reporting an issue with not receiving email notifications on Android. The selected catalog knowledge and topic retrieved knowledge synthesis provide relevant information to address this issue. The next decisive field to check is the notification permission status, as it is directly related to the issue and can help determine the next steps. The renderer should acknowledge the issue, explain the expected behavior, and ask about the notification permission status. The forbidden claims ensure that the renderer does not make unsupported promises or accusations."
+            }
+          }
+        }
+      },
+      {
+        "id": "history_user_$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE",
+        "message_id": "$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE",
+        "created_at": "2026-06-22T14:23:37.115Z",
+        "role": "user",
+        "summary": "Yes, notifications are enabled in Android settings and the permission is granted. I still do not receive notifications.",
+        "turnUnderstandingDelta": {
+          "user_language": "unknown",
+          "segments_lack_comprehension": [],
+          "segments_topic": [
+            {
+              "matched_historical_topic": "yes",
+              "id_topic": 1,
+              "linkedKnowledgeIds": [
+                "android_push_notification_not_received"
+              ],
+              "segment_verbatims": [
+                "I still do not receive notifications."
+              ],
+              "topic_details": {
+                "notification_permission_status": "granted"
+              },
+              "user_goal": "resolve email notification issue on Android",
+              "blocking_issue": "no"
+            }
+          ],
+          "segments_signal": [],
+          "segments_scope_boundary": [],
+          "segments_suspicious": []
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE:0",
+        "message_id": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE:0",
+        "created_at": "2026-06-22T14:24:05.695Z",
+        "role": "bot",
+        "summary": "Thank you for confirming that notifications are enabled in your Android settings. Normally, you should receive a push notification when a new email arrives, provided the mobile app is installed and notifications are allowed by both Android and the app's notification settings. Could you please check if the relevant application notification channel is enabled?",
+        "responsePlan": {
+          "responseLanguage": "same_as_user",
+          "messagesPlan": {
+            "scopeBoundaryPlanMessages": [],
+            "topicPlanMessages": [],
+            "signalPlanMessages": [],
+            "handoverPlanMessages": []
+          },
+          "metadata": {
+            "v2ResponsePlan": {
+              "responsePlanId": "response_plan_topic_update_proposal_1",
+              "knowledgeGate": {
+                "knowledgeMode": "knowledge_available",
+                "solutionAllowed": true,
+                "allowedMoves": [
+                  "acknowledge",
+                  "answer_with_knowledge",
+                  "ask_missing_fields"
+                ],
+                "reason": "The knowledge mode is 'knowledge_available' and there is selected catalog knowledge and retrieved knowledge synthesis available for this topic."
+              },
+              "questionDecision": {
+                "shouldAskQuestion": true,
+                "plannedQuestionCount": 1,
+                "fieldNames": [
+                  "notification_channel_status"
+                ],
+                "questionInstruction": "Ask the user whether the relevant application notification channel is enabled, in English.",
+                "reason": "The 'notification_channel_status' field is missing and is decisive for this topic. The user has already confirmed that the notification permission is granted, and the next step is to check the notification channel status."
+              },
+              "rendererTask": {
+                "targetLanguage": "English",
+                "prompt": "Acknowledge the user's issue with not receiving notifications. Explain that the expected behavior is to receive a push notification when a new email arrives, if the mobile app is installed and notifications are allowed by Android and by the app's notification settings. Ask the user whether the relevant application notification channel is enabled. Do not promise a resolution timeline or claim that a support team is already investigating. Do not blame the user or state that the phone is misconfigured. Do not ask for logs first unless the basic notification permissions and app/device details have already been checked. Ask exactly 1 natural question(s), and do not add any separate rephrasing or follow-up question. Do not mention field names.",
+                "questionFieldNames": [
+                  "notification_channel_status"
+                ],
+                "forbiddenClaims": [
+                  "Do not say that the issue is fixed.",
+                  "Do not say that a fix is already available.",
+                  "Do not promise a resolution timeline.",
+                  "Do not claim that a support team is already investigating.",
+                  "Do not blame the user or state that the phone is misconfigured.",
+                  "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+                  "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
+                ]
+              },
+              "internalRationale": "The user is reporting that they still do not receive notifications on Android after previous troubleshooting steps. The selected catalog knowledge and retrieved knowledge synthesis indicate that the next decisive field to ask is 'notification_channel_status'. The renderer is instructed to acknowledge the issue, explain the expected behavior, and ask about the notification channel status, while adhering to the forbidden claims and limitations."
+            }
+          }
+        }
+      },
+      {
+        "id": "history_user_$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk",
+        "message_id": "$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk",
+        "created_at": "2026-06-22T14:26:27.914Z",
+        "role": "user",
+        "summary": "Yes, the notification channel is enabled too.",
+        "turnUnderstandingDelta": {
+          "user_language": "unknown",
+          "segments_lack_comprehension": [],
+          "segments_topic": [
+            {
+              "matched_historical_topic": "yes",
+              "id_topic": 1,
+              "linkedKnowledgeIds": [
+                "android_push_notification_not_received"
+              ],
+              "segment_verbatims": [
+                "Yes, the notification channel is enabled too."
+              ],
+              "topic_details": {
+                "notification_channel_status": "enabled"
+              },
+              "user_goal": "resolve email notification issue on Android",
+              "blocking_issue": "no"
+            }
+          ],
+          "segments_signal": [],
+          "segments_scope_boundary": [],
+          "segments_suspicious": []
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk:0",
+        "message_id": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk:0",
+        "created_at": "2026-06-22T14:27:17.160Z",
+        "role": "bot",
+        "summary": "Thank you for confirming that the notification channel is enabled. Normally, you should receive a push notification when a new email arrives, provided the mobile app is installed and notifications are allowed by both Android and the app's settings. To help us better understand the issue, could you please let us know which version of the app you are currently using?",
+        "responsePlan": {
+          "responseLanguage": "same_as_user",
+          "messagesPlan": {
+            "scopeBoundaryPlanMessages": [],
+            "topicPlanMessages": [],
+            "signalPlanMessages": [],
+            "handoverPlanMessages": []
+          },
+          "metadata": {
+            "v2ResponsePlan": {
+              "responsePlanId": "response_plan_topic_update_proposal_1",
+              "knowledgeGate": {
+                "knowledgeMode": "knowledge_available",
+                "solutionAllowed": true,
+                "allowedMoves": [
+                  "answer_with_knowledge",
+                  "acknowledge",
+                  "ask_missing_fields"
+                ],
+                "reason": "The knowledge mode is set to 'knowledge_available' and the selected catalog knowledge and topic retrieved knowledge synthesis provide relevant information to address the user's issue with email notifications not being received on Android."
+              },
+              "questionDecision": {
+                "shouldAskQuestion": true,
+                "plannedQuestionCount": 1,
+                "fieldNames": [
+                  "app_version"
+                ],
+                "questionInstruction": "Ask the user for the app version they are using, as it is a decisive field to qualify the issue further.",
+                "reason": "The app version is a decisive field to qualify the issue further. The other fields (platform, operating system, notification permission status, and notification channel status) are already known or confirmed by the user. The frequency field is not asked as it is not as decisive as the app version in this context."
+              },
+              "rendererTask": {
+                "targetLanguage": "English",
+                "prompt": "Acknowledge the user's issue with email notifications not being received on Android. Explain that the expected behavior is to receive a push notification when a new email arrives, if the mobile app is installed and notifications are allowed by Android and by the app's notification settings. Ask the user for the app version they are using, as it is a decisive field to qualify the issue further. Do not promise a resolution timeline or claim that a support team is already investigating. Do not blame the user or state that the phone is misconfigured. Do not ask for logs first unless the basic notification permissions and app/device details have already been checked. Ask exactly 1 natural question(s), and do not add any separate rephrasing or follow-up question. Do not mention field names.",
+                "questionFieldNames": [
+                  "app_version"
+                ],
+                "forbiddenClaims": [
+                  "Do not say that the issue is fixed.",
+                  "Do not say that a fix is already available.",
+                  "Do not promise a resolution timeline.",
+                  "Do not claim that a support team is already investigating.",
+                  "Do not blame the user or state that the phone is misconfigured.",
+                  "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+                  "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
+                ]
+              },
+              "internalRationale": "The user's issue with email notifications not being received on Android is acknowledged, and the expected behavior is explained. The app version is asked as it is a decisive field to qualify the issue further. The other fields (platform, operating system, notification permission status, and notification channel status) are already known or confirmed by the user. The frequency field is not asked as it is not as decisive as the app version in this context. The renderer is instructed to avoid promising a resolution timeline, claiming that a support team is already investigating, blaming the user, or asking for logs first unless the basic notification permissions and app/device details have already been checked."
+            }
+          }
+        }
+      },
+      {
+        "id": "history_user_$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8",
+        "message_id": "$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8",
+        "created_at": "2026-06-22T14:28:28.498Z",
+        "role": "user",
+        "summary": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.",
+        "turnUnderstandingDelta": {
+          "user_language": "unknown",
+          "segments_lack_comprehension": [],
+          "segments_topic": [
+            {
+              "matched_historical_topic": "yes",
+              "id_topic": 1,
+              "linkedKnowledgeIds": [
+                "android_push_notification_not_received"
+              ],
+              "segment_verbatims": [
+                "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+              ],
+              "topic_details": {
+                "app_version": "0.29.0",
+                "device": "Pixel 7",
+                "operating_system": "Android 14"
+              },
+              "user_goal": "resolve email notification issue on Android",
+              "blocking_issue": "no"
+            }
+          ],
+          "segments_signal": [],
+          "segments_scope_boundary": [],
+          "segments_suspicious": []
+        }
+      },
+      {
+        "id": "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8:0",
+        "message_id": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8:0",
+        "created_at": "2026-06-22T14:29:26.279Z",
+        "role": "bot",
+        "summary": "Thank you for reaching out. Normally, you should receive a push notification for each new email if notifications are enabled for the app and allowed by your Android device. Could you please let us know if this issue occurs with every new email or only in some cases?",
+        "responsePlan": {
+          "responseLanguage": "same_as_user",
+          "messagesPlan": {
+            "scopeBoundaryPlanMessages": [],
+            "topicPlanMessages": [],
+            "signalPlanMessages": [],
+            "handoverPlanMessages": []
+          },
+          "metadata": {
+            "v2ResponsePlan": {
+              "responsePlanId": "response_plan_topic_update_proposal_1",
+              "knowledgeGate": {
+                "knowledgeMode": "knowledge_available",
+                "solutionAllowed": true,
+                "allowedMoves": [
+                  "answer_with_knowledge",
+                  "acknowledge",
+                  "ask_missing_fields"
+                ],
+                "reason": "The knowledge mode is set to 'knowledge_available' and the selected catalog knowledge and topic retrieved knowledge synthesis provide relevant information to address the user's issue with email notifications on their Android device."
+              },
+              "questionDecision": {
+                "shouldAskQuestion": true,
+                "plannedQuestionCount": 1,
+                "fieldNames": [
+                  "frequency"
+                ],
+                "questionInstruction": "Ask the user about the frequency of the issue, specifically whether it happens for every new email or only in some cases.",
+                "reason": "The frequency field is missing and is directly relevant to qualifying the issue. The user has already provided the app version, device, and operating system details, and the notification permission status and channel status are already known. The frequency field is the only missing field that is both decisive and askable by the user, and it can be asked within the policy.maxQuestionsPerTopic limit of 2."
+              },
+              "rendererTask": {
+                "targetLanguage": "English",
+                "prompt": "Acknowledge the user's issue with email notifications on their Android device. Explain that the expected behavior is to receive a push notification when a new email arrives, if notifications are enabled for the app and allowed by Android. Ask the user about the frequency of the issue, specifically whether it happens for every new email or only in some cases. Do not promise a resolution timeline or claim that a support team is already investigating. Do not blame the user or state that the phone is misconfigured. Do not ask for logs first. Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it. Ask exactly 1 natural question(s), and do not add any separate rephrasing or follow-up question. Do not mention field names.",
+                "questionFieldNames": [
+                  "frequency"
+                ],
+                "forbiddenClaims": [
+                  "Do not say that the issue is fixed.",
+                  "Do not say that a fix is already available.",
+                  "Do not promise a resolution timeline.",
+                  "Do not claim that a support team is already investigating.",
+                  "Do not blame the user or state that the phone is misconfigured.",
+                  "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+                  "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
+                ]
+              },
+              "internalRationale": "The user has provided the app version, device, and operating system details, and the notification permission status and channel status are already known. The frequency field is the only missing field that is both decisive and askable by the user. The knowledge mode is set to 'knowledge_available' and the selected catalog knowledge and topic retrieved knowledge synthesis provide relevant information to address the user's issue. The renderer task instructs the renderer to acknowledge the issue, explain the expected behavior, ask about the frequency of the issue, and avoid making any forbidden claims."
             }
           }
         }
@@ -118,7 +396,8 @@
     "metadata": {
       "createdFrom": "support-processing-pipeline-patches",
       "channel": "matrix",
-      "lastPatchGeneratedAt": "2026-06-18T15:06:32.001Z",
+      "threadId": null,
+      "lastPatchGeneratedAt": "2026-06-22T14:29:26.279Z",
       "lastUserLanguage": "unknown",
       "lastSupportProcessingPatches": {
         "analysisPatch": {
@@ -127,15 +406,20 @@
             "segments_lack_comprehension": [],
             "segments_topic": [
               {
-                "matched_historical_topic": "no",
+                "matched_historical_topic": "yes",
                 "id_topic": 1,
-                "topic_category": "bug",
-                "topic_label": "Problème de réception des emails sur iOS pour Twake Chat",
-                "segment_verbatims": [
-                  "Oui j’ai un problème je reçoit pas encore mes mails sur IOS de mon twake chat"
+                "linkedKnowledgeIds": [
+                  "android_push_notification_not_received"
                 ],
-                "topic_details": {},
-                "user_goal": "Résoudre le problème de réception des emails sur iOS pour Twake Chat",
+                "segment_verbatims": [
+                  "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+                ],
+                "topic_details": {
+                  "app_version": "0.29.0",
+                  "device": "Pixel 7",
+                  "operating_system": "Android 14"
+                },
+                "user_goal": "resolve email notification issue on Android",
                 "blocking_issue": "no"
               }
             ],
@@ -154,7 +438,7 @@
         },
         "responsePatch": {
           "responsePlan": {
-            "responseLanguage": "french",
+            "responseLanguage": "same_as_user",
             "messagesPlan": {
               "scopeBoundaryPlanMessages": [],
               "topicPlanMessages": [],
@@ -163,60 +447,49 @@
             },
             "metadata": {
               "v2ResponsePlan": {
-                "responsePlanId": "response_plan_1",
+                "responsePlanId": "response_plan_topic_update_proposal_1",
                 "knowledgeGate": {
-                  "knowledgeMode": "rag_not_enabled",
-                  "solutionAllowed": false,
+                  "knowledgeMode": "knowledge_available",
+                  "solutionAllowed": true,
                   "allowedMoves": [
+                    "answer_with_knowledge",
                     "acknowledge",
                     "ask_missing_fields"
                   ],
-                  "reason": "The knowledge mode is set to rag_not_enabled, so no solution or diagnosis is allowed."
+                  "reason": "The knowledge mode is set to 'knowledge_available' and the selected catalog knowledge and topic retrieved knowledge synthesis provide relevant information to address the user's issue with email notifications on their Android device."
                 },
                 "questionDecision": {
-                  "shouldAskQuestion": false,
-                  "plannedQuestionCount": 0,
-                  "fieldNames": [],
-                  "questionInstruction": null,
-                  "reason": "All necessary information is already provided in the user's message. The user has reported the feature (email notifications), the platform (iOS), and the observed result (not receiving emails). No additional fields are needed from the selected catalog."
+                  "shouldAskQuestion": true,
+                  "plannedQuestionCount": 1,
+                  "fieldNames": [
+                    "frequency"
+                  ],
+                  "questionInstruction": "Ask the user about the frequency of the issue, specifically whether it happens for every new email or only in some cases.",
+                  "reason": "The frequency field is missing and is directly relevant to qualifying the issue. The user has already provided the app version, device, and operating system details, and the notification permission status and channel status are already known. The frequency field is the only missing field that is both decisive and askable by the user, and it can be asked within the policy.maxQuestionsPerTopic limit of 2."
                 },
                 "rendererTask": {
-                  "targetLanguage": "French",
-                  "prompt": "Acknowledge the user's issue and inform them that you understand the problem. Do not ask any questions as all necessary information is already provided. Do not make any promises or claims about solutions, investigations, or timelines. Keep the response concise and empathetic. Do not add a solution, diagnosis, procedure, refund, reference, status page, timeline, investigation promise, resolution promise, escalation claim, or team action. Do not ask any question.",
-                  "questionFieldNames": [],
+                  "targetLanguage": "English",
+                  "prompt": "Acknowledge the user's issue with email notifications on their Android device. Explain that the expected behavior is to receive a push notification when a new email arrives, if notifications are enabled for the app and allowed by Android. Ask the user about the frequency of the issue, specifically whether it happens for every new email or only in some cases. Do not promise a resolution timeline or claim that a support team is already investigating. Do not blame the user or state that the phone is misconfigured. Do not ask for logs first. Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it. Ask exactly 1 natural question(s), and do not add any separate rephrasing or follow-up question. Do not mention field names.",
+                  "questionFieldNames": [
+                    "frequency"
+                  ],
                   "forbiddenClaims": [
-                    "solution",
-                    "diagnosis",
-                    "refund",
-                    "investigation_promise",
-                    "escalation_claim",
-                    "human_notification",
-                    "team_action",
-                    "timeline",
-                    "resolution_promise",
-                    "status_page",
-                    "reference_number",
-                    "No solution.",
-                    "No diagnosis.",
-                    "No procedure.",
-                    "No refund.",
-                    "No reference number.",
-                    "No status page.",
-                    "No timeline.",
-                    "No investigation promise.",
-                    "No resolution promise.",
-                    "No escalation claim.",
-                    "No team action.",
-                    "No question."
+                    "Do not say that the issue is fixed.",
+                    "Do not say that a fix is already available.",
+                    "Do not promise a resolution timeline.",
+                    "Do not claim that a support team is already investigating.",
+                    "Do not blame the user or state that the phone is misconfigured.",
+                    "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+                    "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
                   ]
                 },
-                "internalRationale": "The user has clearly stated the problem: they are not receiving email notifications on iOS for Twake Chat. The selected catalog knowledge does not provide any specific fields that are missing or necessary to ask at this stage. Therefore, the best course of action is to acknowledge the issue and proceed without asking further questions. No visual evidence is requested as the issue can be understood without it."
+                "internalRationale": "The user has provided the app version, device, and operating system details, and the notification permission status and channel status are already known. The frequency field is the only missing field that is both decisive and askable by the user. The knowledge mode is set to 'knowledge_available' and the selected catalog knowledge and topic retrieved knowledge synthesis provide relevant information to address the user's issue. The renderer task instructs the renderer to acknowledge the issue, explain the expected behavior, ask about the frequency of the issue, and avoid making any forbidden claims."
               }
             }
           }
         },
         "metadataPatch": {
-          "generatedAt": "2026-06-18T15:06:32.001Z",
+          "generatedAt": "2026-06-22T14:29:26.279Z",
           "source": "support-processing-pipeline"
         }
       },
@@ -227,7 +500,7 @@
         "gateFailed": []
       },
       "lastResponsePlan": {
-        "responseLanguage": "french",
+        "responseLanguage": "same_as_user",
         "messagesPlan": {
           "scopeBoundaryPlanMessages": [],
           "topicPlanMessages": [],
@@ -236,80 +509,132 @@
         },
         "metadata": {
           "v2ResponsePlan": {
-            "responsePlanId": "response_plan_1",
+            "responsePlanId": "response_plan_topic_update_proposal_1",
             "knowledgeGate": {
-              "knowledgeMode": "rag_not_enabled",
-              "solutionAllowed": false,
+              "knowledgeMode": "knowledge_available",
+              "solutionAllowed": true,
               "allowedMoves": [
+                "answer_with_knowledge",
                 "acknowledge",
                 "ask_missing_fields"
               ],
-              "reason": "The knowledge mode is set to rag_not_enabled, so no solution or diagnosis is allowed."
+              "reason": "The knowledge mode is set to 'knowledge_available' and the selected catalog knowledge and topic retrieved knowledge synthesis provide relevant information to address the user's issue with email notifications on their Android device."
             },
             "questionDecision": {
-              "shouldAskQuestion": false,
-              "plannedQuestionCount": 0,
-              "fieldNames": [],
-              "questionInstruction": null,
-              "reason": "All necessary information is already provided in the user's message. The user has reported the feature (email notifications), the platform (iOS), and the observed result (not receiving emails). No additional fields are needed from the selected catalog."
+              "shouldAskQuestion": true,
+              "plannedQuestionCount": 1,
+              "fieldNames": [
+                "frequency"
+              ],
+              "questionInstruction": "Ask the user about the frequency of the issue, specifically whether it happens for every new email or only in some cases.",
+              "reason": "The frequency field is missing and is directly relevant to qualifying the issue. The user has already provided the app version, device, and operating system details, and the notification permission status and channel status are already known. The frequency field is the only missing field that is both decisive and askable by the user, and it can be asked within the policy.maxQuestionsPerTopic limit of 2."
             },
             "rendererTask": {
-              "targetLanguage": "French",
-              "prompt": "Acknowledge the user's issue and inform them that you understand the problem. Do not ask any questions as all necessary information is already provided. Do not make any promises or claims about solutions, investigations, or timelines. Keep the response concise and empathetic. Do not add a solution, diagnosis, procedure, refund, reference, status page, timeline, investigation promise, resolution promise, escalation claim, or team action. Do not ask any question.",
-              "questionFieldNames": [],
+              "targetLanguage": "English",
+              "prompt": "Acknowledge the user's issue with email notifications on their Android device. Explain that the expected behavior is to receive a push notification when a new email arrives, if notifications are enabled for the app and allowed by Android. Ask the user about the frequency of the issue, specifically whether it happens for every new email or only in some cases. Do not promise a resolution timeline or claim that a support team is already investigating. Do not blame the user or state that the phone is misconfigured. Do not ask for logs first. Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it. Ask exactly 1 natural question(s), and do not add any separate rephrasing or follow-up question. Do not mention field names.",
+              "questionFieldNames": [
+                "frequency"
+              ],
               "forbiddenClaims": [
-                "solution",
-                "diagnosis",
-                "refund",
-                "investigation_promise",
-                "escalation_claim",
-                "human_notification",
-                "team_action",
-                "timeline",
-                "resolution_promise",
-                "status_page",
-                "reference_number",
-                "No solution.",
-                "No diagnosis.",
-                "No procedure.",
-                "No refund.",
-                "No reference number.",
-                "No status page.",
-                "No timeline.",
-                "No investigation promise.",
-                "No resolution promise.",
-                "No escalation claim.",
-                "No team action.",
-                "No question."
+                "Do not say that the issue is fixed.",
+                "Do not say that a fix is already available.",
+                "Do not promise a resolution timeline.",
+                "Do not claim that a support team is already investigating.",
+                "Do not blame the user or state that the phone is misconfigured.",
+                "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+                "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
               ]
             },
-            "internalRationale": "The user has clearly stated the problem: they are not receiving email notifications on iOS for Twake Chat. The selected catalog knowledge does not provide any specific fields that are missing or necessary to ask at this stage. Therefore, the best course of action is to acknowledge the issue and proceed without asking further questions. No visual evidence is requested as the issue can be understood without it."
+            "internalRationale": "The user has provided the app version, device, and operating system details, and the notification permission status and channel status are already known. The frequency field is the only missing field that is both decisive and askable by the user. The knowledge mode is set to 'knowledge_available' and the selected catalog knowledge and topic retrieved knowledge synthesis provide relevant information to address the user's issue. The renderer task instructs the renderer to acknowledge the issue, explain the expected behavior, ask about the frequency of the issue, and avoid making any forbidden claims."
           }
         }
       },
       "conversationHistoryCompactInteractionLogs": [
         {
-          "id": "compact_2026-06-18T15_06_32_001Z_1",
-          "created_at": "2026-06-18T15:06:32.001Z",
-          "line": "User(topic): add_topic topic_id=1 label=\"Problème de réception des emails sur iOS pour Twake Chat\" category=bug",
+          "id": "compact_2026-06-22T14_21_19_556Z_1",
+          "created_at": "2026-06-22T14:21:19.556Z",
+          "line": "User(topic): add_topic topic_id=1 label=\"Email notifications not received on Android\" category=bug",
           "source_event_ids": [
-            "history_user_$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM",
-            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM:0"
+            "history_user_$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU",
+            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU:0"
           ]
         },
         {
-          "id": "compact_2026-06-18T15_06_32_001Z_2",
-          "created_at": "2026-06-18T15:06:32.001Z",
-          "line": "User(topic): mark_resolved topic_id=1",
+          "id": "compact_2026-06-22T14_21_19_556Z_2",
+          "created_at": "2026-06-22T14:21:19.556Z",
+          "line": "User(topic): update_topic topic_id=1 fields=[platform, operating_system]",
           "source_event_ids": [
-            "history_user_$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM",
-            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$JP0QsH2k2pWsGYeAMhVG8xiARPG8aAdwKMe8mFsj4jM:0"
+            "history_user_$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU",
+            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-22T14_21_19_556Z_3",
+          "created_at": "2026-06-22T14:21:19.556Z",
+          "line": "User(topic): mark_non_blocking topic_id=1",
+          "source_event_ids": [
+            "history_user_$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU",
+            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-22T14_24_05_695Z_1",
+          "created_at": "2026-06-22T14:24:05.695Z",
+          "line": "User(topic): update_topic topic_id=1 fields=[notification_permission_status]",
+          "source_event_ids": [
+            "history_user_$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE",
+            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-22T14_24_05_695Z_2",
+          "created_at": "2026-06-22T14:24:05.695Z",
+          "line": "User(topic): mark_non_blocking topic_id=1",
+          "source_event_ids": [
+            "history_user_$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE",
+            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-22T14_27_17_160Z_1",
+          "created_at": "2026-06-22T14:27:17.160Z",
+          "line": "User(topic): update_topic topic_id=1 fields=[notification_channel_status]",
+          "source_event_ids": [
+            "history_user_$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk",
+            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-22T14_27_17_160Z_2",
+          "created_at": "2026-06-22T14:27:17.160Z",
+          "line": "User(topic): mark_non_blocking topic_id=1",
+          "source_event_ids": [
+            "history_user_$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk",
+            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-22T14_29_26_279Z_1",
+          "created_at": "2026-06-22T14:29:26.279Z",
+          "line": "User(topic): update_topic topic_id=1 fields=[app_version, device, operating_system]",
+          "source_event_ids": [
+            "history_user_$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8",
+            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8:0"
+          ]
+        },
+        {
+          "id": "compact_2026-06-22T14_29_26_279Z_2",
+          "created_at": "2026-06-22T14:29:26.279Z",
+          "line": "User(topic): mark_non_blocking topic_id=1",
+          "source_event_ids": [
+            "history_user_$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8",
+            "history_bot_delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8:0"
           ]
         }
       ],
-      "conversationHistoryContextLLM": "User(topic): add_topic topic_id=1 label=\"Problème de réception des emails sur iOS pour Twake Chat\" category=bug\nUser(topic): mark_resolved topic_id=1"
+      "conversationHistoryContextLLM": "User(topic): add_topic topic_id=1 label=\"Email notifications not received on Android\" category=bug\nUser(topic): update_topic topic_id=1 fields=[platform, operating_system]\nUser(topic): mark_non_blocking topic_id=1\nUser(topic): update_topic topic_id=1 fields=[notification_permission_status]\nUser(topic): mark_non_blocking topic_id=1\nUser(topic): update_topic topic_id=1 fields=[notification_channel_status]\nUser(topic): mark_non_blocking topic_id=1\nUser(topic): update_topic topic_id=1 fields=[app_version, device, operating_system]\nUser(topic): mark_non_blocking topic_id=1"
     },
-    "createdAt": "2026-06-18T15:06:32.001Z",
-    "updatedAt": "2026-06-18T15:06:32.001Z"
+    "createdAt": "2026-06-22T14:21:19.556Z",
+    "updatedAt": "2026-06-22T14:29:26.279Z"
   }
 ]

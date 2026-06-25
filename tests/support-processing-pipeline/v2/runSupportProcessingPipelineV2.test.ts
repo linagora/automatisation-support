@@ -6,8 +6,20 @@ import {
   runSupportProcessingPipelineV2
 } from "../../../src/support-processing-pipeline/v2/runSupportProcessingPipelineV2";
 import {
+  buildSupportPatchesV2
+} from "../../../src/support-processing-pipeline/v2/build-support-patches/buildSupportPatchesV2";
+import {
   buildTopicResponsePlanDebug
 } from "../../../src/support-processing-pipeline/v2/responsePlanIds";
+import {
+  planKnowledgeEnrichment
+} from "../../../src/support-processing-pipeline/v2/plan-knowledge-enrichment/planKnowledgeEnrichment";
+import {
+  retrieveSupportKnowledge
+} from "../../../src/support-processing-pipeline/v2/retrieve-support-knowledge/retrieveSupportKnowledge";
+import {
+  synthesizeRetrievedKnowledge
+} from "../../../src/support-processing-pipeline/v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
 
 import type {
   AttachmentSurfaceAnalysis,
@@ -1159,6 +1171,135 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(secondTopicPlannerInput?.topicRetrievedKnowledgeSynthesis).toEqual(
       retrievedKnowledgeSynthesis
     );
+  });
+
+  it("retrieves mock knowledge only for the matching topic in a multi-topic turn", async function () {
+    const notificationUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      sourceVerbatims: [
+        "I do not receive notifications on Android when I get a new email."
+      ],
+      summary: "Android push notification missing after new email.",
+      broadCategoryHint: "bug",
+      supportNeeds: ["possible_bug"]
+    };
+    const billingUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      understandingId: "text_understanding_2",
+      sourceSegmentIds: ["seg_support_2"],
+      sourceVerbatims: ["I received my invoice twice."],
+      summary: "Duplicate invoice.",
+      broadCategoryHint: "billing",
+      supportNeeds: ["possible_billing_or_payment_action"]
+    };
+    const proposals: TopicUpdateProposal[] = [
+      {
+        ...topicUpdateProposals[0],
+        selectedSourceVerbatims:
+          notificationUnderstanding.sourceVerbatims
+      },
+      {
+        ...topicUpdateProposals[0],
+        proposalId: "topic_update_proposal_2",
+        fromUnderstandingIds: ["text_understanding_2"],
+        selectedSourceVerbatims: billingUnderstanding.sourceVerbatims,
+        newTopic: {
+          title: "Duplicate invoice",
+          broadCategoryHint: "billing",
+          userGoal: "Clarify duplicate invoice",
+          blockingIssue: "unknown"
+        }
+      }
+    ];
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      analyzeSupportText: vi.fn(async () => ({
+        textUnderstandings: [
+          notificationUnderstanding,
+          billingUnderstanding
+        ],
+        supportResponseCues: []
+      })),
+      proposeTopicUpdates: vi.fn(async () => proposals),
+      planKnowledgeEnrichment: vi.fn(planKnowledgeEnrichment),
+      retrieveSupportKnowledge: vi.fn(retrieveSupportKnowledge),
+      synthesizeRetrievedKnowledge: vi.fn(synthesizeRetrievedKnowledge),
+      buildSupportPatches: vi.fn(buildSupportPatchesV2)
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledTimes(1);
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicEvidence: expect.objectContaining({
+          proposalId: proposals[0].proposalId,
+          relatedTextUnderstandings: [notificationUnderstanding]
+        })
+      })
+    );
+    expect(output.topicKnowledgeEnrichmentPlans).toEqual([
+      expect.objectContaining({
+        proposalId: proposals[0].proposalId,
+        plan: expect.objectContaining({
+          route: "retrieve_knowledge"
+        })
+      }),
+      expect.objectContaining({
+        proposalId: proposals[1].proposalId,
+        plan: expect.objectContaining({
+          route: "no_retrieval"
+        })
+      })
+    ]);
+    expect(output.topicRetrievedSupportKnowledge?.[0].knowledgeChunks[0])
+      .toMatchObject({
+        sourceId: "android_push_notification_not_received"
+      });
+    expect(output.topicRetrievedSupportKnowledge?.[1].knowledgeChunks)
+      .toEqual([]);
+    expect(
+      output.patches.analysisPatch.turnUnderstandingDelta.segments_topic
+    ).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        matched_historical_topic: "no",
+        linkedKnowledgeIds: [
+          "android_push_notification_not_received"
+        ]
+      }),
+      expect.objectContaining({
+        matched_historical_topic: "no",
+        topic_category: "billing"
+      })
+    ]));
+
+    const plannerCalls = vi.mocked(steps.planSupportResponse).mock.calls;
+    const notificationPlannerInput = plannerCalls.find(([plannerInput]) => {
+      return plannerInput.topicEvidence.proposalId ===
+        proposals[0].proposalId;
+    })?.[0];
+    const billingPlannerInput = plannerCalls.find(([plannerInput]) => {
+      return plannerInput.topicEvidence.proposalId ===
+        proposals[1].proposalId;
+    })?.[0];
+
+    expect(notificationPlannerInput?.topicRetrievedKnowledgeSynthesis)
+      .toEqual(expect.objectContaining({
+        relevantFacts: expect.arrayContaining([
+          expect.stringContaining(
+            "Android 13+ requires runtime notification permission"
+          )
+        ]),
+        doNotClaim: expect.arrayContaining([
+          "Do not say that the issue is fixed."
+        ])
+      }));
+    expect(billingPlannerInput?.topicRetrievedKnowledgeSynthesis).toBeNull();
   });
 
   it("supports multiple retrieve_knowledge topics in parallel without mixing syntheses", async function () {

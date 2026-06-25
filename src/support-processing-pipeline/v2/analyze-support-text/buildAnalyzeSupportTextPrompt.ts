@@ -20,6 +20,8 @@ const FIELD_HINTS: Record<string, string> = {
   observed_result: "What actually happens.",
   expected_result: "What should happen instead.",
   available_workaround: "Workaround explicitly available or unavailable.",
+  notification_permission_status: "Operating-system notification permission: granted, denied, or unknown.",
+  notification_channel_status: "App notification setting or relevant notification channel: enabled, disabled, or unknown.",
   access_action: "Access or authentication action such as login, reset, invite, or unlock.",
   billing_issue_type: "Invoice, payment, duplicate charge, refund, renewal, or subscription issue.",
   question_intent: "How-to, possibility, future availability, compatibility, pricing, or policy/consequence."
@@ -194,7 +196,25 @@ Do not rely on fixed phrases, lexical lists, or language-specific expressions.
 
 evidence must be an exact substring of one referenced source segment.
 
-recentInteractionContext may clarify what the answer refers to, but must not be used to create facts attributed to the current support content.
+recentInteractionContext may clarify what the answer refers to, but must not
+supply a value absent from the current support content.
+
+When previousBotQuestionFieldNames contains exactly one field and the current
+support content explicitly answers it, extract that field as a catalogued fact.
+The field identity may come from recentInteractionContext, but the fact value
+must come from the current source segment.
+
+Examples:
+
+* previousBotQuestionFieldNames=["notification_permission_status"] and current
+  content "Yes" -> notification_permission_status="granted", grounded by "Yes".
+* current content "notifications are enabled in Android settings and the
+  permission is granted" -> notification_permission_status="granted"; extract
+  notification_channel_status="enabled" only when the wording clearly confirms
+  the app notification setting or relevant channel, not merely the OS runtime
+  permission.
+* if several fields were asked and "Yes" does not identify which one, keep the
+  answer contextual and do not invent facts.
 
 # Evidence
 
@@ -224,9 +244,13 @@ Every fact must be grounded in the lexical content of one referenced source segm
 
 recentInteractionContext may resolve what a contextual answer refers to, but it must not supply the value of a fact.
 
-Information obtained only by combining the current support content with recentInteractionContext belongs in summary and contextualAnswer, not in facts.
+Information obtained only from recentInteractionContext belongs in summary and
+contextualAnswer, not in facts. A current explicit affirmative or negative
+answer may become a fact when recentInteractionContext identifies one
+unambiguous previously asked field.
 
-A fact marked explicit must be directly recoverable from one referenced source segment without reading recentInteractionContext.
+A fact value marked explicit must be directly recoverable from one referenced
+source segment. Recent context may identify the single field being answered.
 
 For a context-dependent understanding, facts may be empty.
 
@@ -309,7 +333,8 @@ Before returning the JSON, verify internally that:
 4. the same support need split across several source segments is represented as one item with multiple sourceSegmentIds;
 5. every id in sourceSegmentIds exists in the provided support text segments;
 6. every evidence and sourceVerbatims value is an exact substring of a referenced source segment;
-7. recentInteractionContext was not used to create facts attributed to the current support content;
+7. recentInteractionContext was used only to identify the field answered by
+   current explicit evidence, never to supply the fact value;
 8. emotional, urgent, disappointed, or impolite wording was not extracted as a support fact;
 9. contextualAnswer follows the standalone versus context-dependent rules;
 10. supportResponseCues contains only embedded support wording that may affect the response tone, not separated standard interactions.

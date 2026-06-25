@@ -46,6 +46,7 @@ export type MessagingInputEvent =
 export type BufferedMessages = {
   channel: MessagingChannel;
   roomId: string;
+  threadId?: string | null;
   userId: string;
   messages: MessagingEvent[];
   firstMessageAt: string;

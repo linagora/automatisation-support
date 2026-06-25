@@ -35,6 +35,9 @@ import type {
 import type {
   PersistenceResult
 } from "./typesPersistence.types";
+import {
+  buildConversationScopeKey
+} from "../messaging/conversationScope";
 
 function resolvePatchTimestamp(
   supportProcessingOutput: SupportProcessingPipelineOutput,
@@ -58,6 +61,7 @@ function mapIncomingMessage(params: {
     messageId: message.messageId,
     channel: message.channel,
     roomId: message.roomId,
+    threadId: message.threadId ?? null,
     userId: message.userId,
     ...(params.ticketId ? { ticketId: params.ticketId } : {}),
     direction: "incoming",
@@ -84,6 +88,7 @@ function mapOutgoingMessage(params: {
     messageId: params.deliveryMessage.localId,
     channel: params.deliveryMessage.channel,
     roomId: params.deliveryMessage.roomId,
+    threadId: params.deliveryMessage.threadId ?? null,
     userId: params.deliveryMessage.userId,
     ...(params.ticketId ? { ticketId: params.ticketId } : {}),
     direction: "outgoing",
@@ -117,7 +122,9 @@ function buildGeneratedTicketId(params: {
 }): string {
   return [
     "ticket",
+    sanitizeTicketIdPart(params.matchingResult.channel),
     sanitizeTicketIdPart(params.matchingResult.roomId),
+    sanitizeTicketIdPart(params.matchingResult.threadId ?? "no_thread"),
     sanitizeTicketIdPart(params.matchingResult.userId),
     sanitizeTicketIdPart(params.generatedAt)
   ].join("_");
@@ -127,10 +134,16 @@ function buildNewTicket(params: {
   matchingResult: MatchingResult;
   generatedAt: string;
 }): JsonTicket {
+  const conversationScope = buildConversationScopeKey({
+    channel: params.matchingResult.channel,
+    roomId: params.matchingResult.roomId,
+    threadId: params.matchingResult.threadId,
+    userId: params.matchingResult.userId
+  });
+
   return {
     ticketId: buildGeneratedTicketId(params),
-    roomId: params.matchingResult.roomId,
-    userId: params.matchingResult.userId,
+    ...conversationScope,
     status: "active",
     supportTopicKnowledge: {
       segments_topic: []
@@ -138,7 +151,8 @@ function buildNewTicket(params: {
     conversationHistory: [],
     metadata: {
       createdFrom: "support-processing-pipeline-patches",
-      channel: params.matchingResult.channel
+      channel: conversationScope.channel,
+      threadId: conversationScope.threadId
     },
     createdAt: params.generatedAt,
     updatedAt: params.generatedAt

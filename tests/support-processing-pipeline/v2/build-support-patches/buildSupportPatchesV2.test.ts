@@ -37,7 +37,8 @@ const textUnderstanding: TextUnderstanding = {
 };
 
 function buildInput(
-  topicUpdateProposals: TopicUpdateProposal[]
+  topicUpdateProposals: TopicUpdateProposal[],
+  overrides: Partial<BuildSupportPatchesInput> = {}
 ): BuildSupportPatchesInput {
   return {
     promptSecuritySignals: {
@@ -69,7 +70,8 @@ function buildInput(
           content: "Message final."
         }
       ]
-    }
+    },
+    ...overrides
   };
 }
 
@@ -149,5 +151,110 @@ describe("buildSupportPatchesV2", function () {
     expect(patches.metadataPatch).toMatchObject({
       reviewProposals: [reviewProposal]
     });
+  });
+
+  it("links retrieved global knowledge to the user topic without replacing it", function () {
+    const proposal: TopicUpdateProposal = {
+      proposalId: "proposal_notification",
+      action: "update_existing_topic",
+      fromUnderstandingIds: ["understanding_1"],
+      topicId: "topic_4",
+      selectedSourceVerbatims: ["J'ai reçu ma facture deux fois."],
+      updateIntent: {
+        relationship: "adds_new_information",
+        blockingIssue: "unknown",
+        statusHint: "open",
+        userGoal: null,
+        correctionNote: null
+      },
+      newTopic: null,
+      reason: "Updates the active user topic."
+    };
+    const patches = buildSupportPatchesV2(buildInput([proposal], {
+      topicRetrievedSupportKnowledge: [
+        {
+          proposalId: "proposal_notification",
+          topicId: "topic_4",
+          knowledgeChunks: [
+            {
+              topicId: 4,
+              sourceId: "android_push_notification_not_received",
+              content: "{}",
+              score: 1
+            }
+          ]
+        }
+      ]
+    }));
+
+    expect(patches.analysisPatch.turnUnderstandingDelta.segments_topic[0])
+      .toMatchObject({
+        matched_historical_topic: "yes",
+        id_topic: 4,
+        linkedKnowledgeIds: [
+          "android_push_notification_not_received"
+        ]
+      });
+    expect(
+      patches.analysisPatch.turnUnderstandingDelta.segments_topic[0]
+    ).not.toHaveProperty("blocking_issue");
+  });
+
+  it("persists explicit follow-up notification facts on the active user topic", function () {
+    const followUpUnderstanding: TextUnderstanding = {
+      ...textUnderstanding,
+      sourceVerbatims: [
+        "Yes, notifications are enabled in Android settings and the permission is granted. I still do not receive notifications."
+      ],
+      summary: "Notification permission is granted but the issue persists.",
+      facts: [
+        {
+          type: "catalogued_field",
+          fieldName: "notification_permission_status",
+          value: "granted",
+          evidence: "the permission is granted"
+        },
+        {
+          type: "catalogued_field",
+          fieldName: "observed_result",
+          value: "still not receiving notifications",
+          evidence: "I still do not receive notifications"
+        }
+      ]
+    };
+    const proposal: TopicUpdateProposal = {
+      proposalId: "proposal_notification_follow_up",
+      action: "update_existing_topic",
+      fromUnderstandingIds: ["understanding_1"],
+      topicId: "topic_4",
+      selectedSourceVerbatims: followUpUnderstanding.sourceVerbatims,
+      updateIntent: {
+        relationship: "reopens_or_persists_issue",
+        blockingIssue: "unknown",
+        statusHint: "open",
+        userGoal: "Restore Android notifications",
+        correctionNote: null
+      },
+      newTopic: null,
+      reason: "The active notification issue persists."
+    };
+    const patches = buildSupportPatchesV2(buildInput([proposal], {
+      textUnderstandings: [followUpUnderstanding]
+    }));
+
+    expect(patches.analysisPatch.turnUnderstandingDelta.segments_topic)
+      .toEqual([
+        expect.objectContaining({
+          matched_historical_topic: "yes",
+          id_topic: 4,
+          topic_details: {
+            notification_permission_status: "granted",
+            observed_result: "still not receiving notifications"
+          }
+        })
+      ]);
+    expect(
+      patches.analysisPatch.turnUnderstandingDelta.segments_topic[0]
+    ).not.toHaveProperty("blocking_issue");
   });
 });

@@ -5,6 +5,9 @@ import {
   formatSupportTextAnalysisOutput
 } from "./formatSupportTextAnalysisOutput";
 import {
+  enrichContextualAnswerFacts
+} from "./enrichContextualAnswerFacts";
+import {
   requestSupportTextAnalysis
 } from "./requestSupportTextAnalysis";
 
@@ -51,7 +54,11 @@ async function analyzeSupportText(
   });
 
   return {
-    textUnderstandings: formattedOutput.textUnderstandings,
+    textUnderstandings: enrichContextualAnswerFacts({
+      textUnderstandings: formattedOutput.textUnderstandings,
+      recentInteractionContext: input.recentInteractionContext,
+      extractableFieldCatalog: input.extractableFieldCatalog
+    }),
     supportResponseCues: formattedOutput.supportResponseCues
   };
 }

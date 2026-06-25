@@ -93,6 +93,26 @@ const qualificationTopic: DatasetExistingTopic = {
   blockingIssue: "unknown"
 };
 
+const androidNotificationTopic: DatasetExistingTopic = {
+  topicId: "topic_4",
+  title: "Android notification issue",
+  summary: "The user does not receive notifications for new emails.",
+  status: "open",
+  broadCategoryHint: "bug",
+  userGoal: "Restore Android email notifications.",
+  blockingIssue: "unknown",
+  topic_details: {
+    platform: "mobile app",
+    operating_system: "Android",
+    feature_or_page: "notifications",
+    trigger_action: "receiving a new email",
+    observed_result: "not receiving notifications"
+  },
+  linkedKnowledgeIds: [
+    "android_push_notification_not_received"
+  ]
+};
+
 function buildMessage(id: string, content: string): LatestUserMessage {
   return {
     id,
@@ -229,6 +249,28 @@ export const textAnalysisDataset: TextAnalysisDatasetCase[] = [
     content:
       "Bonjour, je suis déçu. Mon compte est toujours bloqué. Et j’ai aussi reçu ma facture deux fois.",
     existingTopics: [blockedAccountTopic, billingTopic]
+  }),
+  buildCase({
+    id: "android-notification-not-received",
+    name: "Android notification not received after new email",
+    content:
+      "I do not receive notifications on Android when I get a new email."
+  }),
+  buildCase({
+    id: "android-notification-follow-up",
+    name: "Android notification permission confirmed but issue persists",
+    content:
+      "Yes, notifications are enabled in Android settings and the permission is granted. I still do not receive notifications.",
+    recentInteractionContext: {
+      previousUserMessageSummary:
+        "The user does not receive notifications on Android for new emails.",
+      previousBotResponseSummary:
+        "The bot asked whether notifications are enabled and notification permission is granted.",
+      previousBotQuestionFieldNames: [
+        "notification_permission_status"
+      ]
+    },
+    existingTopics: [androidNotificationTopic]
   }),
   buildCase({
     id: "topic-urgency",

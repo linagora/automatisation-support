@@ -527,6 +527,16 @@ function getAlreadyAnsweredOrUnavailableFieldNames(input: unknown): Set<string> 
   if (isRecord(topicEvidence.existingTopic)) {
     const existingTopic = topicEvidence.existingTopic;
 
+    if (isRecord(existingTopic.topic_details)) {
+      for (const [fieldName, value] of Object.entries(
+        existingTopic.topic_details
+      )) {
+        if (value !== undefined && value !== null && value !== "") {
+          fieldNames.add(fieldName);
+        }
+      }
+    }
+
     for (const fieldName of [
       ...getStringValues(existingTopic.refusedFields),
       ...getStringValues(existingTopic.refused_fields),

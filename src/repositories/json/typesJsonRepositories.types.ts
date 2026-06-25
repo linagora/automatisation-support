@@ -11,7 +11,9 @@ import type {
 
 export type JsonTicket = {
   ticketId: string;
+  channel?: MessagingChannel;
   roomId: string;
+  threadId?: string | null;
   userId: string;
   status: "active" | "inactive";
   supportTopicKnowledge: SupportTopicKnowledge;
@@ -36,6 +38,7 @@ export type JsonStoredMessage = {
   messageId: string;
   channel: MessagingChannel;
   roomId: string;
+  threadId?: string | null;
   userId: string;
   ticketId?: string;
   direction: "incoming" | "outgoing";
@@ -44,4 +47,33 @@ export type JsonStoredMessage = {
   providerMessageId?: string;
   createdAt: string;
   metadata?: Record<string, unknown>;
+};
+
+export type JsonKnowledgeItem = {
+  knowledgeId: string;
+  title: string;
+  status: "active" | "draft" | "archived";
+  source: {
+    type: "github_issue" | "manual" | "documentation";
+    repository?: string;
+    issueId?: number;
+    issueTitle?: string;
+    issueUrl?: string;
+    labels?: string[];
+  };
+  scope: {
+    productOrService?: string[];
+    broadCategoryHints?: string[];
+    supportNeeds?: string[];
+    topicKeywords?: string[];
+    relatedFieldNames?: string[];
+  };
+  knownBehavior: string[];
+  expectedBehavior: string[];
+  acceptanceCriteria: string[];
+  safeResponseStrategy: string[];
+  questionsToAskFirst: string[];
+  ifUserConfirmsNotificationsEnabled?: string;
+  recommendedFirstAnswer?: string;
+  doNotClaim: string[];
 };

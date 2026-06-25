@@ -70,6 +70,9 @@ function topicDeltaToNewTopic(topicDelta: TopicDelta): ExistingTopic | undefined
     ...(topicDelta.topic_action ? { topic_action: topicDelta.topic_action } : {}),
     ...(topicDelta.topic_object ? { topic_object: topicDelta.topic_object } : {}),
     ...(topicDelta.topic_label ? { topic_label: topicDelta.topic_label } : {}),
+    ...(topicDelta.linkedKnowledgeIds
+      ? { linkedKnowledgeIds: topicDelta.linkedKnowledgeIds }
+      : {}),
     ...(topicDelta.segment_verbatims
       ? { segment_verbatims: topicDelta.segment_verbatims }
       : {}),
@@ -98,6 +101,10 @@ function mergeExistingTopicWithDelta(
     existingTopic.segment_verbatims,
     topicDelta.segment_verbatims
   );
+  const linkedKnowledgeIds = uniqueStrings([
+    ...(existingTopic.linkedKnowledgeIds ?? []),
+    ...(topicDelta.linkedKnowledgeIds ?? [])
+  ]);
 
   return {
     ...existingTopic,
@@ -110,6 +117,7 @@ function mergeExistingTopicWithDelta(
     ...(topicDelta.topic_action ? { topic_action: topicDelta.topic_action } : {}),
     ...(topicDelta.topic_object ? { topic_object: topicDelta.topic_object } : {}),
     ...(topicDelta.topic_label ? { topic_label: topicDelta.topic_label } : {}),
+    ...(linkedKnowledgeIds.length > 0 ? { linkedKnowledgeIds } : {}),
     topic_details: topicDetails,
     ...(testedActions ? { tested_actions: testedActions } : {}),
     ...(segmentVerbatims ? { segment_verbatims: segmentVerbatims } : {}),

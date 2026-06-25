@@ -71,7 +71,9 @@ function buildBufferedMessages(): BufferedMessages {
 function buildTicket(overrides: Partial<JsonTicket> = {}): JsonTicket {
   return {
     ticketId: "ticket_1",
+    channel: "matrix",
     roomId: "!room:example.org",
+    threadId: null,
     userId: "@user:example.org",
     status: "active",
     supportTopicKnowledge,
@@ -137,6 +139,7 @@ describe("matchBufferedMessages", function () {
     ).resolves.toEqual({
       channel: "matrix",
       roomId: "!room:example.org",
+      threadId: null,
       userId: "@user:example.org",
       messages: buildBufferedMessages().messages,
       ticket: activeTicket,
@@ -154,6 +157,7 @@ describe("matchBufferedMessages", function () {
     expect(result).toEqual({
       channel: "matrix",
       roomId: "!room:example.org",
+      threadId: null,
       userId: "@user:example.org",
       messages: buildBufferedMessages().messages
     });

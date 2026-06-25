@@ -10,6 +10,7 @@ import type {
 export type MatchingResult = {
   channel: MessagingChannel;
   roomId: string;
+  threadId?: string | null;
   userId: string;
   messages: MessagingEvent[];
   ticket?: JsonTicket;

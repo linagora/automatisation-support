@@ -54,7 +54,9 @@ const accountInteractionTraits: AccountInteractionTraits = {
 function buildTicket(overrides: Partial<JsonTicket> = {}): JsonTicket {
   return {
     ticketId: "ticket_1",
+    channel: "matrix",
     roomId: "!room:example.org",
+    threadId: null,
     userId: "@user:example.org",
     status: "active",
     supportTopicKnowledge,
@@ -167,6 +169,63 @@ describe("JSON repositories", function () {
     });
     await expect(repository.findByRoomId("!room:example.org")).resolves
       .toHaveLength(2);
+  });
+
+  it("finds active tickets only within the exact conversation scope", async function () {
+    const repository = new JsonTicketRepository(
+      path.join(tempDir, "tickets.json")
+    );
+    const tickets = [
+      buildTicket({
+        ticketId: "matrix_main",
+        channel: "matrix",
+        threadId: null
+      }),
+      buildTicket({
+        ticketId: "matrix_thread_one",
+        channel: "matrix",
+        threadId: "$thread-one"
+      }),
+      buildTicket({
+        ticketId: "matrix_thread_two",
+        channel: "matrix",
+        threadId: "$thread-two"
+      }),
+      buildTicket({
+        ticketId: "twake_main",
+        channel: "twake_chat",
+        threadId: null
+      }),
+      buildTicket({
+        ticketId: "other_room",
+        roomId: "!other-room:example.org"
+      }),
+      buildTicket({
+        ticketId: "other_user",
+        userId: "@other:example.org"
+      })
+    ];
+
+    for (const ticket of tickets) {
+      await repository.upsert(ticket);
+    }
+
+    await expect(repository.findActiveByConversationScope({
+      channel: "matrix",
+      roomId: "!room:example.org",
+      threadId: "$thread-two",
+      userId: "@user:example.org"
+    })).resolves.toMatchObject({
+      ticketId: "matrix_thread_two"
+    });
+    await expect(repository.findActiveByConversationScope({
+      channel: "twake_chat",
+      roomId: "!room:example.org",
+      threadId: null,
+      userId: "@user:example.org"
+    })).resolves.toMatchObject({
+      ticketId: "twake_main"
+    });
   });
 
   it("creates and updates a user with upsert", async function () {

@@ -245,6 +245,7 @@ export type AccountInteractionTraits = {
  * ===================================================== */
 
 type TopicDetails = {
+  product_or_service?: string;
   feature_or_page?: string;
   provided_url?: string;
   pre_problem_state?: string;
@@ -252,6 +253,7 @@ type TopicDetails = {
   expected_result?: string;
   error_message?: string;
   platform?: string;
+  operating_system?: string;
   account_context?: string;
   frequency?: string;
   affected_scope?: string;
@@ -263,6 +265,8 @@ type TopicDetails = {
   device?: string;
   browser?: string;
   app_version?: string;
+  notification_permission_status?: string;
+  notification_channel_status?: string;
   server_or_instance?: string;
   affected_users?: string;
   logs_available?: "yes" | "no";
@@ -284,6 +288,7 @@ export type SupportTopicKnowledge = {
     topic_action?: string;
     topic_object?: string;
     topic_label?: string;
+    linkedKnowledgeIds?: string[];
     segment_verbatims?: string[];
     topic_details: TopicDetails;
     tested_actions?: {
@@ -326,6 +331,7 @@ type ExistingTopicDelta = {
   topic_action?: string;
   topic_object?: string;
   topic_label?: string;
+  linkedKnowledgeIds?: string[];
   segment_verbatims?: string[];
   topic_details?: Partial<TopicDetails>;
   tested_actions?: {
@@ -344,6 +350,7 @@ type NewTopicDelta = {
   topic_action?: string;
   topic_object?: string;
   topic_label?: string;
+  linkedKnowledgeIds?: string[];
   segment_verbatims?: string[];
   topic_details: TopicDetails;
   tested_actions?: {
@@ -380,6 +387,7 @@ type BaseConversationHistoryEvent = {
   id: string;
   message_id: string;
   created_at: string;
+  summary?: string;
 };
 
 type UserConversationHistoryEvent = BaseConversationHistoryEvent & {

@@ -17,6 +17,24 @@ function buildConversationHistoryMessageId(messageIds: string[]): string {
   return messageIds.join(",");
 }
 
+function buildShortSummary(values: (string | undefined)[]): string | undefined {
+  const summary = values
+    .filter((value): value is string => {
+      return typeof value === "string" && value.trim() !== "";
+    })
+    .map((value) => value.trim())
+    .join(" ")
+    .replace(/\s+/g, " ");
+
+  if (summary === "") {
+    return undefined;
+  }
+
+  return summary.length <= 500
+    ? summary
+    : `${summary.slice(0, 497)}...`;
+}
+
 function buildConversationHistoryEvents(params: {
   matchingResult: MatchingResult;
   supportProcessingOutput: SupportProcessingPipelineOutput;
@@ -24,8 +42,6 @@ function buildConversationHistoryEvents(params: {
   storedIncomingMessageIds: string[];
   storedOutgoingMessageIds: string[];
 }): ConversationHistory {
-  void params.deliveryMessages;
-
   const turnUnderstandingDelta =
     params.supportProcessingOutput.patches.analysisPatch.turnUnderstandingDelta;
   const responsePlan =
@@ -34,6 +50,12 @@ function buildConversationHistoryEvents(params: {
     params.supportProcessingOutput.patches.metadataPatch.generatedAt;
   const userMessageCreatedAt =
     params.matchingResult.messages.at(-1)?.createdAt ?? generatedAt;
+  const userSummary = buildShortSummary(
+    params.matchingResult.messages.map((message) => message.content)
+  );
+  const botSummary = buildShortSummary(
+    params.deliveryMessages.map((message) => message.content)
+  );
 
   return [
     {
@@ -46,6 +68,7 @@ function buildConversationHistoryEvents(params: {
       ),
       created_at: userMessageCreatedAt,
       role: "user",
+      ...(userSummary ? { summary: userSummary } : {}),
       turnUnderstandingDelta
     },
     {
@@ -58,6 +81,7 @@ function buildConversationHistoryEvents(params: {
       ),
       created_at: generatedAt,
       role: "bot",
+      ...(botSummary ? { summary: botSummary } : {}),
       responsePlan
     }
   ] as ConversationHistory;

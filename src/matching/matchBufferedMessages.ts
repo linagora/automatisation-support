@@ -10,6 +10,9 @@ import type {
 import type {
   MatchingResult
 } from "./typesMatching.types";
+import {
+  getBufferedMessagesConversationScope
+} from "../messaging/conversationScope";
 
 async function matchBufferedMessages(params: {
   bufferedMessages: BufferedMessages;
@@ -22,14 +25,17 @@ async function matchBufferedMessages(params: {
     userId,
     messages
   } = params.bufferedMessages;
+  const conversationScope =
+    getBufferedMessagesConversationScope(params.bufferedMessages);
   const [ticket, user] = await Promise.all([
-    params.ticketRepository.findActiveByRoomAndUser(roomId, userId),
+    params.ticketRepository.findActiveByConversationScope(conversationScope),
     params.userRepository.findById(userId)
   ]);
 
   return {
     channel,
     roomId,
+    threadId: conversationScope.threadId,
     userId,
     messages,
     ...(ticket ? { ticket } : {}),

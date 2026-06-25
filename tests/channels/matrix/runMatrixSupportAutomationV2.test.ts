@@ -37,6 +37,14 @@ function buildTempRepositories(): {
 describe("runMatrixSupportAutomationV2", function () {
   it("buffers Matrix messages, runs the V2 turn once, and skips delivery in dry-run", async function () {
     const repositories = buildTempRepositories();
+    await repositories.ticketRepository.list();
+    await repositories.userRepository.list();
+    await repositories.messageRepository.list();
+    const repositoriesBefore = {
+      tickets: await repositories.ticketRepository.list(),
+      users: await repositories.userRepository.list(),
+      messages: await repositories.messageRepository.list()
+    };
     let onMessage!: (event: MessagingEvent) => Promise<void> | void;
     const listenMatrixEvents = vi.fn(async (params) => {
       onMessage = params.onMessage;
@@ -115,10 +123,26 @@ describe("runMatrixSupportAutomationV2", function () {
     const records = await handle.flushPending();
 
     expect(runSupportAutomationTurnV2).toHaveBeenCalledTimes(1);
+    expect(runSupportAutomationTurnV2).toHaveBeenCalledWith(
+      expect.objectContaining({
+        persist: false
+      })
+    );
+    expect(listenMatrixEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        downloadAttachments: false
+      })
+    );
     expect(records).toHaveLength(1);
     expect(records[0].supportAutomationTurnResult.deliveryMessages).toHaveLength(1);
     expect(records[0].matrixDeliveryResults).toEqual([]);
     expect(sendMatrixDeliveryMessages).not.toHaveBeenCalled();
+    expect(await repositories.ticketRepository.list())
+      .toEqual(repositoriesBefore.tickets);
+    expect(await repositories.userRepository.list())
+      .toEqual(repositoriesBefore.users);
+    expect(await repositories.messageRepository.list())
+      .toEqual(repositoriesBefore.messages);
 
     await handle.stop();
   });

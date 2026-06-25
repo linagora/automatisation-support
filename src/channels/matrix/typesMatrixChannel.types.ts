@@ -29,6 +29,13 @@ export type MatrixTextEvent = {
   content?: {
     msgtype?: string;
     body?: unknown;
+    "m.relates_to"?: {
+      rel_type?: unknown;
+      event_id?: unknown;
+      "m.in_reply_to"?: {
+        event_id?: unknown;
+      };
+    };
     url?: unknown;
     filename?: unknown;
     info?: {

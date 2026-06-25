@@ -7,6 +7,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   buildSupportProcessingInput
 } from "../../src/orchestration/buildSupportProcessingInput";
+import {
+  buildSupportProcessingInputV2
+} from "../../src/orchestration/buildSupportProcessingInputV2";
 import { applySupportPatches } from "../../src/persistence/applySupportPatches";
 import { JsonMessageRepository } from "../../src/repositories/json/jsonMessageRepository";
 import { JsonTicketRepository } from "../../src/repositories/json/jsonTicketRepository";
@@ -213,6 +216,7 @@ describe("topic continuity context", function () {
     };
 
     const input = buildSupportProcessingInput(turnTwoMatchingResult);
+    const inputV2 = buildSupportProcessingInputV2(turnTwoMatchingResult);
 
     expect(ticket).toBeDefined();
     expect(ticket?.ticketId).toBeTruthy();
@@ -230,6 +234,12 @@ describe("topic continuity context", function () {
       id: "$turn_2",
       content: "Oui, la plateforme est sur mon application web",
       channel: "twake_chat"
+    });
+    expect(inputV2.recentInteractionContext).toEqual({
+      previousUserMessageSummary:
+        "Je crois que j'ai trouvé un bug sur Twake Chat",
+      previousBotResponseSummary:
+        "Sur quelle plateforme rencontrez-vous le bug ?"
     });
   });
 });

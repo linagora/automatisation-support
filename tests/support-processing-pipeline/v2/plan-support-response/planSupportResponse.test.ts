@@ -208,6 +208,102 @@ describe("planSupportResponse topic-only prompt", function () {
     );
   });
 
+  it("exposes mock knowledge guidance and restrictions to the planner", function () {
+    const prompt = serialize({
+      topicKnowledgeEnrichmentPlan: {
+        route: "retrieve_knowledge",
+        retrievalRequests: [
+          {
+            topicId: 0,
+            query: "android notification"
+          }
+        ]
+      },
+      topicRetrievedKnowledgeSynthesis: {
+        relevantFacts: [
+          "Android 13+ requires runtime notification permission."
+        ],
+        applicableInstructions: [
+          "First check whether notifications are enabled in Android settings."
+        ],
+        possibleFields: [
+          "notification_permission_status",
+          "notification_channel_status"
+        ],
+        unresolvedPoints: [
+          "Has the notification permission been granted?"
+        ],
+        sourceReferences: [
+          "https://github.com/linagora/tmail-flutter/issues/4322"
+        ],
+        recommendedFirstAnswer:
+          "Explain the expected notification behavior and check permissions first.",
+        doNotClaim: [
+          "Do not say that the issue is fixed.",
+          "Do not promise a resolution timeline."
+        ]
+      }
+    });
+
+    expect(prompt).toContain('"knowledgeMode": "knowledge_available"');
+    expect(prompt).toContain(
+      "Android 13+ requires runtime notification permission."
+    );
+    expect(prompt).toContain(
+      "Explain the expected notification behavior and check permissions first."
+    );
+    expect(prompt).toContain("Do not say that the issue is fixed.");
+    expect(prompt).toContain(
+      "Carry every doNotClaim and limitation into rendererTask.forbiddenClaims"
+    );
+  });
+
+  it("moves an Android notification follow-up past the confirmed permission question", function () {
+    const prompt = serialize({
+      latestUserMessageContent:
+        "The permission is granted. I still do not receive notifications.",
+      existingTopic: {
+        id_topic: 4,
+        topic_category: "bug",
+        topic_details: {
+          operating_system: "Android",
+          notification_permission_status: "granted",
+          observed_result: "still not receiving notifications"
+        },
+        user_goal: "Restore Android notifications",
+        blocking_issue: "no"
+      },
+      selectedCatalogKnowledge: {
+        selectedFields: [
+          { fieldName: "notification_permission_status" },
+          { fieldName: "operating_system" },
+          { fieldName: "device" },
+          { fieldName: "app_version" },
+          { fieldName: "frequency" }
+        ]
+      },
+      topicRetrievedKnowledgeSynthesis: {
+        relevantFacts: [],
+        sourceReferences: [
+          "android_push_notification_not_received"
+        ],
+        ifUserConfirmsNotificationsEnabled:
+          "Ask for Android version, device model, app version, and frequency.",
+        topics: []
+      }
+    });
+
+    expect(prompt).toContain(
+      "do not ask again whether notifications are enabled or permission is granted"
+    );
+    expect(prompt).toContain("operating_system");
+    expect(prompt).toContain("version, device, app_version, and frequency");
+    expect(prompt).toContain(
+      "Ask for Android version, device model, app version, and frequency."
+    );
+    expect(prompt).toContain('"notification_permission_status": "granted"');
+  });
+
   it("requests a clearer attachment when visual evidence is useful but unusable", function () {
     const attachment: AttachmentUnderstanding = {
       attachmentIndex: 0,
@@ -456,6 +552,62 @@ describe("planSupportResponse topic-only prompt", function () {
             targetLanguage: "French",
             prompt: "Demandez ce qui ne fonctionne pas.",
             questionFieldNames: ["observed_result"],
+            forbiddenClaims: []
+          },
+          internalRationale: "Test."
+        }
+      }
+    });
+
+    expect(output.responsePlan.questionDecision.shouldAskQuestion).toBe(false);
+    expect(output.responsePlan.rendererTask.prompt).toContain(
+      "Do not ask again for information already provided"
+    );
+  });
+
+  it("does not re-ask a field already persisted in topic_details", function () {
+    const plannerInput = input({
+      existingTopic: {
+        id_topic: 4,
+        topic_category: "bug",
+        topic_details: {
+          notification_permission_status: "granted"
+        },
+        user_goal: "Restore Android notifications",
+        blocking_issue: "no"
+      },
+      selectedCatalogKnowledge: {
+        selectedFields: [
+          {
+            fieldName: "notification_permission_status",
+            askableByUser: true
+          }
+        ]
+      }
+    });
+    const output = formatPlanSupportResponseOutput({
+      input: plannerInput,
+      rawPlanSupportResponse: {
+        status: "completed",
+        parsedResponse: {
+          responsePlanId: "response_plan_1",
+          knowledgeGate: {
+            knowledgeMode: "knowledge_available",
+            solutionAllowed: true,
+            allowedMoves: ["answer_with_knowledge", "ask_missing_fields"],
+            reason: "Knowledge is available."
+          },
+          questionDecision: {
+            shouldAskQuestion: true,
+            plannedQuestionCount: 1,
+            fieldNames: ["notification_permission_status"],
+            questionInstruction: "Ask whether permission is granted.",
+            reason: "Permission is needed."
+          },
+          rendererTask: {
+            targetLanguage: "English",
+            prompt: "Ask whether notification permission is granted.",
+            questionFieldNames: ["notification_permission_status"],
             forbiddenClaims: []
           },
           internalRationale: "Test."

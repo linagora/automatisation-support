@@ -1,15 +1,16 @@
 import type {
   BufferedMessages,
-  MessagingChannel,
   MessagingEvent,
   MessagingTypingEvent
 } from "../typesMessaging.types";
+import type {
+  ConversationScopeKey
+} from "../conversationScope";
 
-export type MessageBufferGroupKey = {
-  channel: MessagingChannel;
-  roomId: string;
-  userId: string;
-};
+export type MessageBufferGroupKey =
+  Omit<ConversationScopeKey, "threadId"> & {
+    threadId?: string | null;
+  };
 
 export type MessageBufferFlushCallback = (
   bufferedMessages: BufferedMessages

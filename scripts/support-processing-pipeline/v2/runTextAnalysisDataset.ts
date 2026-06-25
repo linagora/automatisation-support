@@ -58,6 +58,13 @@ import {
   planKnowledgeEnrichment
 } from "../../../src/support-processing-pipeline/v2/plan-knowledge-enrichment/planKnowledgeEnrichment";
 import {
+  retrieveSupportKnowledge
+} from "../../../src/support-processing-pipeline/v2/retrieve-support-knowledge/retrieveSupportKnowledge";
+import {
+  enrichSelectedCatalogKnowledgeWithSynthesis,
+  synthesizeRetrievedKnowledge
+} from "../../../src/support-processing-pipeline/v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
+import {
   planSupportResponse
 } from "../../../src/support-processing-pipeline/v2/plan-support-response/planSupportResponse";
 import {
@@ -790,6 +797,33 @@ async function runKnowledgeStage(params: {
         }))
       ]);
 
+      let topicRetrievedSupportKnowledge: KnowledgeChunk[] = [];
+      let topicRetrievedKnowledgeSynthesis:
+        | RetrievedKnowledgeSynthesis
+        | null = null;
+
+      if (topicKnowledgeEnrichmentPlan.route === "retrieve_knowledge") {
+        topicRetrievedSupportKnowledge = await retrieveSupportKnowledge({
+          knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
+          topicEvidence,
+          selectedCatalogKnowledge,
+          topicKnowledgeEnrichmentPlan
+        });
+        topicRetrievedKnowledgeSynthesis = synthesizeRetrievedKnowledge({
+          knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
+          knowledgeChunks: topicRetrievedSupportKnowledge,
+          topicEvidence,
+          selectedCatalogKnowledge,
+          topicKnowledgeEnrichmentPlan
+        });
+      }
+      const plannerSelectedCatalogKnowledge =
+        enrichSelectedCatalogKnowledgeWithSynthesis({
+          selectedCatalogKnowledge,
+          extractableFieldCatalog: params.testCase.extractableFieldCatalog,
+          synthesis: topicRetrievedKnowledgeSynthesis
+        });
+
       return {
         topicUpdateProposal,
         topicEvidence,
@@ -797,10 +831,10 @@ async function runKnowledgeStage(params: {
         relatedTextUnderstandings: topicEvidence.relatedTextUnderstandings,
         relatedSupportResponseCues:
           topicEvidence.relatedSupportResponseCues,
-        selectedCatalogKnowledge,
+        selectedCatalogKnowledge: plannerSelectedCatalogKnowledge,
         topicKnowledgeEnrichmentPlan,
-        topicRetrievedSupportKnowledge: [],
-        topicRetrievedKnowledgeSynthesis: null
+        topicRetrievedSupportKnowledge,
+        topicRetrievedKnowledgeSynthesis
       };
     })
   );

@@ -51,6 +51,29 @@ function getBody(event: MatrixTextEvent): string {
     : "";
 }
 
+function getThreadId(event: MatrixTextEvent): string | undefined {
+  const relation = event.content?.["m.relates_to"];
+
+  if (
+    relation?.rel_type === "m.thread" &&
+    typeof relation.event_id === "string" &&
+    relation.event_id.trim() !== ""
+  ) {
+    return relation.event_id;
+  }
+
+  return undefined;
+}
+
+function getReplyToMessageId(event: MatrixTextEvent): string | undefined {
+  const eventId =
+    event.content?.["m.relates_to"]?.["m.in_reply_to"]?.event_id;
+
+  return typeof eventId === "string" && eventId.trim() !== ""
+    ? eventId
+    : undefined;
+}
+
 function buildMatrixAttachment(event: MatrixTextEvent): MessagingAttachment | undefined {
   const msgtype = event.content?.msgtype;
   const matrixMxcUrl =
@@ -133,6 +156,12 @@ function mapMatrixEventToMessagingEvent(params: {
     roomId: params.roomId,
     userId: params.event.sender,
     messageId: params.event.event_id,
+    ...(getThreadId(params.event)
+      ? { threadId: getThreadId(params.event) }
+      : {}),
+    ...(getReplyToMessageId(params.event)
+      ? { replyToMessageId: getReplyToMessageId(params.event) }
+      : {}),
     ...(params.event.content?.msgtype === "m.text" && body !== ""
       ? { content: body }
       : {}),

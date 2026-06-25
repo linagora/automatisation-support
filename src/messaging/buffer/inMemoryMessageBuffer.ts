@@ -3,6 +3,10 @@ import type {
   MessagingEvent,
   MessagingTypingEvent
 } from "../typesMessaging.types";
+import {
+  buildConversationScopeKey,
+  serializeConversationScopeKey
+} from "../conversationScope";
 import type {
   InMemoryMessageBufferOptions,
   MessageBuffer,
@@ -34,7 +38,9 @@ function hasBufferedContent(message: MessagingEvent): boolean {
 }
 
 function buildGroupId(groupKey: MessageBufferGroupKey): string {
-  return `${groupKey.channel}:${groupKey.roomId}:${groupKey.userId}`;
+  return serializeConversationScopeKey(
+    buildConversationScopeKey(groupKey)
+  );
 }
 
 class InMemoryMessageBuffer implements MessageBuffer {
@@ -69,11 +75,12 @@ class InMemoryMessageBuffer implements MessageBuffer {
       return false;
     }
 
-    const key = {
+    const key = buildConversationScopeKey({
       channel: message.channel,
       roomId: message.roomId,
+      threadId: message.threadId,
       userId: message.userId
-    };
+    });
     const groupId = buildGroupId(key);
     const existingGroup = this.pendingGroups.get(groupId);
     const group = existingGroup ?? {
@@ -110,11 +117,11 @@ class InMemoryMessageBuffer implements MessageBuffer {
   }
 
   updateTypingState(typingEvent: MessagingTypingEvent): void {
-    const key = {
+    const key = buildConversationScopeKey({
       channel: typingEvent.channel,
       roomId: typingEvent.roomId,
       userId: typingEvent.userId
-    };
+    });
     const groupId = buildGroupId(key);
     const existingGroup = this.pendingGroups.get(groupId);
     const group = existingGroup ?? {
@@ -166,6 +173,7 @@ class InMemoryMessageBuffer implements MessageBuffer {
     return {
       channel: group.key.channel,
       roomId: group.key.roomId,
+      threadId: group.key.threadId,
       userId: group.key.userId,
       messages: [...group.messages],
       firstMessageAt: group.firstBufferedAt,

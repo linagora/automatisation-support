@@ -113,6 +113,42 @@ describe("renderSupportResponse", function () {
     );
   });
 
+  it("receives only safe plan instructions for Android notification knowledge", function () {
+    const plan = buildPlan({
+      id: "plan_android_notifications",
+      prompt:
+        "Explain the expected notification behavior and ask whether Android notification permission is enabled.",
+      fieldNames: ["notification_permission_status"]
+    });
+    plan.knowledgeGate = {
+      knowledgeMode: "knowledge_available",
+      solutionAllowed: true,
+      allowedMoves: ["answer_with_knowledge", "ask_missing_fields"],
+      reason: "Mock knowledge supports this limited answer."
+    };
+    plan.rendererTask.forbiddenClaims = [
+      "Do not say that the issue is fixed.",
+      "Do not promise a resolution timeline.",
+      "Do not claim that a support team is already investigating."
+    ];
+    const serializedPrompt = serializePrompt(buildInput({
+      plans: [plan]
+    }));
+
+    expect(serializedPrompt).toContain(
+      "ask whether Android notification permission is enabled"
+    );
+    expect(serializedPrompt).toContain(
+      "Do not say that the issue is fixed."
+    );
+    expect(serializedPrompt).toContain(
+      "Do not promise a resolution timeline."
+    );
+    expect(serializedPrompt).not.toContain(
+      "Some Android users report that they do not receive push notifications"
+    );
+  });
+
   it("builds support_multi with every plan and deduplication guidance", function () {
     const serializedPrompt = serializePrompt(buildInput({
       plans: [
