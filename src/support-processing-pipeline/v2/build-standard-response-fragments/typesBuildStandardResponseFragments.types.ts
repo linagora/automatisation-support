@@ -5,7 +5,15 @@ import type {
   TextSurfaceStandardSubcategory
 } from "../typesSupportProcessingPipelineV2.types";
 
-export type StandardResponseLanguage = "french" | "english";
+/**
+ * Deprecated compatibility alias.
+ *
+ * Standard response fragments are renderer instructions, not final user-facing
+ * text. They are intentionally language-agnostic and always written in English.
+ * Final response language must be handled by the renderer from
+ * textSurfaceAnalysis.userLanguage.
+ */
+export type StandardResponseLanguage = string;
 
 export type StandardCategory = Exclude<SurfaceCategory, "support_relevant">;
 
@@ -70,15 +78,18 @@ export type StandardSubcategoryFor<
   TCategory extends StandardCategory
 > = StandardSubcategoriesByCategory[TCategory];
 
-export type StandardTemplateCatalog = Record<
-  StandardResponseLanguage,
-  {
-    [TCategory in StandardCategory]: Record<
-      StandardSubcategoryFor<TCategory>,
-      string
-    >;
-  }
->;
+export type StandardRendererInstructionCatalog = {
+  [TCategory in StandardCategory]: Record<
+    StandardSubcategoryFor<TCategory>,
+    string
+  >;
+};
+
+/**
+ * Deprecated compatibility alias.
+ * Use StandardRendererInstructionCatalog instead.
+ */
+export type StandardTemplateCatalog = StandardRendererInstructionCatalog;
 
 export type {
   BuildStandardResponseFragmentsInput,

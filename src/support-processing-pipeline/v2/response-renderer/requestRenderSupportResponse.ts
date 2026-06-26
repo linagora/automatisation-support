@@ -18,6 +18,7 @@ async function requestRenderSupportResponse(
 ): Promise<RawRenderSupportResponse> {
   try {
     const result = await callLLM(input.prompt.messages, {
+      stage: "render_support_response",
       preset: "fullWeightMessageAnalysis",
       temperature: 0,
       maxTokens: 2500,

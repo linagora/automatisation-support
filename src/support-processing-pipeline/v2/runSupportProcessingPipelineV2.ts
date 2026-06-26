@@ -36,6 +36,9 @@ import {
   planSupportResponse
 } from "./plan-support-response/planSupportResponse";
 import {
+  composeSupportResponsePlan
+} from "./compose-support-response-plan/composeSupportResponsePlan";
+import {
   renderSupportResponse
 } from "./response-renderer/renderSupportResponse";
 import {
@@ -47,19 +50,26 @@ import {
 import {
   assignTopicResponsePlanIds
 } from "./responsePlanIds";
+import {
+  normalizeUserLanguageForResponse
+} from "./response-language/normalizeUserLanguageForResponse";
 
 import type {
   AttachmentSurfaceAnalysis,
   AttachmentUnderstanding,
   BuildSupportPatchesInput,
+  ComposedSupportResponsePlan,
   ExtractableFieldDefinition,
   KnowledgeChunk,
+  MergedTopicSnapshot,
+  ProposeTopicUpdatesOutput,
   RetrievedKnowledgeSynthesis,
   RenderSupportResponseInput,
   ResponsePlanV2,
   SelectedCatalogKnowledgeForTopic,
   StandardResponseFragment,
   SupportResponseCue,
+  SupportProcessingProgressEvent,
   SupportProcessingPipelineV2Runtime,
   SupportProcessingPipelineV2Input,
   SupportProcessingPipelineV2Output,
@@ -71,6 +81,8 @@ import type {
   TopicKnowledgeEnrichmentPlanResult,
   TopicRetrievedKnowledgeSynthesisResult,
   TopicRetrievedSupportKnowledgeResult,
+  TopicPatch,
+  TopicUpdateOp,
   TopicUpdateProposal
 } from "./typesSupportProcessingPipelineV2.types";
 
@@ -118,6 +130,12 @@ function isActionableTopicUpdateProposal(
     proposal.action === "update_existing_topic";
 }
 
+function isProposeTopicUpdatesOutput(
+  value: ProposeTopicUpdatesOutput | TopicUpdateProposal[]
+): value is ProposeTopicUpdatesOutput {
+  return !Array.isArray(value);
+}
+
 function findExistingTopicForProposal(
   proposal: TopicUpdateProposal,
   supportTopicKnowledge: SupportProcessingPipelineV2Input["supportTopicKnowledge"]
@@ -129,6 +147,39 @@ function findExistingTopicForProposal(
   return supportTopicKnowledge.segments_topic.find((topic) => {
     return String(topic.id_topic) === proposal.topicId;
   });
+}
+
+function buildTopicEvidenceFromSnapshot(params: {
+  snapshot: MergedTopicSnapshot;
+  textUnderstandings: TextUnderstanding[];
+  supportResponseCues: SupportResponseCue[];
+}): TopicEvidence {
+  const relatedUnderstandingIds = new Set(
+    params.snapshot.sourceUnderstandingIds
+  );
+  const relatedTextUnderstandings = params.textUnderstandings.filter(
+    (understanding) => {
+      return relatedUnderstandingIds.has(understanding.understandingId);
+    }
+  );
+  const relatedSupportResponseCues = params.supportResponseCues.filter((cue) => {
+    return cue.relatedUnderstandingIds.length > 0 &&
+      cue.relatedUnderstandingIds.every((understandingId) => {
+        return relatedUnderstandingIds.has(understandingId);
+      });
+  });
+
+  return {
+    proposalId: params.snapshot.snapshotId,
+    topicId: params.snapshot.topicId ?? params.snapshot.temporaryTopicId,
+    topicSnapshot: params.snapshot,
+    topicSourceVerbatims: Array.from(new Set(params.snapshot.sourceVerbatims)),
+    relatedUnderstandingIds: params.snapshot.sourceUnderstandingIds,
+    relatedTextUnderstandings,
+    relatedAttachmentUnderstandings: [],
+    relatedSupportResponseCues,
+    existingTopic: params.snapshot
+  };
 }
 
 function buildTopicEvidence(params: {
@@ -186,10 +237,12 @@ function buildTemporarySelectedCatalogKnowledge(params: {
   const selectedFieldNames = new Set<string>();
 
   for (const understanding of params.relatedTextUnderstandings) {
-    for (const fact of understanding.facts) {
-      if ("fieldName" in fact) {
-        selectedFieldNames.add(fact.fieldName);
-      }
+    const caseDetailKeys = new Set(
+      (understanding.caseDetails ?? []).map((detail) => detail.key)
+    );
+
+    for (const key of caseDetailKeys) {
+      selectedFieldNames.add(key);
     }
 
     if (understanding.broadCategoryHint === "billing") {
@@ -215,6 +268,44 @@ function buildTemporarySelectedCatalogKnowledge(params: {
       selectedFieldNames.add("account_status");
       selectedFieldNames.add("error_message");
     }
+
+    if (
+      caseDetailKeys.has("billing_issue_type") ||
+      caseDetailKeys.has("billing_date_or_period") ||
+      caseDetailKeys.has("amount") ||
+      caseDetailKeys.has("currency")
+    ) {
+      selectedFieldNames.add("duplicate_billing_impact");
+      selectedFieldNames.add("billing_issue_type");
+      selectedFieldNames.add("billing_date_or_period");
+      selectedFieldNames.add("amount");
+      selectedFieldNames.add("currency");
+    }
+
+    if (
+      caseDetailKeys.has("feature_or_page") ||
+      caseDetailKeys.has("trigger_action") ||
+      caseDetailKeys.has("error_message") ||
+      caseDetailKeys.has("observed_result")
+    ) {
+      selectedFieldNames.add("feature_or_page");
+      selectedFieldNames.add("trigger_action");
+      selectedFieldNames.add("error_message");
+      selectedFieldNames.add("observed_result");
+      selectedFieldNames.add("platform");
+      selectedFieldNames.add("browser");
+    }
+
+    if (
+      caseDetailKeys.has("access_action") ||
+      caseDetailKeys.has("auth_method") ||
+      caseDetailKeys.has("account_status")
+    ) {
+      selectedFieldNames.add("access_action");
+      selectedFieldNames.add("auth_method");
+      selectedFieldNames.add("account_status");
+      selectedFieldNames.add("error_message");
+    }
   }
 
   if (params.relatedAttachmentUnderstandings.length > 0) {
@@ -235,12 +326,14 @@ function buildTemporarySelectedCatalogKnowledge(params: {
 async function reportProgress(
   runtime: SupportProcessingPipelineV2Runtime,
   step: SupportProcessingStepName,
-  status: "started" | "completed" | "skipped" | "failed"
+  status: "started" | "completed" | "skipped" | "failed",
+  details: Omit<Partial<SupportProcessingProgressEvent>, "step" | "status"> = {}
 ): Promise<void> {
   try {
     await runtime.reportProgress?.({
       step,
-      status
+      status,
+      ...details
     });
   } catch {
     // Progress reporting is observational and must not affect pipeline execution.
@@ -251,13 +344,21 @@ async function runStep<TInput, TOutput>(
   runtime: SupportProcessingPipelineV2Runtime,
   stepName: SupportProcessingStepName,
   step: PipelineStep<TInput, TOutput>,
-  input: TInput
+  input: TInput,
+  buildCompletedProgressDetails?: (
+    output: TOutput
+  ) => Omit<Partial<SupportProcessingProgressEvent>, "step" | "status">
 ): Promise<TOutput> {
   await reportProgress(runtime, stepName, "started");
 
   try {
     const output = await step(input);
-    await reportProgress(runtime, stepName, "completed");
+    await reportProgress(
+      runtime,
+      stepName,
+      "completed",
+      buildCompletedProgressDetails?.(output)
+    );
 
     return output;
   } catch (error) {
@@ -321,7 +422,7 @@ async function runSupportProcessingPipelineV2(
         (async (input) => {
           const result = await proposeTopicUpdates(input);
 
-          return result.topicUpdateProposals;
+          return result;
         }),
       "proposeTopicUpdates"
     ),
@@ -352,16 +453,19 @@ async function runSupportProcessingPipelineV2(
         }),
       "planSupportResponse"
     ),
+    composeSupportResponsePlan: resolveStep(
+      steps.composeSupportResponsePlan ||
+        (async (input) => {
+          const result = await composeSupportResponsePlan(input);
+
+          return result.composedSupportResponsePlan;
+        }),
+      "composeSupportResponsePlan"
+    ),
     renderSupportResponse: resolveStep(
       steps.renderSupportResponse ||
         (async (input) => {
-          const result = await renderSupportResponse({
-            latestUserMessageContent: input.latestUserMessageContent,
-            targetLanguage: input.targetLanguage,
-            standardResponseFragments: input.standardResponseFragments,
-            topicResponsePlans: input.topicResponsePlans,
-            channel: input.channel
-          });
+          const result = await renderSupportResponse(input);
 
           return result.renderedResponse;
         }),
@@ -422,6 +526,16 @@ async function runSupportProcessingPipelineV2(
             latestUserMessage,
             turnAnalysisPlan,
             recentInteractionContext
+          },
+          (output) => {
+            const normalizedResponseLanguage =
+              normalizeUserLanguageForResponse(output.userLanguage);
+
+            return {
+              userLanguage: output.userLanguage,
+              rawUserLanguage: output.userLanguage,
+              normalizedResponseLanguage
+            };
           }
         )
       : skipStep(runtime, "analyzeTextSurface").then(() => undefined),
@@ -456,7 +570,11 @@ async function runSupportProcessingPipelineV2(
   const runTextDeepAnalysis = shouldRunDeepTextAnalysis(textSurfaceAnalysis);
   const runAttachmentDeepAnalysis =
     shouldRunDeepAttachmentAnalysis(attachmentSurfaceAnalysis);
+  const responseLanguage = normalizeUserLanguageForResponse(
+    textSurfaceAnalysis?.userLanguage
+  );
   let topicResponsePlans: ResponsePlanV2[] | undefined;
+  let composedSupportResponsePlan: ComposedSupportResponsePlan | undefined;
   let topicKnowledgeEnrichmentPlans:
     | TopicKnowledgeEnrichmentPlanResult[]
     | undefined;
@@ -469,6 +587,9 @@ async function runSupportProcessingPipelineV2(
   let textUnderstandings: TextUnderstanding[] | undefined;
   let attachmentUnderstandings: AttachmentUnderstanding[] | undefined;
   let supportResponseCues: SupportResponseCue[] | undefined;
+  let topicUpdateOps: TopicUpdateOp[] | undefined;
+  let topicPatches: TopicPatch[] | undefined;
+  let mergedTopicSnapshots: MergedTopicSnapshot[] | undefined;
   let topicUpdateProposals: TopicUpdateProposal[] | undefined;
   let knowledgeEnrichmentPlan:
     | Awaited<ReturnType<typeof planKnowledgeEnrichment>>
@@ -536,7 +657,7 @@ async function runSupportProcessingPipelineV2(
     supportResponseCues = analyzedSupportText.supportResponseCues;
     attachmentUnderstandings = analyzedSupportAttachments;
 
-    topicUpdateProposals = await runStep(
+    const proposedTopicUpdates = await runStep(
       runtime,
       "proposeTopicUpdates",
       pipelineSteps.proposeTopicUpdates,
@@ -547,14 +668,31 @@ async function runSupportProcessingPipelineV2(
         latestUserMessageContent: latestUserMessage.content
       }
     );
+    if (isProposeTopicUpdatesOutput(proposedTopicUpdates)) {
+      topicUpdateOps = proposedTopicUpdates.topicUpdateOps;
+      topicPatches = proposedTopicUpdates.topicPatches;
+      mergedTopicSnapshots = proposedTopicUpdates.mergedTopicSnapshots;
+      topicUpdateProposals = proposedTopicUpdates.topicUpdateProposals;
+    } else {
+      topicUpdateOps = [];
+      topicPatches = [];
+      mergedTopicSnapshots = [];
+      topicUpdateProposals = proposedTopicUpdates;
+    }
 
     await skipStep(runtime, "applyTopicUpdates");
 
-    const actionableTopicUpdateProposals = topicUpdateProposals.filter(
-      isActionableTopicUpdateProposal
-    );
+    const actionableTopicSnapshots = mergedTopicSnapshots ?? [];
+    const actionableTopicUpdateProposals = actionableTopicSnapshots.length > 0
+      ? []
+      : (topicUpdateProposals ?? []).filter(
+          isActionableTopicUpdateProposal
+        );
 
-    if (actionableTopicUpdateProposals.length === 0) {
+    if (
+      actionableTopicSnapshots.length === 0 &&
+      actionableTopicUpdateProposals.length === 0
+    ) {
       topicResponsePlans = [];
       topicKnowledgeEnrichmentPlans = [];
       topicRetrievedSupportKnowledge = [];
@@ -567,19 +705,40 @@ async function runSupportProcessingPipelineV2(
         "planSupportResponse"
       ]);
     } else {
-      const topicBranchResults = await Promise.all(
-        actionableTopicUpdateProposals.map(async (topicUpdateProposal) => {
-          const existingTopic = findExistingTopicForProposal(
-            topicUpdateProposal,
-            supportTopicKnowledge
-          );
-          const topicEvidence = buildTopicEvidence({
-            proposal: topicUpdateProposal,
-            ...(existingTopic ? { existingTopic } : {}),
-            textUnderstandings: textUnderstandings ?? [],
-            attachmentUnderstandings: attachmentUnderstandings ?? [],
-            supportResponseCues: supportResponseCues ?? []
+      const topicBranchSources = actionableTopicSnapshots.length > 0
+        ? actionableTopicSnapshots.map((snapshot) => ({
+            branchId: snapshot.snapshotId,
+            topicId: snapshot.topicId ?? snapshot.temporaryTopicId,
+            topicEvidence: buildTopicEvidenceFromSnapshot({
+              snapshot,
+              textUnderstandings: textUnderstandings ?? [],
+              supportResponseCues: supportResponseCues ?? []
+            }),
+            topicSnapshot: snapshot
+          }))
+        : actionableTopicUpdateProposals.map((topicUpdateProposal) => {
+            const existingTopic = findExistingTopicForProposal(
+              topicUpdateProposal,
+              supportTopicKnowledge
+            );
+            const topicEvidence = buildTopicEvidence({
+              proposal: topicUpdateProposal,
+              ...(existingTopic ? { existingTopic } : {}),
+              textUnderstandings: textUnderstandings ?? [],
+              attachmentUnderstandings: attachmentUnderstandings ?? [],
+              supportResponseCues: supportResponseCues ?? []
+            });
+
+            return {
+              branchId: topicUpdateProposal.proposalId,
+              topicId: topicUpdateProposal.topicId,
+              topicEvidence,
+              topicSnapshot: undefined
+            };
           });
+      const topicBranchResults = await Promise.all(
+        topicBranchSources.map(async (topicBranchSource) => {
+          const topicEvidence = topicBranchSource.topicEvidence;
           const topicUserMessageContent =
             buildTopicUserMessageContent(topicEvidence);
           const selectedCatalogKnowledgePromise = runStep(
@@ -589,11 +748,12 @@ async function runSupportProcessingPipelineV2(
             {
               topicUserMessageContent,
               topicEvidence,
+              ...(topicBranchSource.topicSnapshot
+                ? { topicSnapshot: topicBranchSource.topicSnapshot }
+                : {}),
               extractableFieldCatalog,
               recentInteractionContext,
-              ...(textSurfaceAnalysis?.userLanguage
-                ? { targetLanguage: textSurfaceAnalysis.userLanguage }
-                : {})
+              targetLanguage: responseLanguage
             }
           ).catch((): SelectedCatalogKnowledgeForTopic => {
             // TODO: Remove this fallback once the topic catalog selector is
@@ -613,9 +773,7 @@ async function runSupportProcessingPipelineV2(
               topicEvidence,
               extractableFieldCatalog,
               recentInteractionContext,
-              ...(textSurfaceAnalysis?.userLanguage
-                ? { targetLanguage: textSurfaceAnalysis.userLanguage }
-                : {})
+              targetLanguage: responseLanguage
             }
           );
           const [
@@ -674,9 +832,7 @@ async function runSupportProcessingPipelineV2(
             {
               topicUserMessageContent,
               topicEvidence,
-              ...(textSurfaceAnalysis?.userLanguage
-                ? { targetLanguage: textSurfaceAnalysis.userLanguage }
-                : {}),
+              targetLanguage: responseLanguage,
               selectedCatalogKnowledge: plannerSelectedCatalogKnowledge,
               topicKnowledgeEnrichmentPlan,
               topicRetrievedKnowledgeSynthesis,
@@ -686,7 +842,8 @@ async function runSupportProcessingPipelineV2(
           );
 
           return {
-            topicUpdateProposal,
+            branchId: topicBranchSource.branchId,
+            topicId: topicBranchSource.topicId,
             topicEvidence,
             selectedCatalogKnowledge: plannerSelectedCatalogKnowledge,
             topicKnowledgeEnrichmentPlan,
@@ -699,23 +856,23 @@ async function runSupportProcessingPipelineV2(
 
       topicResponsePlans = assignTopicResponsePlanIds(
         topicBranchResults.map((result) => ({
-          proposalId: result.topicUpdateProposal.proposalId,
+          proposalId: result.branchId,
           responsePlan: result.topicResponsePlan
         }))
       );
       topicKnowledgeEnrichmentPlans = topicBranchResults.map((result) => ({
-        proposalId: result.topicUpdateProposal.proposalId,
-        topicId: result.topicUpdateProposal.topicId,
+        proposalId: result.branchId,
+        topicId: result.topicId,
         plan: result.topicKnowledgeEnrichmentPlan
       }));
       topicRetrievedSupportKnowledge = topicBranchResults.map((result) => ({
-        proposalId: result.topicUpdateProposal.proposalId,
-        topicId: result.topicUpdateProposal.topicId,
+        proposalId: result.branchId,
+        topicId: result.topicId,
         knowledgeChunks: result.topicRetrievedSupportKnowledge
       }));
       topicRetrievedKnowledgeSyntheses = topicBranchResults.map((result) => ({
-        proposalId: result.topicUpdateProposal.proposalId,
-        topicId: result.topicUpdateProposal.topicId,
+        proposalId: result.branchId,
+        topicId: result.topicId,
         synthesis: result.topicRetrievedKnowledgeSynthesis
       }));
       // Legacy singular fields expose the first topic branch temporarily.
@@ -728,14 +885,23 @@ async function runSupportProcessingPipelineV2(
     }
   }
 
+  composedSupportResponsePlan = await runStep(
+    runtime,
+    "composeSupportResponsePlan",
+    pipelineSteps.composeSupportResponsePlan,
+    {
+      standardResponseFragments,
+      topicResponsePlans: topicResponsePlans ?? [],
+      supportResponseCues: supportResponseCues ?? [],
+      targetLanguage: responseLanguage,
+      channel: latestUserMessage.channel,
+      recentInteractionContext,
+      responsePlanningPolicy
+    }
+  );
+
   const renderSupportResponseInput: RenderSupportResponseInput = {
-    latestUserMessageContent: latestUserMessage.content,
-    ...(textSurfaceAnalysis?.userLanguage
-      ? { targetLanguage: textSurfaceAnalysis.userLanguage }
-      : {}),
-    standardResponseFragments,
-    topicResponsePlans: topicResponsePlans ?? [],
-    channel: latestUserMessage.channel
+    composedSupportResponsePlan
   };
 
   const renderedSupportResponse = await runStep(
@@ -770,6 +936,12 @@ async function runSupportProcessingPipelineV2(
       ...(typeof topicUpdateProposals !== "undefined"
         ? { topicUpdateProposals }
         : {}),
+      ...(typeof topicPatches !== "undefined"
+        ? { topicPatches }
+        : {}),
+      ...(typeof mergedTopicSnapshots !== "undefined"
+        ? { mergedTopicSnapshots }
+        : {}),
       ...(typeof knowledgeEnrichmentPlan !== "undefined"
         ? { knowledgeEnrichmentPlan }
         : {}),
@@ -789,9 +961,13 @@ async function runSupportProcessingPipelineV2(
         ? { topicRetrievedKnowledgeSyntheses }
         : {}),
       topicResponsePlans,
-      // TODO V2 cleanup: remove legacy responsePlan once downstream consumers
-      // use topicResponsePlans.
-      responsePlan: topicResponsePlans?.[0],
+      ...(typeof composedSupportResponsePlan !== "undefined"
+        ? { composedSupportResponsePlan }
+        : {}),
+      ...(textSurfaceAnalysis?.userLanguage
+        ? { rawUserLanguage: textSurfaceAnalysis.userLanguage }
+        : {}),
+      normalizedResponseLanguage: responseLanguage,
       userResponse
     }
   );
@@ -807,6 +983,15 @@ async function runSupportProcessingPipelineV2(
       : {}),
     ...(typeof topicUpdateProposals !== "undefined"
       ? { topicUpdateProposals }
+      : {}),
+    ...(typeof topicUpdateOps !== "undefined"
+      ? { topicUpdateOps }
+      : {}),
+    ...(typeof topicPatches !== "undefined"
+      ? { topicPatches }
+      : {}),
+    ...(typeof mergedTopicSnapshots !== "undefined"
+      ? { mergedTopicSnapshots }
       : {}),
     ...(typeof knowledgeEnrichmentPlan !== "undefined"
       ? { knowledgeEnrichmentPlan }
@@ -828,12 +1013,12 @@ async function runSupportProcessingPipelineV2(
       : {}),
     ...(typeof topicResponsePlans !== "undefined"
       ? {
-          topicResponsePlans,
-          // TODO V2 cleanup: remove legacy responsePlan once downstream
-          // consumers use topicResponsePlans.
-          ...(topicResponsePlans[0]
-            ? { responsePlan: topicResponsePlans[0] }
-            : {})
+          topicResponsePlans
+        }
+      : {}),
+    ...(typeof composedSupportResponsePlan !== "undefined"
+      ? {
+          composedSupportResponsePlan
         }
       : {})
   };

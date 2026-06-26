@@ -71,30 +71,35 @@ function buildUser(): JsonUser {
   };
 }
 
-function buildBufferedMessages(): BufferedMessages {
+function buildBufferedMessages(
+  overrides: Partial<BufferedMessages["messages"][number]> = {}
+): BufferedMessages {
+  const message = {
+    channel: "matrix" as const,
+    roomId: "!room:example.org",
+    threadId: "$thread",
+    userId: "@user:example.org",
+    messageId: "$message",
+    content: "Bonjour",
+    createdAt: "2026-06-22T10:01:00.000Z",
+    ...overrides
+  };
+
   return {
     channel: "matrix",
     roomId: "!room:example.org",
     threadId: "$thread",
     userId: "@user:example.org",
-    messages: [
-      {
-        channel: "matrix",
-        roomId: "!room:example.org",
-        threadId: "$thread",
-        userId: "@user:example.org",
-        messageId: "$message",
-        content: "Bonjour",
-        createdAt: "2026-06-22T10:01:00.000Z"
-      }
-    ],
-    firstMessageAt: "2026-06-22T10:01:00.000Z",
-    lastMessageAt: "2026-06-22T10:01:00.000Z",
+    messages: [message],
+    firstMessageAt: message.createdAt,
+    lastMessageAt: message.createdAt,
     flushedAt: "2026-06-22T10:01:02.000Z"
   };
 }
 
-function buildSteps(): SupportProcessingPipelineV2Steps {
+function buildSteps(
+  overrides: Partial<SupportProcessingPipelineV2Steps> = {}
+): SupportProcessingPipelineV2Steps {
   const renderedSupportResponse: RenderedSupportResponse = {
     renderedMessages: [
       {
@@ -164,7 +169,8 @@ function buildSteps(): SupportProcessingPipelineV2Steps {
     buildStandardResponseFragments: vi.fn(async () => []),
     renderSupportResponse: vi.fn(async () => renderedSupportResponse),
     buildUserResponse: vi.fn(async () => userResponse),
-    buildSupportPatches: vi.fn(async () => patches)
+    buildSupportPatches: vi.fn(async () => patches),
+    ...overrides
   };
 }
 
@@ -230,5 +236,183 @@ describe("runSupportAutomationTurnV2", function () {
     expect(await ticketRepository.list()).toEqual(before.tickets);
     expect(await userRepository.list()).toEqual(before.users);
     expect(await messageRepository.list()).toEqual(before.messages);
+  });
+
+  it("marks progress language ready after text surface analysis completes", async function () {
+    await ticketRepository.upsert(buildTicket());
+    await userRepository.upsert(buildUser());
+    const stageCalls: {
+      stage: string;
+      userLanguage?: string;
+      progressLanguageReady?: boolean;
+    }[] = [];
+    const progressReporter = {
+      startBuffer: vi.fn(async () => undefined),
+      startTurn: vi.fn(async () => undefined),
+      stage: vi.fn(async (context, stage) => {
+        stageCalls.push({
+          stage,
+          userLanguage: context.userLanguage,
+          progressLanguageReady: context.progressLanguageReady
+        });
+      }),
+      finishTurn: vi.fn(async () => undefined),
+      failTurn: vi.fn(async () => undefined)
+    };
+
+    await runSupportAutomationTurnV2({
+      bufferedMessages: buildBufferedMessages({
+        content: "Hello, I need help."
+      }),
+      ticketRepository,
+      userRepository,
+      messageRepository,
+      persist: false,
+      progressReporter,
+      steps: buildSteps({
+        planTurnAnalysis: vi.fn(async () => ({
+          analyzeText: true,
+          analyzeAttachments: false,
+          matchedPatternIds: []
+        })),
+        analyzeTextSurface: vi.fn(async () => ({
+          userLanguage: "English" as const,
+          segments: [
+            {
+              segmentId: "seg_greeting",
+              verbatim: "Hello",
+              category: "standard_interaction" as const,
+              standardSubcategory: "greeting" as const
+            }
+          ]
+        }))
+      })
+    });
+
+    expect(stageCalls).toContainEqual({
+      stage: "analyzing_surface",
+      userLanguage: undefined,
+      progressLanguageReady: undefined
+    });
+    expect(stageCalls).toContainEqual({
+      stage: "analyzing_surface",
+      userLanguage: "English",
+      progressLanguageReady: true
+    });
+  });
+
+  it("normalizes unsupported progress languages to English", async function () {
+    await ticketRepository.upsert(buildTicket());
+    await userRepository.upsert(buildUser());
+    const stageCalls: {
+      stage: string;
+      userLanguage?: string;
+      progressLanguageReady?: boolean;
+    }[] = [];
+    const progressReporter = {
+      startBuffer: vi.fn(async () => undefined),
+      startTurn: vi.fn(async () => undefined),
+      stage: vi.fn(async (context, stage) => {
+        stageCalls.push({
+          stage,
+          userLanguage: context.userLanguage,
+          progressLanguageReady: context.progressLanguageReady
+        });
+      }),
+      finishTurn: vi.fn(async () => undefined),
+      failTurn: vi.fn(async () => undefined)
+    };
+
+    await runSupportAutomationTurnV2({
+      bufferedMessages: buildBufferedMessages({
+        content: "Guten mein freunde"
+      }),
+      ticketRepository,
+      userRepository,
+      messageRepository,
+      persist: false,
+      progressReporter,
+      steps: buildSteps({
+        planTurnAnalysis: vi.fn(async () => ({
+          analyzeText: true,
+          analyzeAttachments: false,
+          matchedPatternIds: []
+        })),
+        analyzeTextSurface: vi.fn(async () => ({
+          userLanguage: "Other" as const,
+          segments: [
+            {
+              segmentId: "seg_unclear",
+              verbatim: "Guten mein freunde",
+              category: "lack_comprehension" as const,
+              standardSubcategory: "unclear_message" as const
+            }
+          ]
+        }))
+      })
+    });
+
+    expect(stageCalls).toContainEqual({
+      stage: "analyzing_surface",
+      userLanguage: "English",
+      progressLanguageReady: true
+    });
+  });
+
+  it("builds the next turn context in logical support-turn order", async function () {
+    await ticketRepository.upsert(buildTicket());
+    await userRepository.upsert(buildUser());
+
+    await runSupportAutomationTurnV2({
+      bufferedMessages: buildBufferedMessages({
+        messageId: "$message_a",
+        content: "Message A",
+        createdAt: "2026-06-22T10:01:00.000Z"
+      }),
+      ticketRepository,
+      userRepository,
+      messageRepository,
+      steps: buildSteps()
+    });
+
+    const secondTurnResult = await runSupportAutomationTurnV2({
+      bufferedMessages: buildBufferedMessages({
+        messageId: "$message_b",
+        content: "Message B",
+        createdAt: "2026-06-22T10:01:01.000Z"
+      }),
+      ticketRepository,
+      userRepository,
+      messageRepository,
+      steps: buildSteps()
+    });
+
+    expect(secondTurnResult.supportProcessingInput.latestUserMessage.content)
+      .toBe("Message B");
+    expect(secondTurnResult.supportProcessingInput.conversationHistory.map(
+      (event) => event.role
+    )).toEqual(["user", "bot"]);
+    expect(secondTurnResult.supportProcessingInput.conversationHistory[0])
+      .toMatchObject({
+        role: "user",
+        summary: "Message A"
+      });
+    expect(secondTurnResult.supportProcessingInput.conversationHistory[1])
+      .toMatchObject({
+        role: "bot",
+        summary: "Bonjour."
+      });
+    expect(secondTurnResult.supportProcessingInput.recentInteractionContext)
+      .toMatchObject({
+        previousUserMessageSummary: "Message A",
+        previousBotResponseSummary: "Bonjour."
+      });
+
+    const ticket = await ticketRepository.findById("ticket_1");
+
+    expect(ticket?.conversationHistory.map((event) => event.role))
+      .toEqual(["user", "bot", "user", "bot"]);
+    expect(ticket?.conversationHistory.map((event) => event.summary))
+      .toEqual(["Message A", "Bonjour.", "Message B", "Bonjour."]);
   });
 });

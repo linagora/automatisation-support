@@ -47,6 +47,7 @@ class InMemoryMessageBuffer implements MessageBuffer {
   private readonly inactivityTimeoutMs: number;
   private readonly maxWaitMs: number | undefined;
   private readonly onFlush: InMemoryMessageBufferOptions["onFlush"];
+  private readonly canFlush: InMemoryMessageBufferOptions["canFlush"];
   private readonly onDebugEvent: InMemoryMessageBufferOptions["onDebugEvent"];
   private readonly now: () => Date;
   private readonly pendingGroups = new Map<string, PendingMessageGroup>();
@@ -66,6 +67,7 @@ class InMemoryMessageBuffer implements MessageBuffer {
     this.inactivityTimeoutMs = options.inactivityTimeoutMs;
     this.maxWaitMs = options.maxWaitMs;
     this.onFlush = options.onFlush;
+    this.canFlush = options.canFlush;
     this.onDebugEvent = options.onDebugEvent;
     this.now = options.now ?? (() => new Date());
   }
@@ -155,10 +157,79 @@ class InMemoryMessageBuffer implements MessageBuffer {
   }
 
   flushGroup(groupKey: MessageBufferGroupKey): BufferedMessages | undefined {
+    return this.flushGroupIfAllowed({
+      groupKey,
+      respectTyping: false
+    });
+  }
+
+  reevaluateGroup(groupKey: MessageBufferGroupKey): boolean {
     const groupId = buildGroupId(groupKey);
     const group = this.pendingGroups.get(groupId);
 
     if (!group) {
+      return false;
+    }
+
+    if (group.isTyping) {
+      return false;
+    }
+
+    const remainingInactivityMs = this.getRemainingInactivityMs(group);
+
+    if (remainingInactivityMs > 0) {
+      this.resetFlushTimer(group, remainingInactivityMs);
+      return false;
+    }
+
+    return this.flushAndNotify({
+      groupKey,
+      respectTyping: true
+    });
+  }
+
+  flushAll(): BufferedMessages[] {
+    return [...this.pendingGroups.values()].flatMap((group) => {
+      const flushedGroup = this.flushGroup(group.key);
+
+      return flushedGroup ? [flushedGroup] : [];
+    });
+  }
+
+  dispose(): void {
+    for (const group of this.pendingGroups.values()) {
+      this.clearFlushTimer(group);
+      this.clearMaxWaitTimer(group);
+    }
+
+    this.pendingGroups.clear();
+  }
+
+  private flushGroupIfAllowed(params: {
+    groupKey: MessageBufferGroupKey;
+    respectTyping: boolean;
+  }): BufferedMessages | undefined {
+    const groupId = buildGroupId(params.groupKey);
+    const group = this.pendingGroups.get(groupId);
+
+    if (!group) {
+      return undefined;
+    }
+
+    if (params.respectTyping && group.isTyping) {
+      return undefined;
+    }
+
+    if (this.canFlush?.(group.key) === false) {
+      this.emitDebugEvent({
+        eventName: "buffer.flush_blocked_processing",
+        roomId: group.key.roomId,
+        userId: group.key.userId,
+        scopeKey: buildGroupId(group.key),
+        messageIds: group.messages.map((message) => message.messageId),
+        messageCount: group.messages.length
+      });
+      this.resetFlushTimer(group);
       return undefined;
     }
 
@@ -182,36 +253,34 @@ class InMemoryMessageBuffer implements MessageBuffer {
     };
   }
 
-  flushAll(): BufferedMessages[] {
-    return [...this.pendingGroups.values()].flatMap((group) => {
-      const flushedGroup = this.flushGroup(group.key);
+  private flushAndNotify(params: {
+    groupKey: MessageBufferGroupKey;
+    respectTyping: boolean;
+  }): boolean {
+    const bufferedMessages = this.flushGroupIfAllowed(params);
 
-      return flushedGroup ? [flushedGroup] : [];
-    });
-  }
-
-  dispose(): void {
-    for (const group of this.pendingGroups.values()) {
-      this.clearFlushTimer(group);
-      this.clearMaxWaitTimer(group);
+    if (!bufferedMessages) {
+      return false;
     }
 
-    this.pendingGroups.clear();
+    void Promise.resolve(this.onFlush(bufferedMessages));
+    return true;
   }
 
-  private resetFlushTimer(group: PendingMessageGroup): void {
+  private resetFlushTimer(
+    group: PendingMessageGroup,
+    delayMs = this.inactivityTimeoutMs
+  ): void {
     this.clearFlushTimer(group);
     const groupKey = group.key;
 
     group.flushTimer = setTimeout(() => {
-      const bufferedMessages = this.flushGroup(groupKey);
-
-      if (!bufferedMessages) {
-        return;
-      }
-
-      void Promise.resolve(this.onFlush(bufferedMessages));
-    }, this.inactivityTimeoutMs);
+      group.flushTimer = undefined;
+      this.flushAndNotify({
+        groupKey,
+        respectTyping: true
+      });
+    }, delayMs);
   }
 
   private ensureMaxWaitTimer(group: PendingMessageGroup): void {
@@ -222,6 +291,7 @@ class InMemoryMessageBuffer implements MessageBuffer {
     const groupKey = group.key;
 
     group.maxWaitTimer = setTimeout(() => {
+      group.maxWaitTimer = undefined;
       const messageCount = this.pendingGroups.get(buildGroupId(groupKey))
         ?.messages.length ?? 0;
 
@@ -232,14 +302,27 @@ class InMemoryMessageBuffer implements MessageBuffer {
         messageCount
       });
 
-      const bufferedMessages = this.flushGroup(groupKey);
-
-      if (!bufferedMessages) {
-        return;
-      }
-
-      void Promise.resolve(this.onFlush(bufferedMessages));
+      this.flushAndNotify({
+        groupKey,
+        respectTyping: false
+      });
     }, this.maxWaitMs);
+  }
+
+  private getRemainingInactivityMs(group: PendingMessageGroup): number {
+    if (!group.lastMessageAt) {
+      return this.inactivityTimeoutMs;
+    }
+
+    const lastMessageAt = new Date(group.lastMessageAt).getTime();
+
+    if (!Number.isFinite(lastMessageAt)) {
+      return this.inactivityTimeoutMs;
+    }
+
+    const elapsedMs = this.now().getTime() - lastMessageAt;
+
+    return Math.max(0, this.inactivityTimeoutMs - elapsedMs);
   }
 
   private clearFlushTimer(group: PendingMessageGroup): void {

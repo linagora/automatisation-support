@@ -18,9 +18,10 @@ async function requestTextSurfaceAnalysis(
 ): Promise<RawTextSurfaceAnalysis> {
   try {
     const result = await callLLM(input.prompt.messages, {
+      stage: "text_surface_analysis",
       preset: "quickDecision",
       temperature: 0,
-      maxTokens: 1200,
+      maxTokens: 500,
       responseFormat: textSurfaceAnalysisResponseFormat
     });
 

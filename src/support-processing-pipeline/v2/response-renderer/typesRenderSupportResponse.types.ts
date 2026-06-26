@@ -3,10 +3,8 @@ import type {
 } from "../../../llm/llm-client";
 
 import type {
-  SupportResponsePlan
-} from "../plan-support-response/typesPlanSupportResponse.types";
-
-type JsonLike = unknown;
+  ComposedSupportResponsePlan
+} from "../typesSupportProcessingPipelineV2.types";
 
 export type RenderedMessagePurpose =
   | "support_response"
@@ -32,11 +30,7 @@ export type RenderedSupportResponse = {
 };
 
 export type RenderSupportResponseInput = {
-  latestUserMessageContent: string;
-  targetLanguage?: string;
-  standardResponseFragments: JsonLike[];
-  topicResponsePlans: SupportResponsePlan[];
-  channel?: string;
+  composedSupportResponsePlan: ComposedSupportResponsePlan;
 };
 
 export type BuildRenderSupportResponsePromptInput = RenderSupportResponseInput;

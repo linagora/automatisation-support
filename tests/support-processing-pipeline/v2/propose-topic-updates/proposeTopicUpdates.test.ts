@@ -1,41 +1,34 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  formatProposeTopicUpdatesOutput
-} from "../../../../src/support-processing-pipeline/v2/propose-topic-updates/formatProposeTopicUpdatesOutput";
-import {
   buildProposeTopicUpdatesPrompt
 } from "../../../../src/support-processing-pipeline/v2/propose-topic-updates/buildProposeTopicUpdatesPrompt";
+import {
+  buildTopicPatchesAndSnapshots
+} from "../../../../src/support-processing-pipeline/v2/propose-topic-updates/buildTopicPatchesAndSnapshots";
+import {
+  formatProposeTopicUpdatesOutput
+} from "../../../../src/support-processing-pipeline/v2/propose-topic-updates/formatProposeTopicUpdatesOutput";
 
 import type {
-  TextUnderstanding
+  TextUnderstanding,
+  TopicUpdateOp
 } from "../../../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
 
 function understanding(params: {
   id: string;
   summary: string;
-  sourceVerbatims: string[];
-  broadCategoryHint?: TextUnderstanding["broadCategoryHint"];
+  caseDetails?: TextUnderstanding["caseDetails"];
+  attemptedActions?: TextUnderstanding["attemptedActions"];
 }): TextUnderstanding {
   return {
     understandingId: params.id,
     sourceSegmentIds: [`segment_${params.id}`],
-    sourceVerbatims: params.sourceVerbatims,
-    summary: params.summary,
-    primaryUserExpectation: "wants_solution",
-    supportNeeds: ["possible_bug"],
-    ...(params.broadCategoryHint
-      ? { broadCategoryHint: params.broadCategoryHint }
-      : {}),
-    contextDependency: "standalone_but_may_match_existing",
-    contextualAnswer: {
-      type: "none",
-      value: null,
-      evidence: null
-    },
-    facts: [],
-    testedActions: [],
-    uncertainties: []
+    messageKinds: [],
+    caseDetails: params.caseDetails ?? [],
+    attemptedActions: params.attemptedActions ?? [],
+    supportMetadata: [],
+    summary: params.summary
   };
 }
 
@@ -47,304 +40,732 @@ function completed(parsedResponse: unknown) {
   };
 }
 
-function updateProposal(params: {
-  understandingIds: string[];
-  topicId: string;
-  relationship?: string;
-  blockingIssue?: string;
-  selectedSourceVerbatims?: string[];
-}) {
+function updateOp(overrides: Partial<TopicUpdateOp> = {}): TopicUpdateOp {
   return {
-    action: "update_existing_topic",
-    fromUnderstandingIds: params.understandingIds,
-    topicId: params.topicId,
-    selectedSourceVerbatims: params.selectedSourceVerbatims ?? [],
-    updateIntent: {
-      relationship: params.relationship ?? "adds_new_information",
-      blockingIssue: params.blockingIssue ?? "yes",
-      statusHint: "open",
-      userGoal: null,
-      correctionNote: null
+    op: "update",
+    items: [0],
+    topicId: "topic_account",
+    topic: null,
+    merge: {
+      caseDetails: [[0, 0]],
+      attemptedActions: []
     },
-    newTopic: null,
-    reason: "Updates the existing topic."
+    replace: null,
+    review: null,
+    ...overrides
   };
 }
 
 const accountTopic = {
-  id_topic: "topic_account",
-  topic_category: "access_security",
-  summary: "Compte bloqué"
+  id: "topic_account",
+  title: "Compte bloque",
+  broadCategoryHint: "access_security",
+  summary: "Compte bloque.",
+  caseDetails: [],
+  attemptedActions: []
 };
 
 const billingTopic = {
-  id_topic: "topic_billing",
-  topic_category: "billing",
-  summary: "Billing issue"
+  id: "topic_billing",
+  title: "Billing issue",
+  broadCategoryHint: "billing",
+  summary: "Billing issue.",
+  caseDetails: [],
+  attemptedActions: []
 };
 
-describe("formatProposeTopicUpdatesOutput", function () {
-  it("formats an update_existing_topic proposal", function () {
-    const accountUnderstanding = understanding({
-      id: "text_understanding_1",
-      summary: "Compte toujours bloqué",
-      sourceVerbatims: ["Mon compte est toujours bloqué"]
+function createOp(overrides: Partial<TopicUpdateOp> = {}): TopicUpdateOp {
+  return {
+    op: "create",
+    items: [0],
+    topicId: null,
+    topic: {
+      title: "Android notifications",
+      broadCategoryHint: "bug",
+      summary: "Android notifications do not arrive."
+    },
+    merge: {
+      caseDetails: [[0, 0]],
+      attemptedActions: []
+    },
+    replace: null,
+    review: null,
+    ...overrides
+  };
+}
+
+describe("buildTopicPatchesAndSnapshots", function () {
+  it("adds a new caseDetail to an existing topic update snapshot", function () {
+    const output = buildTopicPatchesAndSnapshots({
+      existingTopics: [accountTopic],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Erreur token expired",
+          caseDetails: [
+            {
+              key: "error_message",
+              value: "Token expired",
+              evidence: "Token expired"
+            }
+          ]
+        })
+      ],
+      topicUpdateOps: [
+        updateOp()
+      ]
     });
+
+    expect(output.mergedTopicSnapshots[0]?.caseDetails).toEqual([
+      {
+        key: "error_message",
+        value: "Token expired",
+        evidence: "Token expired"
+      }
+    ]);
+  });
+
+  it("overwrites an existing caseDetail with the same key", function () {
+    const output = buildTopicPatchesAndSnapshots({
+      existingTopics: [
+        {
+          ...accountTopic,
+          caseDetails: [
+            {
+              key: "platform",
+              value: "web",
+              evidence: "web"
+            }
+          ]
+        }
+      ],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Sur Android",
+          caseDetails: [
+            {
+              key: "platform",
+              value: "Android",
+              evidence: "Sur Android"
+            }
+          ]
+        })
+      ],
+      topicUpdateOps: [
+        updateOp()
+      ]
+    });
+
+    expect(output.mergedTopicSnapshots[0]?.caseDetails).toEqual([
+      {
+        key: "platform",
+        value: "Android",
+        evidence: "Sur Android"
+      }
+    ]);
+  });
+
+  it("applies replace.caseDetails by targeted key", function () {
+    const output = buildTopicPatchesAndSnapshots({
+      existingTopics: [
+        {
+          ...accountTopic,
+          caseDetails: [
+            {
+              key: "platform",
+              value: "web",
+              evidence: "web"
+            }
+          ]
+        }
+      ],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Sur Android",
+          caseDetails: [
+            {
+              key: "platform",
+              value: "Android",
+              evidence: "Sur Android"
+            }
+          ]
+        })
+      ],
+      topicUpdateOps: [
+        updateOp({
+          merge: {
+            caseDetails: [],
+            attemptedActions: []
+          },
+          replace: {
+            caseDetails: [
+              {
+                key: "platform",
+                with: [0, 0]
+              }
+            ],
+            attemptedActions: []
+          }
+        })
+      ]
+    });
+
+    expect(output.mergedTopicSnapshots[0]?.caseDetails).toEqual([
+      {
+        key: "platform",
+        value: "Android",
+        evidence: "Sur Android"
+      }
+    ]);
+  });
+
+  it("adds or replaces attemptedActions deterministically", function () {
+    const output = buildTopicPatchesAndSnapshots({
+      existingTopics: [
+        {
+          ...accountTopic,
+          attemptedActions: [
+            {
+              action: "retry login",
+              outcome: "unknown",
+              evidence: "I tried login"
+            }
+          ]
+        }
+      ],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Retry failed",
+          attemptedActions: [
+            {
+              action: "retry login",
+              outcome: "failed",
+              evidence: "I retried login and it failed"
+            }
+          ]
+        })
+      ],
+      topicUpdateOps: [
+        updateOp({
+          merge: {
+            caseDetails: [],
+            attemptedActions: [[0, 0]]
+          }
+        })
+      ]
+    });
+
+    expect(output.mergedTopicSnapshots[0]?.attemptedActions).toEqual([
+      {
+        action: "retry login",
+        outcome: "failed",
+        evidence: "I retried login and it failed"
+      }
+    ]);
+  });
+
+  it("creates a new topic snapshot with a stable temporary id", function () {
+    const output = buildTopicPatchesAndSnapshots({
+      existingTopics: [],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Android notifications do not arrive",
+          caseDetails: [
+            {
+              key: "platform",
+              value: "Android",
+              evidence: "Android"
+            }
+          ],
+          attemptedActions: [
+            {
+              action: "enabled notifications",
+              outcome: "success",
+              evidence: "notifications are enabled"
+            }
+          ]
+        })
+      ],
+      topicUpdateOps: [
+        createOp({
+          merge: {
+            caseDetails: [[0, 0]],
+            attemptedActions: [[0, 0]]
+          }
+        })
+      ]
+    });
+
+    expect(output.topicPatches[0]?.temporaryTopicId).toBe("new_topic_1");
+    expect(output.mergedTopicSnapshots[0]).toMatchObject({
+      snapshotId: "new_topic_1",
+      temporaryTopicId: "new_topic_1",
+      isNewTopic: true,
+      title: "Android notifications",
+      broadCategoryHint: "bug",
+      summary: "Android notifications do not arrive.",
+      caseDetails: [
+        {
+          key: "platform",
+          value: "Android",
+          evidence: "Android"
+        }
+      ],
+      attemptedActions: [
+        {
+          action: "enabled notifications",
+          outcome: "success",
+          evidence: "notifications are enabled"
+        }
+      ]
+    });
+  });
+});
+
+describe("formatProposeTopicUpdatesOutput", function () {
+  it("parses a valid ops response without copying referenced values", function () {
     const output = formatProposeTopicUpdatesOutput({
       existingTopics: [accountTopic],
-      textUnderstandings: [accountUnderstanding],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Compte toujours bloque",
+          caseDetails: [
+            {
+              key: "observed_result",
+              value: "still blocked",
+              evidence: "Mon compte est toujours bloque"
+            }
+          ]
+        })
+      ],
       rawProposeTopicUpdates: completed({
-        proposals: [
-          updateProposal({
-            understandingIds: [accountUnderstanding.understandingId],
-            topicId: "topic_account",
-            relationship: "reopens_or_persists_issue"
+        ops: [
+          updateOp()
+        ]
+      })
+    });
+
+    expect(output).toEqual({
+      status: "valid",
+      topicUpdateOps: [
+        updateOp()
+      ]
+    });
+    expect(JSON.stringify(output.topicUpdateOps)).not.toContain("still blocked");
+  });
+
+  it("converts an invalid item reference into deterministic review fallback", function () {
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [accountTopic],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Compte bloque"
+        })
+      ],
+      rawProposeTopicUpdates: completed({
+        ops: [
+          updateOp({
+            items: [3]
           })
+        ]
+      })
+    });
+
+    expect(output).toEqual({
+      status: "invalid",
+      reason: "invalid_ops",
+      topicUpdateOps: [
+        {
+          op: "review",
+          items: [0],
+          topicId: null,
+          topic: null,
+          merge: null,
+          replace: null,
+          review: "No valid topic update op covered this understanding."
+        }
+      ]
+    });
+  });
+
+  it("converts invalid caseDetails references to review", function () {
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [accountTopic],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Compte bloque",
+          caseDetails: []
+        })
+      ],
+      rawProposeTopicUpdates: completed({
+        ops: [
+          updateOp({
+            merge: {
+              caseDetails: [[0, 0]],
+              attemptedActions: []
+            }
+          })
+        ]
+      })
+    });
+
+    expect(output.status).toBe("invalid");
+    expect(output.topicUpdateOps[0]).toMatchObject({
+      op: "review",
+      items: [0],
+      review: "Invalid topic update references."
+    });
+  });
+
+  it("converts invalid attemptedActions references to review", function () {
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [accountTopic],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Login retried",
+          attemptedActions: []
+        })
+      ],
+      rawProposeTopicUpdates: completed({
+        ops: [
+          updateOp({
+            merge: {
+              caseDetails: [],
+              attemptedActions: [[0, 0]]
+            }
+          })
+        ]
+      })
+    });
+
+    expect(output.status).toBe("invalid");
+    expect(output.topicUpdateOps[0]).toMatchObject({
+      op: "review",
+      items: [0],
+      review: "Invalid topic update references."
+    });
+  });
+
+  it("accepts update only when it references an existing topic", function () {
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [billingTopic],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Billing confirmation"
+        })
+      ],
+      rawProposeTopicUpdates: completed({
+        ops: [
+          updateOp({
+            topicId: "topic_billing",
+            merge: {
+              caseDetails: [],
+              attemptedActions: []
+            }
+          })
+        ]
+      })
+    });
+
+    expect(output.status).toBe("valid");
+    expect(output.topicUpdateOps[0]).toMatchObject({
+      op: "update",
+      topicId: "topic_billing"
+    });
+  });
+
+  it("accepts create with topicId null and topic present", function () {
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [accountTopic],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Duplicate invoice",
+          caseDetails: [
+            {
+              key: "observed_result",
+              value: "duplicate invoice",
+              evidence: "facture recue deux fois"
+            }
+          ]
+        })
+      ],
+      rawProposeTopicUpdates: completed({
+        ops: [
+          {
+            op: "create",
+            items: [0],
+            topicId: null,
+            topic: {
+              title: "Duplicate invoice",
+              broadCategoryHint: "billing",
+              summary: "The user reports a duplicate invoice."
+            },
+            merge: {
+              caseDetails: [[0, 0]],
+              attemptedActions: []
+            },
+            replace: null,
+            review: null
+          }
+        ]
+      })
+    });
+
+    expect(output.status).toBe("valid");
+    expect(output.topicUpdateOps[0]).toMatchObject({
+      op: "create",
+      topicId: null,
+      topic: {
+        broadCategoryHint: "billing"
+      }
+    });
+  });
+
+  it("normalizes notifications to an allowed broad category", function () {
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Android notifications are not received",
+          caseDetails: [
+            {
+              key: "observed_result",
+              value: "notifications not received",
+              evidence: "I do not receive notifications"
+            }
+          ]
+        })
+      ],
+      rawProposeTopicUpdates: completed({
+        ops: [
+          {
+            op: "create",
+            items: [0],
+            topicId: null,
+            topic: {
+              title: "Android notifications not received",
+              broadCategoryHint: "notifications",
+              summary: "The user does not receive Android notifications."
+            },
+            merge: {
+              caseDetails: [[0, 0]],
+              attemptedActions: []
+            },
+            replace: null,
+            review: null
+          }
+        ]
+      })
+    });
+
+    expect(output.status).toBe("valid");
+    expect(output.topicUpdateOps[0]?.topic?.broadCategoryHint).toBe("bug");
+    expect(JSON.stringify(output.topicUpdateOps)).not.toContain(
+      "\"notifications\""
+    );
+  });
+
+  it("accepts none without merge or replace", function () {
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [accountTopic],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Thanks"
+        })
+      ],
+      rawProposeTopicUpdates: completed({
+        ops: [
+          {
+            op: "none",
+            items: [0],
+            topicId: null,
+            topic: null,
+            merge: null,
+            replace: null,
+            review: null
+          }
         ]
       })
     });
 
     expect(output).toMatchObject({
       status: "valid",
-      topicUpdateProposals: [
+      topicUpdateOps: [
         {
-          proposalId: "topic_update_proposal_1",
-          action: "update_existing_topic",
-          topicId: "topic_account",
-          updateIntent: {
-            relationship: "reopens_or_persists_issue",
-            blockingIssue: "yes",
-            statusHint: "open"
-          }
+          op: "none",
+          items: [0]
         }
       ]
     });
   });
 
-  it("formats a create_new_topic proposal without generating a final topic id", function () {
-    const billingUnderstanding = understanding({
-      id: "text_understanding_1",
-      summary: "Facture de mai reçue deux fois",
-      sourceVerbatims: ["facture de mai reçue deux fois"],
-      broadCategoryHint: "billing"
-    });
+  it("accepts review with a reason", function () {
     const output = formatProposeTopicUpdatesOutput({
       existingTopics: [accountTopic],
-      textUnderstandings: [billingUnderstanding],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Ambiguous continuation"
+        })
+      ],
       rawProposeTopicUpdates: completed({
-        proposals: [
+        ops: [
           {
-            action: "create_new_topic",
-            fromUnderstandingIds: [billingUnderstanding.understandingId],
+            op: "review",
+            items: [0],
             topicId: null,
-            selectedSourceVerbatims: ["facture de mai reçue deux fois"],
-            updateIntent: {
-              relationship: "creates_distinct_topic",
-              blockingIssue: "unknown",
-              statusHint: "open",
-              userGoal: "Fix duplicate invoice",
-              correctionNote: null
-            },
-            newTopic: {
-              title: "Duplicate May invoice",
-              broadCategoryHint: "billing",
-              userGoal: "Fix duplicate invoice",
-              blockingIssue: "unknown"
-            },
-            reason: "The billing issue is distinct from account access."
+            topic: null,
+            merge: null,
+            replace: null,
+            review: "Ambiguous topic match."
           }
         ]
       })
     });
 
-    expect(output.status).toBe("valid");
-    expect(output.topicUpdateProposals[0]).toMatchObject({
-      action: "create_new_topic",
-      topicId: null,
-      newTopic: {
-        broadCategoryHint: "billing",
-        blockingIssue: "unknown"
-      }
+    expect(output).toMatchObject({
+      status: "valid",
+      topicUpdateOps: [
+        {
+          op: "review",
+          review: "Ambiguous topic match."
+        }
+      ]
     });
   });
 
-  it("updates an existing topic for an answer to a requested field", function () {
-    const answerUnderstanding = understanding({
-      id: "text_understanding_1",
-      summary: "The user confirms billing relevance.",
-      sourceVerbatims: ["Oui pour la facturation"],
-      broadCategoryHint: "billing"
-    });
-    const output = formatProposeTopicUpdatesOutput({
-      existingTopics: [billingTopic],
-      textUnderstandings: [answerUnderstanding],
-      rawProposeTopicUpdates: completed({
-        proposals: [
-          updateProposal({
-            understandingIds: [answerUnderstanding.understandingId],
-            topicId: "topic_billing",
-            relationship: "answers_requested_field"
-          })
-        ]
-      })
-    });
-
-    expect(output.topicUpdateProposals[0]).toMatchObject({
-      action: "update_existing_topic",
-      topicId: "topic_billing",
-      newTopic: null,
-      updateIntent: {
-        relationship: "answers_requested_field"
-      }
-    });
-  });
-
-  it("allows several understandings to update the same topic", function () {
-    const blockedAccount = understanding({
-      id: "text_understanding_1",
-      summary: "Compte bloqué",
-      sourceVerbatims: ["Mon compte est bloqué"]
-    });
-    const failedReconnect = understanding({
-      id: "text_understanding_2",
-      summary: "Reconnection failed",
-      sourceVerbatims: ["J'ai réessayé de me connecter"]
-    });
+  it("accepts replace.caseDetails by key", function () {
     const output = formatProposeTopicUpdatesOutput({
       existingTopics: [accountTopic],
-      textUnderstandings: [blockedAccount, failedReconnect],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Updated account state",
+          caseDetails: [
+            {
+              key: "observed_result",
+              value: "still blocked",
+              evidence: "toujours bloque"
+            }
+          ]
+        })
+      ],
       rawProposeTopicUpdates: completed({
-        proposals: [
-          updateProposal({
-            understandingIds: [
-              blockedAccount.understandingId,
-              failedReconnect.understandingId
-            ],
-            topicId: "topic_account",
-            relationship: "reports_test_result"
+        ops: [
+          updateOp({
+            merge: null,
+            replace: {
+              caseDetails: [
+                {
+                  key: "observed_result",
+                  with: [0, 0]
+                }
+              ],
+              attemptedActions: []
+            }
           })
         ]
       })
     });
 
     expect(output.status).toBe("valid");
-    expect(output.topicUpdateProposals).toHaveLength(1);
-    expect(output.topicUpdateProposals[0]?.fromUnderstandingIds).toEqual([
-      "text_understanding_1",
-      "text_understanding_2"
-    ]);
-    expect(output.topicUpdateProposals[0]?.action).toBe(
-      "update_existing_topic"
-    );
-  });
-
-  it("keeps unclear matching as needs_review", function () {
-    const vagueUnderstanding = understanding({
-      id: "text_understanding_1",
-      summary: "Still not working",
-      sourceVerbatims: ["Toujours pareil"]
-    });
-    const output = formatProposeTopicUpdatesOutput({
-      existingTopics: [accountTopic, billingTopic],
-      textUnderstandings: [vagueUnderstanding],
-      rawProposeTopicUpdates: completed({
-        proposals: [
-          {
-            action: "needs_review",
-            fromUnderstandingIds: [vagueUnderstanding.understandingId],
-            topicId: null,
-            selectedSourceVerbatims: ["Toujours pareil"],
-            updateIntent: {
-              relationship: "unclear",
-              blockingIssue: "unknown",
-              statusHint: "unclear",
-              userGoal: null,
-              correctionNote: null
-            },
-            newTopic: null,
-            reason: "The existing topic match is ambiguous."
-          }
-        ]
-      })
-    });
-
-    expect(output.status).toBe("valid");
-    expect(output.topicUpdateProposals[0]?.action).toBe("needs_review");
-    expect(output.topicUpdateProposals[0]?.newTopic).toBeNull();
-  });
-
-  it("rejects invalid proposals and creates deterministic review fallback", function () {
-    const blockedAccount = understanding({
-      id: "text_understanding_1",
-      summary: "Compte bloqué",
-      sourceVerbatims: ["Mon compte est bloqué"]
-    });
-    const output = formatProposeTopicUpdatesOutput({
-      existingTopics: [accountTopic],
-      textUnderstandings: [blockedAccount],
-      rawProposeTopicUpdates: completed({
-        proposals: [
-          {
-            action: "update_existing_topic",
-            fromUnderstandingIds: ["unknown_understanding"],
-            topicId: "unknown_topic",
-            selectedSourceVerbatims: ["not exact"],
-            updateIntent: {
-              relationship: "adds_new_information",
-              blockingIssue: "yes",
-              statusHint: "open",
-              userGoal: null,
-              correctionNote: null
-            },
-            newTopic: null,
-            reason: "Invalid proposal."
-          }
-        ]
-      })
-    });
-
-    expect(output.status).toBe("invalid");
-    expect(output.topicUpdateProposals).toEqual([
+    expect(output.topicUpdateOps[0]?.replace?.caseDetails).toEqual([
       {
-        proposalId: "topic_update_proposal_1",
-        action: "needs_review",
-        fromUnderstandingIds: ["text_understanding_1"],
-        topicId: null,
-        selectedSourceVerbatims: [],
-        updateIntent: {
-          relationship: "unclear",
-          blockingIssue: "unknown",
-          statusHint: "unclear",
-          userGoal: null,
-          correctionNote: null
-        },
-        newTopic: null,
-        reason: "No valid topic update proposal covered this understanding."
+        key: "observed_result",
+        with: [0, 0]
+      }
+    ]);
+  });
+
+  it("accepts replace.attemptedActions by targetIndex", function () {
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [accountTopic],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Retry failed",
+          attemptedActions: [
+            {
+              action: "retry login",
+              outcome: "failed",
+              evidence: "j'ai reessaye"
+            }
+          ]
+        })
+      ],
+      rawProposeTopicUpdates: completed({
+        ops: [
+          updateOp({
+            merge: null,
+            replace: {
+              caseDetails: [],
+              attemptedActions: [
+                {
+                  targetIndex: 0,
+                  with: [0, 0]
+                }
+              ]
+            }
+          })
+        ]
+      })
+    });
+
+    expect(output.status).toBe("valid");
+    expect(output.topicUpdateOps[0]?.replace?.attemptedActions).toEqual([
+      {
+        targetIndex: 0,
+        with: [0, 0]
       }
     ]);
   });
 });
 
 describe("buildProposeTopicUpdatesPrompt", function () {
-  it("keeps topic matching independent from standard segments and documents conservative blocking rules", function () {
+  it("documents the ops contract and does not ask for legacy proposal fields", function () {
     const prompt = buildProposeTopicUpdatesPrompt({
       existingTopics: [accountTopic],
       textUnderstandings: [
         understanding({
           id: "text_understanding_1",
-          summary: "Compte bloqué",
-          sourceVerbatims: ["Mon compte est toujours bloqué"]
+          summary: "Compte bloque",
+          caseDetails: [
+            {
+              key: "observed_result",
+              value: "blocked",
+              evidence: "Mon compte est bloque"
+            }
+          ]
         })
       ],
       recentInteractionContext: {},
-      latestUserMessageContent: "Mon compte est toujours bloqué"
+      latestUserMessageContent: "Mon compte est bloque"
     });
-    const content = prompt.messages.map((message) => message.content).join("\n");
+    const content = prompt.messages.map((message) => {
+      return message.content;
+    }).join("\n");
 
-    expect(content).not.toContain("standard_segments");
-    expect(content).not.toContain("linkedStandardSegmentIds");
-    expect(content).toContain("\"Mon compte est toujours bloqué.\" -> blockingIssue yes");
-    expect(content).toContain("\"J'ai reçu ma facture de mai deux fois.\" -> blockingIssue unknown");
-    expect(content).toContain("Do not infer that billing topics are blocking");
+    expect(content).toContain("\"ops\"");
+    expect(content).toContain("\"op\": \"update|create|none|review\"");
+    expect(content).toContain("Allowed broadCategoryHint values:");
+    expect(content).toContain("bug | access_security | billing");
+    expect(content).toContain("Do not invent narrow category values");
+    expect(content).toContain("merge.caseDetails");
+    expect(content).toContain("replace.attemptedActions");
+    expect(content).not.toContain("update_existing_topic");
+    expect(content).not.toContain("selectedSourceVerbatims");
+    expect(content).not.toContain("fromUnderstandingIds");
   });
 });

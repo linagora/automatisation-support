@@ -13,6 +13,10 @@ import type {
 const textUnderstanding: TextUnderstanding = {
   understandingId: "understanding_1",
   sourceSegmentIds: ["segment_1"],
+  messageKinds: [],
+  caseDetails: [],
+  attemptedActions: [],
+  supportMetadata: [],
   sourceVerbatims: ["J'ai reçu ma facture deux fois."],
   summary: "Duplicate invoice.",
   primaryUserExpectation: "wants_acknowledgement",
@@ -227,7 +231,7 @@ describe("buildSupportPatchesV2", function () {
       action: "update_existing_topic",
       fromUnderstandingIds: ["understanding_1"],
       topicId: "topic_4",
-      selectedSourceVerbatims: followUpUnderstanding.sourceVerbatims,
+      selectedSourceVerbatims: followUpUnderstanding.sourceVerbatims as string[],
       updateIntent: {
         relationship: "reopens_or_persists_issue",
         blockingIssue: "unknown",

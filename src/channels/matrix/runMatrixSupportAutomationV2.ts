@@ -47,6 +47,7 @@ import type {
 import {
   getBufferedMessagesConversationScope,
   getMessageConversationScope,
+  buildConversationScopeKey,
   serializeConversationScopeKey
 } from "../../messaging/conversationScope";
 
@@ -103,6 +104,12 @@ function getErrorMessage(error: unknown): string {
 function buildTurnId(bufferedMessages: BufferedMessages): string {
   return bufferedMessages.messages[0]?.messageId ??
     `${bufferedMessages.roomId}:${bufferedMessages.userId}:${Date.now()}`;
+}
+
+function getBufferedMessageIds(bufferedMessages: BufferedMessages): string[] {
+  return bufferedMessages.messages.map((message) => {
+    return message.messageId;
+  });
 }
 
 function shouldIgnoreHistoricalMessage(params: {
@@ -169,6 +176,9 @@ async function runMatrixSupportAutomationV2(
         })
       : undefined);
   const activeBufferTurnIdsByKey = new Map<string, string>();
+  const activeProcessingScopeKeys = new Set<string>();
+  const activeProcessingTurnIdsByKey = new Map<string, string>();
+  const activeProcessingPromises = new Set<Promise<unknown>>();
 
   logInfo({
     logger,
@@ -186,7 +196,7 @@ async function runMatrixSupportAutomationV2(
     }
   });
 
-  async function processBufferedMessages(
+  async function runBufferedMessagesTurn(
     bufferedMessages: BufferedMessages
   ): Promise<MatrixSupportAutomationV2RunRecord> {
     const bufferKey = serializeConversationScopeKey(
@@ -296,10 +306,109 @@ async function runMatrixSupportAutomationV2(
     };
   }
 
+  async function processBufferedMessages(
+    bufferedMessages: BufferedMessages
+  ): Promise<MatrixSupportAutomationV2RunRecord> {
+    const scopeKey = serializeConversationScopeKey(
+      getBufferedMessagesConversationScope(bufferedMessages)
+    );
+    const messageIds = getBufferedMessageIds(bufferedMessages);
+
+    const turnId = activeBufferTurnIdsByKey.get(scopeKey) ??
+      buildTurnId(bufferedMessages);
+
+    activeProcessingScopeKeys.add(scopeKey);
+    activeProcessingTurnIdsByKey.set(scopeKey, turnId);
+
+    logInfo({
+      logger,
+      eventName: "conversation.processing_started",
+      metadata: {
+        scopeKey,
+        turnId,
+        messageIds,
+        pendingMessageIds: [],
+        queueLength: 0
+      }
+    });
+
+    try {
+      const result = await runBufferedMessagesTurn(bufferedMessages);
+
+      logInfo({
+        logger,
+        eventName: "conversation.processing_finished",
+        metadata: {
+          scopeKey,
+          turnId,
+          messageIds,
+          pendingMessageIds: [],
+          queueLength: 0
+        }
+      });
+
+      return result;
+    } catch (error) {
+      logError({
+        logger,
+        eventName: "conversation.processing_failed",
+        metadata: {
+          scopeKey,
+          turnId,
+          messageIds,
+          pendingMessageIds: [],
+          queueLength: 0,
+          error: getErrorMessage(error)
+        }
+      });
+
+      throw error;
+    } finally {
+      activeProcessingScopeKeys.delete(scopeKey);
+      activeProcessingTurnIdsByKey.delete(scopeKey);
+      logInfo({
+        logger,
+        eventName: "conversation.pending_processing_released_after_current_turn",
+        metadata: {
+          scopeKey,
+          turnId,
+          messageIds: [],
+          pendingMessageIds: [],
+          queueLength: 0
+        }
+      });
+      buffer.reevaluateGroup(
+        getBufferedMessagesConversationScope(bufferedMessages)
+      );
+    }
+  }
+
   const buffer = new InMemoryMessageBuffer({
     inactivityTimeoutMs,
     maxWaitMs,
+    canFlush: (groupKey) => {
+      const scopeKey = serializeConversationScopeKey(
+        buildConversationScopeKey(groupKey)
+      );
+
+      return !activeProcessingScopeKeys.has(scopeKey);
+    },
     onDebugEvent: (event) => {
+      if (event.eventName === "buffer.flush_blocked_processing") {
+        logInfo({
+          logger,
+          eventName: "conversation.pending_processing_delayed_until_current_turn_done",
+          metadata: {
+            scopeKey: event.scopeKey,
+            turnId: activeProcessingTurnIdsByKey.get(event.scopeKey),
+            messageIds: event.messageIds,
+            pendingMessageIds: event.messageIds,
+            queueLength: event.messageCount
+          }
+        });
+        return;
+      }
+
       logInfo({
         logger,
         eventName: event.eventName,
@@ -312,8 +421,11 @@ async function runMatrixSupportAutomationV2(
       });
     },
     onFlush: async (bufferedMessages) => {
+      const processingPromise = processBufferedMessages(bufferedMessages);
+      activeProcessingPromises.add(processingPromise);
+
       try {
-        await processBufferedMessages(bufferedMessages);
+        await processingPromise;
       } catch (error) {
         logError({
           logger,
@@ -324,6 +436,8 @@ async function runMatrixSupportAutomationV2(
             error: getErrorMessage(error)
           }
         });
+      } finally {
+        activeProcessingPromises.delete(processingPromise);
       }
     }
   });
@@ -400,6 +514,20 @@ async function runMatrixSupportAutomationV2(
         getMessageConversationScope(event)
       );
 
+      if (activeProcessingScopeKeys.has(bufferKey)) {
+        logInfo({
+          logger,
+          eventName: "conversation.pending_messages_collected",
+          metadata: {
+            scopeKey: bufferKey,
+            turnId: activeProcessingTurnIdsByKey.get(bufferKey),
+            messageIds: [event.messageId],
+            pendingMessageIds: [event.messageId],
+            queueLength: 1
+          }
+        });
+      }
+
       if (!activeBufferTurnIdsByKey.has(bufferKey)) {
         activeBufferTurnIdsByKey.set(bufferKey, event.messageId);
         await progressReporter?.startBuffer({
@@ -418,7 +546,7 @@ async function runMatrixSupportAutomationV2(
   async function flushPending(): Promise<MatrixSupportAutomationV2RunRecord[]> {
     const pendingGroups = buffer.flushAll();
 
-    return Promise.all(pendingGroups.map(async (bufferedMessages) => {
+    const records = await Promise.all(pendingGroups.map(async (bufferedMessages) => {
       try {
         return await processBufferedMessages(bufferedMessages);
       } catch (error) {
@@ -435,6 +563,8 @@ async function runMatrixSupportAutomationV2(
         throw error;
       }
     }));
+
+    return records;
   }
 
   return {
@@ -442,6 +572,9 @@ async function runMatrixSupportAutomationV2(
     stop: async () => {
       await listenerHandle.stop();
       await flushPending();
+      while (activeProcessingPromises.size > 0) {
+        await Promise.all([...activeProcessingPromises]);
+      }
       buffer.dispose();
     }
   };

@@ -2,280 +2,299 @@ import type {
   BuildProposeTopicUpdatesPromptInput,
   ProposeTopicUpdatesPrompt
 } from "./typesProposeTopicUpdates.types";
+import {
+  BROAD_CATEGORY_HINTS
+} from "../analyze-support-text/supportTextAnalysis.taxonomy";
 
-const TOPIC_UPDATE_ACTIONS = [
-  "update_existing_topic",
-  "create_new_topic",
-  "no_topic_update",
-  "needs_review"
+const TOPIC_UPDATE_OPS = [
+  "update",
+  "create",
+  "none",
+  "review"
 ] as const;
 
-const TOPIC_UPDATE_RELATIONSHIPS = [
-  "continues_existing_issue",
-  "adds_new_information",
-  "answers_requested_field",
-  "reports_test_result",
-  "reports_resolution",
-  "reports_partial_resolution",
-  "corrects_previous_information",
-  "reopens_or_persists_issue",
-  "creates_distinct_topic",
-  "unclear"
-] as const;
-
-const TOPIC_STATUS_HINTS = [
-  "open",
-  "resolved",
-  "partially_resolved",
-  "unclear"
-] as const;
-
-const BLOCKING_ISSUE_VALUES = [
-  "yes",
-  "no",
-  "unknown"
-] as const;
-
-function toPrettyJson(value: unknown): string {
-  return JSON.stringify(value, null, 2);
+function toPromptJson(value: unknown): string {
+  return JSON.stringify(value);
 }
 
 function buildProposeTopicUpdatesPrompt(
   input: BuildProposeTopicUpdatesPromptInput
 ): ProposeTopicUpdatesPrompt {
   const systemPrompt = `
-You are the topic reconciliation stage of a customer support pipeline.
+You are the topic update proposal stage of a customer support pipeline. Return exactly one JSON object.
 
-Return only one JSON object matching the provided schema.
+# Goal
 
 You receive:
+- existing persistent support topics;
+- analyzed support items from the latest user message;
+- recent interaction context.
 
-* existing persistent support topics;
-* TextUnderstanding items extracted from the latest user message by LLM2;
-* recent interaction context.
+For each analyzed item, decide whether it updates an existing topic, creates a new topic, needs no persistent update, or needs review.
 
-Your task is to propose how the latest TextUnderstanding items should update the persistent support topics.
+You do not build final topics.
+You only propose minimal deterministic update operations.
+Application code will create ids, timestamps, status, blocking state, final ordering, strict deduplication, and final topic objects.
 
-# Role boundaries
+# Input item format
 
-You do not:
+Each analyzed item may contain:
+- sourceSegmentIds;
+- messageKinds;
+- caseDetails;
+- attemptedActions;
+- supportMetadata;
+- summary.
 
-* extract facts;
-* extract tested actions;
-* rewrite or deduplicate facts;
-* rewrite or deduplicate tested actions;
-* route text segments;
-* classify raw user text;
-* re-run surface analysis;
-* write a user-facing answer;
-* propose troubleshooting solutions;
-* retrieve external knowledge;
-* generate ids for newly created topics.
+Use analyzed items as the source of truth.
+Do not re-extract facts from raw user text.
+Do not propose support solutions.
+Do not write a user-facing reply.
+Do not retrieve knowledge.
+Do not generate final topic ids.
 
-LLM1 is responsible for surface routing.
-LLM2 is responsible for support understanding extraction.
-You are responsible only for topic-aware reconciliation.
+# Field meaning
 
-# Core concepts
+messageKinds describe what the latest user text does in the conversation.
 
-A TextUnderstanding is a candidate support problem, question, request, objective, or contextual answer extracted from the latest user message.
+caseDetails are concrete persistent support facts about the product, account, billing, access, environment, observed behavior, expected behavior, error, device, version, or similar topic details.
 
-A topic is the persistent support state across the conversation.
+attemptedActions are troubleshooting, verification, workaround, or recovery actions already tried by the user.
 
-A TopicUpdateProposal says how one or more TextUnderstanding items should affect persistent topics.
+supportMetadata contains metadata about the support exchange itself, not product facts. Examples: screenshot unavailable, proof unavailable, logs unavailable, user availability, attachment constraint, support-process constraint.
 
-The normal case is one TextUnderstanding to one TopicUpdateProposal.
+supportMetadata can help you understand and match an item, and it can be reflected in topic.summary when useful, but it is not currently merged as structured topic data.
 
-However:
+# Message kind guidance
 
-* several TextUnderstanding items may update the same existing topic when they describe the same persistent support issue;
-* one TextUnderstanding may exceptionally feed several proposals only if its sourceVerbatims or facts clearly separate several subjects;
-* otherwise use needs_review rather than inventing an unsafe split.
+Use messageKinds to help decide the operation:
 
-# Matching rules
+- issue_report can create a new topic or update an existing topic.
+- question can create a new topic or update an existing topic when it belongs to an existing issue/request.
+- action_request can create a new topic or update an existing topic.
+- info_update usually updates an existing topic, unless it clearly belongs to a new independent topic.
+- confirmation usually updates an existing topic, especially when it answers a recent bot question.
+- denial usually updates an existing topic, especially when it corrects or answers a recent bot question.
+- feedback can create or update a topic when it concerns a product/support issue, preference, complaint, or improvement.
+- support_context must not create a topic by itself.
 
-Use update_existing_topic when a TextUnderstanding:
+A support_context-only item should usually:
+- be grouped with the nearest related issue item in the same operation when the relation is clear;
+- update the related topic summary only if the metadata is useful to persist;
+- use op "none" if it is valid but not worth persisting;
+- use op "review" if the related topic/item is unclear.
 
-* continues an existing topic;
-* answers a recent question about an existing topic;
-* adds details to an existing topic;
-* reports a test result for an existing topic;
-* reports that an existing topic is resolved;
-* reports that an existing topic is partially resolved;
-* reports that an existing issue still happens;
-* corrects previous information about an existing topic.
+A plain issue report is not automatically a question.
+A messageKind "question" matters only when the user actually asks for information, explanation, possibility, policy, compatibility, pricing, availability, or support clarification.
 
-Use create_new_topic when a TextUnderstanding is a distinct new issue, request, or question not covered by any existing topic.
+# Operations
 
-Do not create a new topic when the TextUnderstanding is only a contextual answer to a recent question about an existing topic.
+Use op "update" when an item:
+- continues an existing topic;
+- adds useful new details to an existing topic;
+- answers a recent question about an existing topic;
+- reports a test/action result for an existing topic;
+- says the same issue still happens;
+- confirms a current state for an existing topic;
+- denies or corrects previous topic information;
+- changes the persistent summary.
 
-Do not merge distinct issues into the same topic merely because they appear in the same user message.
+Use op "create" when an item is a distinct new issue, request, question, feedback, or objective not covered by existing topics.
 
-Keep existing topic metadata unless the TextUnderstanding explicitly corrects it.
+Use op "none" only when the item is valid but all useful information is already known or should not affect persistent topic state.
 
-If the understanding reports that a previous issue now works, use update_existing_topic with relationship reports_resolution, statusHint resolved, and blockingIssue no.
+Use op "review" when matching, splitting, merging, or replacing is unsafe or unclear.
 
-If the understanding reports that the issue still happens, use update_existing_topic with relationship reopens_or_persists_issue and statusHint open.
+Do not create a new topic for a contextual answer to a recent question about an existing topic.
+Do not create a new topic for supportMetadata alone.
+Do not create a new topic for support_context alone.
+Do not merge distinct issues merely because they appear in the same user message.
 
-If the understanding reports partial progress but not full resolution, use relationship reports_partial_resolution and statusHint partially_resolved.
+Several items may update the same topic when they describe the same persistent support issue.
+One operation may reference several item indexes when the items belong to the same persistent topic.
+One item may feed several operations only if its caseDetails, attemptedActions, or evidence clearly separate several subjects; otherwise use review.
 
-If the understanding provides a value or confirmation requested recently for a specific topic, update that topic with relationship answers_requested_field.
+# Contextual answers
 
-If the understanding corrects a previous value for a topic, use relationship corrects_previous_information.
+recentInteractionContext may identify what a short answer refers to.
 
-If matching is unclear, use needs_review.
+If the bot asked about an existing topic and the user gives a short answer such as "yes", "no", "still same", "it works now", "0.29.0", or a device name:
+- update the relevant existing topic;
+- do not create a new topic;
+- merge or replace the interpreted caseDetails when useful;
+- use review only if the related topic is unclear.
 
-# Source and evidence rules
+# Topic field
 
-Use the TextUnderstanding fields as the source of truth for extracted support information.
+topic is not a final topic object.
 
-Do not invent new facts from raw text or recentInteractionContext.
+For op "create", topic must contain the new topic identity:
+- title: short and specific;
+- broadCategoryHint: broad functional category when clear, otherwise null;
+- summary: initial persistent summary.
 
-Do not copy facts into the output.
+Allowed broadCategoryHint values:
+${BROAD_CATEGORY_HINTS.join(" | ")}
 
-Do not copy testedActions into the output.
+Do not invent narrow category values such as "notifications".
+For notification delivery failures, use "bug" when the behavior is broken, or
+"configuration" only when the topic is about settings/setup.
 
-selectedSourceVerbatims is optional and should only be used when one understanding feeds multiple proposals or when you need to make the topic split traceable.
+For op "update", topic is optional.
+Use topic only when title, broadCategoryHint, or summary should be replaced.
 
-When provided, selectedSourceVerbatims must be copied exactly from the sourceVerbatims of the referenced TextUnderstanding items.
+topic.summary is a replacement persistent summary.
+If present, it must synthesize the previous topic knowledge plus the latest analyzed item knowledge.
+It will overwrite the previous persistent summary.
+Use null when the existing summary should not change.
 
-Do not translate, summarize, or rewrite selectedSourceVerbatims.
+supportMetadata may be mentioned in topic.summary only when it is useful for future support handling.
+Example: "The user cannot provide a screenshot for the dark theme issue."
+Do not make supportMetadata the main topic unless it is itself the reported product issue.
 
-# Coverage rules
+Do not output userGoal, blockingIssue, or statusHint.
+Those are handled deterministically elsewhere.
 
-Every TextUnderstanding should appear in at least one proposal.
+# Merge
 
-Use no_topic_update only when the understanding is valid but should not update or create a persistent topic.
+merge references analyzed item data that should be added to the topic.
 
-Use needs_review when the understanding appears support-relevant but cannot be safely matched, split, or turned into a new topic.
+Use merge.caseDetails for new useful caseDetails.
+Use merge.attemptedActions for new useful attemptedActions.
 
-A proposal must reference at least one understanding id.
+Do not merge supportMetadata as structured data in this stage.
+If supportMetadata is useful to keep, reflect it in topic.summary.
 
-For update_existing_topic, topicId must be an existing topic id.
+Do not copy values.
+Use index references only:
+- [itemIndex, caseDetailIndex] for caseDetails;
+- [itemIndex, attemptedActionIndex] for attemptedActions.
 
-For create_new_topic, topicId must be null and newTopic must be present.
+Example:
+"caseDetails": [[0, 1]]
+means: add analyzedItems[0].caseDetails[1].
 
-For no_topic_update and needs_review, topicId should be null unless the uncertainty is about a specific existing topic.
+# Replace
 
-# New topic rules
+replace references analyzed item data that should overwrite existing topic data.
 
-For create_new_topic, produce a compact newTopic object.
+Use replace.caseDetails when an existing topic detail with the same key should be replaced by a newer or corrected detail from the latest analysis.
 
-The title must be short, specific, and based on the understanding summary or sourceVerbatims.
+caseDetails replacement format:
+{
+  "key": "existing detail key to replace",
+  "with": [itemIndex, caseDetailIndex]
+}
 
-The broadCategoryHint should reuse the understanding broadCategoryHint when available.
+Use replace.attemptedActions when an existing attempted action should be replaced because the latest analysis updates its outcome or details.
 
-The userGoal should describe what the user likely wants for this topic.
-Do not infer a refund, duplicate payment, duplicate charge, or correction action from duplicate-invoice wording alone. If the user only says they received an invoice twice, describe the goal neutrally as understanding or handling the duplicate invoice.
+attemptedActions replacement format:
+{
+  "targetIndex": 0,
+  "with": [itemIndex, attemptedActionIndex]
+}
 
-The blockingIssue should reflect whether the user appears blocked by the issue.
+targetIndex is the index of the existing attemptedAction in the current topic.
+If the existing action to replace cannot be identified safely, use review.
 
-Do not generate a final topic id.
+For a new topic, use merge only, not replace.
 
-# Blocking issue rules
+# Deduplication
 
-Use blockingIssue conservatively.
+Do not merge information already present with the same meaning.
 
-Use blockingIssue yes only when the user explicitly says they are blocked, cannot access or use the product, face a critical error, or clearly express a blocking impact.
+If a detail or action already exists unchanged and no summary, title, or category update is needed, use op "none".
 
-Use blockingIssue no only when the user explicitly says the issue is not blocking or is resolved.
+If a latest detail explicitly corrects an existing value, use replace, not merge.
 
-Use blockingIssue unknown by default when blocking impact is not explicitly established.
+If the latest message adds a more precise value that should supersede an older vague value, use replace.
 
-Do not infer that billing topics are blocking only because they involve billing.
+If the latest message adds a different complementary detail, use merge.
 
-Examples:
+If supportMetadata is already reflected in the topic summary, do not update only to repeat it.
 
-* "Mon compte est toujours bloqué." -> blockingIssue yes.
-* "Je n'arrive plus à me connecter." -> blockingIssue yes.
-* "J'ai reçu ma facture de mai deux fois." -> blockingIssue unknown.
-* "La facture est en double mais ce n'est pas bloquant." -> blockingIssue no.
-* "J'ai été prélevé deux fois et ça bloque ma comptabilité." -> blockingIssue yes.
+# Review
 
-# Allowed values
+Use review when:
+- an item could match multiple topics;
+- a replace target is unclear;
+- one item appears to contain several topics but cannot be safely split;
+- the operation would risk merging distinct issues;
+- support_context or supportMetadata appears related but the related topic is unclear;
+- the latest analysis is too ambiguous to apply.
 
-action:
-${TOPIC_UPDATE_ACTIONS.join(" | ")}
+review must contain a short reason for op "review".
+For other ops, review must be null.
 
-relationship:
-${TOPIC_UPDATE_RELATIONSHIPS.join(" | ")}
+# Allowed ops
 
-statusHint:
-${TOPIC_STATUS_HINTS.join(" | ")}
-
-blockingIssue:
-${BLOCKING_ISSUE_VALUES.join(" | ")}
+${TOPIC_UPDATE_OPS.join(" | ")}
 
 # Output shape
 
 {
-  "proposals": [
+  "ops": [
     {
-      "action": "update_existing_topic|create_new_topic|no_topic_update|needs_review",
-      "fromUnderstandingIds": ["provided understanding id"],
+      "op": "update|create|none|review",
+      "items": [0],
       "topicId": "existing topic id or null",
-      "selectedSourceVerbatims": ["exact sourceVerbatim copied from referenced understandings"],
-      "updateIntent": {
-        "relationship": "allowed relationship",
-        "blockingIssue": "yes|no|unknown",
-        "statusHint": "open|resolved|partially_resolved|unclear",
-        "userGoal": "string or null",
-        "correctionNote": "string or null"
-      } or null,
-      "newTopic": {
-        "title": "short topic title",
+      "topic": {
+        "title": "string or null",
         "broadCategoryHint": "string or null",
-        "userGoal": "string or null",
-        "blockingIssue": "yes|no|unknown"
+        "summary": "replacement persistent summary or null"
       } or null,
-      "reason": "short explanation"
+      "merge": {
+        "caseDetails": [[0, 0]],
+        "attemptedActions": [[0, 0]]
+      } or null,
+      "replace": {
+        "caseDetails": [
+          {
+            "key": "detail key",
+            "with": [0, 0]
+          }
+        ],
+        "attemptedActions": [
+          {
+            "targetIndex": 0,
+            "with": [0, 0]
+          }
+        ]
+      } or null,
+      "review": "short review reason or null"
     }
   ]
 }
 
-# Required final verification
+# Final checks
 
-Before returning the JSON, verify internally that:
+Before returning JSON, verify:
+- every analyzed item appears in at least one op;
+- op "update" uses an existing topicId;
+- op "create" has topicId null and topic present;
+- op "create" does not use replace;
+- op "none" and op "review" do not merge or replace data;
+- no final topic id is generated;
+- merge does not duplicate already-known details/actions;
+- replace is used for explicit corrections or superseding values;
+- topic.summary, when present, is a full replacement persistent summary, not a small appended note;
+- contextual answers update the relevant existing topic instead of creating a new topic;
+- support_context alone does not create a new topic;
+- supportMetadata alone does not create a new topic;
+- uncertain matching uses review.
 
-1. every proposal references at least one valid TextUnderstanding id;
-2. every TextUnderstanding appears in at least one proposal;
-3. update_existing_topic uses a valid existing topicId;
-4. create_new_topic has topicId null and a non-null newTopic;
-5. no_topic_update and needs_review do not create a newTopic;
-6. several understandings update the same topic only when they describe the same persistent support issue;
-7. one understanding feeds several proposals only when selectedSourceVerbatims or facts make the split traceable;
-8. contextual answers to recently requested fields update the relevant existing topic instead of creating a new topic;
-9. no facts or testedActions are copied into the output;
-10. no new topic id is generated;
-11. selectedSourceVerbatims, when present, are exact copies from referenced understanding sourceVerbatims.
-
-Return only the final JSON.
+Return only JSON.
 `.trim();
 
   const userPrompt = `
 # Existing persistent support topics
+${toPromptJson(input.existingTopics)}
 
-<existing_topics>
-${toPrettyJson(input.existingTopics)}
-</existing_topics>
-
-# Text understandings from latest user message
-
-<text_understandings>
-${toPrettyJson(input.textUnderstandings)}
-</text_understandings>
+# Analyzed support items from latest user message
+${toPromptJson(input.textUnderstandings)}
 
 # Recent interaction context
-
-<recent_interaction_context>
-${toPrettyJson(input.recentInteractionContext)}
-</recent_interaction_context>
-
-# Latest user message content, for tone and consistency only
-
-<latest_user_message>
-${input.latestUserMessageContent ?? null}
-</latest_user_message>
+${toPromptJson(input.recentInteractionContext)}
 
 Return only JSON.
 `.trim();

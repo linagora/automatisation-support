@@ -79,7 +79,9 @@ const textSurfaceAnalysisResponseFormat = {
     schema: objectOf(
       {
         userLanguage: {
-          enum: ["French", "English", "Other", "Unknown"]
+          type: "string",
+          description:
+            "Dominant language of the latest user message only, as a BCP-47 language code such as fr, en, de, es, pt-br, or unknown."
         },
         segments: {
           type: "array",

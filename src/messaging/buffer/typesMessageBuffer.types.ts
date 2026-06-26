@@ -36,12 +36,21 @@ export type MessageBufferDebugEvent =
       roomId: string;
       userId: string;
       messageCount: number;
+    }
+  | {
+      eventName: "buffer.flush_blocked_processing";
+      roomId: string;
+      userId: string;
+      scopeKey: string;
+      messageIds: string[];
+      messageCount: number;
     };
 
 export type InMemoryMessageBufferOptions = {
   inactivityTimeoutMs: number;
   maxWaitMs?: number;
   onFlush: MessageBufferFlushCallback;
+  canFlush?: (groupKey: MessageBufferGroupKey) => boolean;
   onDebugEvent?: (event: MessageBufferDebugEvent) => void;
   now?: () => Date;
 };
@@ -51,5 +60,6 @@ export type MessageBuffer = {
   updateTypingState: (typingEvent: MessagingTypingEvent) => void;
   flushGroup: (groupKey: MessageBufferGroupKey) => BufferedMessages | undefined;
   flushAll: () => BufferedMessages[];
+  reevaluateGroup: (groupKey: MessageBufferGroupKey) => boolean;
   dispose: () => void;
 };

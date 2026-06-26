@@ -18,6 +18,7 @@ async function requestSupportTextAnalysis(
 ): Promise<RawSupportTextAnalysis> {
   try {
     const result = await callLLM(input.prompt.messages, {
+      stage: "support_text_analysis",
       preset: "fullWeightMessageAnalysis",
       temperature: 0,
       maxTokens: 2000,

@@ -20,6 +20,10 @@ function buildInput(): RetrieveSupportKnowledgeInput {
       {
         understandingId: "understanding_notification",
         sourceSegmentIds: ["segment_notification"],
+        messageKinds: [],
+        caseDetails: [],
+        attemptedActions: [],
+        supportMetadata: [],
         sourceVerbatims: [
           "I do not receive notifications on Android when I get a new email."
         ],

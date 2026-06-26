@@ -1,0 +1,3412 @@
+
+================ support-facts-tested-action ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case support-facts-tested-action --until support --debug
+
+
+============================================================
+CASE support-facts-tested-action — Explicit support issue with facts and tested action
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_support-facts-tested-action",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Sur le web, mon compte affiche l'erreur Token expired. J'ai déjà réessayé de me connecter et ça échoue toujours."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 1,
+  "existingTopics": [
+    {
+      "topicId": "topic_1",
+      "title": "Compte bloqué",
+      "summary": "L'utilisateur indique que son compte est bloqué.",
+      "status": "open",
+      "broadCategoryHint": "access_security",
+      "userGoal": "Récupérer l'accès à son compte.",
+      "blockingIssue": "yes"
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2765, image_tokens≈0, output_tokens=500, total_tokens≈3265
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2384, completion_tokens=105, total_tokens=2489
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2571, image_tokens≈0, output_tokens=2000, total_tokens≈4571
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3811, completion_tokens=420, total_tokens=4231
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": [
+    "credential_or_secret_leak"
+  ]
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": [
+    "credential_or_secret_leak"
+  ]
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Sur le web, mon compte affiche l'erreur Token expired. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "J'ai déjà réessayé de me connecter et ça échoue toujours.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1",
+      "text_segment_2"
+    ],
+    "sourceVerbatims": [
+      "Sur le web, mon compte affiche l'erreur Token expired.",
+      "J'ai déjà réessayé de me connecter et ça échoue toujours."
+    ],
+    "summary": "User reports a token expired error on the web platform and has tried reconnecting without success.",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug"
+    ],
+    "broadCategoryHint": "access_security",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "platform",
+        "value": "web",
+        "evidence": "Sur le web"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "error_message",
+        "value": "Token expired",
+        "evidence": "l'erreur Token expired"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "trigger_action",
+        "value": "login",
+        "evidence": "me connecter"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "observed_result",
+        "value": "login failure",
+        "evidence": "ça échoue toujours"
+      }
+    ],
+    "testedActions": [
+      {
+        "label": "reconnect",
+        "outcome": "failed",
+        "evidence": "J'ai déjà réessayé de me connecter et ça échoue toujours"
+      }
+    ],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Sur le web, mon compte affiche l'erreur Token expired.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"J'ai déjà réessayé de me connecter et ça échoue toujours.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\", \"text_segment_2\"],\n      \"sourceVerbatims\": [\n        \"Sur le web, mon compte affiche l'erreur Token expired.\",\n        \"J'ai déjà réessayé de me connecter et ça échoue toujours.\"\n      ],\n      \"summary\": \"User reports a token expired error on the web platform and has tried reconnecting without success.\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\"possible_bug\"],\n      \"broadCategoryHint\": \"access_security\",\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"platform\",\n          \"value\": \"web\",\n          \"evidence\": \"Sur le web\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"error_message\",\n          \"value\": \"Token expired\",\n          \"evidence\": \"l'erreur Token expired\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"trigger_action\",\n          \"value\": \"login\",\n          \"evidence\": \"me connecter\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"observed_result\",\n          \"value\": \"login failure\",\n          \"evidence\": \"ça échoue toujours\"\n        }\n      ],\n      \"testedActions\": [\n        {\n          \"label\": \"reconnect\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"J'ai déjà réessayé de me connecter et ça échoue toujours\"\n        }\n      ],\n      \"uncertainties\": [],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1",
+            "text_segment_2"
+          ],
+          "sourceVerbatims": [
+            "Sur le web, mon compte affiche l'erreur Token expired.",
+            "J'ai déjà réessayé de me connecter et ça échoue toujours."
+          ],
+          "summary": "User reports a token expired error on the web platform and has tried reconnecting without success.",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug"
+          ],
+          "broadCategoryHint": "access_security",
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "platform",
+              "value": "web",
+              "evidence": "Sur le web"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "error_message",
+              "value": "Token expired",
+              "evidence": "l'erreur Token expired"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "trigger_action",
+              "value": "login",
+              "evidence": "me connecter"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "observed_result",
+              "value": "login failure",
+              "evidence": "ça échoue toujours"
+            }
+          ],
+          "testedActions": [
+            {
+              "label": "reconnect",
+              "outcome": "failed",
+              "evidence": "J'ai déjà réessayé de me connecter et ça échoue toujours"
+            }
+          ],
+          "uncertainties": [],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ short-context ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case short-context --until support --debug
+
+
+============================================================
+CASE short-context — Short contextual answer
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_short-context",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Oui"
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "The user reported a blocked account on Twake.",
+    "previousBotResponseSummary": "The bot asked whether the account is still blocked."
+  },
+  "existingTopicsCount": 1,
+  "existingTopics": [
+    {
+      "topicId": "topic_1",
+      "title": "Compte bloqué",
+      "summary": "L'utilisateur indique que son compte est bloqué.",
+      "status": "open",
+      "broadCategoryHint": "access_security",
+      "userGoal": "Récupérer l'accès à son compte.",
+      "blockingIssue": "yes"
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2738, image_tokens≈0, output_tokens=500, total_tokens≈3238
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2357, completion_tokens=41, total_tokens=2398
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2535, image_tokens≈0, output_tokens=2000, total_tokens≈4535
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3768, completion_tokens=213, total_tokens=3981
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Oui",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "sourceVerbatims": [
+      "Oui"
+    ],
+    "summary": "The user confirms that the account is still blocked.",
+    "primaryUserExpectation": "provides_information",
+    "supportNeeds": [
+      "possible_account_or_access_action"
+    ],
+    "broadCategoryHint": "access_security",
+    "contextDependency": "needs_context_to_interpret",
+    "contextualAnswer": {
+      "type": "affirmative",
+      "value": true,
+      "evidence": "Oui"
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "account_status",
+        "value": "blocked",
+        "evidence": "Oui"
+      }
+    ],
+    "testedActions": [],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n\"userLanguage\": \"fr\",\n\"segments\": [\n{\n\"verbatim\": \"Oui\",\n\"category\": \"support_relevant\",\n\"standardSubcategory\": null\n}\n]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"sourceVerbatims\": [\"Oui\"],\n      \"summary\": \"The user confirms that the account is still blocked.\",\n      \"primaryUserExpectation\": \"provides_information\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\"possible_account_or_access_action\"],\n      \"broadCategoryHint\": \"access_security\",\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"account_status\",\n          \"value\": \"blocked\",\n          \"evidence\": \"Oui\"\n        }\n      ],\n      \"testedActions\": [],\n      \"uncertainties\": [],\n      \"contextDependency\": \"needs_context_to_interpret\",\n      \"contextualAnswer\": {\n        \"type\": \"affirmative\",\n        \"value\": true,\n        \"evidence\": \"Oui\"\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "sourceVerbatims": [
+            "Oui"
+          ],
+          "summary": "The user confirms that the account is still blocked.",
+          "primaryUserExpectation": "provides_information",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_account_or_access_action"
+          ],
+          "broadCategoryHint": "access_security",
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "account_status",
+              "value": "blocked",
+              "evidence": "Oui"
+            }
+          ],
+          "testedActions": [],
+          "uncertainties": [],
+          "contextDependency": "needs_context_to_interpret",
+          "contextualAnswer": {
+            "type": "affirmative",
+            "value": true,
+            "evidence": "Oui"
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ multi-support-needs ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case multi-support-needs --until support --debug
+
+
+============================================================
+CASE multi-support-needs — One support macro-segment with independent needs
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_multi-support-needs",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Sur Android, les notifications ne partent plus. Aussi, je n'arrive pas à télécharger ma facture de mai."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2756, image_tokens≈0, output_tokens=500, total_tokens≈3256
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2373, completion_tokens=102, total_tokens=2475
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2569, image_tokens≈0, output_tokens=2000, total_tokens≈4569
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3808, completion_tokens=611, total_tokens=4419
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Sur Android, les notifications ne partent plus. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "Aussi, je n'arrive pas à télécharger ma facture de mai.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "sourceVerbatims": [
+      "Sur Android, les notifications ne partent plus."
+    ],
+    "summary": "Notifications not sending on Android",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug"
+    ],
+    "broadCategoryHint": "bug",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "operating_system",
+        "value": "Android",
+        "evidence": "Sur Android"
+      },
+      {
+        "type": "open_fact",
+        "kind": "observed_result",
+        "value": "Notifications not sending",
+        "evidence": "les notifications ne partent plus",
+        "support": "explicit"
+      }
+    ],
+    "testedActions": [
+      {
+        "label": "User checked notifications",
+        "outcome": "failed",
+        "evidence": "les notifications ne partent plus"
+      }
+    ],
+    "uncertainties": []
+  },
+  {
+    "understandingId": "text_understanding_2",
+    "sourceSegmentIds": [
+      "text_segment_2"
+    ],
+    "sourceVerbatims": [
+      "Aussi, je n'arrive pas à télécharger ma facture de mai."
+    ],
+    "summary": "Unable to download May invoice",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_billing_or_payment_action"
+    ],
+    "broadCategoryHint": "billing",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "open_fact",
+        "kind": "observed_result",
+        "value": "Unable to download invoice",
+        "evidence": "je n'arrive pas à télécharger ma facture",
+        "support": "explicit"
+      },
+      {
+        "type": "open_fact",
+        "kind": "billing_date_or_period",
+        "value": "May",
+        "evidence": "ma facture de mai",
+        "support": "explicit"
+      }
+    ],
+    "testedActions": [
+      {
+        "label": "User attempted to download invoice",
+        "outcome": "failed",
+        "evidence": "je n'arrive pas à télécharger ma facture"
+      }
+    ],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Sur Android, les notifications ne partent plus.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Aussi, je n'arrive pas à télécharger ma facture de mai.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"sourceVerbatims\": [\"Sur Android, les notifications ne partent plus.\"],\n      \"summary\": \"Notifications not sending on Android\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\"possible_bug\"],\n      \"broadCategoryHint\": \"bug\",\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"operating_system\",\n          \"value\": \"Android\",\n          \"evidence\": \"Sur Android\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"observed_result\",\n          \"value\": \"Notifications not sending\",\n          \"evidence\": \"les notifications ne partent plus\",\n          \"support\": \"explicit\"\n        }\n      ],\n      \"testedActions\": [\n        {\n          \"label\": \"User checked notifications\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"les notifications ne partent plus\"\n        }\n      ],\n      \"uncertainties\": [],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_2\"],\n      \"sourceVerbatims\": [\"Aussi, je n'arrive pas à télécharger ma facture de mai.\"],\n      \"summary\": \"Unable to download May invoice\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\"possible_billing_or_payment_action\"],\n      \"broadCategoryHint\": \"billing\",\n      \"facts\": [\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"observed_result\",\n          \"value\": \"Unable to download invoice\",\n          \"evidence\": \"je n'arrive pas à télécharger ma facture\",\n          \"support\": \"explicit\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"billing_date_or_period\",\n          \"value\": \"May\",\n          \"evidence\": \"ma facture de mai\",\n          \"support\": \"explicit\"\n        }\n      ],\n      \"testedActions\": [\n        {\n          \"label\": \"User attempted to download invoice\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"je n'arrive pas à télécharger ma facture\"\n        }\n      ],\n      \"uncertainties\": [],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "sourceVerbatims": [
+            "Sur Android, les notifications ne partent plus."
+          ],
+          "summary": "Notifications not sending on Android",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug"
+          ],
+          "broadCategoryHint": "bug",
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "operating_system",
+              "value": "Android",
+              "evidence": "Sur Android"
+            },
+            {
+              "type": "open_fact",
+              "kind": "observed_result",
+              "value": "Notifications not sending",
+              "evidence": "les notifications ne partent plus",
+              "support": "explicit"
+            }
+          ],
+          "testedActions": [
+            {
+              "label": "User checked notifications",
+              "outcome": "failed",
+              "evidence": "les notifications ne partent plus"
+            }
+          ],
+          "uncertainties": [],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_2"
+          ],
+          "sourceVerbatims": [
+            "Aussi, je n'arrive pas à télécharger ma facture de mai."
+          ],
+          "summary": "Unable to download May invoice",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_billing_or_payment_action"
+          ],
+          "broadCategoryHint": "billing",
+          "facts": [
+            {
+              "type": "open_fact",
+              "kind": "observed_result",
+              "value": "Unable to download invoice",
+              "evidence": "je n'arrive pas à télécharger ma facture",
+              "support": "explicit"
+            },
+            {
+              "type": "open_fact",
+              "kind": "billing_date_or_period",
+              "value": "May",
+              "evidence": "ma facture de mai",
+              "support": "explicit"
+            }
+          ],
+          "testedActions": [
+            {
+              "label": "User attempted to download invoice",
+              "outcome": "failed",
+              "evidence": "je n'arrive pas à télécharger ma facture"
+            }
+          ],
+          "uncertainties": [],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ single-issue-rich ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case single-issue-rich --until support --debug
+
+
+============================================================
+CASE single-issue-rich — One issue with trigger, error, environment and tested action
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_single-issue-rich",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Sur Firefox, quand j'ouvre la page Facturation, j'obtiens l'erreur 502. J'ai rafraîchi la page et ça échoue encore."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2759, image_tokens≈0, output_tokens=500, total_tokens≈3259
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2384, completion_tokens=84, total_tokens=2468
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2556, image_tokens≈0, output_tokens=2000, total_tokens≈4556
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3795, completion_tokens=584, total_tokens=4379
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Sur Firefox, quand j'ouvre la page Facturation, j'obtiens l'erreur 502. J'ai rafraîchi la page et ça échoue encore.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "sourceVerbatims": [
+      "Sur Firefox, quand j'ouvre la page Facturation, j'obtiens l'erreur 502. J'ai rafraîchi la page et ça échoue encore."
+    ],
+    "summary": "Error 502 when opening the Billing page on Firefox, even after refreshing.",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug"
+    ],
+    "broadCategoryHint": "bug",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "browser",
+        "value": "Firefox",
+        "evidence": "Firefox"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "feature_or_page",
+        "value": "Facturation",
+        "evidence": "la page Facturation"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "error_message",
+        "value": "502",
+        "evidence": "l'erreur 502"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "trigger_action",
+        "value": "opening the Billing page",
+        "evidence": "quand j'ouvre la page Facturation"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "observed_result",
+        "value": "Error 502",
+        "evidence": "j'obtiens l'erreur 502"
+      },
+      {
+        "type": "open_fact",
+        "kind": "tested action",
+        "value": "refreshed the page",
+        "evidence": "J'ai rafraîchi la page",
+        "support": "explicit"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "observed_result",
+        "value": "Error 502 persists after refresh",
+        "evidence": "et ça échoue encore"
+      }
+    ],
+    "testedActions": [
+      {
+        "label": "refreshed the page",
+        "outcome": "failed",
+        "evidence": "J'ai rafraîchi la page et ça échoue encore"
+      }
+    ],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Sur Firefox, quand j'ouvre la page Facturation, j'obtiens l'erreur 502. J'ai rafraîchi la page et ça échoue encore.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"sourceVerbatims\": [\"Sur Firefox, quand j'ouvre la page Facturation, j'obtiens l'erreur 502. J'ai rafraîchi la page et ça échoue encore.\"],\n      \"summary\": \"Error 502 when opening the Billing page on Firefox, even after refreshing.\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\"possible_bug\"],\n      \"broadCategoryHint\": \"bug\",\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"browser\",\n          \"value\": \"Firefox\",\n          \"evidence\": \"Firefox\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"feature_or_page\",\n          \"value\": \"Facturation\",\n          \"evidence\": \"la page Facturation\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"error_message\",\n          \"value\": \"502\",\n          \"evidence\": \"l'erreur 502\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"trigger_action\",\n          \"value\": \"opening the Billing page\",\n          \"evidence\": \"quand j'ouvre la page Facturation\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"observed_result\",\n          \"value\": \"Error 502\",\n          \"evidence\": \"j'obtiens l'erreur 502\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"tested action\",\n          \"value\": \"refreshed the page\",\n          \"evidence\": \"J'ai rafraîchi la page\",\n          \"support\": \"explicit\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"observed_result\",\n          \"value\": \"Error 502 persists after refresh\",\n          \"evidence\": \"et ça échoue encore\"\n        }\n      ],\n      \"testedActions\": [\n        {\n          \"label\": \"refreshed the page\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"J'ai rafraîchi la page et ça échoue encore\"\n        }\n      ],\n      \"uncertainties\": [],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "sourceVerbatims": [
+            "Sur Firefox, quand j'ouvre la page Facturation, j'obtiens l'erreur 502. J'ai rafraîchi la page et ça échoue encore."
+          ],
+          "summary": "Error 502 when opening the Billing page on Firefox, even after refreshing.",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug"
+          ],
+          "broadCategoryHint": "bug",
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "browser",
+              "value": "Firefox",
+              "evidence": "Firefox"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "feature_or_page",
+              "value": "Facturation",
+              "evidence": "la page Facturation"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "error_message",
+              "value": "502",
+              "evidence": "l'erreur 502"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "trigger_action",
+              "value": "opening the Billing page",
+              "evidence": "quand j'ouvre la page Facturation"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "observed_result",
+              "value": "Error 502",
+              "evidence": "j'obtiens l'erreur 502"
+            },
+            {
+              "type": "open_fact",
+              "kind": "tested action",
+              "value": "refreshed the page",
+              "evidence": "J'ai rafraîchi la page",
+              "support": "explicit"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "observed_result",
+              "value": "Error 502 persists after refresh",
+              "evidence": "et ça échoue encore"
+            }
+          ],
+          "testedActions": [
+            {
+              "label": "refreshed the page",
+              "outcome": "failed",
+              "evidence": "J'ai rafraîchi la page et ça échoue encore"
+            }
+          ],
+          "uncertainties": [],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ android-notification-not-received ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case android-notification-not-received --until support --debug
+
+
+============================================================
+CASE android-notification-not-received — Android notification not received after new email
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_android-notification-not-received",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "I do not receive notifications on Android when I get a new email."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2746, image_tokens≈0, output_tokens=500, total_tokens≈3246
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2360, completion_tokens=60, total_tokens=2420
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2543, image_tokens≈0, output_tokens=2000, total_tokens≈4543
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3771, completion_tokens=330, total_tokens=4101
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "en",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "I do not receive notifications on Android when I get a new email.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "sourceVerbatims": [
+      "I do not receive notifications on Android when I get a new email."
+    ],
+    "summary": "User not receiving email notifications on Android",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug"
+    ],
+    "broadCategoryHint": "configuration",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "operating_system",
+        "value": "Android",
+        "evidence": "Android"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "observed_result",
+        "value": "I do not receive notifications on Android when I get a new email.",
+        "evidence": "I do not receive notifications on Android when I get a new email."
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "trigger_action",
+        "value": "get a new email",
+        "evidence": "when I get a new email"
+      }
+    ],
+    "testedActions": [],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"en\",\n  \"segments\": [\n    {\n      \"verbatim\": \"I do not receive notifications on Android when I get a new email.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\n        \"text_segment_1\"\n      ],\n      \"sourceVerbatims\": [\n        \"I do not receive notifications on Android when I get a new email.\"\n      ],\n      \"summary\": \"User not receiving email notifications on Android\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\n        \"possible_bug\"\n      ],\n      \"broadCategoryHint\": \"configuration\",\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"operating_system\",\n          \"value\": \"Android\",\n          \"evidence\": \"Android\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"observed_result\",\n          \"value\": \"I do not receive notifications on Android when I get a new email.\",\n          \"evidence\": \"I do not receive notifications on Android when I get a new email.\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"trigger_action\",\n          \"value\": \"get a new email\",\n          \"evidence\": \"when I get a new email\"\n        }\n      ],\n      \"testedActions\": [],\n      \"uncertainties\": [],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "sourceVerbatims": [
+            "I do not receive notifications on Android when I get a new email."
+          ],
+          "summary": "User not receiving email notifications on Android",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug"
+          ],
+          "broadCategoryHint": "configuration",
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "operating_system",
+              "value": "Android",
+              "evidence": "Android"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "observed_result",
+              "value": "I do not receive notifications on Android when I get a new email.",
+              "evidence": "I do not receive notifications on Android when I get a new email."
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "trigger_action",
+              "value": "get a new email",
+              "evidence": "when I get a new email"
+            }
+          ],
+          "testedActions": [],
+          "uncertainties": [],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ android-notification-follow-up ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case android-notification-follow-up --until support --debug
+
+
+============================================================
+CASE android-notification-follow-up — Android notification permission confirmed but issue persists
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_android-notification-follow-up",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Yes, notifications are enabled in Android settings and the permission is granted. I still do not receive notifications."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "The user does not receive notifications on Android for new emails.",
+    "previousBotResponseSummary": "The bot asked whether notifications are enabled and notification permission is granted.",
+    "previousBotQuestionFieldNames": [
+      "notification_permission_status"
+    ]
+  },
+  "existingTopicsCount": 1,
+  "existingTopics": [
+    {
+      "topicId": "topic_4",
+      "title": "Android notification issue",
+      "summary": "The user does not receive notifications for new emails.",
+      "status": "open",
+      "broadCategoryHint": "bug",
+      "userGoal": "Restore Android email notifications.",
+      "blockingIssue": "unknown",
+      "topic_details": {
+        "platform": "mobile app",
+        "operating_system": "Android",
+        "feature_or_page": "notifications",
+        "trigger_action": "receiving a new email",
+        "observed_result": "not receiving notifications"
+      },
+      "linkedKnowledgeIds": [
+        "android_push_notification_not_received"
+      ]
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2798, image_tokens≈0, output_tokens=500, total_tokens≈3298
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2393, completion_tokens=95, total_tokens=2488
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2614, image_tokens≈0, output_tokens=2000, total_tokens≈4614
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3832, completion_tokens=465, total_tokens=4297
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "en",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Yes, notifications are enabled in Android settings and the permission is granted. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "I still do not receive notifications.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1",
+      "text_segment_2"
+    ],
+    "sourceVerbatims": [
+      "Yes, notifications are enabled in Android settings and the permission is granted.",
+      "I still do not receive notifications."
+    ],
+    "summary": "User reports not receiving notifications despite having them enabled and permission granted on Android.",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug",
+      "possible_product_limitation"
+    ],
+    "broadCategoryHint": "bug",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "notification_permission_status",
+        "value": "granted",
+        "evidence": "the permission is granted"
+      },
+      {
+        "type": "open_fact",
+        "kind": "notification_channel_status",
+        "value": "enabled",
+        "evidence": "notifications are enabled in Android settings",
+        "support": "explicit"
+      },
+      {
+        "type": "open_fact",
+        "kind": "observed_result",
+        "value": "not receiving notifications",
+        "evidence": "I still do not receive notifications",
+        "support": "explicit"
+      },
+      {
+        "type": "open_fact",
+        "kind": "platform",
+        "value": "mobile app",
+        "evidence": "notifications are enabled in Android settings",
+        "support": "strongly_implied"
+      },
+      {
+        "type": "open_fact",
+        "kind": "operating_system",
+        "value": "Android",
+        "evidence": "notifications are enabled in Android settings",
+        "support": "explicit"
+      }
+    ],
+    "testedActions": [],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"en\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Yes, notifications are enabled in Android settings and the permission is granted.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"I still do not receive notifications.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\n        \"text_segment_1\",\n        \"text_segment_2\"\n      ],\n      \"sourceVerbatims\": [\n        \"Yes, notifications are enabled in Android settings and the permission is granted.\",\n        \"I still do not receive notifications.\"\n      ],\n      \"summary\": \"User reports not receiving notifications despite having them enabled and permission granted on Android.\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\n        \"possible_bug\",\n        \"possible_product_limitation\"\n      ],\n      \"broadCategoryHint\": \"bug\",\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"notification_permission_status\",\n          \"value\": \"granted\",\n          \"evidence\": \"the permission is granted\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"notification_channel_status\",\n          \"value\": \"enabled\",\n          \"evidence\": \"notifications are enabled in Android settings\",\n          \"support\": \"explicit\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"observed_result\",\n          \"value\": \"not receiving notifications\",\n          \"evidence\": \"I still do not receive notifications\",\n          \"support\": \"explicit\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"platform\",\n          \"value\": \"mobile app\",\n          \"evidence\": \"notifications are enabled in Android settings\",\n          \"support\": \"strongly_implied\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"operating_system\",\n          \"value\": \"Android\",\n          \"evidence\": \"notifications are enabled in Android settings\",\n          \"support\": \"explicit\"\n        }\n      ],\n      \"testedActions\": [],\n      \"uncertainties\": [],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1",
+            "text_segment_2"
+          ],
+          "sourceVerbatims": [
+            "Yes, notifications are enabled in Android settings and the permission is granted.",
+            "I still do not receive notifications."
+          ],
+          "summary": "User reports not receiving notifications despite having them enabled and permission granted on Android.",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug",
+            "possible_product_limitation"
+          ],
+          "broadCategoryHint": "bug",
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "notification_permission_status",
+              "value": "granted",
+              "evidence": "the permission is granted"
+            },
+            {
+              "type": "open_fact",
+              "kind": "notification_channel_status",
+              "value": "enabled",
+              "evidence": "notifications are enabled in Android settings",
+              "support": "explicit"
+            },
+            {
+              "type": "open_fact",
+              "kind": "observed_result",
+              "value": "not receiving notifications",
+              "evidence": "I still do not receive notifications",
+              "support": "explicit"
+            },
+            {
+              "type": "open_fact",
+              "kind": "platform",
+              "value": "mobile app",
+              "evidence": "notifications are enabled in Android settings",
+              "support": "strongly_implied"
+            },
+            {
+              "type": "open_fact",
+              "kind": "operating_system",
+              "value": "Android",
+              "evidence": "notifications are enabled in Android settings",
+              "support": "explicit"
+            }
+          ],
+          "testedActions": [],
+          "uncertainties": [],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ android-notification-technical-details-follow-up ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case android-notification-technical-details-follow-up --until support --debug
+
+
+============================================================
+CASE android-notification-technical-details-follow-up — Android notification technical details after checks confirmed
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_android-notification-technical-details-follow-up",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "The user confirmed Android notification settings and permission are enabled, but still does not receive notifications.",
+    "previousBotResponseSummary": "The bot asked for app version, device model, Android version, and whether the issue happens for every new email or only in specific cases.",
+    "previousBotQuestionFieldNames": [
+      "app_version",
+      "device",
+      "operating_system",
+      "frequency"
+    ]
+  },
+  "existingTopicsCount": 1,
+  "existingTopics": [
+    {
+      "topicId": "topic_4",
+      "title": "Android notification issue",
+      "summary": "The user does not receive notifications for new emails despite enabled notification settings.",
+      "status": "open",
+      "broadCategoryHint": "bug",
+      "userGoal": "Restore Android email notifications.",
+      "blockingIssue": "unknown",
+      "topic_details": {
+        "platform": "mobile app",
+        "operating_system": "Android",
+        "feature_or_page": "notifications",
+        "trigger_action": "receiving a new email",
+        "observed_result": "still not receiving notifications",
+        "notification_permission_status": "granted",
+        "notification_channel_status": "enabled"
+      },
+      "linkedKnowledgeIds": [
+        "android_push_notification_not_received"
+      ]
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2821, image_tokens≈0, output_tokens=500, total_tokens≈3321
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2429, completion_tokens=76, total_tokens=2505
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2625, image_tokens≈0, output_tokens=2000, total_tokens≈4625
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3851, completion_tokens=404, total_tokens=4255
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "en",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "sourceVerbatims": [
+      "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+    ],
+    "summary": "User provides app version, device, operating system, and frequency of the issue.",
+    "primaryUserExpectation": "provides_information",
+    "supportNeeds": [],
+    "contextDependency": "needs_context_to_interpret",
+    "contextualAnswer": {
+      "type": "affirmative",
+      "value": true,
+      "evidence": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "app_version",
+        "value": "0.29.0",
+        "evidence": "app version 0.29.0"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "device",
+        "value": "Pixel 7",
+        "evidence": "Pixel 7"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "operating_system",
+        "value": "Android 14",
+        "evidence": "Android 14"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "frequency",
+        "value": "every new email",
+        "evidence": "It happens for every new email"
+      }
+    ],
+    "testedActions": [],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"en\",\n  \"segments\": [\n    {\n      \"verbatim\": \"I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"sourceVerbatims\": [\"I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.\"],\n      \"summary\": \"User provides app version, device, operating system, and frequency of the issue.\",\n      \"primaryUserExpectation\": \"provides_information\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [],\n      \"broadCategoryHint\": null,\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"app_version\",\n          \"value\": \"0.29.0\",\n          \"evidence\": \"app version 0.29.0\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"device\",\n          \"value\": \"Pixel 7\",\n          \"evidence\": \"Pixel 7\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"operating_system\",\n          \"value\": \"Android 14\",\n          \"evidence\": \"Android 14\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"frequency\",\n          \"value\": \"every new email\",\n          \"evidence\": \"It happens for every new email\"\n        }\n      ],\n      \"testedActions\": [],\n      \"uncertainties\": [],\n      \"contextDependency\": \"needs_context_to_interpret\",\n      \"contextualAnswer\": {\n        \"type\": \"affirmative\",\n        \"value\": true,\n        \"evidence\": \"I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.\"\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "sourceVerbatims": [
+            "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+          ],
+          "summary": "User provides app version, device, operating system, and frequency of the issue.",
+          "primaryUserExpectation": "provides_information",
+          "explicitUserRequest": null,
+          "supportNeeds": [],
+          "broadCategoryHint": null,
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "app_version",
+              "value": "0.29.0",
+              "evidence": "app version 0.29.0"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "device",
+              "value": "Pixel 7",
+              "evidence": "Pixel 7"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "operating_system",
+              "value": "Android 14",
+              "evidence": "Android 14"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "frequency",
+              "value": "every new email",
+              "evidence": "It happens for every new email"
+            }
+          ],
+          "testedActions": [],
+          "uncertainties": [],
+          "contextDependency": "needs_context_to_interpret",
+          "contextualAnswer": {
+            "type": "affirmative",
+            "value": true,
+            "evidence": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ real-multi-bug-app-crash-dark-theme-my-vault ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case real-multi-bug-app-crash-dark-theme-my-vault --until support --debug
+
+
+============================================================
+CASE real-multi-bug-app-crash-dark-theme-my-vault — Real multi-bug: app crash, dark theme contrast, My Vault shortcut
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_real-multi-bug-app-crash-dark-theme-my-vault",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "J'ai eu plusieurs fois des fermetures de l'application, sans pour autant comprendre pourquoi.La gestion du thème sombre est perfectible, notamment dans la création d'une nouvelle entrée, les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles. Mais je ne peux pas t'illustrer avec une capture d'écran, elles ne sont pas possible.Le raccourci \"My vault\" dans les réglages rapides ne fonctionne plus. Je l'aimais bien celui-là, il était pratique pour accéder à l'appli rapidement. Et l'appui sur ce raccourci provoque une fermeture d'application."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2875, image_tokens≈0, output_tokens=500, total_tokens≈3375
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2482, completion_tokens=322, total_tokens=2804
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2752, image_tokens≈0, output_tokens=2000, total_tokens≈4752
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=4006, completion_tokens=1346, total_tokens=5352
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "J'ai eu plusieurs fois des fermetures de l'application, sans pour autant comprendre pourquoi.",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "La gestion du thème sombre est perfectible, notamment dans la création d'une nouvelle entrée, les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_3",
+      "verbatim": "Mais je ne peux pas t'illustrer avec une capture d'écran, elles ne sont pas possible.",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_4",
+      "verbatim": "Le raccourci \"My vault\" dans les réglages rapides ne fonctionne plus. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_5",
+      "verbatim": "Je l'aimais bien celui-là, il était pratique pour accéder à l'appli rapidement. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_6",
+      "verbatim": "Et l'appui sur ce raccourci provoque une fermeture d'application.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "sourceVerbatims": [
+      "J'ai eu plusieurs fois des fermetures de l'application, sans pour autant comprendre pourquoi."
+    ],
+    "summary": "Application closes unexpectedly",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug"
+    ],
+    "broadCategoryHint": "bug",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "open_fact",
+        "kind": "observed_result",
+        "value": "application closes unexpectedly",
+        "evidence": "des fermetures de l'application",
+        "support": "explicit"
+      }
+    ],
+    "testedActions": [
+      {
+        "label": "user tried to understand the cause",
+        "outcome": "failed",
+        "evidence": "sans pour autant comprendre pourquoi"
+      }
+    ],
+    "uncertainties": [
+      {
+        "reason": "missing_context",
+        "detail": "no specific trigger action or error message provided"
+      }
+    ]
+  },
+  {
+    "understandingId": "text_understanding_2",
+    "sourceSegmentIds": [
+      "text_segment_2"
+    ],
+    "sourceVerbatims": [
+      "La gestion du thème sombre est perfectible, notamment dans la création d'une nouvelle entrée, les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles."
+    ],
+    "summary": "Dark theme accessibility issue",
+    "primaryUserExpectation": "expresses_feedback",
+    "supportNeeds": [
+      "possible_product_limitation"
+    ],
+    "broadCategoryHint": "accessibility",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "open_fact",
+        "kind": "observed_result",
+        "value": "save buttons are unreadable in dark theme",
+        "evidence": "les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles",
+        "support": "explicit"
+      },
+      {
+        "type": "open_fact",
+        "kind": "feature_or_page",
+        "value": "new entry creation",
+        "evidence": "dans la création d'une nouvelle entrée",
+        "support": "explicit"
+      }
+    ],
+    "testedActions": [],
+    "uncertainties": [
+      {
+        "reason": "missing_context",
+        "detail": "no specific platform or app version provided"
+      }
+    ]
+  },
+  {
+    "understandingId": "text_understanding_3",
+    "sourceSegmentIds": [
+      "text_segment_3"
+    ],
+    "sourceVerbatims": [
+      "Mais je ne peux pas t'illustrer avec une capture d'écran, elles ne sont pas possible."
+    ],
+    "summary": "Inability to provide screenshot",
+    "primaryUserExpectation": "provides_information",
+    "supportNeeds": [],
+    "contextDependency": "needs_context_to_interpret",
+    "contextualAnswer": {
+      "type": "reference",
+      "value": "unable to provide screenshot",
+      "evidence": "je ne peux pas t'illustrer avec une capture d'écran"
+    },
+    "facts": [
+      {
+        "type": "open_fact",
+        "kind": "observed_result",
+        "value": "unable to provide screenshot",
+        "evidence": "je ne peux pas t'illustrer avec une capture d'écran",
+        "support": "explicit"
+      }
+    ],
+    "testedActions": [],
+    "uncertainties": [
+      {
+        "reason": "missing_context",
+        "detail": "no specific reason or context for why screenshots are not possible"
+      }
+    ]
+  },
+  {
+    "understandingId": "text_understanding_4",
+    "sourceSegmentIds": [
+      "text_segment_4",
+      "text_segment_5",
+      "text_segment_6"
+    ],
+    "sourceVerbatims": [
+      "Le raccourci \"My vault\" dans les réglages rapides ne fonctionne plus.",
+      "Je l'aimais bien celui-là, il était pratique pour accéder à l'appli rapidement.",
+      "Et l'appui sur ce raccourci provoque une fermeture d'application."
+    ],
+    "summary": "Quick settings shortcut not working and causing app crash",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug"
+    ],
+    "broadCategoryHint": "bug",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "open_fact",
+        "kind": "trigger_action",
+        "value": "pressing 'My vault' shortcut",
+        "evidence": "l'appui sur ce raccourci",
+        "support": "explicit"
+      },
+      {
+        "type": "open_fact",
+        "kind": "observed_result",
+        "value": "app closes when pressing shortcut",
+        "evidence": "provoque une fermeture d'application",
+        "support": "explicit"
+      },
+      {
+        "type": "open_fact",
+        "kind": "expected_result",
+        "value": "quick access to the app",
+        "evidence": "il était pratique pour accéder à l'appli rapidement",
+        "support": "explicit"
+      }
+    ],
+    "testedActions": [],
+    "uncertainties": [
+      {
+        "reason": "missing_context",
+        "detail": "no specific platform or app version provided"
+      }
+    ]
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"J'ai eu plusieurs fois des fermetures de l'application, sans pour autant comprendre pourquoi.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"La gestion du thème sombre est perfectible, notamment dans la création d'une nouvelle entrée, les boutons \\\"enregistrer\\\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Mais je ne peux pas t'illustrer avec une capture d'écran, elles ne sont pas possible.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Le raccourci \\\"My vault\\\" dans les réglages rapides ne fonctionne plus.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Je l'aimais bien celui-là, il était pratique pour accéder à l'appli rapidement.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Et l'appui sur ce raccourci provoque une fermeture d'application.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"sourceVerbatims\": [\"J'ai eu plusieurs fois des fermetures de l'application, sans pour autant comprendre pourquoi.\"],\n      \"summary\": \"Application closes unexpectedly\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\"possible_bug\"],\n      \"broadCategoryHint\": \"bug\",\n      \"facts\": [\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"observed_result\",\n          \"value\": \"application closes unexpectedly\",\n          \"evidence\": \"des fermetures de l'application\",\n          \"support\": \"explicit\"\n        }\n      ],\n      \"testedActions\": [\n        {\n          \"label\": \"user tried to understand the cause\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"sans pour autant comprendre pourquoi\"\n        }\n      ],\n      \"uncertainties\": [\n        {\n          \"reason\": \"missing_context\",\n          \"detail\": \"no specific trigger action or error message provided\",\n          \"evidence\": null\n        }\n      ],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_2\"],\n      \"sourceVerbatims\": [\"La gestion du thème sombre est perfectible, notamment dans la création d'une nouvelle entrée, les boutons \\\"enregistrer\\\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles.\"],\n      \"summary\": \"Dark theme accessibility issue\",\n      \"primaryUserExpectation\": \"expresses_feedback\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\"possible_product_limitation\"],\n      \"broadCategoryHint\": \"accessibility\",\n      \"facts\": [\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"observed_result\",\n          \"value\": \"save buttons are unreadable in dark theme\",\n          \"evidence\": \"les boutons \\\"enregistrer\\\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles\",\n          \"support\": \"explicit\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"feature_or_page\",\n          \"value\": \"new entry creation\",\n          \"evidence\": \"dans la création d'une nouvelle entrée\",\n          \"support\": \"explicit\"\n        }\n      ],\n      \"testedActions\": [],\n      \"uncertainties\": [\n        {\n          \"reason\": \"missing_context\",\n          \"detail\": \"no specific platform or app version provided\",\n          \"evidence\": null\n        }\n      ],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_3\"],\n      \"sourceVerbatims\": [\"Mais je ne peux pas t'illustrer avec une capture d'écran, elles ne sont pas possible.\"],\n      \"summary\": \"Inability to provide screenshot\",\n      \"primaryUserExpectation\": \"provides_information\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [],\n      \"broadCategoryHint\": null,\n      \"facts\": [\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"observed_result\",\n          \"value\": \"unable to provide screenshot\",\n          \"evidence\": \"je ne peux pas t'illustrer avec une capture d'écran\",\n          \"support\": \"explicit\"\n        }\n      ],\n      \"testedActions\": [],\n      \"uncertainties\": [\n        {\n          \"reason\": \"missing_context\",\n          \"detail\": \"no specific reason or context for why screenshots are not possible\",\n          \"evidence\": null\n        }\n      ],\n      \"contextDependency\": \"needs_context_to_interpret\",\n      \"contextualAnswer\": {\n        \"type\": \"reference\",\n        \"value\": \"unable to provide screenshot\",\n        \"evidence\": \"je ne peux pas t'illustrer avec une capture d'écran\"\n      }\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_4\", \"text_segment_5\", \"text_segment_6\"],\n      \"sourceVerbatims\": [\n        \"Le raccourci \\\"My vault\\\" dans les réglages rapides ne fonctionne plus.\",\n        \"Je l'aimais bien celui-là, il était pratique pour accéder à l'appli rapidement.\",\n        \"Et l'appui sur ce raccourci provoque une fermeture d'application.\"\n      ],\n      \"summary\": \"Quick settings shortcut not working and causing app crash\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\"possible_bug\"],\n      \"broadCategoryHint\": \"bug\",\n      \"facts\": [\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"trigger_action\",\n          \"value\": \"pressing 'My vault' shortcut\",\n          \"evidence\": \"l'appui sur ce raccourci\",\n          \"support\": \"explicit\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"observed_result\",\n          \"value\": \"app closes when pressing shortcut\",\n          \"evidence\": \"provoque une fermeture d'application\",\n          \"support\": \"explicit\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"expected_result\",\n          \"value\": \"quick access to the app\",\n          \"evidence\": \"il était pratique pour accéder à l'appli rapidement\",\n          \"support\": \"explicit\"\n        }\n      ],\n      \"testedActions\": [],\n      \"uncertainties\": [\n        {\n          \"reason\": \"missing_context\",\n          \"detail\": \"no specific platform or app version provided\",\n          \"evidence\": null\n        }\n      ],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "sourceVerbatims": [
+            "J'ai eu plusieurs fois des fermetures de l'application, sans pour autant comprendre pourquoi."
+          ],
+          "summary": "Application closes unexpectedly",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug"
+          ],
+          "broadCategoryHint": "bug",
+          "facts": [
+            {
+              "type": "open_fact",
+              "kind": "observed_result",
+              "value": "application closes unexpectedly",
+              "evidence": "des fermetures de l'application",
+              "support": "explicit"
+            }
+          ],
+          "testedActions": [
+            {
+              "label": "user tried to understand the cause",
+              "outcome": "failed",
+              "evidence": "sans pour autant comprendre pourquoi"
+            }
+          ],
+          "uncertainties": [
+            {
+              "reason": "missing_context",
+              "detail": "no specific trigger action or error message provided",
+              "evidence": null
+            }
+          ],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_2"
+          ],
+          "sourceVerbatims": [
+            "La gestion du thème sombre est perfectible, notamment dans la création d'une nouvelle entrée, les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles."
+          ],
+          "summary": "Dark theme accessibility issue",
+          "primaryUserExpectation": "expresses_feedback",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_product_limitation"
+          ],
+          "broadCategoryHint": "accessibility",
+          "facts": [
+            {
+              "type": "open_fact",
+              "kind": "observed_result",
+              "value": "save buttons are unreadable in dark theme",
+              "evidence": "les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles",
+              "support": "explicit"
+            },
+            {
+              "type": "open_fact",
+              "kind": "feature_or_page",
+              "value": "new entry creation",
+              "evidence": "dans la création d'une nouvelle entrée",
+              "support": "explicit"
+            }
+          ],
+          "testedActions": [],
+          "uncertainties": [
+            {
+              "reason": "missing_context",
+              "detail": "no specific platform or app version provided",
+              "evidence": null
+            }
+          ],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_3"
+          ],
+          "sourceVerbatims": [
+            "Mais je ne peux pas t'illustrer avec une capture d'écran, elles ne sont pas possible."
+          ],
+          "summary": "Inability to provide screenshot",
+          "primaryUserExpectation": "provides_information",
+          "explicitUserRequest": null,
+          "supportNeeds": [],
+          "broadCategoryHint": null,
+          "facts": [
+            {
+              "type": "open_fact",
+              "kind": "observed_result",
+              "value": "unable to provide screenshot",
+              "evidence": "je ne peux pas t'illustrer avec une capture d'écran",
+              "support": "explicit"
+            }
+          ],
+          "testedActions": [],
+          "uncertainties": [
+            {
+              "reason": "missing_context",
+              "detail": "no specific reason or context for why screenshots are not possible",
+              "evidence": null
+            }
+          ],
+          "contextDependency": "needs_context_to_interpret",
+          "contextualAnswer": {
+            "type": "reference",
+            "value": "unable to provide screenshot",
+            "evidence": "je ne peux pas t'illustrer avec une capture d'écran"
+          }
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_4",
+            "text_segment_5",
+            "text_segment_6"
+          ],
+          "sourceVerbatims": [
+            "Le raccourci \"My vault\" dans les réglages rapides ne fonctionne plus.",
+            "Je l'aimais bien celui-là, il était pratique pour accéder à l'appli rapidement.",
+            "Et l'appui sur ce raccourci provoque une fermeture d'application."
+          ],
+          "summary": "Quick settings shortcut not working and causing app crash",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug"
+          ],
+          "broadCategoryHint": "bug",
+          "facts": [
+            {
+              "type": "open_fact",
+              "kind": "trigger_action",
+              "value": "pressing 'My vault' shortcut",
+              "evidence": "l'appui sur ce raccourci",
+              "support": "explicit"
+            },
+            {
+              "type": "open_fact",
+              "kind": "observed_result",
+              "value": "app closes when pressing shortcut",
+              "evidence": "provoque une fermeture d'application",
+              "support": "explicit"
+            },
+            {
+              "type": "open_fact",
+              "kind": "expected_result",
+              "value": "quick access to the app",
+              "evidence": "il était pratique pour accéder à l'appli rapidement",
+              "support": "explicit"
+            }
+          ],
+          "testedActions": [],
+          "uncertainties": [
+            {
+              "reason": "missing_context",
+              "detail": "no specific platform or app version provided",
+              "evidence": null
+            }
+          ],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_3",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_4",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_5",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_6",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ real-folder-create-rename-app-error ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case real-folder-create-rename-app-error --until support --debug
+
+
+============================================================
+CASE real-folder-create-rename-app-error — Real folder create and rename bug with error message
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_real-folder-create-rename-app-error",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Depuis qq temps je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli. Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer. Dans le cas d'un répertoire j'ai ensuite ce message \"vous devez nommer votre dossier si vous voulez le sauvegarder...\""
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2810, image_tokens≈0, output_tokens=500, total_tokens≈3310
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2429, completion_tokens=187, total_tokens=2616
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2639, image_tokens≈0, output_tokens=2000, total_tokens≈4639
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3888, completion_tokens=551, total_tokens=4439
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Depuis qq temps je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_3",
+      "verbatim": "Dans le cas d'un répertoire j'ai ensuite ce message \"vous devez nommer votre dossier si vous voulez le sauvegarder...\"",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1",
+      "text_segment_2",
+      "text_segment_3"
+    ],
+    "sourceVerbatims": [
+      "Depuis qq temps je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli.",
+      "Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer.",
+      "Dans le cas d'un répertoire j'ai ensuite ce message \"vous devez nommer votre dossier si vous voulez le sauvegarder...\""
+    ],
+    "summary": "User cannot create directories or rename files in the app, and encounters an error message when trying to create a directory.",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug"
+    ],
+    "broadCategoryHint": "bug",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "open_fact",
+        "kind": "trigger_action",
+        "value": "create directories or rename files in the app",
+        "evidence": "créer des répertoires ni renommer des fichiers depuis l'appli",
+        "support": "explicit"
+      },
+      {
+        "type": "open_fact",
+        "kind": "observed_result",
+        "value": "The name field closes immediately, preventing renaming.",
+        "evidence": "le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer",
+        "support": "explicit"
+      },
+      {
+        "type": "open_fact",
+        "kind": "error_message",
+        "value": "vous devez nommer votre dossier si vous voulez le sauvegarder...",
+        "evidence": "vous devez nommer votre dossier si vous voulez le sauvegarder...",
+        "support": "explicit"
+      }
+    ],
+    "testedActions": [
+      {
+        "label": "Attempt to create directories or rename files",
+        "outcome": "failed",
+        "evidence": "je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli"
+      }
+    ],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Depuis qq temps je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Dans le cas d'un répertoire j'ai ensuite ce message \\\"vous devez nommer votre dossier si vous voulez le sauvegarder...\\\"\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\", \"text_segment_2\", \"text_segment_3\"],\n      \"sourceVerbatims\": [\n        \"Depuis qq temps je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli.\",\n        \"Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer.\",\n        \"Dans le cas d'un répertoire j'ai ensuite ce message \\\"vous devez nommer votre dossier si vous voulez le sauvegarder...\\\"\"\n      ],\n      \"summary\": \"User cannot create directories or rename files in the app, and encounters an error message when trying to create a directory.\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\"possible_bug\"],\n      \"broadCategoryHint\": \"bug\",\n      \"facts\": [\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"trigger_action\",\n          \"value\": \"create directories or rename files in the app\",\n          \"evidence\": \"créer des répertoires ni renommer des fichiers depuis l'appli\",\n          \"support\": \"explicit\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"observed_result\",\n          \"value\": \"The name field closes immediately, preventing renaming.\",\n          \"evidence\": \"le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer\",\n          \"support\": \"explicit\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"error_message\",\n          \"value\": \"vous devez nommer votre dossier si vous voulez le sauvegarder...\",\n          \"evidence\": \"vous devez nommer votre dossier si vous voulez le sauvegarder...\",\n          \"support\": \"explicit\"\n        }\n      ],\n      \"testedActions\": [\n        {\n          \"label\": \"Attempt to create directories or rename files\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli\"\n        }\n      ],\n      \"uncertainties\": [],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1",
+            "text_segment_2",
+            "text_segment_3"
+          ],
+          "sourceVerbatims": [
+            "Depuis qq temps je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli.",
+            "Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer.",
+            "Dans le cas d'un répertoire j'ai ensuite ce message \"vous devez nommer votre dossier si vous voulez le sauvegarder...\""
+          ],
+          "summary": "User cannot create directories or rename files in the app, and encounters an error message when trying to create a directory.",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug"
+          ],
+          "broadCategoryHint": "bug",
+          "facts": [
+            {
+              "type": "open_fact",
+              "kind": "trigger_action",
+              "value": "create directories or rename files in the app",
+              "evidence": "créer des répertoires ni renommer des fichiers depuis l'appli",
+              "support": "explicit"
+            },
+            {
+              "type": "open_fact",
+              "kind": "observed_result",
+              "value": "The name field closes immediately, preventing renaming.",
+              "evidence": "le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer",
+              "support": "explicit"
+            },
+            {
+              "type": "open_fact",
+              "kind": "error_message",
+              "value": "vous devez nommer votre dossier si vous voulez le sauvegarder...",
+              "evidence": "vous devez nommer votre dossier si vous voulez le sauvegarder...",
+              "support": "explicit"
+            }
+          ],
+          "testedActions": [
+            {
+              "label": "Attempt to create directories or rename files",
+              "outcome": "failed",
+              "evidence": "je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli"
+            }
+          ],
+          "uncertainties": [],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_3",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ real-android-folder-create-error ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case real-android-folder-create-error --until support --debug
+
+
+============================================================
+CASE real-android-folder-create-error — Real Android folder creation bug with exact error
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_real-android-folder-create-error",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "depuis l'application android twake workplace, je ne peux plus créer de dossier. Quand je fais \"Créer\" - dossier, j'ai le message : \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\" Mais je ne peux pas entrer de nom de dossier."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2800, image_tokens≈0, output_tokens=500, total_tokens≈3300
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2416, completion_tokens=146, total_tokens=2562
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2614, image_tokens≈0, output_tokens=2000, total_tokens≈4614
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3851, completion_tokens=622, total_tokens=4473
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "depuis l'application android twake workplace, je ne peux plus créer de dossier. Quand je fais \"Créer\" - dossier, j'ai le message : \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\" ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "Mais je ne peux pas entrer de nom de dossier.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1",
+      "text_segment_2"
+    ],
+    "sourceVerbatims": [
+      "depuis l'application android twake workplace, je ne peux plus créer de dossier. Quand je fais \"Créer\" - dossier, j'ai le message : \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\"",
+      "Mais je ne peux pas entrer de nom de dossier."
+    ],
+    "summary": "User cannot create a folder in the Android Twake Workplace app due to an error message and inability to name the folder.",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug"
+    ],
+    "broadCategoryHint": "bug",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "platform",
+        "value": "mobile app",
+        "evidence": "application android"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "operating_system",
+        "value": "Android",
+        "evidence": "application android"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "product_or_service",
+        "value": "Twake Workplace",
+        "evidence": "twake workplace"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "feature_or_page",
+        "value": "folder creation",
+        "evidence": "créer de dossier"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "trigger_action",
+        "value": "create folder",
+        "evidence": "Quand je fais \"Créer\" - dossier"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "error_message",
+        "value": "Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.",
+        "evidence": "j'ai le message : \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\""
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "observed_result",
+        "value": "cannot name the folder",
+        "evidence": "Mais je ne peux pas entrer de nom de dossier."
+      }
+    ],
+    "testedActions": [],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"depuis l'application android twake workplace, je ne peux plus créer de dossier. Quand je fais \\\"Créer\\\" - dossier, j'ai le message : \\\"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\\\"\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Mais je ne peux pas entrer de nom de dossier.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\n        \"text_segment_1\",\n        \"text_segment_2\"\n      ],\n      \"sourceVerbatims\": [\n        \"depuis l'application android twake workplace, je ne peux plus créer de dossier. Quand je fais \\\"Créer\\\" - dossier, j'ai le message : \\\"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\\\"\",\n        \"Mais je ne peux pas entrer de nom de dossier.\"\n      ],\n      \"summary\": \"User cannot create a folder in the Android Twake Workplace app due to an error message and inability to name the folder.\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\n        \"possible_bug\"\n      ],\n      \"broadCategoryHint\": \"bug\",\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"platform\",\n          \"value\": \"mobile app\",\n          \"evidence\": \"application android\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"operating_system\",\n          \"value\": \"Android\",\n          \"evidence\": \"application android\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"product_or_service\",\n          \"value\": \"Twake Workplace\",\n          \"evidence\": \"twake workplace\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"feature_or_page\",\n          \"value\": \"folder creation\",\n          \"evidence\": \"créer de dossier\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"trigger_action\",\n          \"value\": \"create folder\",\n          \"evidence\": \"Quand je fais \\\"Créer\\\" - dossier\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"error_message\",\n          \"value\": \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\",\n          \"evidence\": \"j'ai le message : \\\"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\\\"\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"observed_result\",\n          \"value\": \"cannot name the folder\",\n          \"evidence\": \"Mais je ne peux pas entrer de nom de dossier.\"\n        }\n      ],\n      \"testedActions\": [],\n      \"uncertainties\": [],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1",
+            "text_segment_2"
+          ],
+          "sourceVerbatims": [
+            "depuis l'application android twake workplace, je ne peux plus créer de dossier. Quand je fais \"Créer\" - dossier, j'ai le message : \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\"",
+            "Mais je ne peux pas entrer de nom de dossier."
+          ],
+          "summary": "User cannot create a folder in the Android Twake Workplace app due to an error message and inability to name the folder.",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug"
+          ],
+          "broadCategoryHint": "bug",
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "platform",
+              "value": "mobile app",
+              "evidence": "application android"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "operating_system",
+              "value": "Android",
+              "evidence": "application android"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "product_or_service",
+              "value": "Twake Workplace",
+              "evidence": "twake workplace"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "feature_or_page",
+              "value": "folder creation",
+              "evidence": "créer de dossier"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "trigger_action",
+              "value": "create folder",
+              "evidence": "Quand je fais \"Créer\" - dossier"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "error_message",
+              "value": "Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.",
+              "evidence": "j'ai le message : \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\""
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "observed_result",
+              "value": "cannot name the folder",
+              "evidence": "Mais je ne peux pas entrer de nom de dossier."
+            }
+          ],
+          "testedActions": [],
+          "uncertainties": [],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ real-duplicate-monthly-charge-cozy-easypark ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case real-duplicate-monthly-charge-cozy-easypark --until support --debug
+
+
+============================================================
+CASE real-duplicate-monthly-charge-cozy-easypark — Real duplicate monthly charge with amount and providers
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_real-duplicate-monthly-charge-cozy-easypark",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Je viens de constater que depuis un certain temps je suis prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz. Pouvez-vous m'expliquer cette anomalie ? Il semble que cela se produit depuis le passage vers Twake."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2797, image_tokens≈0, output_tokens=500, total_tokens≈3297
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2414, completion_tokens=172, total_tokens=2586
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2625, image_tokens≈0, output_tokens=2000, total_tokens≈4625
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=3872, completion_tokens=603, total_tokens=4475
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Je viens de constater que depuis un certain temps je suis prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "Pouvez-vous m'expliquer cette anomalie ? ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_3",
+      "verbatim": "Il semble que cela se produit depuis le passage vers Twake.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1",
+      "text_segment_2",
+      "text_segment_3"
+    ],
+    "sourceVerbatims": [
+      "Je viens de constater que depuis un certain temps je suis prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz.",
+      "Pouvez-vous m'expliquer cette anomalie ?",
+      "Il semble que cela se produit depuis le passage vers Twake."
+    ],
+    "summary": "User reports being charged twice a month (2.99 €) by CozyCloud and Easypark SARL Metz, and asks for an explanation of this anomaly, which started after switching to Twake.",
+    "primaryUserExpectation": "wants_answer",
+    "explicitUserRequest": {
+      "request": "Pouvez-vous m'expliquer cette anomalie ?",
+      "evidence": "Pouvez-vous m'expliquer cette anomalie ?"
+    },
+    "supportNeeds": [
+      "possible_billing_or_payment_action"
+    ],
+    "broadCategoryHint": "billing",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "billing_issue_type",
+        "value": "duplicate charge",
+        "evidence": "prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "amount",
+        "value": "2,99 €",
+        "evidence": "prélevé deux fois par mois de 2,99 €"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "frequency",
+        "value": "twice a month",
+        "evidence": "prélevé deux fois par mois"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "billing_provider",
+        "value": "CozyCloud, Easypark SARL Metz",
+        "evidence": "une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "migration_or_transition_context",
+        "value": "switch to Twake",
+        "evidence": "depuis le passage vers Twake"
+      }
+    ],
+    "testedActions": [],
+    "uncertainties": []
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Je viens de constater que depuis un certain temps je suis prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Pouvez-vous m'expliquer cette anomalie ?\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Il semble que cela se produit depuis le passage vers Twake.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\", \"text_segment_2\", \"text_segment_3\"],\n      \"sourceVerbatims\": [\n        \"Je viens de constater que depuis un certain temps je suis prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz.\",\n        \"Pouvez-vous m'expliquer cette anomalie ?\",\n        \"Il semble que cela se produit depuis le passage vers Twake.\"\n      ],\n      \"summary\": \"User reports being charged twice a month (2.99 €) by CozyCloud and Easypark SARL Metz, and asks for an explanation of this anomaly, which started after switching to Twake.\",\n      \"primaryUserExpectation\": \"wants_answer\",\n      \"explicitUserRequest\": {\n        \"request\": \"Pouvez-vous m'expliquer cette anomalie ?\",\n        \"evidence\": \"Pouvez-vous m'expliquer cette anomalie ?\"\n      },\n      \"supportNeeds\": [\"possible_billing_or_payment_action\"],\n      \"broadCategoryHint\": \"billing\",\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"billing_issue_type\",\n          \"value\": \"duplicate charge\",\n          \"evidence\": \"prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"amount\",\n          \"value\": \"2,99 €\",\n          \"evidence\": \"prélevé deux fois par mois de 2,99 €\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"frequency\",\n          \"value\": \"twice a month\",\n          \"evidence\": \"prélevé deux fois par mois\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"billing_provider\",\n          \"value\": \"CozyCloud, Easypark SARL Metz\",\n          \"evidence\": \"une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"migration_or_transition_context\",\n          \"value\": \"switch to Twake\",\n          \"evidence\": \"depuis le passage vers Twake\"\n        }\n      ],\n      \"testedActions\": [],\n      \"uncertainties\": [],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1",
+            "text_segment_2",
+            "text_segment_3"
+          ],
+          "sourceVerbatims": [
+            "Je viens de constater que depuis un certain temps je suis prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz.",
+            "Pouvez-vous m'expliquer cette anomalie ?",
+            "Il semble que cela se produit depuis le passage vers Twake."
+          ],
+          "summary": "User reports being charged twice a month (2.99 €) by CozyCloud and Easypark SARL Metz, and asks for an explanation of this anomaly, which started after switching to Twake.",
+          "primaryUserExpectation": "wants_answer",
+          "explicitUserRequest": {
+            "request": "Pouvez-vous m'expliquer cette anomalie ?",
+            "evidence": "Pouvez-vous m'expliquer cette anomalie ?"
+          },
+          "supportNeeds": [
+            "possible_billing_or_payment_action"
+          ],
+          "broadCategoryHint": "billing",
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "billing_issue_type",
+              "value": "duplicate charge",
+              "evidence": "prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "amount",
+              "value": "2,99 €",
+              "evidence": "prélevé deux fois par mois de 2,99 €"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "frequency",
+              "value": "twice a month",
+              "evidence": "prélevé deux fois par mois"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "billing_provider",
+              "value": "CozyCloud, Easypark SARL Metz",
+              "evidence": "une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "migration_or_transition_context",
+              "value": "switch to Twake",
+              "evidence": "depuis le passage vers Twake"
+            }
+          ],
+          "testedActions": [],
+          "uncertainties": [],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_3",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ real-access-invalid-credentials-ios-voiceover-altcha ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case real-access-invalid-credentials-ios-voiceover-altcha --until support --debug
+
+
+============================================================
+CASE real-access-invalid-credentials-ios-voiceover-altcha — Real access issue with invalid credentials, reset failure and VoiceOver AltCha question
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_real-access-invalid-credentials-ios-voiceover-altcha",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Jusqu'à ce matin j'étais encore connecté sur mon application iOS.J'ai souhaité me déconnecter pour tester le nouveau système… Mais mal m'en a pris… Problème probable avec le nouveau mode de connexions… :J'ai essayé de me connecter avec mon identifiant et mot de passe habituels depuis l'application, depuis le site et ce avec deux navigateurs différents. A chaque fois je reçois invariablement le message \"Informations d'identification invalides\". J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel, même résultat…J'ai alors essayé de réinitialiser mon mot de passe (alors que mes données sont a priori correctes), mais là encore le système ne reconnaît ni mon courriel de récupération ni même mon numéro de téléphone… m'indiquant en retour qu'aucun compte n'existe avec ce numéro/courriel…Je précise que je suis sous iOS 26.1 bêta et utilise VoiceOver étant non-voyant… ce soucis de connexion pourrait-il être lié au nouveau système d'authentification AltCha et une incompatibilité avec VoiceOver?"
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2985, image_tokens≈0, output_tokens=500, total_tokens≈3485
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2586, completion_tokens=345, total_tokens=2931
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2814, image_tokens≈0, output_tokens=2000, total_tokens≈4814
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=4044, completion_tokens=1060, total_tokens=5104
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Jusqu'à ce matin j'étais encore connecté sur mon application iOS.",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "J'ai souhaité me déconnecter pour tester le nouveau système… Mais mal m'en a pris… Problème probable avec le nouveau mode de connexions… :J'ai essayé de me connecter avec mon identifiant et mot de passe habituels depuis l'application, depuis le site et ce avec deux navigateurs différents. A chaque fois je reçois invariablement le message \"Informations d'identification invalides\". J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel, même résultat…J'ai alors essayé de réinitialiser mon mot de passe (alors que mes données sont a priori correctes), mais là encore le système ne reconnaît ni mon courriel de récupération ni même mon numéro de téléphone… m'indiquant en retour qu'aucun compte n'existe avec ce numéro/courriel…",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_3",
+      "verbatim": "Je précise que je suis sous iOS 26.1 bêta et utilise VoiceOver étant non-voyant… ce soucis de connexion pourrait-il être lié au nouveau système d'authentification AltCha et une incompatibilité avec VoiceOver?",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1",
+      "text_segment_2",
+      "text_segment_3"
+    ],
+    "sourceVerbatims": [
+      "Jusqu'à ce matin j'étais encore connecté sur mon application iOS.",
+      "J'ai souhaité me déconnecter pour tester le nouveau système… Mais mal m'en a pris… Problème probable avec le nouveau mode de connexions… :J'ai essayé de me connecter avec mon identifiant et mot de passe habituels depuis l'application, depuis le site et ce avec deux navigateurs différents. A chaque fois je reçois invariablement le message \"Informations d'identification invalides\". J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel, même résultat…J'ai alors essayé de réinitialiser mon mot de passe (alors que mes données sont a priori correctes), mais là encore le système ne reconnaît ni mon courriel de récupération ni même mon numéro de téléphone… m'indiquant en retour qu'aucun compte n'existe avec ce numéro/courriel…",
+      "Je précise que je suis sous iOS 26.1 bêta et utilise VoiceOver étant non-voyant… ce soucis de connexion pourrait-il être lié au nouveau système d'authentification AltCha et une incompatibilité avec VoiceOver?"
+    ],
+    "summary": "User cannot log in after attempting to log out to test a new system, receiving 'Invalid credentials' error and unable to reset password.",
+    "primaryUserExpectation": "wants_solution",
+    "supportNeeds": [
+      "possible_bug",
+      "possible_product_limitation"
+    ],
+    "broadCategoryHint": "access_security",
+    "contextDependency": "standalone_complete",
+    "contextualAnswer": {
+      "type": "none",
+      "value": null,
+      "evidence": null
+    },
+    "facts": [
+      {
+        "type": "catalogued_field",
+        "fieldName": "platform",
+        "value": "mobile app",
+        "evidence": "mon application iOS"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "operating_system",
+        "value": "iOS 26.1 bêta",
+        "evidence": "iOS 26.1 bêta"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "assistive_technology",
+        "value": "VoiceOver",
+        "evidence": "utilise VoiceOver"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "trigger_action",
+        "value": "attempt to log in",
+        "evidence": "J'ai essayé de me connecter"
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "error_message",
+        "value": "Informations d'identification invalides",
+        "evidence": "\"Informations d'identification invalides\""
+      },
+      {
+        "type": "catalogued_field",
+        "fieldName": "observed_result",
+        "value": "unable to log in and reset password",
+        "evidence": "J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel, même résultat…J'ai alors essayé de réinitialiser mon mot de passe (alors que mes données sont a priori correctes), mais là encore le système ne reconnaît ni mon courriel de récupération ni même mon numéro de téléphone… m'indiquant en retour qu'aucun compte n'existe avec ce numéro/courriel…"
+      },
+      {
+        "type": "open_fact",
+        "kind": "new_authentication_system",
+        "value": "AltCha",
+        "evidence": "nouveau système d'authentification AltCha",
+        "support": "explicit"
+      }
+    ],
+    "testedActions": [
+      {
+        "label": "attempt to log in with username and password",
+        "outcome": "failed",
+        "evidence": "J'ai essayé de me connecter avec mon identifiant et mot de passe habituels"
+      },
+      {
+        "label": "attempt to log in with email",
+        "outcome": "failed",
+        "evidence": "J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel"
+      },
+      {
+        "label": "attempt to reset password",
+        "outcome": "failed",
+        "evidence": "J'ai alors essayé de réinitialiser mon mot de passe"
+      }
+    ],
+    "uncertainties": [
+      {
+        "reason": "missing_context",
+        "detail": "No information about the pre-problem state or expected result."
+      }
+    ]
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Jusqu'à ce matin j'étais encore connecté sur mon application iOS.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"J'ai souhaité me déconnecter pour tester le nouveau système… Mais mal m'en a pris… Problème probable avec le nouveau mode de connexions… :J'ai essayé de me connecter avec mon identifiant et mot de passe habituels depuis l'application, depuis le site et ce avec deux navigateurs différents. A chaque fois je reçois invariablement le message \\\"Informations d'identification invalides\\\". J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel, même résultat…J'ai alors essayé de réinitialiser mon mot de passe (alors que mes données sont a priori correctes), mais là encore le système ne reconnaît ni mon courriel de récupération ni même mon numéro de téléphone… m'indiquant en retour qu'aucun compte n'existe avec ce numéro/courriel…\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Je précise que je suis sous iOS 26.1 bêta et utilise VoiceOver étant non-voyant… ce soucis de connexion pourrait-il être lié au nouveau système d'authentification AltCha et une incompatibilité avec VoiceOver?\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\", \"text_segment_2\", \"text_segment_3\"],\n      \"sourceVerbatims\": [\n        \"Jusqu'à ce matin j'étais encore connecté sur mon application iOS.\",\n        \"J'ai souhaité me déconnecter pour tester le nouveau système… Mais mal m'en a pris… Problème probable avec le nouveau mode de connexions… :J'ai essayé de me connecter avec mon identifiant et mot de passe habituels depuis l'application, depuis le site et ce avec deux navigateurs différents. A chaque fois je reçois invariablement le message \\\"Informations d'identification invalides\\\". J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel, même résultat…J'ai alors essayé de réinitialiser mon mot de passe (alors que mes données sont a priori correctes), mais là encore le système ne reconnaît ni mon courriel de récupération ni même mon numéro de téléphone… m'indiquant en retour qu'aucun compte n'existe avec ce numéro/courriel…\",\n        \"Je précise que je suis sous iOS 26.1 bêta et utilise VoiceOver étant non-voyant… ce soucis de connexion pourrait-il être lié au nouveau système d'authentification AltCha et une incompatibilité avec VoiceOver?\"\n      ],\n      \"summary\": \"User cannot log in after attempting to log out to test a new system, receiving 'Invalid credentials' error and unable to reset password.\",\n      \"primaryUserExpectation\": \"wants_solution\",\n      \"explicitUserRequest\": null,\n      \"supportNeeds\": [\n        \"possible_bug\",\n        \"possible_product_limitation\"\n      ],\n      \"broadCategoryHint\": \"access_security\",\n      \"facts\": [\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"platform\",\n          \"value\": \"mobile app\",\n          \"evidence\": \"mon application iOS\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"operating_system\",\n          \"value\": \"iOS 26.1 bêta\",\n          \"evidence\": \"iOS 26.1 bêta\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"assistive_technology\",\n          \"value\": \"VoiceOver\",\n          \"evidence\": \"utilise VoiceOver\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"trigger_action\",\n          \"value\": \"attempt to log in\",\n          \"evidence\": \"J'ai essayé de me connecter\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"error_message\",\n          \"value\": \"Informations d'identification invalides\",\n          \"evidence\": \"\\\"Informations d'identification invalides\\\"\"\n        },\n        {\n          \"type\": \"catalogued_field\",\n          \"fieldName\": \"observed_result\",\n          \"value\": \"unable to log in and reset password\",\n          \"evidence\": \"J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel, même résultat…J'ai alors essayé de réinitialiser mon mot de passe (alors que mes données sont a priori correctes), mais là encore le système ne reconnaît ni mon courriel de récupération ni même mon numéro de téléphone… m'indiquant en retour qu'aucun compte n'existe avec ce numéro/courriel…\"\n        },\n        {\n          \"type\": \"open_fact\",\n          \"kind\": \"new_authentication_system\",\n          \"value\": \"AltCha\",\n          \"evidence\": \"nouveau système d'authentification AltCha\",\n          \"support\": \"explicit\"\n        }\n      ],\n      \"testedActions\": [\n        {\n          \"label\": \"attempt to log in with username and password\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"J'ai essayé de me connecter avec mon identifiant et mot de passe habituels\"\n        },\n        {\n          \"label\": \"attempt to log in with email\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel\"\n        },\n        {\n          \"label\": \"attempt to reset password\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"J'ai alors essayé de réinitialiser mon mot de passe\"\n        }\n      ],\n      \"uncertainties\": [\n        {\n          \"reason\": \"missing_context\",\n          \"detail\": \"No information about the pre-problem state or expected result.\",\n          \"evidence\": null\n        }\n      ],\n      \"contextDependency\": \"standalone_complete\",\n      \"contextualAnswer\": {\n        \"type\": \"none\",\n        \"value\": null,\n        \"evidence\": null\n      }\n    }\n  ],\n  \"supportResponseCues\": []\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1",
+            "text_segment_2",
+            "text_segment_3"
+          ],
+          "sourceVerbatims": [
+            "Jusqu'à ce matin j'étais encore connecté sur mon application iOS.",
+            "J'ai souhaité me déconnecter pour tester le nouveau système… Mais mal m'en a pris… Problème probable avec le nouveau mode de connexions… :J'ai essayé de me connecter avec mon identifiant et mot de passe habituels depuis l'application, depuis le site et ce avec deux navigateurs différents. A chaque fois je reçois invariablement le message \"Informations d'identification invalides\". J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel, même résultat…J'ai alors essayé de réinitialiser mon mot de passe (alors que mes données sont a priori correctes), mais là encore le système ne reconnaît ni mon courriel de récupération ni même mon numéro de téléphone… m'indiquant en retour qu'aucun compte n'existe avec ce numéro/courriel…",
+            "Je précise que je suis sous iOS 26.1 bêta et utilise VoiceOver étant non-voyant… ce soucis de connexion pourrait-il être lié au nouveau système d'authentification AltCha et une incompatibilité avec VoiceOver?"
+          ],
+          "summary": "User cannot log in after attempting to log out to test a new system, receiving 'Invalid credentials' error and unable to reset password.",
+          "primaryUserExpectation": "wants_solution",
+          "explicitUserRequest": null,
+          "supportNeeds": [
+            "possible_bug",
+            "possible_product_limitation"
+          ],
+          "broadCategoryHint": "access_security",
+          "facts": [
+            {
+              "type": "catalogued_field",
+              "fieldName": "platform",
+              "value": "mobile app",
+              "evidence": "mon application iOS"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "operating_system",
+              "value": "iOS 26.1 bêta",
+              "evidence": "iOS 26.1 bêta"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "assistive_technology",
+              "value": "VoiceOver",
+              "evidence": "utilise VoiceOver"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "trigger_action",
+              "value": "attempt to log in",
+              "evidence": "J'ai essayé de me connecter"
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "error_message",
+              "value": "Informations d'identification invalides",
+              "evidence": "\"Informations d'identification invalides\""
+            },
+            {
+              "type": "catalogued_field",
+              "fieldName": "observed_result",
+              "value": "unable to log in and reset password",
+              "evidence": "J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel, même résultat…J'ai alors essayé de réinitialiser mon mot de passe (alors que mes données sont a priori correctes), mais là encore le système ne reconnaît ni mon courriel de récupération ni même mon numéro de téléphone… m'indiquant en retour qu'aucun compte n'existe avec ce numéro/courriel…"
+            },
+            {
+              "type": "open_fact",
+              "kind": "new_authentication_system",
+              "value": "AltCha",
+              "evidence": "nouveau système d'authentification AltCha",
+              "support": "explicit"
+            }
+          ],
+          "testedActions": [
+            {
+              "label": "attempt to log in with username and password",
+              "outcome": "failed",
+              "evidence": "J'ai essayé de me connecter avec mon identifiant et mot de passe habituels"
+            },
+            {
+              "label": "attempt to log in with email",
+              "outcome": "failed",
+              "evidence": "J'ai tenté la connexions avec mon nom d'utilisateur, mon adresse courriel"
+            },
+            {
+              "label": "attempt to reset password",
+              "outcome": "failed",
+              "evidence": "J'ai alors essayé de réinitialiser mon mot de passe"
+            }
+          ],
+          "uncertainties": [
+            {
+              "reason": "missing_context",
+              "detail": "No information about the pre-problem state or expected result.",
+              "evidence": null
+            }
+          ],
+          "contextDependency": "standalone_complete",
+          "contextualAnswer": {
+            "type": "none",
+            "value": null,
+            "evidence": null
+          }
+        }
+      ],
+      "supportResponseCues": []
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_3",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}

@@ -1,6 +1,5 @@
 export {
   DEFAULT_RESPONSE_PLANNING_POLICY,
-  QUESTION_SELECTION_HINTS,
   buildPlanSupportResponsePrompt
 } from "./buildPlanSupportResponsePrompt";
 export {

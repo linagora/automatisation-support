@@ -11,11 +11,7 @@ import type {
   LLMMessage
 } from "../../../llm/llm-client";
 
-export type TextSurfaceUserLanguage =
-  | "French"
-  | "English"
-  | "Other"
-  | "Unknown";
+export type TextSurfaceUserLanguage = string;
 
 export type BuildAnalyzeTextSurfacePromptInput = {
   latestUserMessageContent: string;

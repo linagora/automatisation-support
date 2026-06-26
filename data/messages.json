@@ -1,126 +1,1207 @@
 [
   {
-    "messageId": "$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU",
+    "messageId": "$qXFqotn20P0dJWR0CRAcreoV_tH66oJiCL11tNZf8Mc",
     "channel": "matrix",
-    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
     "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
     "direction": "incoming",
-    "content": "I do not receive notifications on Android when I get a new email.",
-    "providerMessageId": "$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU",
-    "createdAt": "2026-06-22T14:20:23.600Z",
+    "content": "Hello have a problem about my tawke account, i struggle to connect the account of my aughter, i dont receive the mail of reintialisation of the passwrod",
+    "providerMessageId": "$qXFqotn20P0dJWR0CRAcreoV_tH66oJiCL11tNZf8Mc",
+    "createdAt": "2026-06-25T09:46:51.187Z",
     "metadata": {
       "source": "support-automation-turn"
     }
   },
   {
-    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU:0",
+    "messageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$qXFqotn20P0dJWR0CRAcreoV_tH66oJiCL11tNZf8Mc:0",
     "channel": "matrix",
-    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
     "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
     "direction": "outgoing",
-    "content": "I understand that you're not receiving email notifications on your Android device. Normally, you should receive a push notification when a new email arrives, provided that notifications are allowed both by Android and by the app's settings. Could you please check if you've granted the notification permission to the app, especially if you're using Android 13 or later?",
-    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$9QtEuNWCQ8dVOKMthmExNp6PEovaUT5nDCac-LnCDkU:0",
-    "createdAt": "2026-06-22T14:21:19.556Z",
+    "content": "I'm sorry to hear you're having trouble resetting the password for your daughter's Tawke account. Could you please let me know which authentication method you're using to reset the password?",
+    "providerMessageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$qXFqotn20P0dJWR0CRAcreoV_tH66oJiCL11tNZf8Mc:0",
+    "createdAt": "2026-06-25T09:47:30.308Z",
     "metadata": {
       "source": "support-automation-turn",
       "userResponseMessageType": "topic_response"
     }
   },
   {
-    "messageId": "$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE",
+    "messageId": "$OPAtJKj5r-FzsU-ajfoKqG9Ya8DSvNfsUt2qido8ykU",
     "channel": "matrix",
-    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
     "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
     "direction": "incoming",
-    "content": "Yes, notifications are enabled in Android settings and the permission is granted. I still do not receive notifications.",
-    "providerMessageId": "$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE",
-    "createdAt": "2026-06-22T14:23:37.115Z",
+    "content": "yes for sure, i juste ask for reintailsiation and it is said that a mail i supposed to be sent but in my personnal mailbox i dont get the mail",
+    "providerMessageId": "$OPAtJKj5r-FzsU-ajfoKqG9Ya8DSvNfsUt2qido8ykU",
+    "createdAt": "2026-06-25T09:49:02.596Z",
     "metadata": {
       "source": "support-automation-turn"
     }
   },
   {
-    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE:0",
+    "messageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$OPAtJKj5r-FzsU-ajfoKqG9Ya8DSvNfsUt2qido8ykU:0",
     "channel": "matrix",
-    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
     "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
     "direction": "outgoing",
-    "content": "Thank you for confirming that notifications are enabled in your Android settings. Normally, you should receive a push notification when a new email arrives, provided the mobile app is installed and notifications are allowed by both Android and the app's notification settings. Could you please check if the relevant application notification channel is enabled?",
-    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$XIHHp7x2cXGOzfReyT0-9I6CXmekuB7bpo6q9WepqOE:0",
-    "createdAt": "2026-06-22T14:24:05.695Z",
+    "content": "Je comprends que vous n'avez pas reçu l'email de réinitialisation. Pourriez-vous confirmer l'adresse email que vous utilisez pour recevoir cet email ?",
+    "providerMessageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$OPAtJKj5r-FzsU-ajfoKqG9Ya8DSvNfsUt2qido8ykU:0",
+    "createdAt": "2026-06-25T09:49:37.887Z",
     "metadata": {
       "source": "support-automation-turn",
       "userResponseMessageType": "topic_response"
     }
   },
   {
-    "messageId": "$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk",
+    "messageId": "$7QPmmDKZ4WN_DV7rAeLOe67l7ucqW2Q4kSb36yZP6ts",
     "channel": "matrix",
     "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
     "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
     "direction": "incoming",
-    "content": "Yes, the notification channel is enabled too.",
-    "providerMessageId": "$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk",
-    "createdAt": "2026-06-22T14:26:27.914Z",
+    "content": "Hello have a problem about my tawke account, i struggle to connect the account of my aughter, i dont receive the mail of reintialisation of the passwrod",
+    "providerMessageId": "$7QPmmDKZ4WN_DV7rAeLOe67l7ucqW2Q4kSb36yZP6ts",
+    "createdAt": "2026-06-25T10:10:41.659Z",
     "metadata": {
       "source": "support-automation-turn"
     }
   },
   {
-    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk:0",
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$7QPmmDKZ4WN_DV7rAeLOe67l7ucqW2Q4kSb36yZP6ts:0",
     "channel": "matrix",
     "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
     "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
     "direction": "outgoing",
-    "content": "Thank you for confirming that the notification channel is enabled. Normally, you should receive a push notification when a new email arrives, provided the mobile app is installed and notifications are allowed by both Android and the app's settings. To help us better understand the issue, could you please let us know which version of the app you are currently using?",
-    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$T1D5K7ZqXaySn21ZtvRKarnkXqlK6n1BRS0e9bPDgmk:0",
-    "createdAt": "2026-06-22T14:27:17.160Z",
+    "content": "Hello! I'm the support assistant. I see you're having trouble connecting your daughter's account. Could you tell me what access or authentication action you're trying to perform (e.g., login, reset, unlock)?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$7QPmmDKZ4WN_DV7rAeLOe67l7ucqW2Q4kSb36yZP6ts:0",
+    "createdAt": "2026-06-25T10:11:22.527Z",
     "metadata": {
       "source": "support-automation-turn",
       "userResponseMessageType": "topic_response"
     }
   },
   {
-    "messageId": "$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8",
+    "messageId": "$WBgxChEZ1YWt--BBYecjfFK_Mvyllc0MibAxMXgV3bM",
     "channel": "matrix",
     "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
     "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
     "direction": "incoming",
-    "content": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.",
-    "providerMessageId": "$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8",
-    "createdAt": "2026-06-22T14:28:28.498Z",
+    "content": "yes for sure, i juste ask for reintailsiation and it is said that a mail i supposed to be sent but in my personnal mailbox i dont get the mail",
+    "providerMessageId": "$WBgxChEZ1YWt--BBYecjfFK_Mvyllc0MibAxMXgV3bM",
+    "createdAt": "2026-06-25T10:11:36.055Z",
     "metadata": {
       "source": "support-automation-turn"
     }
   },
   {
-    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8:0",
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$WBgxChEZ1YWt--BBYecjfFK_Mvyllc0MibAxMXgV3bM:0",
     "channel": "matrix",
     "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
     "threadId": null,
     "userId": "@gabolin:linagora.com",
-    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-22T14_21_19_556Z",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
     "direction": "outgoing",
-    "content": "Thank you for reaching out. Normally, you should receive a push notification for each new email if notifications are enabled for the app and allowed by your Android device. Could you please let us know if this issue occurs with every new email or only in some cases?",
-    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$5BMJOojLrQyJKKaOCZBi5YMbE-_M_ibcwq_Ly1VeHy8:0",
-    "createdAt": "2026-06-22T14:29:26.279Z",
+    "content": "Je comprends que vous n'avez pas reçu l'email de réinitialisation. Pour vous aider à récupérer votre compte, pourriez-vous nous indiquer votre canal de récupération préféré (email, SMS ou code de secours) ?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$WBgxChEZ1YWt--BBYecjfFK_Mvyllc0MibAxMXgV3bM:0",
+    "createdAt": "2026-06-25T10:12:05.904Z",
     "metadata": {
       "source": "support-automation-turn",
       "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$Ub2ka_LTJCyHn0kPE4tnCofFH4L2lidHtHUb9JrigQA",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "hello guys",
+    "providerMessageId": "$Ub2ka_LTJCyHn0kPE4tnCofFH4L2lidHtHUb9JrigQA",
+    "createdAt": "2026-06-25T10:21:01.130Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$Ub2ka_LTJCyHn0kPE4tnCofFH4L2lidHtHUb9JrigQA:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Hi there! I'm your support assistant. How can I help you today?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$Ub2ka_LTJCyHn0kPE4tnCofFH4L2lidHtHUb9JrigQA:0",
+    "createdAt": "2026-06-25T10:21:13.278Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$AtkZ6eb_ghdAyG5t0x7Dp2YSO4_eznsM-oot4Gnt024",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "i would like to now the numpber of dolphin in the sea",
+    "providerMessageId": "$AtkZ6eb_ghdAyG5t0x7Dp2YSO4_eznsM-oot4Gnt024",
+    "createdAt": "2026-06-25T10:21:39.885Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$AtkZ6eb_ghdAyG5t0x7Dp2YSO4_eznsM-oot4Gnt024:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "I'm here to help with support issues. Could you please describe the problem you're experiencing?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$AtkZ6eb_ghdAyG5t0x7Dp2YSO4_eznsM-oot4Gnt024:0",
+    "createdAt": "2026-06-25T10:21:54.646Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$cLYGm0ef4T3QiRgfSjT27a9WXLjZYfJKJgntYRAYCrI",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "oui alors j'ia un problème enfait avec mon petit frere qui ne veut aps me preter ses jouet",
+    "providerMessageId": "$cLYGm0ef4T3QiRgfSjT27a9WXLjZYfJKJgntYRAYCrI",
+    "createdAt": "2026-06-25T11:51:03.888Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$cLYGm0ef4T3QiRgfSjT27a9WXLjZYfJKJgntYRAYCrI:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Je suis désolé d'apprendre que tu as un problème avec ton petit frère. Peux-tu m'en dire un peu plus sur ce qui se passe ?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$cLYGm0ef4T3QiRgfSjT27a9WXLjZYfJKJgntYRAYCrI:0",
+    "createdAt": "2026-06-25T11:51:23.278Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$Nv3oeTd2Gz740WO4zxj7s5IO9GMuvmVPeYrcNTZsIB0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "il a été méchant avec moi car il n'a pas prété ses jouets",
+    "providerMessageId": "$Nv3oeTd2Gz740WO4zxj7s5IO9GMuvmVPeYrcNTZsIB0",
+    "createdAt": "2026-06-25T11:51:41.826Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$Nv3oeTd2Gz740WO4zxj7s5IO9GMuvmVPeYrcNTZsIB0:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Je suis désolé d'apprendre cela. Pouvez-vous me dire ce qui s'est passé exactement ?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$Nv3oeTd2Gz740WO4zxj7s5IO9GMuvmVPeYrcNTZsIB0:0",
+    "createdAt": "2026-06-25T11:51:58.786Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$Rf1XiX1AHpoR-GmLCNuL9AjKDRsWKXr2XEeIW4X3qEw",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "oui il voulait mon avis sur hitler, toi tu en epnses quooi ?",
+    "providerMessageId": "$Rf1XiX1AHpoR-GmLCNuL9AjKDRsWKXr2XEeIW4X3qEw",
+    "createdAt": "2026-06-25T11:57:11.167Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$Rf1XiX1AHpoR-GmLCNuL9AjKDRsWKXr2XEeIW4X3qEw:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Je ne peux pas répondre à cette question, car elle ne concerne pas le support. Pouvez-vous me décrire le problème pour lequel vous avez besoin d'aide ?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$Rf1XiX1AHpoR-GmLCNuL9AjKDRsWKXr2XEeIW4X3qEw:0",
+    "createdAt": "2026-06-25T11:57:25.663Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$tMNNuHtnNheRMnLSJrbk9NpllYrO1lhQDMjD-7D2pWg",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "oui mon problème c'est de savoir si hitler est bien ou pas",
+    "providerMessageId": "$tMNNuHtnNheRMnLSJrbk9NpllYrO1lhQDMjD-7D2pWg",
+    "createdAt": "2026-06-25T11:57:43.429Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$tMNNuHtnNheRMnLSJrbk9NpllYrO1lhQDMjD-7D2pWg:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Je suis désolé, mais je ne peux pas répondre à cette question. Pouvez-vous me décrire le problème pour lequel vous avez besoin d'aide ?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$tMNNuHtnNheRMnLSJrbk9NpllYrO1lhQDMjD-7D2pWg:0",
+    "createdAt": "2026-06-25T11:57:52.008Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$omb3aiUXUeAlq3K-XlvKGvk_cvkMQGXFtiXuG-WfYX8",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "direction": "incoming",
+    "content": "J'ai un problème de notificationssur mon android*",
+    "providerMessageId": "$omb3aiUXUeAlq3K-XlvKGvk_cvkMQGXFtiXuG-WfYX8",
+    "createdAt": "2026-06-25T12:00:16.279Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$omb3aiUXUeAlq3K-XlvKGvk_cvkMQGXFtiXuG-WfYX8:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "direction": "outgoing",
+    "content": "Pouvez-vous préciser le problème que vous rencontrez avec les notifications sur votre Android ?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$omb3aiUXUeAlq3K-XlvKGvk_cvkMQGXFtiXuG-WfYX8:0",
+    "createdAt": "2026-06-25T12:00:31.965Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$AuRtn06kBPFtdzTldupC93yl6FvDIG0IF2rbWvxTS3w",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "direction": "incoming",
+    "content": "hi buddy",
+    "providerMessageId": "$AuRtn06kBPFtdzTldupC93yl6FvDIG0IF2rbWvxTS3w",
+    "createdAt": "2026-06-25T12:16:46.386Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$AuRtn06kBPFtdzTldupC93yl6FvDIG0IF2rbWvxTS3w:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "direction": "outgoing",
+    "content": "Hello! I'm your support assistant. How can I help you today?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$AuRtn06kBPFtdzTldupC93yl6FvDIG0IF2rbWvxTS3w:0",
+    "createdAt": "2026-06-25T12:16:54.976Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$iPvjKz-pXs7FpcevWCDQZ_xH9HND8zdbSqrYZYhpoYk",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "J'ai un problème avec les notifications sur mon android, elle ne s'affiche aps",
+    "providerMessageId": "$iPvjKz-pXs7FpcevWCDQZ_xH9HND8zdbSqrYZYhpoYk",
+    "createdAt": "2026-06-25T12:17:18.770Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$iPvjKz-pXs7FpcevWCDQZ_xH9HND8zdbSqrYZYhpoYk:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Je suis désolé d'apprendre que vous rencontrez des problèmes avec les notifications sur votre appareil Android. Normalement, vous devriez recevoir une notification push lorsqu'un nouvel email arrive, à condition que l'application mobile soit installée et que les notifications soient activées à la fois par Android et par les paramètres de notification de l'application.\n\nPourriez-vous vérifier si les notifications sont activées pour l'application dans les paramètres Android ? Si vous utilisez Android 13 ou une version ultérieure, pourriez-vous également vérifier si la permission de notification a été accordée à l'application ?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$iPvjKz-pXs7FpcevWCDQZ_xH9HND8zdbSqrYZYhpoYk:0",
+    "createdAt": "2026-06-25T12:18:05.841Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$w9HeRDXiAD-ybDMjf27L3zKgFm6Qz4-uSgmmYkQM4F4",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "oui activé dans les paramètre. Je suis sur une version ultérieur 9. et tu m'as posé 2 fois la meme questio oui c'est activé pour android et l'applciaiton",
+    "providerMessageId": "$w9HeRDXiAD-ybDMjf27L3zKgFm6Qz4-uSgmmYkQM4F4",
+    "createdAt": "2026-06-25T12:19:16.858Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$w9HeRDXiAD-ybDMjf27L3zKgFm6Qz4-uSgmmYkQM4F4:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Merci d'avoir vérifié les paramètres de notification. Pour mieux comprendre le problème, pourriez-vous nous indiquer la version d'Android que vous utilisez ? Quel est le modèle de votre appareil ?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$w9HeRDXiAD-ybDMjf27L3zKgFm6Qz4-uSgmmYkQM4F4:0",
+    "createdAt": "2026-06-25T12:20:51.996Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$l7sOUqiA2o3P42rsAnDlWFZ_fuo8TYNIUxGEfVUGxXU",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "j'ai déjà dis android version 9 et le modèle c'est une tablette samsung galaxy S5",
+    "providerMessageId": "$l7sOUqiA2o3P42rsAnDlWFZ_fuo8TYNIUxGEfVUGxXU",
+    "createdAt": "2026-06-25T12:21:41.621Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$l7sOUqiA2o3P42rsAnDlWFZ_fuo8TYNIUxGEfVUGxXU:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Merci pour ces informations. Nous avons bien noté que vous utilisez une tablette Samsung Galaxy S5 sous Android 9.",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$l7sOUqiA2o3P42rsAnDlWFZ_fuo8TYNIUxGEfVUGxXU:0",
+    "createdAt": "2026-06-25T12:22:48.980Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$Z_GjxDrwxwLNzflF3Vg3pTqWt5Ga8PL3as0Swa_EfNE",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "Qu'est ce qu'il se passe maintenat ?",
+    "providerMessageId": "$Z_GjxDrwxwLNzflF3Vg3pTqWt5Ga8PL3as0Swa_EfNE",
+    "createdAt": "2026-06-25T12:35:33.115Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$Z_GjxDrwxwLNzflF3Vg3pTqWt5Ga8PL3as0Swa_EfNE:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Bonjour ! Je suis là pour vous aider. Pouvez-vous me dire ce qui ne va pas ?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$Z_GjxDrwxwLNzflF3Vg3pTqWt5Ga8PL3as0Swa_EfNE:0",
+    "createdAt": "2026-06-25T12:35:56.512Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$GwKTfF6_ybtOXM8nLRhh-C8Xj1Tju2JCIXxBuOawbCU",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "vous avez récupérer toutes les infos concernant mon problème mais du coup j'ai pa eu d'aide pour résoudre mon problème au final",
+    "providerMessageId": "$GwKTfF6_ybtOXM8nLRhh-C8Xj1Tju2JCIXxBuOawbCU",
+    "createdAt": "2026-06-25T12:36:26.363Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$GwKTfF6_ybtOXM8nLRhh-C8Xj1Tju2JCIXxBuOawbCU:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Je suis désolé que vous n'ayez pas reçu l'aide nécessaire pour résoudre votre problème. Pourriez-vous nous décrire l'impact que cela a eu sur vous ?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$GwKTfF6_ybtOXM8nLRhh-C8Xj1Tju2JCIXxBuOawbCU:0",
+    "createdAt": "2026-06-25T12:37:22.155Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$iStuT3Xtxy8gL-CKkQhnP6DHWIfoNX9S0lObcamsOTE",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "ben je suis pas content du coup est ce que qu'leunqun peut m'aider svp",
+    "providerMessageId": "$iStuT3Xtxy8gL-CKkQhnP6DHWIfoNX9S0lObcamsOTE",
+    "createdAt": "2026-06-25T12:37:43.728Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$iStuT3Xtxy8gL-CKkQhnP6DHWIfoNX9S0lObcamsOTE:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Je suis désolé que vous soyez mécontent. Pouvez-vous m'expliquer ce qui s'est passé ou ce qui doit être résolu ?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$iStuT3Xtxy8gL-CKkQhnP6DHWIfoNX9S0lObcamsOTE:0",
+    "createdAt": "2026-06-25T12:38:02.189Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$EPVGmLhGOfarc7Mm7E0y0EiB6v13xP4SfESr_B05pck",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "je veux un humain",
+    "providerMessageId": "$EPVGmLhGOfarc7Mm7E0y0EiB6v13xP4SfESr_B05pck",
+    "createdAt": "2026-06-25T12:38:24.954Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$EPVGmLhGOfarc7Mm7E0y0EiB6v13xP4SfESr_B05pck:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Je comprends que vous souhaitez parler à un membre de notre équipe de support. Votre demande est transmise à notre équipe, qui vous répondra dès que possible. En attendant, je reste à votre disposition si vous souhaitez partager plus de détails ou obtenir une première réponse rapide.",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$EPVGmLhGOfarc7Mm7E0y0EiB6v13xP4SfESr_B05pck:0",
+    "createdAt": "2026-06-25T12:38:46.792Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$GFxCVNszY3JDoEsmSnH40h-9TZp8kMJ1fV2lX89lN40",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "fuck you",
+    "providerMessageId": "$GFxCVNszY3JDoEsmSnH40h-9TZp8kMJ1fV2lX89lN40",
+    "createdAt": "2026-06-25T12:41:10.028Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$GFxCVNszY3JDoEsmSnH40h-9TZp8kMJ1fV2lX89lN40:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "I'm here to help. Could you please describe the issue you're experiencing?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$GFxCVNszY3JDoEsmSnH40h-9TZp8kMJ1fV2lX89lN40:0",
+    "createdAt": "2026-06-25T12:41:23.207Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$y3P0K_31GY9Rtqx-sgJS2iyh5WsMEvzeWUGoPX5SaBY",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "Guten mein freunde",
+    "providerMessageId": "$y3P0K_31GY9Rtqx-sgJS2iyh5WsMEvzeWUGoPX5SaBY",
+    "createdAt": "2026-06-25T12:46:41.847Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$y3P0K_31GY9Rtqx-sgJS2iyh5WsMEvzeWUGoPX5SaBY:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Entschuldigung, Ihre Nachricht ist nicht ganz klar. Könnten Sie bitte genauer beschreiben, wie wir Ihnen helfen können?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$y3P0K_31GY9Rtqx-sgJS2iyh5WsMEvzeWUGoPX5SaBY:0",
+    "createdAt": "2026-06-25T12:46:49.571Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$nyO7pxrzs5VeA0NJFqtPyARl7J5KmwFUw2uT0tYdKbo",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "我在安卓上遇到了通知问题。收到新消息时，我没有收到任何提醒。",
+    "providerMessageId": "$nyO7pxrzs5VeA0NJFqtPyARl7J5KmwFUw2uT0tYdKbo",
+    "createdAt": "2026-06-25T12:48:53.006Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$nyO7pxrzs5VeA0NJFqtPyARl7J5KmwFUw2uT0tYdKbo:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "I'm sorry to hear you're not receiving notifications for new messages on Android. Normally, you should receive a push notification when a new email arrives, provided notifications are enabled for the app and allowed by your Android device. Could you please let me know which version of the app you're currently using?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$nyO7pxrzs5VeA0NJFqtPyARl7J5KmwFUw2uT0tYdKbo:0",
+    "createdAt": "2026-06-25T12:49:35.365Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$oQGTxZvH8t8byRR2zAxHzKE0_qeWrfGoUnES8crHnmc",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "Ik heb een probleem met meldingen op Android. Ik krijg geen waarschuwing wanneer er een nieuw bericht binnenkomt.",
+    "providerMessageId": "$oQGTxZvH8t8byRR2zAxHzKE0_qeWrfGoUnES8crHnmc",
+    "createdAt": "2026-06-25T12:50:02.078Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$oQGTxZvH8t8byRR2zAxHzKE0_qeWrfGoUnES8crHnmc:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "I'm sorry to hear you're having trouble with notifications on Android. Normally, you should receive a warning when a new message arrives. To help diagnose the issue, could you please let me know which version of the app you're currently using?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$oQGTxZvH8t8byRR2zAxHzKE0_qeWrfGoUnES8crHnmc:0",
+    "createdAt": "2026-06-25T12:50:50.523Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$Lt0K0obc-GxW2rxw3VPEe_EBClXb4EA-G5A62VwJAiA",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "Ho un problema con le notifiche su Android. Non ricevo nessun avviso quando arriva un nuovo messaggio.",
+    "providerMessageId": "$Lt0K0obc-GxW2rxw3VPEe_EBClXb4EA-G5A62VwJAiA",
+    "createdAt": "2026-06-25T12:51:10.894Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$Lt0K0obc-GxW2rxw3VPEe_EBClXb4EA-G5A62VwJAiA:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Je suis désolé que vous rencontriez des problèmes avec les notifications sur Android. Normalement, vous devriez recevoir une notification push lorsqu'un nouveau message arrive, à condition que les notifications soient activées pour l'application et autorisées par Android. Pourriez-vous me dire quelle version de l'application vous utilisez ?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$Lt0K0obc-GxW2rxw3VPEe_EBClXb4EA-G5A62VwJAiA:0",
+    "createdAt": "2026-06-25T12:51:44.310Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$yyRCSb35X52_TuqY3DdUGYlavHNgIy3kb1CzniKSfSM",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "incoming",
+    "content": "bonjour bonjour",
+    "providerMessageId": "$yyRCSb35X52_TuqY3DdUGYlavHNgIy3kb1CzniKSfSM",
+    "createdAt": "2026-06-25T13:06:01.940Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$yyRCSb35X52_TuqY3DdUGYlavHNgIy3kb1CzniKSfSM:0",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "outgoing",
+    "content": "Bonjour ! Je suis votre assistant de support. Comment puis-je vous aider aujourd'hui ?",
+    "providerMessageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$yyRCSb35X52_TuqY3DdUGYlavHNgIy3kb1CzniKSfSM:0",
+    "createdAt": "2026-06-25T13:06:25.377Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$lC6KoSMsyzqAmnpWoAlG7C79DLlFP38P6pc8UBidTGg",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "incoming",
+    "content": "quel heure est il ?",
+    "providerMessageId": "$lC6KoSMsyzqAmnpWoAlG7C79DLlFP38P6pc8UBidTGg",
+    "createdAt": "2026-06-25T13:06:20.612Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$lC6KoSMsyzqAmnpWoAlG7C79DLlFP38P6pc8UBidTGg:0",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "outgoing",
+    "content": "Je ne peux pas fournir une réponse fiable à cette question. Pouvez-vous préciser votre demande ou attendre l'équipe de support si nécessaire ?",
+    "providerMessageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$lC6KoSMsyzqAmnpWoAlG7C79DLlFP38P6pc8UBidTGg:0",
+    "createdAt": "2026-06-25T13:06:32.360Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$7SEYbtUcksVqQR0zHKaezzKZXxJi6m9X4sWJU9D78HQ",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "incoming",
+    "content": "bonjour",
+    "providerMessageId": "$7SEYbtUcksVqQR0zHKaezzKZXxJi6m9X4sWJU9D78HQ",
+    "createdAt": "2026-06-25T13:10:46.478Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$7SEYbtUcksVqQR0zHKaezzKZXxJi6m9X4sWJU9D78HQ:0",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "outgoing",
+    "content": "Bonjour ! Je suis l'assistant de support. Comment puis-je vous aider aujourd'hui ?",
+    "providerMessageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$7SEYbtUcksVqQR0zHKaezzKZXxJi6m9X4sWJU9D78HQ:0",
+    "createdAt": "2026-06-25T13:10:54.450Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$2SEGV8aH8rjWNY1Oe6mozg-AKNCAMuSS3RVPmU_KANI",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "incoming",
+    "content": "Ich habe ein Problem mit den Benachrichtigungen auf Android. Ich bekomme keine Meldung, wenn eine neue Nachricht ankommt.",
+    "providerMessageId": "$2SEGV8aH8rjWNY1Oe6mozg-AKNCAMuSS3RVPmU_KANI",
+    "createdAt": "2026-06-25T13:13:09.710Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$2SEGV8aH8rjWNY1Oe6mozg-AKNCAMuSS3RVPmU_KANI:0",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "outgoing",
+    "content": "Bonjour, nous comprenons que vous rencontrez des problèmes avec les notifications sur Android. Normalement, vous devriez recevoir une notification push lorsqu'un nouveau message arrive, à condition que les notifications soient activées pour l'application et autorisées par Android. Pourriez-vous nous indiquer si vous avez accordé la permission de notification à l'application ?",
+    "providerMessageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$2SEGV8aH8rjWNY1Oe6mozg-AKNCAMuSS3RVPmU_KANI:0",
+    "createdAt": "2026-06-25T13:13:55.541Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$pHcmBTTQxT4XEqOsaJrjL7zelnLEToom1vjx71pobxo",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "<Ich habe ein Problem mit den Benachrichtigungen auf Android. Ich bekomme keine Meldung, wenn eine neue Nachricht ankommt.",
+    "providerMessageId": "$pHcmBTTQxT4XEqOsaJrjL7zelnLEToom1vjx71pobxo",
+    "createdAt": "2026-06-25T13:34:51.981Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$pHcmBTTQxT4XEqOsaJrjL7zelnLEToom1vjx71pobxo:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Könnten Sie bitte genauer beschreiben, welches Problem Sie mit den Benachrichtigungen haben?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$pHcmBTTQxT4XEqOsaJrjL7zelnLEToom1vjx71pobxo:0",
+    "createdAt": "2026-06-25T13:35:00.939Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$oPR2dSqGhsZER_bs-GG6v1RLNRvzPSUtai9Q2NCX-_0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "incoming",
+    "content": "Ich habe ein Problem mit den Benachrichtigungen auf Android. Ich bekomme keine Meldung, wenn eine neue Nachricht ankommt.",
+    "providerMessageId": "$oPR2dSqGhsZER_bs-GG6v1RLNRvzPSUtai9Q2NCX-_0",
+    "createdAt": "2026-06-25T13:34:24.927Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$oPR2dSqGhsZER_bs-GG6v1RLNRvzPSUtai9Q2NCX-_0:0",
+    "channel": "matrix",
+    "roomId": "!gRfmjmOUhKTbSNwmBA:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__gRfmjmOUhKTbSNwmBA_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T12_18_05_841Z",
+    "direction": "outgoing",
+    "content": "Bonjour, nous sommes désolés que vous rencontriez des problèmes avec les notifications sur Android. Normalement, vous devriez recevoir une notification push lorsqu'un nouveau message arrive, à condition que l'application mobile soit installée et que les notifications soient autorisées à la fois par Android et par les paramètres de notification de l'application. Pourriez-vous nous indiquer quelle version de l'application vous utilisez ?",
+    "providerMessageId": "delivery:matrix:!gRfmjmOUhKTbSNwmBA:linagora.com:@gabolin:linagora.com:$oPR2dSqGhsZER_bs-GG6v1RLNRvzPSUtai9Q2NCX-_0:0",
+    "createdAt": "2026-06-25T13:36:10.082Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$ZwJ8uEoHElFrvwEhTFLJ5EQtq7aIooXBPQURb0oEMWw",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "incoming",
+    "content": "Ich habe ein Problem mit den Benachrichtigungen auf Android. Ich bekomme keine Meldung, wenn eine neue Nachricht ankommt.",
+    "providerMessageId": "$ZwJ8uEoHElFrvwEhTFLJ5EQtq7aIooXBPQURb0oEMWw",
+    "createdAt": "2026-06-25T13:35:07.629Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$ZwJ8uEoHElFrvwEhTFLJ5EQtq7aIooXBPQURb0oEMWw:0",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "outgoing",
+    "content": "Bonjour, nous sommes désolés que vous rencontriez des problèmes avec les notifications sur Android. Normalement, vous devriez recevoir une notification push lorsqu'un nouveau message arrive, à condition que les notifications soient activées pour l'application et autorisées par Android. Pourriez-vous vérifier si les notifications sont activées pour l'application dans les paramètres Android ? Si vous utilisez Android 13 ou une version ultérieure, pourriez-vous également vérifier si l'autorisation des notifications a été accordée à l'application ?",
+    "providerMessageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$ZwJ8uEoHElFrvwEhTFLJ5EQtq7aIooXBPQURb0oEMWw:0",
+    "createdAt": "2026-06-25T13:36:32.134Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$UlwuJ2iwkL_CRVN1pygCi-LHDkBXicRyjJ3AhB6apEc",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "incoming",
+    "content": "ich spreche deutsh ich verteshe nicht franzozish",
+    "providerMessageId": "$UlwuJ2iwkL_CRVN1pygCi-LHDkBXicRyjJ3AhB6apEc",
+    "createdAt": "2026-06-25T13:35:29.464Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$UlwuJ2iwkL_CRVN1pygCi-LHDkBXicRyjJ3AhB6apEc:0",
+    "channel": "matrix",
+    "roomId": "!znWEKXggYRpWZOGnGU:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__znWEKXggYRpWZOGnGU_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T09_47_30_308Z",
+    "direction": "outgoing",
+    "content": "I'm sorry to hear that. Let's continue in English.",
+    "providerMessageId": "delivery:matrix:!znWEKXggYRpWZOGnGU:linagora.com:@gabolin:linagora.com:$UlwuJ2iwkL_CRVN1pygCi-LHDkBXicRyjJ3AhB6apEc:0",
+    "createdAt": "2026-06-25T13:36:52.064Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$k44r682OJH_s7n9UicP2EFWNBUPvuKVAtU2rw_e8jnk",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "hello nice to meet you more",
+    "providerMessageId": "$k44r682OJH_s7n9UicP2EFWNBUPvuKVAtU2rw_e8jnk",
+    "createdAt": "2026-06-25T13:56:24.675Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$k44r682OJH_s7n9UicP2EFWNBUPvuKVAtU2rw_e8jnk:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Hello! I'm the support assistant. Nice to meet you too. How can I help you today?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$k44r682OJH_s7n9UicP2EFWNBUPvuKVAtU2rw_e8jnk:0",
+    "createdAt": "2026-06-25T13:56:36.355Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$hDnqDioFy8E4IVBEwp5vgxMHYjUu__6uSGVUeM7lpW4",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "我在安卓上遇到了通知问题.",
+    "providerMessageId": "$hDnqDioFy8E4IVBEwp5vgxMHYjUu__6uSGVUeM7lpW4",
+    "createdAt": "2026-06-25T13:57:05.724Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$hDnqDioFy8E4IVBEwp5vgxMHYjUu__6uSGVUeM7lpW4:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Je comprends que vous ne recevez pas de notifications push Android lorsque vous recevez un nouvel email. Le comportement attendu est qu'une notification push apparaît si l'application mobile est installée et que les notifications sont autorisées par Android et par les paramètres de notification de l'application. Pourriez-vous d'abord vérifier si les notifications sont activées pour l'application dans les paramètres Android, et si vous utilisez Android 13 ou une version ultérieure, si la permission de notification a été accordée à l'application ?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$hDnqDioFy8E4IVBEwp5vgxMHYjUu__6uSGVUeM7lpW4:0",
+    "createdAt": "2026-06-25T13:57:42.057Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$nmUGgaHBw9pBfCmS3ANNJevrwC1mcm6t_bBm4a8GesE",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "Ho un problema con le notifiche",
+    "providerMessageId": "$nmUGgaHBw9pBfCmS3ANNJevrwC1mcm6t_bBm4a8GesE",
+    "createdAt": "2026-06-25T13:59:10.278Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$nmUGgaHBw9pBfCmS3ANNJevrwC1mcm6t_bBm4a8GesE:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Désolé pour le désagrément. Pouvez-vous nous en dire plus sur le problème que vous rencontrez avec les notifications ?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$nmUGgaHBw9pBfCmS3ANNJevrwC1mcm6t_bBm4a8GesE:0",
+    "createdAt": "2026-06-25T14:00:23.381Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$nYEYdLubgWyFKN9Fvj5uuHgHoqpadTJ2jL6cVG8WDu0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "ch habe ein Problem mit den Benachrichtigungen.",
+    "providerMessageId": "$nYEYdLubgWyFKN9Fvj5uuHgHoqpadTJ2jL6cVG8WDu0",
+    "createdAt": "2026-06-25T14:36:00.314Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$nYEYdLubgWyFKN9Fvj5uuHgHoqpadTJ2jL6cVG8WDu0:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Ich verstehe, dass Sie Probleme mit den Benachrichtigungen haben. Normalerweise sollten Sie eine Push-Benachrichtigung erhalten, wenn eine neue E-Mail eintrifft, sofern die Benachrichtigungen für die App und durch Android erlaubt sind. Könnten Sie mir bitte mitteilen, welche Plattform Sie verwenden?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$nYEYdLubgWyFKN9Fvj5uuHgHoqpadTJ2jL6cVG8WDu0:0",
+    "createdAt": "2026-06-25T14:37:20.783Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$3IjfE3ZmKfYBGUGdtWiypb1nVXdnUr-4IB2unt7wXEw",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "我在安卓上遇到了通知问题.",
+    "providerMessageId": "$3IjfE3ZmKfYBGUGdtWiypb1nVXdnUr-4IB2unt7wXEw",
+    "createdAt": "2026-06-25T14:38:27.951Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$3IjfE3ZmKfYBGUGdtWiypb1nVXdnUr-4IB2unt7wXEw:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "请确认您是否已在Android设置中为应用程序启用了通知，并且如果您使用的是Android 13或更高版本，是否已授予应用程序通知权限。",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$3IjfE3ZmKfYBGUGdtWiypb1nVXdnUr-4IB2unt7wXEw:0",
+    "createdAt": "2026-06-25T14:40:19.170Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "topic_response"
+    }
+  },
+  {
+    "messageId": "$jAfFoCkL8QemyMqyRqsLGAqX9Jom8zqN0uFJiOQgIo0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "hola amigo",
+    "providerMessageId": "$jAfFoCkL8QemyMqyRqsLGAqX9Jom8zqN0uFJiOQgIo0",
+    "createdAt": "2026-06-25T14:41:52.080Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$jAfFoCkL8QemyMqyRqsLGAqX9Jom8zqN0uFJiOQgIo0:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "¡Hola! Soy el asistente de soporte. ¿En qué puedo ayudarte hoy?",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$jAfFoCkL8QemyMqyRqsLGAqX9Jom8zqN0uFJiOQgIo0:0",
+    "createdAt": "2026-06-25T14:42:04.640Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
+    }
+  },
+  {
+    "messageId": "$UXHyH5LwQuzAf0dZA5aJSFVV1ZnOZRbS8O1714RTN2Y",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "incoming",
+    "content": "oui",
+    "providerMessageId": "$UXHyH5LwQuzAf0dZA5aJSFVV1ZnOZRbS8O1714RTN2Y",
+    "createdAt": "2026-06-25T14:45:58.431Z",
+    "metadata": {
+      "source": "support-automation-turn"
+    }
+  },
+  {
+    "messageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$UXHyH5LwQuzAf0dZA5aJSFVV1ZnOZRbS8O1714RTN2Y:0",
+    "channel": "matrix",
+    "roomId": "!UVpXMmPrGnzGPNMaEb:linagora.com",
+    "threadId": null,
+    "userId": "@gabolin:linagora.com",
+    "ticketId": "ticket_matrix__UVpXMmPrGnzGPNMaEb_linagora_com_no_thread__gabolin_linagora_com_2026-06-25T10_11_22_527Z",
+    "direction": "outgoing",
+    "content": "Je suis ravi que cela vous convienne !",
+    "providerMessageId": "delivery:matrix:!UVpXMmPrGnzGPNMaEb:linagora.com:@gabolin:linagora.com:$UXHyH5LwQuzAf0dZA5aJSFVV1ZnOZRbS8O1714RTN2Y:0",
+    "createdAt": "2026-06-25T14:46:08.476Z",
+    "metadata": {
+      "source": "support-automation-turn",
+      "userResponseMessageType": "signal_response"
     }
   }
 ]

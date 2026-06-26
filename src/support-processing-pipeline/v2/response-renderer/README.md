@@ -1,57 +1,30 @@
 # response-renderer
 
-Final rendering step for the V2 support-processing pipeline.
+Final writing step for the V2 support-processing pipeline.
 
-This LLM does not decide the support strategy. It turns structured
-`topicResponsePlans` and standard rendering instructions into final
-user-facing message(s).
+This LLM receives only a `composedSupportResponsePlan` produced by
+`compose-support-response-plan`.
 
-It also supports a `standard-only` route when `topicResponsePlans` is empty.
+It does not compose globally and does not receive:
+
+- raw latest user message content;
+- standard response fragments;
+- raw topic response plans.
 
 ## Responsibilities
 
-- Write concise final customer-facing content.
-- Follow every topic response plan.
-- Ask questions naturally when planned.
-- Integrate standard rendering instructions without copying them literally.
-- Merge duplicate questions while preserving distinct planned requests.
+- Turn the composed plan into concise final customer-facing content.
+- Preserve the section order and planned questions.
+- Respect `globalForbid`, section-level `forbid`, and renderer instructions.
 - Return one or several rendered messages.
 
 ## Non-responsibilities
 
 - No topic matching.
 - No fact extraction.
+- No global composition.
+- No question deduplication.
 - No support strategy decision.
 - No invented technical solution.
 - No RAG retrieval.
 - No persistence.
-
-## Suggested location
-
-```text
-src/support-processing-pipeline/v2/response-renderer/
-```
-
-## Pipeline usage
-
-For support routes:
-
-```ts
-const renderResult = await renderSupportResponse({
-  latestUserMessageContent,
-  standardResponseFragments,
-  topicResponsePlans: [supportResponsePlan],
-  channel
-});
-```
-
-For standard-only routes:
-
-```ts
-const renderResult = await renderSupportResponse({
-  latestUserMessageContent,
-  standardResponseFragments,
-  topicResponsePlans: [],
-  channel
-});
-```

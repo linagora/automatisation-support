@@ -2,6 +2,9 @@ import {
   ALLOWED_RESPONSE_MOVE_VALUES,
   KNOWLEDGE_MODE_VALUES
 } from "./planSupportResponse.taxonomy";
+import {
+  normalizeUserLanguageForResponse
+} from "../response-language/normalizeUserLanguageForResponse";
 
 import type {
   AllowedResponseMove,
@@ -83,7 +86,7 @@ function buildFallbackPlan(reason: string): SupportResponsePlan {
       reason: `Fallback response plan used because: ${reason}`
     },
     rendererTask: {
-      targetLanguage: "same_language_as_user",
+      targetLanguage: "en",
       prompt:
         "Write a short acknowledgement. Do not ask questions, give solutions, promise actions, or invent operational details.",
       questionFieldNames: [],
@@ -227,7 +230,7 @@ function formatRendererTask(
   }
 
   return {
-    targetLanguage: raw.targetLanguage.trim(),
+    targetLanguage: normalizeUserLanguageForResponse(raw.targetLanguage),
     prompt: raw.prompt.trim(),
     questionFieldNames: stringList(raw.questionFieldNames),
     forbiddenClaims: stringList(raw.forbiddenClaims)

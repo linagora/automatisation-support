@@ -24,6 +24,8 @@ type ProgressContext = {
   userId: string;
   turnId?: string;
   messageCount?: number;
+  userLanguage?: string;
+  progressLanguageReady?: boolean;
 };
 
 type SupportProgressReporter = {

@@ -44,6 +44,17 @@ function shouldLogUsage(options: CallLLMOptions): boolean {
   return options.logUsage === true || process.env.LLM_LOG_USAGE === "true";
 }
 
+function shouldLogEstimates(options: CallLLMOptions): boolean {
+  return options.logEstimates === true ||
+    process.env.LLM_LOG_ESTIMATES === "true";
+}
+
+function formatStage(options: CallLLMOptions): string {
+  return typeof options.stage === "string" && options.stage.trim() !== ""
+    ? `stage=${options.stage.trim()} `
+    : "";
+}
+
 function formatUsage(usage: LLMUsage | undefined): string {
   if (!usage) {
     return "usage not provided by API";
@@ -67,7 +78,8 @@ function logUsageIfEnabled(
   }
 
   console.log(
-    `[LLM usage] preset=${preset}, model=${model}, ${formatUsage(usage)}`
+    `[LLM usage] ${formatStage(options)}preset=${preset} ` +
+    `model=${model} ${formatUsage(usage)}`
   );
 }
 
@@ -77,12 +89,12 @@ function logEstimateIfEnabled(
   model: string,
   estimate: LLMTokenEstimate
 ): void {
-  if (!shouldLogUsage(options)) {
+  if (!shouldLogEstimates(options)) {
     return;
   }
 
   console.log(
-    `[LLM estimate] preset=${preset}, model=${model}, ` +
+    `[LLM estimate] ${formatStage(options)}preset=${preset} model=${model} ` +
     `text_tokens≈${estimate.textTokens}, ` +
     `image_tokens≈${estimate.imageTokens}, ` +
     `output_tokens=${estimate.outputTokens}, ` +

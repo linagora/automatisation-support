@@ -18,6 +18,7 @@ async function requestProposeTopicUpdates(
 ): Promise<RawProposeTopicUpdates> {
   try {
     const result = await callLLM(input.prompt.messages, {
+      stage: "topic_update_proposal",
       preset: "fullWeightMessageAnalysis",
       temperature: 0,
       maxTokens: 2000,

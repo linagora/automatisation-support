@@ -13,6 +13,7 @@
  *   npm run support:v2:text-dataset -- --case mixed --until render
  *   npm run support:v2:text-dataset -- --case mixed --until topics --full-input
  *   npm run support:v2:text-dataset -- --case mixed --until topics --debug
+ *   npm run support:v2:text-dataset -- --case mixed --until topics --debug --show-llm-estimates
  */
 
 import "dotenv/config";
@@ -82,6 +83,7 @@ import {
 } from "../../../src/support-processing-pipeline/v2/propose-topic-updates/proposeTopicUpdates";
 import {
   textAnalysisDataset,
+  type ExpectedTextSurface,
   type TextAnalysisDatasetCase
 } from "./textAnalysisDataset";
 
@@ -94,11 +96,9 @@ import type {
   SupportResponseCue,
   TextSurfaceAnalysis,
   TextUnderstanding,
+  TopicUpdateOp,
   TopicEvidence
 } from "../../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
-import type {
-  TopicUpdateProposal
-} from "../../../src/support-processing-pipeline/v2/propose-topic-updates/typesProposeTopicUpdates.types";
 import type {
   SupportResponsePlan
 } from "../../../src/support-processing-pipeline/v2/plan-support-response/typesPlanSupportResponse.types";
@@ -130,7 +130,7 @@ type CaseRunOutput = {
   standardResponseFragments: StandardResponseFragment[] | "SKIPPED";
   textUnderstandings: TextUnderstanding[] | "SKIPPED";
   supportResponseCues: SupportResponseCue[] | "SKIPPED";
-  topicUpdateProposals: TopicUpdateProposal[] | "SKIPPED";
+  topicUpdateOps: TopicUpdateOp[] | "SKIPPED";
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan | "SKIPPED";
   retrievedSupportKnowledge: KnowledgeChunk[] | "SKIPPED";
   synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null | "SKIPPED";
@@ -143,6 +143,21 @@ type CaseRunOutput = {
     topicUpdates?: TopicUpdatesDebugInfo;
     topicCatalogSelections?: TopicCatalogSelectionDebugInfo[];
   };
+};
+
+type DatasetAssertionStatus = "passed" | "failed";
+
+type DatasetAssertionResult = {
+  name: string;
+  status: DatasetAssertionStatus;
+  expected?: unknown;
+  actual?: unknown;
+  message: string;
+};
+
+type DatasetAssertionsOutput = {
+  status: DatasetAssertionStatus;
+  results: DatasetAssertionResult[];
 };
 
 type TopicCatalogSelectionDebugInfo = {
@@ -170,7 +185,8 @@ type TopicCatalogSelectionDebugInfo = {
 };
 
 type TopicDatasetBranch = {
-  topicUpdateProposal: TopicUpdateProposal;
+  topicUpdateOp: TopicUpdateOp;
+  topicUpdateOpId: string;
   topicEvidence: TopicEvidence;
   existingTopic?: unknown;
   relatedTextUnderstandings: TextUnderstanding[];
@@ -258,8 +274,8 @@ function buildTopicCatalogSelectionsDebug(
       buildTopicResponsePlanDebug(branch.topicResponsePlan);
 
     return {
-      proposalId: branch.topicUpdateProposal.proposalId,
-      topicId: branch.topicUpdateProposal.topicId,
+      proposalId: branch.topicUpdateOpId,
+      topicId: branch.topicUpdateOp.topicId,
       topicSourceVerbatims: branch.topicEvidence.topicSourceVerbatims,
       relatedUnderstandingIds: branch.topicEvidence.relatedUnderstandingIds,
       selectedFields: branch.selectedCatalogKnowledge.selectedFields.flatMap(
@@ -394,6 +410,222 @@ function stringify(value: unknown): string {
 function logSection(title: string, value: unknown): void {
   console.log(`\n${title}`);
   console.log(stringify(value));
+}
+
+function normalizeDatasetLanguage(value: unknown): string {
+  if (typeof value !== "string") {
+    return "unknown";
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+
+  if (normalizedValue === "") {
+    return "unknown";
+  }
+
+  const primaryCode = normalizedValue.split("-")[0] ?? normalizedValue;
+  const legacyLanguages: Record<string, string> = {
+    french: "fr",
+    english: "en",
+    german: "de",
+    italian: "it",
+    spanish: "es",
+    chinese: "zh",
+    other: "unknown",
+    unknown: "unknown"
+  };
+
+  return legacyLanguages[normalizedValue] ??
+    legacyLanguages[primaryCode] ??
+    primaryCode;
+}
+
+function passedAssertion(
+  name: string,
+  expected: unknown,
+  actual: unknown,
+  message: string
+): DatasetAssertionResult {
+  return {
+    name,
+    status: "passed",
+    expected,
+    actual,
+    message
+  };
+}
+
+function failedAssertion(
+  name: string,
+  expected: unknown,
+  actual: unknown,
+  message: string
+): DatasetAssertionResult {
+  return {
+    name,
+    status: "failed",
+    expected,
+    actual,
+    message
+  };
+}
+
+function evaluateExpectedTextSurface(params: {
+  expected: ExpectedTextSurface;
+  textSurfaceAnalysis: TextSurfaceAnalysis | "SKIPPED";
+}): DatasetAssertionsOutput {
+  const results: DatasetAssertionResult[] = [];
+
+  if (params.textSurfaceAnalysis === "SKIPPED") {
+    return {
+      status: "failed",
+      results: [
+        failedAssertion(
+          "textSurfaceAnalysis.available",
+          "TextSurfaceAnalysis",
+          "SKIPPED",
+          "textSurfaceAnalysis was skipped, so expectedTextSurface could not be evaluated."
+        )
+      ]
+    };
+  }
+
+  const actualLanguage = normalizeDatasetLanguage(
+    params.textSurfaceAnalysis.userLanguage
+  );
+
+  if (params.expected.userLanguage) {
+    const expectedLanguage = normalizeDatasetLanguage(
+      params.expected.userLanguage
+    );
+
+    results.push(
+      actualLanguage === expectedLanguage
+        ? passedAssertion(
+            "userLanguage",
+            expectedLanguage,
+            actualLanguage,
+            `userLanguage matched ${expectedLanguage}.`
+          )
+        : failedAssertion(
+            "userLanguage",
+            expectedLanguage,
+            actualLanguage,
+            `userLanguage expected ${expectedLanguage}, got ${actualLanguage}.`
+          )
+    );
+  }
+
+  if (params.expected.allowedUserLanguages) {
+    const expectedLanguages = params.expected.allowedUserLanguages.map(
+      normalizeDatasetLanguage
+    );
+
+    results.push(
+      expectedLanguages.includes(actualLanguage)
+        ? passedAssertion(
+            "allowedUserLanguages",
+            expectedLanguages,
+            actualLanguage,
+            `userLanguage ${actualLanguage} is allowed.`
+          )
+        : failedAssertion(
+            "allowedUserLanguages",
+            expectedLanguages,
+            actualLanguage,
+            `userLanguage expected one of ${expectedLanguages.join(", ")}, got ${actualLanguage}.`
+          )
+    );
+  }
+
+  if (params.expected.forbiddenUserLanguages) {
+    const forbiddenLanguages = params.expected.forbiddenUserLanguages.map(
+      normalizeDatasetLanguage
+    );
+
+    results.push(
+      forbiddenLanguages.includes(actualLanguage)
+        ? failedAssertion(
+            "forbiddenUserLanguages",
+            forbiddenLanguages,
+            actualLanguage,
+            `userLanguage ${actualLanguage} is forbidden.`
+          )
+        : passedAssertion(
+            "forbiddenUserLanguages",
+            forbiddenLanguages,
+            actualLanguage,
+            `userLanguage ${actualLanguage} is not forbidden.`
+          )
+    );
+  }
+
+  if (params.expected.expectedCategories) {
+    const actualCategories = params.textSurfaceAnalysis.segments.map(
+      (segment) => segment.category
+    );
+
+    for (const expectedCategory of params.expected.expectedCategories) {
+      results.push(
+        actualCategories.includes(expectedCategory)
+          ? passedAssertion(
+              `category.${expectedCategory}`,
+              expectedCategory,
+              actualCategories,
+              `category ${expectedCategory} is present.`
+            )
+          : failedAssertion(
+              `category.${expectedCategory}`,
+              expectedCategory,
+              actualCategories,
+              `category ${expectedCategory} is missing.`
+            )
+      );
+    }
+  }
+
+  if (params.expected.minSupportRelevantSegments !== undefined) {
+    const supportRelevantCount = params.textSurfaceAnalysis.segments.filter(
+      (segment) => segment.category === "support_relevant"
+    ).length;
+
+    results.push(
+      supportRelevantCount >= params.expected.minSupportRelevantSegments
+        ? passedAssertion(
+            "minSupportRelevantSegments",
+            params.expected.minSupportRelevantSegments,
+            supportRelevantCount,
+            `support_relevant segment count ${supportRelevantCount} is sufficient.`
+          )
+        : failedAssertion(
+            "minSupportRelevantSegments",
+            params.expected.minSupportRelevantSegments,
+            supportRelevantCount,
+            `support_relevant segment count expected >= ${params.expected.minSupportRelevantSegments}, got ${supportRelevantCount}.`
+          )
+    );
+  }
+
+  return {
+    status: results.some((result) => result.status === "failed")
+      ? "failed"
+      : "passed",
+    results
+  };
+}
+
+function buildDatasetAssertions(params: {
+  testCase: TextAnalysisDatasetCase;
+  output: CaseRunOutput;
+}): DatasetAssertionsOutput | undefined {
+  if (!params.testCase.expectedTextSurface) {
+    return undefined;
+  }
+
+  return evaluateExpectedTextSurface({
+    expected: params.testCase.expectedTextSurface,
+    textSurfaceAnalysis: params.output.textSurfaceAnalysis
+  });
 }
 
 function buildInputDisplay(
@@ -648,12 +880,12 @@ async function runTopicUpdatesStage(params: {
   testCase: TextAnalysisDatasetCase;
   textUnderstandings: TextUnderstanding[] | undefined;
 }): Promise<{
-  topicUpdateProposals: TopicUpdateProposal[] | undefined;
+  topicUpdateOps: TopicUpdateOp[] | undefined;
   topicUpdatesDebug: TopicUpdatesDebugInfo | undefined;
 }> {
   if (!params.textUnderstandings || params.textUnderstandings.length === 0) {
     return {
-      topicUpdateProposals: undefined,
+      topicUpdateOps: undefined,
       topicUpdatesDebug: {
         callPerformed: false,
         skippedReason: "no_text_understandings"
@@ -674,25 +906,24 @@ async function runTopicUpdatesStage(params: {
   });
 
   return {
-    topicUpdateProposals: topicUpdatesResult.topicUpdateProposals,
+    topicUpdateOps: topicUpdatesResult.topicUpdateOps,
     topicUpdatesDebug: {
       callPerformed: true
     }
   };
 }
 
-function isActionableTopicUpdateProposal(
-  proposal: TopicUpdateProposal
+function isActionableTopicUpdateOp(
+  op: TopicUpdateOp
 ): boolean {
-  return proposal.action === "create_new_topic" ||
-    proposal.action === "update_existing_topic";
+  return op.op === "create" || op.op === "update";
 }
 
 function findExistingTopic(
-  proposal: TopicUpdateProposal,
+  op: TopicUpdateOp,
   existingTopics: unknown[]
 ): unknown | undefined {
-  if (proposal.topicId === null) {
+  if (op.topicId === null) {
     return undefined;
   }
 
@@ -704,24 +935,46 @@ function findExistingTopic(
     const record = topic as Record<string, unknown>;
     const topicId = record.id_topic ?? record.topicId ?? record.id;
 
-    return String(topicId) === proposal.topicId;
+    return String(topicId) === op.topicId;
+  });
+}
+
+function understandingEvidence(understanding: TextUnderstanding): string[] {
+  return [
+    ...understanding.messageKinds.map((messageKind) => {
+      return messageKind.evidence;
+    }),
+    ...understanding.caseDetails.map((detail) => {
+      return detail.evidence;
+    }),
+    ...understanding.attemptedActions.map((action) => {
+      return action.evidence;
+    }),
+    ...understanding.supportMetadata.map((metadata) => {
+      return metadata.evidence;
+    })
+  ].filter((evidence) => {
+    return typeof evidence === "string" && evidence.trim() !== "";
   });
 }
 
 function buildDatasetTopicEvidence(params: {
-  proposal: TopicUpdateProposal;
+  op: TopicUpdateOp;
+  opIndex: number;
   existingTopic?: unknown;
   textUnderstandings: TextUnderstanding[];
   supportResponseCues: SupportResponseCue[];
 }): TopicEvidence {
+  const relatedTextUnderstandings = params.op.items.flatMap((itemIndex) => {
+    const understanding = params.textUnderstandings[itemIndex];
+
+    return understanding ? [understanding] : [];
+  });
   const relatedUnderstandingIds = new Set(
-    params.proposal.fromUnderstandingIds
-  );
-  const relatedTextUnderstandings = params.textUnderstandings.filter(
-    (understanding) => {
-      return relatedUnderstandingIds.has(understanding.understandingId);
+    relatedTextUnderstandings.map((understanding) => {
+      return understanding.understandingId;
     }
-  );
+  ));
   const relatedSupportResponseCues = params.supportResponseCues.filter((cue) => {
     return cue.relatedUnderstandingIds.length > 0 &&
       cue.relatedUnderstandingIds.every((understandingId) => {
@@ -729,14 +982,14 @@ function buildDatasetTopicEvidence(params: {
       });
   });
   const topicSourceVerbatims = Array.from(new Set(
-    params.proposal.selectedSourceVerbatims
+    relatedTextUnderstandings.flatMap(understandingEvidence)
   ));
 
   return {
-    proposalId: params.proposal.proposalId,
-    topicId: params.proposal.topicId,
+    proposalId: `topic_update_op_${params.opIndex + 1}`,
+    topicId: params.op.topicId,
     topicSourceVerbatims,
-    relatedUnderstandingIds: params.proposal.fromUnderstandingIds,
+    relatedUnderstandingIds: Array.from(relatedUnderstandingIds),
     relatedTextUnderstandings,
     relatedAttachmentUnderstandings: [],
     relatedSupportResponseCues,
@@ -750,24 +1003,26 @@ async function runKnowledgeStage(params: {
   standardResponseFragments: StandardResponseFragment[];
   textUnderstandings: TextUnderstanding[] | undefined;
   supportResponseCues: SupportResponseCue[] | undefined;
-  topicUpdateProposals: TopicUpdateProposal[] | undefined;
+  topicUpdateOps: TopicUpdateOp[] | undefined;
 }): Promise<{
   topicBranches: TopicDatasetBranch[];
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
   retrievedSupportKnowledge: KnowledgeChunk[];
   synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null;
 }> {
-  const actionableProposals = (params.topicUpdateProposals ?? []).filter(
-    isActionableTopicUpdateProposal
+  const actionableOps = (params.topicUpdateOps ?? []).filter(
+    isActionableTopicUpdateOp
   );
   const topicBranches = await Promise.all(
-    actionableProposals.map(async (topicUpdateProposal) => {
+    actionableOps.map(async (topicUpdateOp) => {
+      const opIndex = params.topicUpdateOps?.indexOf(topicUpdateOp) ?? 0;
       const existingTopic = findExistingTopic(
-        topicUpdateProposal,
+        topicUpdateOp,
         params.testCase.existingTopics
       );
       const topicEvidence = buildDatasetTopicEvidence({
-        proposal: topicUpdateProposal,
+        op: topicUpdateOp,
+        opIndex,
         ...(existingTopic ? { existingTopic } : {}),
         textUnderstandings: params.textUnderstandings ?? [],
         supportResponseCues: params.supportResponseCues ?? []
@@ -825,7 +1080,8 @@ async function runKnowledgeStage(params: {
         });
 
       return {
-        topicUpdateProposal,
+        topicUpdateOp,
+        topicUpdateOpId: topicEvidence.proposalId,
         topicEvidence,
         ...(existingTopic ? { existingTopic } : {}),
         relatedTextUnderstandings: topicEvidence.relatedTextUnderstandings,
@@ -892,7 +1148,7 @@ async function runResponsePlanStage(params: {
   );
   const topicResponsePlans = assignTopicResponsePlanIds(
     plannedBranches.map((branch) => ({
-      proposalId: branch.topicUpdateProposal.proposalId,
+      proposalId: branch.topicUpdateOpId,
       responsePlan: branch.topicResponsePlan
     }))
   );
@@ -946,7 +1202,7 @@ async function runCase(
       standardResponseFragments: "SKIPPED",
       textUnderstandings: "SKIPPED",
       supportResponseCues: "SKIPPED",
-      topicUpdateProposals: "SKIPPED",
+      topicUpdateOps: "SKIPPED",
       knowledgeEnrichmentPlan: "SKIPPED",
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
@@ -970,7 +1226,7 @@ async function runCase(
       standardResponseFragments: "SKIPPED",
       textUnderstandings: "SKIPPED",
       supportResponseCues: "SKIPPED",
-      topicUpdateProposals: "SKIPPED",
+      topicUpdateOps: "SKIPPED",
       knowledgeEnrichmentPlan: "SKIPPED",
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
@@ -998,7 +1254,7 @@ async function runCase(
       standardResponseFragments: "SKIPPED",
       textUnderstandings: "SKIPPED",
       supportResponseCues: "SKIPPED",
-      topicUpdateProposals: "SKIPPED",
+      topicUpdateOps: "SKIPPED",
       knowledgeEnrichmentPlan: "SKIPPED",
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
@@ -1032,7 +1288,7 @@ async function runCase(
       standardResponseFragments,
       textUnderstandings: "SKIPPED",
       supportResponseCues: "SKIPPED",
-      topicUpdateProposals: "SKIPPED",
+      topicUpdateOps: "SKIPPED",
       knowledgeEnrichmentPlan: "SKIPPED",
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
@@ -1069,7 +1325,7 @@ async function runCase(
       standardResponseFragments,
       textUnderstandings: textUnderstandings ?? "SKIPPED",
       supportResponseCues: supportResponseCues ?? "SKIPPED",
-      topicUpdateProposals: "SKIPPED",
+      topicUpdateOps: "SKIPPED",
       knowledgeEnrichmentPlan: "SKIPPED",
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
@@ -1087,7 +1343,7 @@ async function runCase(
   }
 
   const {
-    topicUpdateProposals,
+    topicUpdateOps,
     topicUpdatesDebug
   } = await runTopicUpdatesStage({
     testCase,
@@ -1104,7 +1360,7 @@ async function runCase(
       standardResponseFragments,
       textUnderstandings: textUnderstandings ?? "SKIPPED",
       supportResponseCues: supportResponseCues ?? "SKIPPED",
-      topicUpdateProposals: topicUpdateProposals ?? "SKIPPED",
+      topicUpdateOps: topicUpdateOps ?? "SKIPPED",
       knowledgeEnrichmentPlan: "SKIPPED",
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
@@ -1133,7 +1389,7 @@ async function runCase(
     standardResponseFragments,
     textUnderstandings,
     supportResponseCues,
-    topicUpdateProposals
+    topicUpdateOps
   });
 
   if (!shouldRunStage(options.until, "response-plan")) {
@@ -1146,7 +1402,7 @@ async function runCase(
       standardResponseFragments,
       textUnderstandings: textUnderstandings ?? "SKIPPED",
       supportResponseCues: supportResponseCues ?? "SKIPPED",
-      topicUpdateProposals: topicUpdateProposals ?? "SKIPPED",
+      topicUpdateOps: topicUpdateOps ?? "SKIPPED",
       knowledgeEnrichmentPlan,
       retrievedSupportKnowledge,
       synthesizedRetrievedKnowledge,
@@ -1186,7 +1442,7 @@ async function runCase(
       standardResponseFragments,
       textUnderstandings: textUnderstandings ?? "SKIPPED",
       supportResponseCues: supportResponseCues ?? "SKIPPED",
-      topicUpdateProposals: topicUpdateProposals ?? "SKIPPED",
+      topicUpdateOps: topicUpdateOps ?? "SKIPPED",
       knowledgeEnrichmentPlan,
       retrievedSupportKnowledge,
       synthesizedRetrievedKnowledge,
@@ -1223,7 +1479,7 @@ async function runCase(
     standardResponseFragments,
     textUnderstandings: textUnderstandings ?? "SKIPPED",
     supportResponseCues: supportResponseCues ?? "SKIPPED",
-    topicUpdateProposals: topicUpdateProposals ?? "SKIPPED",
+    topicUpdateOps: topicUpdateOps ?? "SKIPPED",
     knowledgeEnrichmentPlan,
     retrievedSupportKnowledge,
     synthesizedRetrievedKnowledge,
@@ -1273,7 +1529,7 @@ async function runAndLogCase(
     );
     logSection("5. textUnderstandings", output.textUnderstandings);
     logSection("6. supportResponseCues", output.supportResponseCues);
-    logSection("7. topicUpdateProposals", output.topicUpdateProposals);
+    logSection("7. topicUpdateOps", output.topicUpdateOps);
     logSection("8. knowledgeEnrichmentPlan", output.knowledgeEnrichmentPlan);
     logSection("9. retrievedSupportKnowledge", output.retrievedSupportKnowledge);
     logSection(
@@ -1295,9 +1551,23 @@ async function runAndLogCase(
     if (options.debug) {
       logSection("DEBUG", output.debug ?? {});
     }
+
+    const datasetAssertions = buildDatasetAssertions({
+      testCase,
+      output
+    });
+
+    if (datasetAssertions) {
+      logSection("datasetAssertions", datasetAssertions);
+
+      if (datasetAssertions.status === "failed") {
+        process.exitCode = 1;
+      }
+    }
   } catch (error) {
     console.error("\nERROR");
     console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
   }
 }
 
@@ -1305,6 +1575,11 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const debug = args.includes("--debug");
   const fullInput = args.includes("--full-input");
+  const showLlmEstimates = args.includes("--show-llm-estimates");
+
+  if (showLlmEstimates) {
+    process.env.LLM_LOG_ESTIMATES = "true";
+  }
 
   if (args.includes("--list")) {
     listCases();

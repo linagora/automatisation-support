@@ -18,6 +18,7 @@ async function requestPlanSupportResponse(
 ): Promise<RawPlanSupportResponse> {
   try {
     const result = await callLLM(input.prompt.messages, {
+      stage: "response_plan",
       preset: "fullWeightMessageAnalysis",
       temperature: 0,
       maxTokens: 3500,

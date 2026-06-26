@@ -18,6 +18,7 @@ async function requestSelectCatalogKnowledgeForTopic(
 ): Promise<RawSelectCatalogKnowledgeForTopic> {
   try {
     const result = await callLLM(input.prompt.messages, {
+      stage: "catalog_field_selection",
       preset: "fullWeightMessageAnalysis",
       temperature: 0,
       maxTokens: 1600,

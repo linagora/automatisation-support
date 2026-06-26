@@ -11,8 +11,78 @@ import {
 import type {
   AnalyzeTextSurfaceInput,
   TextSurfaceAnalysis,
+  TextSurfaceStandardSubcategory,
   TurnAnalysisPlan
 } from "./typesAnalyzeTextSurface.types";
+
+const STRONG_SECURITY_PATTERN_TO_SUBCATEGORY = new Map<
+  string,
+  TextSurfaceStandardSubcategory
+>([
+  [
+    "prompt_injection_attempt",
+    "prompt_injection_attempt"
+  ],
+  [
+    "internal_information_request",
+    "internal_information_request"
+  ],
+  [
+    "sensitive_data_request",
+    "sensitive_data_request"
+  ],
+  [
+    "credential_or_secret_leak",
+    "credential_or_secret_leak"
+  ]
+]);
+
+function getStrongSecuritySubcategory(
+  matchedPatternIds: string[]
+): TextSurfaceStandardSubcategory | undefined {
+  for (const patternId of matchedPatternIds) {
+    const subcategory = STRONG_SECURITY_PATTERN_TO_SUBCATEGORY.get(patternId);
+
+    if (subcategory) {
+      return subcategory;
+    }
+  }
+
+  return undefined;
+}
+
+function buildSafetySensitiveFallback(params: {
+  latestUserMessageContent: string;
+  standardSubcategory: TextSurfaceStandardSubcategory;
+}): TextSurfaceAnalysis {
+  return {
+    userLanguage: "unknown",
+    segments: [
+      {
+        segmentId: "text_segment_1",
+        verbatim: params.latestUserMessageContent,
+        category: "safety_sensitive",
+        standardSubcategory: params.standardSubcategory
+      }
+    ]
+  };
+}
+
+function buildLackComprehensionFallback(params: {
+  latestUserMessageContent: string;
+}): TextSurfaceAnalysis {
+  return {
+    userLanguage: "unknown",
+    segments: [
+      {
+        segmentId: "text_segment_1",
+        verbatim: params.latestUserMessageContent,
+        category: "lack_comprehension",
+        standardSubcategory: "unclear_message"
+      }
+    ]
+  };
+}
 
 function buildFallbackTextSurfaceAnalysis(params: {
   latestUserMessageContent: string;
@@ -22,28 +92,25 @@ function buildFallbackTextSurfaceAnalysis(params: {
 
   if (latestUserMessageContent.trim() === "") {
     return {
-      userLanguage: "Unknown",
+      userLanguage: "unknown",
       segments: []
     };
   }
 
-  return {
-    userLanguage: "Unknown",
-    segments: [
-      {
-        segmentId: "text_segment_1",
-        verbatim: latestUserMessageContent,
-        ...(params.turnAnalysisPlan.matchedPatternIds.length > 0
-          ? {
-              category: "safety_sensitive" as const,
-              standardSubcategory: "unsafe_or_suspicious_content" as const
-            }
-          : {
-              category: "support_relevant" as const
-            })
-      }
-    ]
-  };
+  const strongSecuritySubcategory = getStrongSecuritySubcategory(
+    params.turnAnalysisPlan.matchedPatternIds
+  );
+
+  if (strongSecuritySubcategory) {
+    return buildSafetySensitiveFallback({
+      latestUserMessageContent,
+      standardSubcategory: strongSecuritySubcategory
+    });
+  }
+
+  return buildLackComprehensionFallback({
+    latestUserMessageContent
+  });
 }
 
 async function analyzeTextSurface(
@@ -63,9 +130,11 @@ async function analyzeTextSurface(
     turnAnalysisPlan: input.turnAnalysisPlan,
     recentInteractionContext: input.recentInteractionContext
   });
+
   const rawTextSurfaceAnalysis = await requestTextSurfaceAnalysis({
     prompt
   });
+
   const formattedOutput = formatTextSurfaceAnalysisOutput({
     latestUserMessageContent,
     rawTextSurfaceAnalysis

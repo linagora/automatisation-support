@@ -1,19 +1,13 @@
 import type {
   AnalyzeSupportTextInput,
   AnalyzeSupportTextOutput,
-  BroadCategoryHint,
-  ContextDependency,
   ExtractableFieldDefinition,
-  PrimaryUserExpectation,
   RecentInteractionContext,
-  ContextualAnswer,
-  SupportFact,
-  SupportNeed,
+  SupportMessageKind,
+  SupportMetadata,
   SupportResponseCue,
-  TestedAction,
   TextSurfaceAnalysis,
-  TextUnderstanding,
-  TextUncertainty
+  TextUnderstanding
 } from "../typesSupportProcessingPipelineV2.types";
 
 import type {
@@ -49,56 +43,11 @@ export type RawSupportTextAnalysis = {
 
 export type RawSupportTextItem = {
   sourceSegmentIds?: unknown;
-  sourceVerbatims?: unknown;
+  messageKinds?: unknown;
+  caseDetails?: unknown;
+  attemptedActions?: unknown;
+  supportMetadata?: unknown;
   summary?: unknown;
-  primaryUserExpectation?: unknown;
-  explicitUserRequest?: unknown;
-  supportNeeds?: unknown;
-  broadCategoryHint?: unknown;
-  contextDependency?: unknown;
-  contextualAnswer?: unknown;
-  facts?: unknown;
-  testedActions?: unknown;
-  uncertainties?: unknown;
-};
-
-export type RawSupportResponseCue = {
-  sourceSegmentIds?: unknown;
-  relatedUnderstandingIds?: unknown;
-  verbatim?: unknown;
-  cueNote?: unknown;
-};
-
-export type RawExplicitUserRequest = {
-  request?: unknown;
-  evidence?: unknown;
-};
-
-export type RawContextualAnswer = {
-  type?: unknown;
-  value?: unknown;
-  evidence?: unknown;
-};
-
-export type RawSupportFact = {
-  type?: unknown;
-  fieldName?: unknown;
-  kind?: unknown;
-  value?: unknown;
-  evidence?: unknown;
-  support?: unknown;
-};
-
-export type RawTextUncertainty = {
-  reason?: unknown;
-  detail?: unknown;
-  evidence?: unknown;
-};
-
-export type RawTestedAction = {
-  label?: unknown;
-  outcome?: unknown;
-  evidence?: unknown;
 };
 
 export type FormatSupportTextAnalysisOutputInput = {
@@ -123,17 +72,11 @@ export type SupportTextValidationResult =
 export type {
   AnalyzeSupportTextInput,
   AnalyzeSupportTextOutput,
-  BroadCategoryHint,
-  ContextDependency,
   ExtractableFieldDefinition,
-  PrimaryUserExpectation,
   RecentInteractionContext,
-  ContextualAnswer,
-  SupportFact,
-  SupportNeed,
+  SupportMessageKind,
+  SupportMetadata,
   SupportResponseCue,
-  TestedAction,
   TextSurfaceAnalysis,
-  TextUnderstanding,
-  TextUncertainty
+  TextUnderstanding
 };

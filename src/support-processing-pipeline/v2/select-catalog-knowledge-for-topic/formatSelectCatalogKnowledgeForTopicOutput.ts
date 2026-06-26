@@ -15,6 +15,10 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim() !== "";
 }
 
+function asString(value: unknown): string | null {
+  return isNonEmptyString(value) ? value.trim() : null;
+}
+
 function stringArray(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) {
     return undefined;
@@ -73,15 +77,54 @@ const ACCESS_FIELD_NAMES = new Set([
 function getTopicCategoryHints(
   input: FormatSelectCatalogKnowledgeForTopicOutputInput
 ): Set<string> {
-  return new Set(
-    input.input.topicEvidence.relatedTextUnderstandings.flatMap(
-      (understanding) => {
-        return understanding.broadCategoryHint
-          ? [understanding.broadCategoryHint]
-          : [];
-      }
-    )
-  );
+  const hints = new Set<string>();
+  const existingTopic = input.input.topicEvidence.existingTopic;
+
+  if (isRecord(existingTopic)) {
+    const existingTopicHint = asString(
+      existingTopic.broadCategoryHint ??
+        existingTopic.topic_category ??
+        existingTopic.category
+    );
+
+    if (existingTopicHint) {
+      hints.add(existingTopicHint);
+    }
+  }
+
+  for (const understanding of input.input.topicEvidence.relatedTextUnderstandings) {
+    const caseDetailKeys = new Set(
+      (understanding.caseDetails ?? []).map((detail) => detail.key)
+    );
+
+    if (
+      caseDetailKeys.has("billing_issue_type") ||
+      caseDetailKeys.has("billing_date_or_period") ||
+      caseDetailKeys.has("amount") ||
+      caseDetailKeys.has("currency")
+    ) {
+      hints.add("billing");
+    }
+
+    if (
+      caseDetailKeys.has("access_action") ||
+      caseDetailKeys.has("auth_method") ||
+      caseDetailKeys.has("account_status")
+    ) {
+      hints.add("access_security");
+    }
+
+    if (
+      caseDetailKeys.has("feature_or_page") ||
+      caseDetailKeys.has("trigger_action") ||
+      caseDetailKeys.has("error_message") ||
+      caseDetailKeys.has("observed_result")
+    ) {
+      hints.add("bug");
+    }
+  }
+
+  return hints;
 }
 
 function isCrossTopicField(params: {
@@ -109,9 +152,7 @@ function buildFallback(
     selectedFields: [],
     selectedGenericKnowledge: [],
     scopeReason: `catalog_selection_fallback:${reason}`,
-    rejectedFieldNames: input.input.extractableFieldCatalog.map((field) => {
-      return field.fieldName;
-    }),
+    rejectedFieldNames: [],
     warnings: [reason]
   };
 }

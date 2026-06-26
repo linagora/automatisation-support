@@ -45,6 +45,10 @@ function understanding(
   return {
     understandingId: "understanding_1",
     sourceSegmentIds: ["segment_1"],
+    messageKinds: [],
+    caseDetails: [],
+    attemptedActions: [],
+    supportMetadata: [],
     sourceVerbatims: ["Le problème est toujours présent."],
     summary: "Problème applicatif",
     primaryUserExpectation: "wants_solution",
@@ -131,10 +135,9 @@ describe("planSupportResponse topic-only prompt", function () {
     const prompt = serialize({
       relatedTextUnderstandings: [
         understanding({
-          facts: [
+          caseDetails: [
             {
-              type: "catalogued_field",
-              fieldName: "browser",
+              key: "browser",
               value: "Firefox",
               evidence: "sur Firefox"
             }
@@ -390,7 +393,29 @@ describe("planSupportResponse topic-only prompt", function () {
       }
     });
 
-    expect(prompt).toContain('"targetLanguage": "French"');
+    expect(prompt).toContain('"targetLanguage": "fr"');
+  });
+
+  it("normalizes legacy Other explicit target languages to en", function () {
+    const prompt = serialize({
+      latestUserMessageContent: "Guten mein freunde",
+      targetLanguage: "Other"
+    });
+
+    expect(prompt).toContain('"targetLanguage": "en"');
+    expect(prompt).not.toContain('"targetLanguage": "Other"');
+  });
+
+  it("keeps known non-French non-English explicit target language codes", function () {
+    const prompt = serialize({
+      latestUserMessageContent:
+        "Mein Konto ist gesperrt.",
+      targetLanguage: "de"
+    });
+
+    expect(prompt).toContain('"targetLanguage": "de"');
+    expect(prompt).not.toContain('"targetLanguage": "French"');
+    expect(prompt).not.toContain('"targetLanguage": "English"');
   });
 
   it("does not ask again for already qualified login information", function () {
@@ -400,22 +425,19 @@ describe("planSupportResponse topic-only prompt", function () {
       relatedTextUnderstandings: [
         understanding({
           broadCategoryHint: "access_security",
-          facts: [
+          caseDetails: [
             {
-              type: "catalogued_field",
-              fieldName: "access_action",
+              key: "access_action",
               value: "login",
               evidence: "erreur de login"
             },
             {
-              type: "catalogued_field",
-              fieldName: "auth_method",
+              key: "auth_method",
               value: "password",
               evidence: "mot de passe"
             },
             {
-              type: "catalogued_field",
-              fieldName: "observed_result",
+              key: "observed_result",
               value: "password rejected",
               evidence: "mon mot de passe n’est pas bon"
             }
@@ -504,6 +526,42 @@ describe("planSupportResponse topic-only prompt", function () {
       questionInstruction: null
     });
     expect(output.responsePlan.rendererTask.questionFieldNames).toEqual([]);
+  });
+
+  it("normalizes unsupported formatted renderer task languages to English", function () {
+    const output = formatPlanSupportResponseOutput({
+      input: input({
+        targetLanguage: "Other"
+      }),
+      rawPlanSupportResponse: {
+        status: "completed",
+        parsedResponse: {
+          responsePlanId: "response_plan_1",
+          knowledgeGate: {
+            knowledgeMode: "rag_not_enabled",
+            solutionAllowed: false,
+            allowedMoves: ["acknowledge"],
+            reason: "No knowledge."
+          },
+          questionDecision: {
+            shouldAskQuestion: false,
+            plannedQuestionCount: 0,
+            fieldNames: [],
+            questionInstruction: null,
+            reason: "No question needed."
+          },
+          rendererTask: {
+            targetLanguage: "Other",
+            prompt: "Write a short acknowledgement.",
+            questionFieldNames: [],
+            forbiddenClaims: []
+          },
+          internalRationale: "Test."
+        }
+      }
+    });
+
+    expect(output.responsePlan.rendererTask.targetLanguage).toBe("en");
   });
 
   it("removes a question for login information already provided", function () {

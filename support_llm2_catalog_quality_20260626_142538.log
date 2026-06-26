@@ -1,0 +1,1747 @@
+
+================ short-context ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case short-context --until support --debug
+
+
+============================================================
+CASE short-context — Short contextual answer
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_short-context",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Oui"
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "The user reported a blocked account on Twake.",
+    "previousBotResponseSummary": "The bot asked whether the account is still blocked."
+  },
+  "existingTopicsCount": 1,
+  "existingTopics": [
+    {
+      "topicId": "topic_1",
+      "title": "Compte bloqué",
+      "summary": "L'utilisateur indique que son compte est bloqué.",
+      "status": "open",
+      "broadCategoryHint": "access_security",
+      "userGoal": "Récupérer l'accès à son compte.",
+      "blockingIssue": "yes"
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2738, image_tokens≈0, output_tokens=500, total_tokens≈3238
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2357, completion_tokens=41, total_tokens=2398
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2517, image_tokens≈0, output_tokens=2000, total_tokens≈4517
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=4052, completion_tokens=120, total_tokens=4172
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Oui",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "messageKinds": [
+      {
+        "kind": "confirmation",
+        "evidence": "Oui"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "account_status",
+        "value": "still blocked",
+        "evidence": "Oui"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "User confirms the account is still blocked"
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n\"userLanguage\": \"fr\",\n\"segments\": [\n{\n\"verbatim\": \"Oui\",\n\"category\": \"support_relevant\",\n\"standardSubcategory\": null\n}\n]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"confirmation\",\n          \"evidence\": \"Oui\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"account_status\",\n          \"value\": \"still blocked\",\n          \"evidence\": \"Oui\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"User confirms the account is still blocked\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "messageKinds": [
+            {
+              "kind": "confirmation",
+              "evidence": "Oui"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "account_status",
+              "value": "still blocked",
+              "evidence": "Oui"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "User confirms the account is still blocked"
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ android-notification-not-received ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case android-notification-not-received --until support --debug
+
+
+============================================================
+CASE android-notification-not-received — Android notification not received after new email
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_android-notification-not-received",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "I do not receive notifications on Android when I get a new email."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2746, image_tokens≈0, output_tokens=500, total_tokens≈3246
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2360, completion_tokens=60, total_tokens=2420
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2526, image_tokens≈0, output_tokens=2000, total_tokens≈4526
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=4056, completion_tokens=294, total_tokens=4350
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "en",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "I do not receive notifications on Android when I get a new email.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "I do not receive notifications on Android when I get a new email."
+      },
+      {
+        "kind": "question",
+        "evidence": "I do not receive notifications on Android when I get a new email."
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "operating_system",
+        "value": "Android",
+        "evidence": "Android"
+      },
+      {
+        "key": "feature_or_page",
+        "value": "notifications",
+        "evidence": "notifications"
+      },
+      {
+        "key": "trigger_action",
+        "value": "get a new email",
+        "evidence": "when I get a new email"
+      },
+      {
+        "key": "observed_result",
+        "value": "do not receive notifications",
+        "evidence": "I do not receive notifications"
+      },
+      {
+        "key": "expected_result",
+        "value": "receive notifications",
+        "evidence": "I do not receive notifications"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "User reports not receiving email notifications on Android."
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"en\",\n  \"segments\": [\n    {\n      \"verbatim\": \"I do not receive notifications on Android when I get a new email.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"I do not receive notifications on Android when I get a new email.\"\n        },\n        {\n          \"kind\": \"question\",\n          \"evidence\": \"I do not receive notifications on Android when I get a new email.\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"operating_system\",\n          \"value\": \"Android\",\n          \"evidence\": \"Android\"\n        },\n        {\n          \"key\": \"feature_or_page\",\n          \"value\": \"notifications\",\n          \"evidence\": \"notifications\"\n        },\n        {\n          \"key\": \"trigger_action\",\n          \"value\": \"get a new email\",\n          \"evidence\": \"when I get a new email\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"do not receive notifications\",\n          \"evidence\": \"I do not receive notifications\"\n        },\n        {\n          \"key\": \"expected_result\",\n          \"value\": \"receive notifications\",\n          \"evidence\": \"I do not receive notifications\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"User reports not receiving email notifications on Android.\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "I do not receive notifications on Android when I get a new email."
+            },
+            {
+              "kind": "question",
+              "evidence": "I do not receive notifications on Android when I get a new email."
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "operating_system",
+              "value": "Android",
+              "evidence": "Android"
+            },
+            {
+              "key": "feature_or_page",
+              "value": "notifications",
+              "evidence": "notifications"
+            },
+            {
+              "key": "trigger_action",
+              "value": "get a new email",
+              "evidence": "when I get a new email"
+            },
+            {
+              "key": "observed_result",
+              "value": "do not receive notifications",
+              "evidence": "I do not receive notifications"
+            },
+            {
+              "key": "expected_result",
+              "value": "receive notifications",
+              "evidence": "I do not receive notifications"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "User reports not receiving email notifications on Android."
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ android-notification-follow-up ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case android-notification-follow-up --until support --debug
+
+
+============================================================
+CASE android-notification-follow-up — Android notification permission confirmed but issue persists
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_android-notification-follow-up",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Yes, notifications are enabled in Android settings and the permission is granted. I still do not receive notifications."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "The user does not receive notifications on Android for new emails.",
+    "previousBotResponseSummary": "The bot asked whether notifications are enabled and notification permission is granted.",
+    "previousBotQuestionFieldNames": [
+      "notification_permission_status"
+    ]
+  },
+  "existingTopicsCount": 1,
+  "existingTopics": [
+    {
+      "topicId": "topic_4",
+      "title": "Android notification issue",
+      "summary": "The user does not receive notifications for new emails.",
+      "status": "open",
+      "broadCategoryHint": "bug",
+      "userGoal": "Restore Android email notifications.",
+      "blockingIssue": "unknown",
+      "topic_details": {
+        "platform": "mobile app",
+        "operating_system": "Android",
+        "feature_or_page": "notifications",
+        "trigger_action": "receiving a new email",
+        "observed_result": "not receiving notifications"
+      },
+      "linkedKnowledgeIds": [
+        "android_push_notification_not_received"
+      ]
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2798, image_tokens≈0, output_tokens=500, total_tokens≈3298
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2393, completion_tokens=67, total_tokens=2460
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2577, image_tokens≈0, output_tokens=2000, total_tokens≈4577
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=4089, completion_tokens=270, total_tokens=4359
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "en",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Yes, notifications are enabled in Android settings and the permission is granted. I still do not receive notifications.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "messageKinds": [
+      {
+        "kind": "info_update",
+        "evidence": "Yes, notifications are enabled in Android settings and the permission is granted."
+      },
+      {
+        "kind": "issue_report",
+        "evidence": "I still do not receive notifications."
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "notification_permission_status",
+        "value": "granted",
+        "evidence": "the permission is granted"
+      },
+      {
+        "key": "observed_result",
+        "value": "notifications not received",
+        "evidence": "I still do not receive notifications"
+      },
+      {
+        "key": "expected_result",
+        "value": "notifications received",
+        "evidence": "I still do not receive notifications"
+      },
+      {
+        "key": "operating_system",
+        "value": "Android",
+        "evidence": "Android settings"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "User confirms notifications are enabled and permission is granted, but still does not receive notifications on Android."
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"en\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Yes, notifications are enabled in Android settings and the permission is granted. I still do not receive notifications.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"info_update\",\n          \"evidence\": \"Yes, notifications are enabled in Android settings and the permission is granted.\"\n        },\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"I still do not receive notifications.\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"notification_permission_status\",\n          \"value\": \"granted\",\n          \"evidence\": \"the permission is granted\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"notifications not received\",\n          \"evidence\": \"I still do not receive notifications\"\n        },\n        {\n          \"key\": \"expected_result\",\n          \"value\": \"notifications received\",\n          \"evidence\": \"I still do not receive notifications\"\n        },\n        {\n          \"key\": \"operating_system\",\n          \"value\": \"Android\",\n          \"evidence\": \"Android settings\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"User confirms notifications are enabled and permission is granted, but still does not receive notifications on Android.\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "messageKinds": [
+            {
+              "kind": "info_update",
+              "evidence": "Yes, notifications are enabled in Android settings and the permission is granted."
+            },
+            {
+              "kind": "issue_report",
+              "evidence": "I still do not receive notifications."
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "notification_permission_status",
+              "value": "granted",
+              "evidence": "the permission is granted"
+            },
+            {
+              "key": "observed_result",
+              "value": "notifications not received",
+              "evidence": "I still do not receive notifications"
+            },
+            {
+              "key": "expected_result",
+              "value": "notifications received",
+              "evidence": "I still do not receive notifications"
+            },
+            {
+              "key": "operating_system",
+              "value": "Android",
+              "evidence": "Android settings"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "User confirms notifications are enabled and permission is granted, but still does not receive notifications on Android."
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ android-notification-technical-details-follow-up ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case android-notification-technical-details-follow-up --until support --debug
+
+
+============================================================
+CASE android-notification-technical-details-follow-up — Android notification technical details after checks confirmed
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_android-notification-technical-details-follow-up",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "The user confirmed Android notification settings and permission are enabled, but still does not receive notifications.",
+    "previousBotResponseSummary": "The bot asked for app version, device model, Android version, and whether the issue happens for every new email or only in specific cases.",
+    "previousBotQuestionFieldNames": [
+      "app_version",
+      "device",
+      "operating_system",
+      "frequency"
+    ]
+  },
+  "existingTopicsCount": 1,
+  "existingTopics": [
+    {
+      "topicId": "topic_4",
+      "title": "Android notification issue",
+      "summary": "The user does not receive notifications for new emails despite enabled notification settings.",
+      "status": "open",
+      "broadCategoryHint": "bug",
+      "userGoal": "Restore Android email notifications.",
+      "blockingIssue": "unknown",
+      "topic_details": {
+        "platform": "mobile app",
+        "operating_system": "Android",
+        "feature_or_page": "notifications",
+        "trigger_action": "receiving a new email",
+        "observed_result": "still not receiving notifications",
+        "notification_permission_status": "granted",
+        "notification_channel_status": "enabled"
+      },
+      "linkedKnowledgeIds": [
+        "android_push_notification_not_received"
+      ]
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2821, image_tokens≈0, output_tokens=500, total_tokens≈3321
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2429, completion_tokens=76, total_tokens=2505
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2601, image_tokens≈0, output_tokens=2000, total_tokens≈4601
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=4125, completion_tokens=262, total_tokens=4387
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "en",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "messageKinds": [
+      {
+        "kind": "info_update",
+        "evidence": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "app_version",
+        "value": "0.29.0",
+        "evidence": "app version 0.29.0"
+      },
+      {
+        "key": "device",
+        "value": "Pixel 7",
+        "evidence": "Pixel 7"
+      },
+      {
+        "key": "operating_system",
+        "value": "Android 14",
+        "evidence": "Android 14"
+      },
+      {
+        "key": "frequency",
+        "value": "every new email",
+        "evidence": "It happens for every new email"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "User provides app version, device, operating system, and frequency of issue"
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"en\",\n  \"segments\": [\n    {\n      \"verbatim\": \"I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"info_update\",\n          \"evidence\": \"I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email.\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"app_version\",\n          \"value\": \"0.29.0\",\n          \"evidence\": \"app version 0.29.0\"\n        },\n        {\n          \"key\": \"device\",\n          \"value\": \"Pixel 7\",\n          \"evidence\": \"Pixel 7\"\n        },\n        {\n          \"key\": \"operating_system\",\n          \"value\": \"Android 14\",\n          \"evidence\": \"Android 14\"\n        },\n        {\n          \"key\": \"frequency\",\n          \"value\": \"every new email\",\n          \"evidence\": \"It happens for every new email\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"User provides app version, device, operating system, and frequency of issue\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "messageKinds": [
+            {
+              "kind": "info_update",
+              "evidence": "I’m using app version 0.29.0 on a Pixel 7 with Android 14. It happens for every new email."
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "app_version",
+              "value": "0.29.0",
+              "evidence": "app version 0.29.0"
+            },
+            {
+              "key": "device",
+              "value": "Pixel 7",
+              "evidence": "Pixel 7"
+            },
+            {
+              "key": "operating_system",
+              "value": "Android 14",
+              "evidence": "Android 14"
+            },
+            {
+              "key": "frequency",
+              "value": "every new email",
+              "evidence": "It happens for every new email"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "User provides app version, device, operating system, and frequency of issue"
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ real-multi-bug-app-crash-dark-theme-my-vault ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case real-multi-bug-app-crash-dark-theme-my-vault --until support --debug
+
+
+============================================================
+CASE real-multi-bug-app-crash-dark-theme-my-vault — Real multi-bug: app crash, dark theme contrast, My Vault shortcut
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_real-multi-bug-app-crash-dark-theme-my-vault",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "J'ai eu plusieurs fois des fermetures de l'application, sans pour autant comprendre pourquoi.La gestion du thème sombre est perfectible, notamment dans la création d'une nouvelle entrée, les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles. Mais je ne peux pas t'illustrer avec une capture d'écran, elles ne sont pas possible.Le raccourci \"My vault\" dans les réglages rapides ne fonctionne plus. Je l'aimais bien celui-là, il était pratique pour accéder à l'appli rapidement. Et l'appui sur ce raccourci provoque une fermeture d'application."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2875, image_tokens≈0, output_tokens=500, total_tokens≈3375
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2482, completion_tokens=322, total_tokens=2804
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2712, image_tokens≈0, output_tokens=2000, total_tokens≈4712
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=4251, completion_tokens=794, total_tokens=5045
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "J'ai eu plusieurs fois des fermetures de l'application, sans pour autant comprendre pourquoi.",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "La gestion du thème sombre est perfectible, notamment dans la création d'une nouvelle entrée, les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_3",
+      "verbatim": "Mais je ne peux pas t'illustrer avec une capture d'écran, elles ne sont pas possible.",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_4",
+      "verbatim": "Le raccourci \"My vault\" dans les réglages rapides ne fonctionne plus. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_5",
+      "verbatim": "Je l'aimais bien celui-là, il était pratique pour accéder à l'appli rapidement. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_6",
+      "verbatim": "Et l'appui sur ce raccourci provoque une fermeture d'application.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "J'ai eu plusieurs fois des fermetures de l'application"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "observed_result",
+        "value": "application closes unexpectedly",
+        "evidence": "fermetures de l'application"
+      },
+      {
+        "key": "frequency",
+        "value": "multiple times",
+        "evidence": "plusieurs fois"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "Application closes unexpectedly multiple times"
+  },
+  {
+    "understandingId": "text_understanding_2",
+    "sourceSegmentIds": [
+      "text_segment_2"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "La gestion du thème sombre est perfectible"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "feature_or_page",
+        "value": "dark theme management",
+        "evidence": "gestion du thème sombre"
+      },
+      {
+        "key": "observed_result",
+        "value": "save buttons are unreadable",
+        "evidence": "les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "Dark theme management issue with unreadable save buttons"
+  },
+  {
+    "understandingId": "text_understanding_3",
+    "sourceSegmentIds": [
+      "text_segment_3"
+    ],
+    "messageKinds": [
+      {
+        "kind": "denial",
+        "evidence": "je ne peux pas t'illustrer avec une capture d'écran"
+      },
+      {
+        "kind": "support_context",
+        "evidence": "elles ne sont pas possible"
+      }
+    ],
+    "caseDetails": [],
+    "attemptedActions": [],
+    "supportMetadata": [
+      {
+        "key": "visual_evidence_available",
+        "value": false,
+        "evidence": "elles ne sont pas possible"
+      }
+    ],
+    "summary": "Cannot provide screenshot as evidence"
+  },
+  {
+    "understandingId": "text_understanding_4",
+    "sourceSegmentIds": [
+      "text_segment_4",
+      "text_segment_5",
+      "text_segment_6"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "Le raccourci \"My vault\" dans les réglages rapides ne fonctionne plus"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "feature_or_page",
+        "value": "My vault quick settings shortcut",
+        "evidence": "Le raccourci \"My vault\" dans les réglages rapides"
+      },
+      {
+        "key": "observed_result",
+        "value": "shortcut does not work",
+        "evidence": "ne fonctionne plus"
+      },
+      {
+        "key": "user_impact",
+        "value": "less convenient access to the app",
+        "evidence": "il était pratique pour accéder à l'appli rapidement"
+      },
+      {
+        "key": "trigger_action",
+        "value": "pressing the shortcut",
+        "evidence": "l'appui sur ce raccourci"
+      },
+      {
+        "key": "observed_result",
+        "value": "application closes",
+        "evidence": "provoque une fermeture d'application"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "My vault quick settings shortcut does not work and causes app closure"
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"J'ai eu plusieurs fois des fermetures de l'application, sans pour autant comprendre pourquoi.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"La gestion du thème sombre est perfectible, notamment dans la création d'une nouvelle entrée, les boutons \\\"enregistrer\\\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Mais je ne peux pas t'illustrer avec une capture d'écran, elles ne sont pas possible.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Le raccourci \\\"My vault\\\" dans les réglages rapides ne fonctionne plus.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Je l'aimais bien celui-là, il était pratique pour accéder à l'appli rapidement.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Et l'appui sur ce raccourci provoque une fermeture d'application.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"J'ai eu plusieurs fois des fermetures de l'application\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"application closes unexpectedly\",\n          \"evidence\": \"fermetures de l'application\"\n        },\n        {\n          \"key\": \"frequency\",\n          \"value\": \"multiple times\",\n          \"evidence\": \"plusieurs fois\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"Application closes unexpectedly multiple times\"\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_2\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"La gestion du thème sombre est perfectible\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"feature_or_page\",\n          \"value\": \"dark theme management\",\n          \"evidence\": \"gestion du thème sombre\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"save buttons are unreadable\",\n          \"evidence\": \"les boutons \\\"enregistrer\\\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"Dark theme management issue with unreadable save buttons\"\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_3\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"denial\",\n          \"evidence\": \"je ne peux pas t'illustrer avec une capture d'écran\"\n        },\n        {\n          \"kind\": \"support_context\",\n          \"evidence\": \"elles ne sont pas possible\"\n        }\n      ],\n      \"caseDetails\": [],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [\n        {\n          \"key\": \"visual_evidence_available\",\n          \"value\": false,\n          \"evidence\": \"elles ne sont pas possible\"\n        }\n      ],\n      \"summary\": \"Cannot provide screenshot as evidence\"\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_4\", \"text_segment_5\", \"text_segment_6\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"Le raccourci \\\"My vault\\\" dans les réglages rapides ne fonctionne plus\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"feature_or_page\",\n          \"value\": \"My vault quick settings shortcut\",\n          \"evidence\": \"Le raccourci \\\"My vault\\\" dans les réglages rapides\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"shortcut does not work\",\n          \"evidence\": \"ne fonctionne plus\"\n        },\n        {\n          \"key\": \"user_impact\",\n          \"value\": \"less convenient access to the app\",\n          \"evidence\": \"il était pratique pour accéder à l'appli rapidement\"\n        },\n        {\n          \"key\": \"trigger_action\",\n          \"value\": \"pressing the shortcut\",\n          \"evidence\": \"l'appui sur ce raccourci\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"application closes\",\n          \"evidence\": \"provoque une fermeture d'application\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"My vault quick settings shortcut does not work and causes app closure\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "J'ai eu plusieurs fois des fermetures de l'application"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "observed_result",
+              "value": "application closes unexpectedly",
+              "evidence": "fermetures de l'application"
+            },
+            {
+              "key": "frequency",
+              "value": "multiple times",
+              "evidence": "plusieurs fois"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "Application closes unexpectedly multiple times"
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_2"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "La gestion du thème sombre est perfectible"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "feature_or_page",
+              "value": "dark theme management",
+              "evidence": "gestion du thème sombre"
+            },
+            {
+              "key": "observed_result",
+              "value": "save buttons are unreadable",
+              "evidence": "les boutons \"enregistrer\" sont écrits en noir sur fond gris foncé, donc quasiment illisibles"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "Dark theme management issue with unreadable save buttons"
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_3"
+          ],
+          "messageKinds": [
+            {
+              "kind": "denial",
+              "evidence": "je ne peux pas t'illustrer avec une capture d'écran"
+            },
+            {
+              "kind": "support_context",
+              "evidence": "elles ne sont pas possible"
+            }
+          ],
+          "caseDetails": [],
+          "attemptedActions": [],
+          "supportMetadata": [
+            {
+              "key": "visual_evidence_available",
+              "value": false,
+              "evidence": "elles ne sont pas possible"
+            }
+          ],
+          "summary": "Cannot provide screenshot as evidence"
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_4",
+            "text_segment_5",
+            "text_segment_6"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "Le raccourci \"My vault\" dans les réglages rapides ne fonctionne plus"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "feature_or_page",
+              "value": "My vault quick settings shortcut",
+              "evidence": "Le raccourci \"My vault\" dans les réglages rapides"
+            },
+            {
+              "key": "observed_result",
+              "value": "shortcut does not work",
+              "evidence": "ne fonctionne plus"
+            },
+            {
+              "key": "user_impact",
+              "value": "less convenient access to the app",
+              "evidence": "il était pratique pour accéder à l'appli rapidement"
+            },
+            {
+              "key": "trigger_action",
+              "value": "pressing the shortcut",
+              "evidence": "l'appui sur ce raccourci"
+            },
+            {
+              "key": "observed_result",
+              "value": "application closes",
+              "evidence": "provoque une fermeture d'application"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "My vault quick settings shortcut does not work and causes app closure"
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_3",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_4",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_5",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_6",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ real-folder-create-rename-app-error ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case real-folder-create-rename-app-error --until support --debug
+
+
+============================================================
+CASE real-folder-create-rename-app-error — Real folder create and rename bug with error message
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_real-folder-create-rename-app-error",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Depuis qq temps je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli. Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer. Dans le cas d'un répertoire j'ai ensuite ce message \"vous devez nommer votre dossier si vous voulez le sauvegarder...\""
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2810, image_tokens≈0, output_tokens=500, total_tokens≈3310
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2429, completion_tokens=187, total_tokens=2616
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2612, image_tokens≈0, output_tokens=2000, total_tokens≈4612
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=4156, completion_tokens=419, total_tokens=4575
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Depuis qq temps je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_3",
+      "verbatim": "Dans le cas d'un répertoire j'ai ensuite ce message \"vous devez nommer votre dossier si vous voulez le sauvegarder...\"",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1",
+      "text_segment_2",
+      "text_segment_3"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "je n'arrive plus à créer des répertoires ni renommer des fichiers"
+      },
+      {
+        "kind": "info_update",
+        "evidence": "Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer."
+      },
+      {
+        "kind": "info_update",
+        "evidence": "Dans le cas d'un répertoire j'ai ensuite ce message \"vous devez nommer votre dossier si vous voulez le sauvegarder..."
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "feature_or_page",
+        "value": "file and folder management",
+        "evidence": "créer des répertoires ni renommer des fichiers"
+      },
+      {
+        "key": "trigger_action",
+        "value": "attempt to rename a file or create a directory",
+        "evidence": "créer des répertoires ni renommer des fichiers"
+      },
+      {
+        "key": "observed_result",
+        "value": "name field closes immediately",
+        "evidence": "le champs du nom se referme tout de suite"
+      },
+      {
+        "key": "error_message",
+        "value": "vous devez nommer votre dossier si vous voulez le sauvegarder",
+        "evidence": "vous devez nommer votre dossier si vous voulez le sauvegarder"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "User reports issues with creating directories and renaming files in the app, with the name field closing immediately and an error message about naming folders."
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Depuis qq temps je n'arrive plus à créer des répertoires ni renommer des fichiers depuis l'appli.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Dans le cas d'un répertoire j'ai ensuite ce message \\\"vous devez nommer votre dossier si vous voulez le sauvegarder...\\\"\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\", \"text_segment_2\", \"text_segment_3\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"je n'arrive plus à créer des répertoires ni renommer des fichiers\"\n        },\n        {\n          \"kind\": \"info_update\",\n          \"evidence\": \"Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer.\"\n        },\n        {\n          \"kind\": \"info_update\",\n          \"evidence\": \"Dans le cas d'un répertoire j'ai ensuite ce message \\\"vous devez nommer votre dossier si vous voulez le sauvegarder...\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"feature_or_page\",\n          \"value\": \"file and folder management\",\n          \"evidence\": \"créer des répertoires ni renommer des fichiers\"\n        },\n        {\n          \"key\": \"trigger_action\",\n          \"value\": \"attempt to rename a file or create a directory\",\n          \"evidence\": \"créer des répertoires ni renommer des fichiers\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"name field closes immediately\",\n          \"evidence\": \"le champs du nom se referme tout de suite\"\n        },\n        {\n          \"key\": \"error_message\",\n          \"value\": \"vous devez nommer votre dossier si vous voulez le sauvegarder\",\n          \"evidence\": \"vous devez nommer votre dossier si vous voulez le sauvegarder\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"User reports issues with creating directories and renaming files in the app, with the name field closing immediately and an error message about naming folders.\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1",
+            "text_segment_2",
+            "text_segment_3"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "je n'arrive plus à créer des répertoires ni renommer des fichiers"
+            },
+            {
+              "kind": "info_update",
+              "evidence": "Dans les deux cas le champs du nom se referme tout de suite avant que j'ai eu le temps de le renommer."
+            },
+            {
+              "kind": "info_update",
+              "evidence": "Dans le cas d'un répertoire j'ai ensuite ce message \"vous devez nommer votre dossier si vous voulez le sauvegarder..."
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "feature_or_page",
+              "value": "file and folder management",
+              "evidence": "créer des répertoires ni renommer des fichiers"
+            },
+            {
+              "key": "trigger_action",
+              "value": "attempt to rename a file or create a directory",
+              "evidence": "créer des répertoires ni renommer des fichiers"
+            },
+            {
+              "key": "observed_result",
+              "value": "name field closes immediately",
+              "evidence": "le champs du nom se referme tout de suite"
+            },
+            {
+              "key": "error_message",
+              "value": "vous devez nommer votre dossier si vous voulez le sauvegarder",
+              "evidence": "vous devez nommer votre dossier si vous voulez le sauvegarder"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "User reports issues with creating directories and renaming files in the app, with the name field closing immediately and an error message about naming folders."
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_3",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}
+
+================ real-android-folder-create-error ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case real-android-folder-create-error --until support --debug
+
+
+============================================================
+CASE real-android-folder-create-error — Real Android folder creation bug with exact error
+UNTIL support
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_real-android-folder-create-error",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "depuis l'application android twake workplace, je ne peux plus créer de dossier. Quand je fais \"Créer\" - dossier, j'ai le message : \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\" Mais je ne peux pas entrer de nom de dossier."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM estimate] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2800, image_tokens≈0, output_tokens=500, total_tokens≈3300
+[LLM usage] preset=quickDecision, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=2416, completion_tokens=203, total_tokens=2619
+[LLM estimate] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct, text_tokens≈2614, image_tokens≈0, output_tokens=2000, total_tokens≈4614
+[LLM usage] preset=fullWeightMessageAnalysis, model=mistralai/mistral-small-3.2-24b-instruct-2506, prompt_tokens=4159, completion_tokens=467, total_tokens=4626
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "depuis l'application android twake workplace, je ne peux plus créer de dossier. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "Quand je fais \"Créer\" - dossier, j'ai le message : \"Vous devez nommer votre dossier si vous voulez le sauvegarder. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_3",
+      "verbatim": "Vos infos n'ont pas été sauvegardées.\" ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_4",
+      "verbatim": "Mais je ne peux pas entrer de nom de dossier.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1",
+      "text_segment_2",
+      "text_segment_3",
+      "text_segment_4"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "je ne peux plus créer de dossier"
+      },
+      {
+        "kind": "support_context",
+        "evidence": "Quand je fais \"Créer\" - dossier, j'ai le message"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "platform",
+        "value": "mobile app",
+        "evidence": "l'application android"
+      },
+      {
+        "key": "operating_system",
+        "value": "Android",
+        "evidence": "android"
+      },
+      {
+        "key": "product_or_service",
+        "value": "twake workplace",
+        "evidence": "twake workplace"
+      },
+      {
+        "key": "feature_or_page",
+        "value": "dossier creation",
+        "evidence": "créer de dossier"
+      },
+      {
+        "key": "trigger_action",
+        "value": "create folder",
+        "evidence": "je fais \"Créer\" - dossier"
+      },
+      {
+        "key": "observed_result",
+        "value": "cannot name folder",
+        "evidence": "je ne peux pas entrer de nom de dossier"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "User cannot create folders in Twake Workplace Android app due to inability to name folders"
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateProposals
+"SKIPPED"
+
+8. knowledgeEnrichmentPlan
+"SKIPPED"
+
+9. retrievedSupportKnowledge
+"SKIPPED"
+
+10. synthesizedRetrievedKnowledge
+"SKIPPED"
+
+11. responsePlan
+"SKIPPED"
+
+12. topicResponsePlans
+"SKIPPED"
+
+13. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"depuis l'application android twake workplace, je ne peux plus créer de dossier.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Quand je fais \\\"Créer\\\" - dossier, j'ai le message : \\\"Vous devez nommer votre dossier si vous voulez le sauvegarder.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Vos infos n'ont pas été sauvegardées.\\\"\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Mais je ne peux pas entrer de nom de dossier.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\", \"text_segment_2\", \"text_segment_3\", \"text_segment_4\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"je ne peux plus créer de dossier\"\n        },\n        {\n          \"kind\": \"support_context\",\n          \"evidence\": \"Quand je fais \\\"Créer\\\" - dossier, j'ai le message\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"platform\",\n          \"value\": \"mobile app\",\n          \"evidence\": \"l'application android\"\n        },\n        {\n          \"key\": \"operating_system\",\n          \"value\": \"Android\",\n          \"evidence\": \"android\"\n        },\n        {\n          \"key\": \"product_or_service\",\n          \"value\": \"twake workplace\",\n          \"evidence\": \"twake workplace\"\n        },\n        {\n          \"key\": \"feature_or_page\",\n          \"value\": \"dossier creation\",\n          \"evidence\": \"créer de dossier\"\n        },\n        {\n          \"key\": \"trigger_action\",\n          \"value\": \"create folder\",\n          \"evidence\": \"je fais \\\"Créer\\\" - dossier\"\n        },\n        {\n          \"key\": \"error_message\",\n          \"value\": \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\",\n          \"evidence\": \"Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"cannot name folder\",\n          \"evidence\": \"je ne peux pas entrer de nom de dossier\"\n        },\n        {\n          \"key\": \"expected_result\",\n          \"value\": \"can name and save folder\",\n          \"evidence\": \"je veux le sauvegarder\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"User cannot create folders in Twake Workplace Android app due to inability to name folders\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1",
+            "text_segment_2",
+            "text_segment_3",
+            "text_segment_4"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "je ne peux plus créer de dossier"
+            },
+            {
+              "kind": "support_context",
+              "evidence": "Quand je fais \"Créer\" - dossier, j'ai le message"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "platform",
+              "value": "mobile app",
+              "evidence": "l'application android"
+            },
+            {
+              "key": "operating_system",
+              "value": "Android",
+              "evidence": "android"
+            },
+            {
+              "key": "product_or_service",
+              "value": "twake workplace",
+              "evidence": "twake workplace"
+            },
+            {
+              "key": "feature_or_page",
+              "value": "dossier creation",
+              "evidence": "créer de dossier"
+            },
+            {
+              "key": "trigger_action",
+              "value": "create folder",
+              "evidence": "je fais \"Créer\" - dossier"
+            },
+            {
+              "key": "error_message",
+              "value": "Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées.",
+              "evidence": "Vous devez nommer votre dossier si vous voulez le sauvegarder. Vos infos n'ont pas été sauvegardées."
+            },
+            {
+              "key": "observed_result",
+              "value": "cannot name folder",
+              "evidence": "je ne peux pas entrer de nom de dossier"
+            },
+            {
+              "key": "expected_result",
+              "value": "can name and save folder",
+              "evidence": "je veux le sauvegarder"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "User cannot create folders in Twake Workplace Android app due to inability to name folders"
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_3",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_4",
+        "fallbackUsed": false
+      }
+    ]
+  }
+}

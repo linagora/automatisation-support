@@ -460,6 +460,61 @@ describe("InMemoryMessageBuffer", function () {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  it("keeps a ready group pending when flushing is blocked by processing", async function () {
+    const flushedMessages: BufferedMessages[] = [];
+    const debugEvents: unknown[] = [];
+    let canFlush = false;
+    const buffer = new InMemoryMessageBuffer({
+      inactivityTimeoutMs: 1000,
+      canFlush: () => canFlush,
+      onFlush: (bufferedMessages) => {
+        flushedMessages.push(bufferedMessages);
+      },
+      onDebugEvent: (event) => {
+        debugEvents.push(event);
+      },
+      now: () => new Date("2026-06-05T10:00:03.000Z")
+    });
+
+    buffer.addMessage(buildMessage({
+      messageId: "$blocked-1"
+    }));
+
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(flushedMessages).toHaveLength(0);
+    expect(debugEvents).toContainEqual({
+      eventName: "buffer.flush_blocked_processing",
+      roomId: "!room:example.org",
+      userId: "@user:example.org",
+      scopeKey: JSON.stringify([
+        "matrix",
+        "!room:example.org",
+        null,
+        "@user:example.org"
+      ]),
+      messageIds: ["$blocked-1"],
+      messageCount: 1
+    });
+
+    buffer.addMessage(buildMessage({
+      messageId: "$blocked-2",
+      createdAt: "2026-06-05T10:00:01.000Z"
+    }));
+    canFlush = true;
+
+    expect(buffer.reevaluateGroup({
+      channel: "matrix",
+      roomId: "!room:example.org",
+      userId: "@user:example.org"
+    })).toBe(true);
+    expect(flushedMessages).toHaveLength(1);
+    expect(flushedMessages[0].messages.map((message) => message.messageId))
+      .toEqual(["$blocked-1", "$blocked-2"]);
+
+    buffer.dispose();
+  });
+
   it("dispose clears inactivity and max-wait timers", async function () {
     const flushedMessages: BufferedMessages[] = [];
     const buffer = new InMemoryMessageBuffer({

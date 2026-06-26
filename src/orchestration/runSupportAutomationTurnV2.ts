@@ -4,6 +4,9 @@ import { JsonMessageRepository } from "../repositories/json/jsonMessageRepositor
 import { JsonTicketRepository } from "../repositories/json/jsonTicketRepository";
 import { JsonUserRepository } from "../repositories/json/jsonUserRepository";
 import { runSupportProcessingPipelineV2 } from "../support-processing-pipeline/v2/runSupportProcessingPipelineV2";
+import {
+  normalizeUserLanguageForResponse
+} from "../support-processing-pipeline/v2/response-language/normalizeUserLanguageForResponse";
 import { buildSupportProcessingInputV2 } from "./buildSupportProcessingInputV2";
 import { mapUserResponseToDelivery } from "./mapUserResponseToDelivery";
 import {
@@ -73,6 +76,21 @@ async function runSupportAutomationTurnV2(params: {
         const stage = mapSupportProcessingProgressToStage(event);
 
         if (stage === null) {
+          if (
+            event.step === "analyzeTextSurface" &&
+            (event.status === "completed" || event.status === "skipped")
+          ) {
+            progressContext.userLanguage =
+              event.normalizedResponseLanguage ??
+              normalizeUserLanguageForResponse(event.userLanguage);
+
+            progressContext.progressLanguageReady = true;
+
+            if (event.status === "completed") {
+              await progressReporter.stage(progressContext, "analyzing_surface");
+            }
+          }
+
           return;
         }
 

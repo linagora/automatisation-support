@@ -1,5 +1,9 @@
 import { createMatrixClient } from "./matrixClient";
-import { DEFAULT_MATRIX_PROGRESS_MESSAGES } from "./matrixProgressMessages";
+import {
+  DEFAULT_MATRIX_PROGRESS_MESSAGES,
+  formatMatrixProgressFinalMessage,
+  formatMatrixProgressStageMessage
+} from "./matrixProgressMessages";
 import {
   logError,
   logInfo
@@ -171,8 +175,14 @@ function createMatrixSupportProgressReporter(
     stateByTurnKey.delete(getTurnKey(context));
   }
 
-  function getStageText(stage: SupportProgressStage): string {
-    return config.messages[stage];
+  function getStageText(
+    context: ProgressContext,
+    stage: SupportProgressStage
+  ): string {
+    return formatMatrixProgressStageMessage({
+      stage,
+      userLanguage: context.userLanguage
+    });
   }
 
   function logSimulation(
@@ -291,7 +301,7 @@ function createMatrixSupportProgressReporter(
       return;
     }
 
-    const text = getStageText(stage);
+    const text = getStageText(context, stage);
 
     state.lastStage = stage;
     state.lastVisibleText = text;
@@ -378,7 +388,7 @@ function createMatrixSupportProgressReporter(
     }
 
     const state = getState(context);
-    const text = getStageText(stage);
+    const text = getStageText(context, stage);
     const currentTime = now();
 
     if (state.lastStage === stage || state.lastVisibleText === text) {
@@ -463,10 +473,26 @@ function createMatrixSupportProgressReporter(
 
     delete state.pendingStage;
 
+    if (context.userLanguage === undefined) {
+      logInfo({
+        logger: params.logger,
+        eventName: "matrix.v2.progress.language_missing",
+        metadata: {
+          roomId: context.roomId,
+          userId: context.userId,
+          turnId: getTurnId(context),
+          lastStage: state.lastStage,
+          fallbackLanguage: "English"
+        }
+      });
+    }
+
     await sendStatusEdit({
       context,
       eventName: "matrix.v2.progress.status_final_edit.simulated",
-      text: config.finalMessage
+      text: formatMatrixProgressFinalMessage({
+        userLanguage: context.userLanguage
+      })
     });
   }
 
@@ -481,7 +507,7 @@ function createMatrixSupportProgressReporter(
       context,
       eventName: "matrix.v2.progress.status_failed_edit.simulated",
       stage: "failed",
-      text: getStageText("failed")
+      text: getStageText(context, "failed")
     });
   }
 
@@ -532,10 +558,13 @@ function createMatrixSupportProgressReporter(
     startTurn: async (context) => {
       resetState(context);
       await setTyping(context, true);
-      await createStatusMessage(context, "buffer_flushed");
     },
     stage: async (context, stage) => {
       await setTyping(context, true);
+      if (context.progressLanguageReady !== true) {
+        return;
+      }
+
       await editStatusMessage(context, stage);
     },
     finishTurn: async (context) => {

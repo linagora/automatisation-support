@@ -42,14 +42,28 @@ function buildTopicSearchText(topicEvidence: TopicEvidence): string {
     ...topicEvidence.topicSourceVerbatims,
     ...topicEvidence.relatedTextUnderstandings.flatMap((understanding) => [
       understanding.summary,
-      understanding.broadCategoryHint ?? "",
-      ...understanding.supportNeeds,
-      ...understanding.sourceVerbatims,
-      ...understanding.facts.flatMap((fact) => {
+      ...(understanding.messageKinds ?? []).map((messageKind) => {
+        return messageKind.evidence;
+      }),
+      ...(understanding.caseDetails ?? []).flatMap((detail) => {
         return [
-          "fieldName" in fact ? fact.fieldName : fact.kind,
-          String(fact.value ?? ""),
-          fact.evidence
+          detail.key,
+          String(detail.value ?? ""),
+          detail.evidence
+        ];
+      }),
+      ...(understanding.attemptedActions ?? []).flatMap((action) => {
+        return [
+          action.action,
+          action.outcome,
+          action.evidence
+        ];
+      }),
+      ...(understanding.supportMetadata ?? []).flatMap((metadata) => {
+        return [
+          metadata.key,
+          String(metadata.value ?? ""),
+          metadata.evidence
         ];
       })
     ])

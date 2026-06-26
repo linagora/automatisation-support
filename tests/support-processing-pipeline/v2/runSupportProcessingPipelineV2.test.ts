@@ -24,6 +24,7 @@ import {
 import type {
   AttachmentSurfaceAnalysis,
   AttachmentUnderstanding,
+  ComposedSupportResponsePlan,
   KnowledgeChunk,
   KnowledgeEnrichmentPlan,
   Patches,
@@ -170,6 +171,10 @@ const textUnderstandings: TextUnderstanding[] = [
   {
     understandingId: "text_understanding_1",
     sourceSegmentIds: ["seg_support"],
+    messageKinds: [],
+    caseDetails: [],
+    attemptedActions: [],
+    supportMetadata: [],
     sourceVerbatims: ["Login issue"],
     summary: "Login issue",
     primaryUserExpectation: "wants_solution",
@@ -299,6 +304,40 @@ const expectedTopicResponsePlan: ResponsePlanV2 = {
   responsePlanId: "response_plan_topic_update_proposal_1"
 };
 
+const composedSupportResponsePlan: ComposedSupportResponsePlan = {
+  targetLanguage: "fr",
+  channel: "email",
+  messageIntent: "support_reply",
+  globalTone: {
+    opening: "brief_acknowledgement",
+    empathy: "light",
+    formality: "standard"
+  },
+  sections: [
+    {
+      kind: "topic",
+      topicId: "topic_update_proposal_1",
+      purpose: "Render the login topic.",
+      say: [
+        "Write a concise acknowledgement without inventing a solution."
+      ],
+      ask: [],
+      forbid: [
+        "No question.",
+        "No solution."
+      ]
+    }
+  ],
+  globalQuestions: [],
+  globalForbid: [
+    "No question.",
+    "No solution."
+  ],
+  rendererInstructions: [
+    "Write only from this composed plan."
+  ]
+};
+
 const renderedSupportResponse: RenderedSupportResponse = {
   renderedMessages: [
     {
@@ -411,6 +450,7 @@ function buildSteps(
       async () => retrievedKnowledgeSynthesis
     ),
     planSupportResponse: vi.fn(async () => responsePlan),
+    composeSupportResponsePlan: vi.fn(async () => composedSupportResponsePlan),
     renderSupportResponse: vi.fn(async () => renderedSupportResponse),
     buildUserResponse: vi.fn(async () => userResponse),
     buildSupportPatches: vi.fn(async () => patches),
@@ -431,18 +471,22 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.analyzeAttachmentSurface).not.toHaveBeenCalled();
     expect(steps.analyzeSupportText).not.toHaveBeenCalled();
     expect(steps.planSupportResponse).not.toHaveBeenCalled();
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(expect.objectContaining({
       standardResponseFragments: [standardFragment],
       topicResponsePlans: [],
       channel: input.latestUserMessage.channel
     }));
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
     expect(steps.buildUserResponse).toHaveBeenCalledWith({
       renderedSupportResponse
     });
     expect(steps.renderSupportResponse).toHaveBeenCalledTimes(1);
     expect(output).toEqual({
       userResponse,
-      patches
+      patches,
+      composedSupportResponsePlan
     });
   });
 
@@ -468,11 +512,14 @@ describe("runSupportProcessingPipelineV2", function () {
       recentInteractionContext: input.recentInteractionContext
     });
     expect(steps.analyzeSupportText).not.toHaveBeenCalled();
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(expect.objectContaining({
       standardResponseFragments: [],
       topicResponsePlans: [],
       channel: input.latestUserMessage.channel
     }));
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
   });
 
   it("runs text deep analysis when text surface has support content", async function () {
@@ -489,11 +536,14 @@ describe("runSupportProcessingPipelineV2", function () {
 
     expect(steps.analyzeSupportText).toHaveBeenCalled();
     expect(steps.analyzeSupportAttachments).not.toHaveBeenCalled();
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(expect.objectContaining({
       topicResponsePlans: [expectedTopicResponsePlan],
       standardResponseFragments: [],
       channel: buildInput().latestUserMessage.channel
     }));
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
     expect(steps.proposeTopicUpdates).toHaveBeenCalledWith({
       textUnderstandings,
       supportTopicKnowledge: buildInput().supportTopicKnowledge,
@@ -579,7 +629,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(output.retrievedSupportKnowledge).toEqual([]);
     expect(output.synthesizedRetrievedKnowledge).toBeNull();
     expect(output.topicResponsePlans).toEqual([expectedTopicResponsePlan]);
-    expect(output.responsePlan).toEqual(expectedTopicResponsePlan);
+    expect(output).not.toHaveProperty("responsePlan");
     expect(steps.retrieveSupportKnowledge).not.toHaveBeenCalled();
     expect(steps.synthesizeRetrievedKnowledge).not.toHaveBeenCalled();
     expect(steps.planKnowledgeEnrichment).toHaveBeenCalledWith({
@@ -592,7 +642,7 @@ describe("runSupportProcessingPipelineV2", function () {
         relatedSupportResponseCues: supportResponseCues
       }),
       recentInteractionContext: buildInput().recentInteractionContext,
-      targetLanguage: "French",
+      targetLanguage: "fr",
       extractableFieldCatalog: expect.arrayContaining([
         expect.objectContaining({
           fieldName: "account_status",
@@ -606,7 +656,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         topicUserMessageContent: "Login issue",
-        targetLanguage: "French",
+        targetLanguage: "fr",
         topicEvidence: expect.objectContaining({
           proposalId: topicUpdateProposals[0].proposalId,
           topicSourceVerbatims: ["Login issue"],
@@ -626,6 +676,108 @@ describe("runSupportProcessingPipelineV2", function () {
         })
       })
     );
+  });
+
+  it("passes the current turn language to the renderer despite French previous bot context", async function () {
+    const input = buildInput();
+    input.latestUserMessage.content =
+      "yes for sure, i juste ask for reinitialisation and it is said that a mail is supposed to be sent but in my personal mailbox i dont get the mail";
+    input.recentInteractionContext = {
+      previousUserMessageSummary: "I asked for password reset.",
+      previousBotResponseSummary:
+        "Je comprends que vous attendez un email de réinitialisation."
+    };
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => ({
+        ...supportTextSurface,
+        userLanguage: "English"
+      }))
+    });
+
+    await runSupportProcessingPipelineV2(input, steps);
+
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetLanguage: "en"
+      })
+    );
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
+  });
+
+  it("normalizes legacy Other surface languages before planner and renderer inputs", async function () {
+    const input = buildInput();
+    input.latestUserMessage.content = "Guten mein freunde";
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => ({
+        ...supportTextSurface,
+        userLanguage: "Other"
+      }))
+    });
+
+    await runSupportProcessingPipelineV2(input, steps);
+
+    expect(steps.planSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetLanguage: "en"
+      })
+    );
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetLanguage: "en"
+      })
+    );
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
+  });
+
+  it("passes a German surface language through planner and renderer despite French previous context", async function () {
+    const input = buildInput();
+    input.latestUserMessage.content =
+      "Ich habe ein Problem mit den Benachrichtigungen auf Android.";
+    input.recentInteractionContext = {
+      previousUserMessageSummary: "Bonjour",
+      previousBotResponseSummary: "Je vous réponds en français."
+    };
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => ({
+        ...supportTextSurface,
+        userLanguage: "de"
+      }))
+    });
+
+    await runSupportProcessingPipelineV2(input, steps);
+
+    expect(steps.planSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetLanguage: "de"
+      })
+    );
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetLanguage: "de"
+      })
+    );
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
   });
 
   it("plans every actionable topic with its related evidence", async function () {
@@ -770,18 +922,21 @@ describe("runSupportProcessingPipelineV2", function () {
     );
     expect(firstTopicResponsePlan.responsePlanId).not.toBe("");
     expect(secondTopicResponsePlan.responsePlanId).not.toBe("");
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
       expect.objectContaining({
         topicResponsePlans
       })
     );
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
     expect(buildTopicResponsePlanDebug(firstTopicResponsePlan)).toEqual({
       responsePlanId: firstTopicResponsePlan.responsePlanId
     });
     expect(buildTopicResponsePlanDebug(secondTopicResponsePlan)).toEqual({
       responsePlanId: secondTopicResponsePlan.responsePlanId
     });
-    expect(output.responsePlan).toEqual(firstTopicResponsePlan);
+    expect(output).not.toHaveProperty("responsePlan");
   });
 
   it("isolates access and billing evidence across topic-only branches", async function () {
@@ -1196,13 +1351,13 @@ describe("runSupportProcessingPipelineV2", function () {
       {
         ...topicUpdateProposals[0],
         selectedSourceVerbatims:
-          notificationUnderstanding.sourceVerbatims
+          notificationUnderstanding.sourceVerbatims as string[]
       },
       {
         ...topicUpdateProposals[0],
         proposalId: "topic_update_proposal_2",
         fromUnderstandingIds: ["text_understanding_2"],
-        selectedSourceVerbatims: billingUnderstanding.sourceVerbatims,
+        selectedSourceVerbatims: billingUnderstanding.sourceVerbatims as string[],
         newTopic: {
           title: "Duplicate invoice",
           broadCategoryHint: "billing",
@@ -1503,16 +1658,19 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.planKnowledgeEnrichment).not.toHaveBeenCalled();
     expect(steps.selectCatalogKnowledgeForTopic).not.toHaveBeenCalled();
     expect(steps.planSupportResponse).not.toHaveBeenCalled();
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
       expect.objectContaining({
         topicResponsePlans: []
       })
     );
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
     expect(output.topicResponsePlans).toEqual([]);
     expect(output).not.toHaveProperty("responsePlan");
   });
 
-  it("passes support response plans and empty standard fragments to the renderer on support-only turns", async function () {
+  it("passes support response plans and empty standard fragments to the composer on support-only turns", async function () {
     const input = buildInput();
     const steps = buildSteps({
       planTurnAnalysis: vi.fn(async () => ({
@@ -1526,14 +1684,17 @@ describe("runSupportProcessingPipelineV2", function () {
 
     await runSupportProcessingPipelineV2(input, steps);
 
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(expect.objectContaining({
       topicResponsePlans: [expectedTopicResponsePlan],
       standardResponseFragments: [],
       channel: input.latestUserMessage.channel
     }));
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
   });
 
-  it("passes support response plans and standard fragments together to the renderer", async function () {
+  it("passes support response plans and standard fragments together to the composer", async function () {
     const input = buildInput();
     const steps = buildSteps({
       planTurnAnalysis: vi.fn(async () => ({
@@ -1548,14 +1709,17 @@ describe("runSupportProcessingPipelineV2", function () {
     await runSupportProcessingPipelineV2(input, steps);
 
     expect(steps.analyzeSupportText).toHaveBeenCalled();
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(expect.objectContaining({
       topicResponsePlans: [expectedTopicResponsePlan],
       standardResponseFragments: [standardFragment],
       channel: input.latestUserMessage.channel
     }));
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
   });
 
-  it("renders multiple standard fragments with one renderer call", async function () {
+  it("composes multiple standard fragments before one renderer call", async function () {
     const input = buildInput();
     const fragments: StandardResponseFragment[] = [
       standardFragment,
@@ -1571,12 +1735,15 @@ describe("runSupportProcessingPipelineV2", function () {
 
     await runSupportProcessingPipelineV2(input, steps);
 
-    expect(steps.renderSupportResponse).toHaveBeenCalledTimes(1);
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith(expect.objectContaining({
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(expect.objectContaining({
       standardResponseFragments: fragments,
       topicResponsePlans: [],
       channel: input.latestUserMessage.channel
     }));
+    expect(steps.renderSupportResponse).toHaveBeenCalledTimes(1);
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
+      composedSupportResponsePlan
+    });
   });
 
   it("does not send standard fragments directly to buildUserResponse", async function () {
@@ -1683,6 +1850,8 @@ describe("runSupportProcessingPipelineV2", function () {
       { step: "retrieveSupportKnowledge", status: "skipped" },
       { step: "synthesizeRetrievedKnowledge", status: "skipped" },
       { step: "planSupportResponse", status: "skipped" },
+      { step: "composeSupportResponsePlan", status: "started" },
+      { step: "composeSupportResponsePlan", status: "completed" },
       { step: "renderSupportResponse", status: "started" },
       { step: "renderSupportResponse", status: "completed" },
       { step: "buildUserResponse", status: "started" },
@@ -1739,9 +1908,53 @@ describe("runSupportProcessingPipelineV2", function () {
       status: "completed"
     });
     expect(progressEvents).toContainEqual({
+      step: "composeSupportResponsePlan",
+      status: "completed"
+    });
+    expect(progressEvents).toContainEqual({
       step: "renderSupportResponse",
       status: "completed"
     });
+  });
+
+  it("reports the detected user language only after text surface analysis completes", async function () {
+    const progressEvents: SupportProcessingProgressEvent[] = [];
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => ({
+        ...supportTextSurface,
+        userLanguage: "English"
+      })),
+      planKnowledgeEnrichment: vi.fn(async () => noRagPlan)
+    });
+
+    await runSupportProcessingPipelineV2(buildInput(), steps, {
+      reportProgress: (event) => {
+        progressEvents.push(event);
+      }
+    });
+
+    const textSurfaceEvents = progressEvents.filter((event) => {
+      return event.step === "analyzeTextSurface";
+    });
+
+    expect(textSurfaceEvents).toEqual([
+      {
+        step: "analyzeTextSurface",
+        status: "started"
+      },
+      {
+        step: "analyzeTextSurface",
+        status: "completed",
+        userLanguage: "English",
+        rawUserLanguage: "English",
+        normalizedResponseLanguage: "en"
+      }
+    ]);
   });
 
   it("ignores reportProgress failures", async function () {
@@ -1757,7 +1970,8 @@ describe("runSupportProcessingPipelineV2", function () {
 
     expect(output).toEqual({
       userResponse,
-      patches
+      patches,
+      composedSupportResponsePlan
     });
   });
 });

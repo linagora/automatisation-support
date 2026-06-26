@@ -19,7 +19,7 @@ import {
 import type {
   ExtractableFieldDefinition,
   TextUnderstanding,
-  TopicUpdateProposal
+  TopicEvidence
 } from "../../../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
 import type {
   SelectCatalogKnowledgeForTopicInput
@@ -81,48 +81,17 @@ const catalog: ExtractableFieldDefinition[] = [
   }
 ];
 
-const proposal: TopicUpdateProposal = {
-  proposalId: "proposal_1",
-  action: "create_new_topic",
-  fromUnderstandingIds: ["understanding_1"],
-  topicId: null,
-  selectedSourceVerbatims: ["Erreur de login"],
-  updateIntent: {
-    relationship: "creates_distinct_topic",
-    blockingIssue: "yes",
-    statusHint: "open",
-    userGoal: "Se connecter",
-    correctionNote: null
-  },
-  newTopic: {
-    title: "Erreur de login",
-    broadCategoryHint: "access_security",
-    userGoal: "Se connecter",
-    blockingIssue: "yes"
-  },
-  reason: "New access topic."
-};
-
 function understanding(
   overrides: Partial<TextUnderstanding> = {}
 ): TextUnderstanding {
   return {
     understandingId: "understanding_1",
     sourceSegmentIds: ["segment_1"],
-    sourceVerbatims: ["Erreur de login"],
+    messageKinds: [],
+    caseDetails: [],
+    attemptedActions: [],
+    supportMetadata: [],
     summary: "Login error",
-    primaryUserExpectation: "wants_solution",
-    supportNeeds: ["possible_account_or_access_action"],
-    broadCategoryHint: "access_security",
-    contextDependency: "standalone_complete",
-    contextualAnswer: {
-      type: "none",
-      value: null,
-      evidence: null
-    },
-    facts: [],
-    testedActions: [],
-    uncertainties: [],
     ...overrides
   };
 }
@@ -132,7 +101,7 @@ type SelectorTestOverrides = Omit<
   "topicUserMessageContent" | "topicEvidence"
 > & {
   latestUserMessageContent?: string;
-  topicUpdateProposal?: TopicUpdateProposal;
+  topicEvidence?: Partial<TopicEvidence>;
   existingTopic?: unknown;
   relatedTextUnderstandings?: TextUnderstanding[];
   relatedAttachmentUnderstandings?: SelectCatalogKnowledgeForTopicInput[
@@ -146,7 +115,7 @@ function input(
   const {
     latestUserMessageContent =
       "Erreur de login, mon mot de passe n’est pas bon.",
-    topicUpdateProposal = proposal,
+    topicEvidence,
     existingTopic,
     relatedTextUnderstandings = [understanding()],
     relatedAttachmentUnderstandings = [],
@@ -156,14 +125,17 @@ function input(
   return {
     topicUserMessageContent: latestUserMessageContent,
     topicEvidence: {
-      proposalId: topicUpdateProposal.proposalId,
-      topicId: topicUpdateProposal.topicId,
-      topicSourceVerbatims: topicUpdateProposal.selectedSourceVerbatims,
-      relatedUnderstandingIds: topicUpdateProposal.fromUnderstandingIds,
+      proposalId: "topic_update_op_1",
+      topicId: null,
+      topicSourceVerbatims: [latestUserMessageContent],
+      relatedUnderstandingIds: relatedTextUnderstandings.map((item) => {
+        return item.understandingId;
+      }),
       relatedTextUnderstandings,
       relatedAttachmentUnderstandings,
       relatedSupportResponseCues: [],
-      ...(existingTopic ? { existingTopic } : {})
+      ...(existingTopic ? { existingTopic } : {}),
+      ...topicEvidence
     },
     extractableFieldCatalog: catalog,
     targetLanguage: "French",
@@ -203,6 +175,7 @@ describe("selectCatalogKnowledgeForTopic", function () {
     expect(callLLMMock).toHaveBeenCalledWith(
       expect.any(Array),
       expect.objectContaining({
+        stage: "catalog_field_selection",
         preset: "fullWeightMessageAnalysis",
         temperature: 0,
         responseFormat: selectCatalogKnowledgeForTopicResponseFormat
@@ -215,10 +188,9 @@ describe("selectCatalogKnowledgeForTopic", function () {
       input: input({
         relatedTextUnderstandings: [
           understanding({
-            facts: [
+            caseDetails: [
               {
-                type: "catalogued_field",
-                fieldName: "error_message",
+                key: "error_message",
                 value: "mot de passe incorrect",
                 evidence: "mot de passe n’est pas bon"
               }
@@ -272,14 +244,19 @@ describe("selectCatalogKnowledgeForTopic", function () {
       relatedTextUnderstandings: [
         understanding({
           summary: "Page crash",
-          broadCategoryHint: "bug",
-          supportNeeds: ["possible_bug"]
+          caseDetails: [
+            {
+              key: "observed_result",
+              value: "page closes",
+              evidence: "La page se ferme"
+            }
+          ]
         })
       ]
     })).messages.map((message) => message.content).join("\n");
 
     expect(prompt).toContain(
-      "Do not select visual_evidence by default for bugs."
+      "Do not select visual_evidence by default for every bug."
     );
     expect(prompt).toContain('"relatedAttachmentUnderstandings": []');
   });
@@ -316,8 +293,13 @@ describe("selectCatalogKnowledgeForTopic", function () {
         relatedTextUnderstandings: [
           understanding({
             summary: "Duplicate invoice",
-            broadCategoryHint: "billing",
-            supportNeeds: ["possible_billing_or_payment_action"]
+            caseDetails: [
+              {
+                key: "billing_issue_type",
+                value: "duplicate invoice",
+                evidence: "facture deux fois"
+              }
+            ]
           })
         ]
       }),
@@ -338,7 +320,19 @@ describe("selectCatalogKnowledgeForTopic", function () {
 
   it("defensively rejects billing fields from an access-only topic", function () {
     const output = formatSelectCatalogKnowledgeForTopicOutput({
-      input: input(),
+      input: input({
+        relatedTextUnderstandings: [
+          understanding({
+            caseDetails: [
+              {
+                key: "access_action",
+                value: "login",
+                evidence: "Erreur de login"
+              }
+            ]
+          })
+        ]
+      }),
       rawSelectCatalogKnowledgeForTopic: completed({
         selectedFieldNames: [
           "access_action",
@@ -369,29 +363,20 @@ describe("selectCatalogKnowledgeForTopic", function () {
   });
 
   it("defensively rejects access fields from a billing-only topic", function () {
-    const billingProposal: TopicUpdateProposal = {
-      ...proposal,
-      proposalId: "proposal_billing",
-      fromUnderstandingIds: ["understanding_billing"],
-      selectedSourceVerbatims: ["J’ai reçu ma facture deux fois."],
-      newTopic: {
-        ...proposal.newTopic!,
-        title: "Facture reçue deux fois",
-        broadCategoryHint: "billing",
-        userGoal: "Clarifier la double facturation"
-      }
-    };
     const output = formatSelectCatalogKnowledgeForTopicOutput({
       input: input({
-        topicUpdateProposal: billingProposal,
         latestUserMessageContent: "J’ai reçu ma facture deux fois.",
         relatedTextUnderstandings: [
           understanding({
             understandingId: "understanding_billing",
-            sourceVerbatims: ["J’ai reçu ma facture deux fois."],
             summary: "Duplicate invoice",
-            broadCategoryHint: "billing",
-            supportNeeds: ["possible_billing_or_payment_action"]
+            caseDetails: [
+              {
+                key: "billing_issue_type",
+                value: "duplicate invoice",
+                evidence: "facture deux fois"
+              }
+            ]
           })
         ]
       }),

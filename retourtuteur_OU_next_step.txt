@@ -50,3 +50,16 @@ Brancher le chat support : environnemnt sur QA ou Stagging, channel de support n
 , il faudrait qu'on me file un token pour lire ce channel là
 Demander à Pierre Marty pour savoir si ça existe ou pas, créer un channel sur QA ou stagging qu'on nomme discussion. matrix
 recuperer room Id qui est le channel de sdsicussion + token pour s'autitifer sur cette room.
+
+NEXT STEP : 
+- aligner bien le selector de calatlogue qui est encore mauvais.
+- tester le response plan par topic qui a déjà été amélioré théoriquemnt mais jamais testé. 
+- analyser et tester le response plan synthethiser qui doit bien synthetiser ce qui est sorite des response plan précédent et des standartds fragmints
+- analyser el render qui doit pas du tout raisonner et recevoir jsute les isntructiosn du response plan synthethiser
+- analyser comment foncitonne le FAUX rag qui pour l'instnat se base sur le knowledge et comment l'améliorer
+- lancer des tests de toute la pipeline et cherhcer encore où on peut optimsier en tokens
+- pour tester les vrais écahnges depuis matrix il faut mettre à jour la façon dont est stocké les topics car on a simplfiier et acutlelemnt c'est encore sur l'ancien modèle donc ça va créer des perturbations et notamment la gestion du patch sortie du llm3. ça sort un objet apthces à applqiue ret aussi un objet intermédiaire mais qui sert que dans la pipleine pas pour faire les patches
+- faire des tests depuis matrix
+- preparer l'appel au rag réel pas jsute le faux knwoledge vite fait. 
+- alimenter le rag d'anciens topics.
+- tester l'évolution des réponses selons le rag 

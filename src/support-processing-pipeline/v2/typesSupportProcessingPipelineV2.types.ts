@@ -68,6 +68,7 @@ export type SupportProcessingStepName =
   | "retrieveSupportKnowledge"
   | "synthesizeRetrievedKnowledge"
   | "planSupportResponse"
+  | "composeSupportResponsePlan"
   | "renderSupportResponse"
   | "buildUserResponse"
   | "buildSupportPatches";
@@ -75,6 +76,9 @@ export type SupportProcessingStepName =
 export type SupportProcessingProgressEvent = {
   step: SupportProcessingStepName;
   status: "started" | "completed" | "skipped" | "failed";
+  userLanguage?: string;
+  rawUserLanguage?: string;
+  normalizedResponseLanguage?: string;
 };
 
 export type SupportProcessingPipelineV2Runtime = {
@@ -107,6 +111,9 @@ export type SupportProcessingPipelineV2Output = {
   patches: Patches;
   textUnderstandings?: TextUnderstanding[];
   supportResponseCues?: SupportResponseCue[];
+  topicUpdateOps?: TopicUpdateOp[];
+  topicPatches?: TopicPatch[];
+  mergedTopicSnapshots?: MergedTopicSnapshot[];
   topicUpdateProposals?: TopicUpdateProposal[];
   knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
   retrievedSupportKnowledge?: KnowledgeChunk[];
@@ -115,8 +122,7 @@ export type SupportProcessingPipelineV2Output = {
   topicRetrievedSupportKnowledge?: TopicRetrievedSupportKnowledgeResult[];
   topicRetrievedKnowledgeSyntheses?: TopicRetrievedKnowledgeSynthesisResult[];
   topicResponsePlans?: ResponsePlanV2[];
-  /** @deprecated Use topicResponsePlans. */
-  responsePlan?: ResponsePlanV2;
+  composedSupportResponsePlan?: ComposedSupportResponsePlan;
 };
 
 export type PromptSecuritySignals = {
@@ -167,6 +173,37 @@ export type TestedAction = {
   evidence: string;
 };
 
+export type SupportMessageKind = {
+  kind:
+    | "issue_report"
+    | "question"
+    | "action_request"
+    | "info_update"
+    | "confirmation"
+    | "denial"
+    | "feedback"
+    | "support_context";
+  evidence: string;
+};
+
+export type SupportCaseDetail = {
+  key: string;
+  value: string | number | boolean | null;
+  evidence: string;
+};
+
+export type SupportMetadata = {
+  key: string;
+  value: string | number | boolean | null;
+  evidence: string;
+};
+
+export type SupportAttemptedAction = {
+  action: string;
+  outcome: "success" | "failed" | "partial" | "unknown";
+  evidence: string;
+};
+
 export type SupportResponseCue = {
   cueId: string;
   sourceSegmentIds: string[];
@@ -211,20 +248,110 @@ export type TextUncertainty = {
 export type TextUnderstanding = {
   understandingId: string;
   sourceSegmentIds: string[];
-  sourceVerbatims: string[];
+  messageKinds: SupportMessageKind[];
+  caseDetails: SupportCaseDetail[];
+  attemptedActions: SupportAttemptedAction[];
+  supportMetadata: SupportMetadata[];
   summary: string;
-  primaryUserExpectation: PrimaryUserExpectation;
-  explicitUserRequest?: {
-    request: string;
-    evidence: string;
-  };
-  supportNeeds: SupportNeed[];
-  broadCategoryHint?: BroadCategoryHint;
-  contextDependency: ContextDependency;
-  contextualAnswer: ContextualAnswer;
-  facts: SupportFact[];
-  testedActions: TestedAction[];
-  uncertainties: TextUncertainty[];
+  [legacyField: string]: unknown;
+};
+
+export type TopicUpdateOperation =
+  | "update"
+  | "create"
+  | "none"
+  | "review";
+
+export type TopicPatchIdentity = {
+  title: string | null;
+  broadCategoryHint: string | null;
+  summary: string | null;
+};
+
+export type TopicItemReference = [number, number];
+
+export type TopicMergeRefs = {
+  caseDetails: TopicItemReference[];
+  attemptedActions: TopicItemReference[];
+};
+
+export type TopicReplaceRefs = {
+  caseDetails: {
+    key: string;
+    with: TopicItemReference;
+  }[];
+  attemptedActions: {
+    targetIndex: number;
+    with: TopicItemReference;
+  }[];
+};
+
+export type TopicUpdateOp = {
+  op: TopicUpdateOperation;
+  items: number[];
+  topicId: string | null;
+  topic: TopicPatchIdentity | null;
+  merge: TopicMergeRefs | null;
+  replace: TopicReplaceRefs | null;
+  review: string | null;
+};
+
+export type TopicUpdateOpsResponse = {
+  ops: TopicUpdateOp[];
+};
+
+export type ResolvedTopicMerge = {
+  caseDetails: SupportCaseDetail[];
+  attemptedActions: SupportAttemptedAction[];
+};
+
+export type ResolvedTopicReplace = {
+  caseDetails: {
+    key: string;
+    with: SupportCaseDetail;
+  }[];
+  attemptedActions: {
+    targetIndex: number;
+    with: SupportAttemptedAction;
+  }[];
+};
+
+export type TopicPatch = {
+  patchId: string;
+  op: TopicUpdateOperation;
+  items: number[];
+  topicId: string | null;
+  temporaryTopicId: string | null;
+  topic: TopicPatchIdentity | null;
+  merge: ResolvedTopicMerge;
+  replace: ResolvedTopicReplace;
+  review: string | null;
+  sourceUnderstandingIds: string[];
+  selectedSourceVerbatims: string[];
+};
+
+export type MergedTopicSnapshot = {
+  snapshotId: string;
+  topicId: string | null;
+  temporaryTopicId: string | null;
+  isNewTopic: boolean;
+  title: string | null;
+  broadCategoryHint: string | null;
+  summary: string | null;
+  caseDetails: SupportCaseDetail[];
+  attemptedActions: SupportAttemptedAction[];
+  topic_details: Record<string, string | number | boolean | null>;
+  sourceUnderstandingIds: string[];
+  sourceVerbatims: string[];
+  sourceOpIndex: number;
+  baseTopic: unknown | null;
+};
+
+export type ProposeTopicUpdatesOutput = {
+  topicUpdateOps: TopicUpdateOp[];
+  topicUpdateProposals: TopicUpdateProposal[];
+  topicPatches: TopicPatch[];
+  mergedTopicSnapshots: MergedTopicSnapshot[];
 };
 
 export type AttachmentUnderstanding = {
@@ -418,6 +545,7 @@ export type PlanKnowledgeEnrichmentInput = {
 export type TopicEvidence = {
   proposalId: string;
   topicId: string | null;
+  topicSnapshot?: MergedTopicSnapshot;
   topicSourceVerbatims: string[];
   relatedUnderstandingIds: string[];
   relatedTextUnderstandings: TextUnderstanding[];
@@ -429,6 +557,7 @@ export type TopicEvidence = {
 export type SelectCatalogKnowledgeForTopicInput = {
   topicUserMessageContent: string;
   topicEvidence: TopicEvidence;
+  topicSnapshot?: MergedTopicSnapshot;
   extractableFieldCatalog: ExtractableFieldDefinition[];
   recentInteractionContext?: unknown;
   targetLanguage?: string;
@@ -486,12 +615,64 @@ export type PlanSupportResponseInput = {
   channel?: Channel;
 };
 
-export type RenderSupportResponseInput = {
-  latestUserMessageContent: string;
-  targetLanguage?: string;
+export type ComposedResponseSectionKind =
+  | "standard_fragment"
+  | "topic"
+  | "handover"
+  | "safety"
+  | "review";
+
+export type ComposedResponseQuestion = {
+  fieldName: string;
+  goal: string;
+};
+
+export type ComposedResponseSection = {
+  kind: ComposedResponseSectionKind;
+  topicId?: string | null;
+  purpose: string;
+  say: string[];
+  ask: ComposedResponseQuestion[];
+  forbid: string[];
+};
+
+export type ComposedSupportResponsePlan = {
+  targetLanguage: string;
+  channel: string;
+  messageIntent:
+    | "support_reply"
+    | "standard_reply"
+    | "mixed_reply"
+    | "handover_reply"
+    | "review_reply";
+  globalTone: {
+    opening:
+      | "none"
+      | "brief_acknowledgement"
+      | "empathetic_acknowledgement";
+    empathy: "none" | "light" | "strong";
+    formality: "standard" | "friendly" | "formal";
+  };
+  sections: ComposedResponseSection[];
+  globalQuestions: (ComposedResponseQuestion & {
+    sourceTopicIds: string[];
+  })[];
+  globalForbid: string[];
+  rendererInstructions: string[];
+};
+
+export type ComposeSupportResponsePlanInput = {
   standardResponseFragments: StandardResponseFragment[];
   topicResponsePlans: ResponsePlanV2[];
+  supportResponseCues?: SupportResponseCue[];
+  targetLanguage: string;
   channel: Channel;
+  recentInteractionContext: RecentInteractionContext;
+  responsePlanningPolicy?: Partial<ResponsePlanningPolicy>;
+};
+
+export type RenderSupportResponseInput = {
+  composedSupportResponsePlan: ComposedSupportResponsePlan;
 };
 
 export type BuildUserResponseInput = {
@@ -505,6 +686,8 @@ export type BuildSupportPatchesInput = {
   textUnderstandings?: TextUnderstanding[];
   supportResponseCues?: SupportResponseCue[];
   topicUpdateProposals?: TopicUpdateProposal[];
+  topicPatches?: TopicPatch[];
+  mergedTopicSnapshots?: MergedTopicSnapshot[];
   knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
   retrievedSupportKnowledge?: KnowledgeChunk[];
   synthesizedRetrievedKnowledge?: RetrievedKnowledgeSynthesis | null;
@@ -512,8 +695,9 @@ export type BuildSupportPatchesInput = {
   topicRetrievedSupportKnowledge?: TopicRetrievedSupportKnowledgeResult[];
   topicRetrievedKnowledgeSyntheses?: TopicRetrievedKnowledgeSynthesisResult[];
   topicResponsePlans?: ResponsePlanV2[];
-  /** @deprecated Use topicResponsePlans. */
-  responsePlan?: ResponsePlanV2;
+  composedSupportResponsePlan?: ComposedSupportResponsePlan;
+  rawUserLanguage?: string;
+  normalizedResponseLanguage?: string;
   userResponse: UserResponse;
 };
 
@@ -545,7 +729,7 @@ export type SupportProcessingPipelineV2Steps = {
   >;
   proposeTopicUpdates?: PipelineStep<
     ProposeTopicUpdatesInput,
-    TopicUpdateProposal[]
+    ProposeTopicUpdatesOutput | TopicUpdateProposal[]
   >;
   applyTopicUpdates?: PipelineStep<
     ApplyTopicUpdatesInput,
@@ -568,6 +752,10 @@ export type SupportProcessingPipelineV2Steps = {
     RetrievedKnowledgeSynthesis
   >;
   planSupportResponse?: PipelineStep<PlanSupportResponseInput, ResponsePlanV2>;
+  composeSupportResponsePlan?: PipelineStep<
+    ComposeSupportResponsePlanInput,
+    ComposedSupportResponsePlan
+  >;
   renderSupportResponse?: PipelineStep<
     RenderSupportResponseInput,
     RenderedSupportResponse

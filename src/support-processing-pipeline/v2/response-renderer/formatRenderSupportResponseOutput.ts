@@ -56,49 +56,24 @@ function enumValue<TValues extends readonly string[]>(
     : undefined;
 }
 
-function getStandardFragmentSubcategories(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
+function buildFallbackText(input: FormatRenderSupportResponseOutputInput): string {
+  const plan = input.input.composedSupportResponsePlan;
+  const useFrench = plan.targetLanguage === "fr" ||
+    plan.targetLanguage.toLowerCase() === "french";
+  const firstSay = plan.sections.flatMap((section) => {
+    return section.say;
+  }).find((item) => {
+    return item.trim() !== "";
+  });
+
+  if (firstSay) {
+    return firstSay;
   }
 
-  return value.flatMap((fragment) => {
-    if (!isRecord(fragment)) {
-      return [];
-    }
-
-    return isString(fragment.standardSubcategory)
-      ? [fragment.standardSubcategory.trim()]
-      : [];
-  });
-}
-
-function buildFallbackText(input: FormatRenderSupportResponseOutputInput): string {
-  const standardSubcategories = getStandardFragmentSubcategories(
-    input.input.standardResponseFragments
-  );
-  const useFrench = input.input.topicResponsePlans.some((plan) => {
-    return plan.rendererTask.targetLanguage === "French";
-  }) || input.input.targetLanguage === "French" ||
-    /\b(bonjour|merci|probl[eè]me|aide|je|j['’]|oui|non|normalement|semaine derni[eè]re|derni[eè]re fois|mot de passe|[çc]a marche|[çc]a ne marche pas)\b/i.test(
-      input.input.latestUserMessageContent
-    );
-
-  if (standardSubcategories.includes("handover_request")) {
+  if (plan.messageIntent === "handover_reply") {
     return useFrench
       ? "Votre demande va être transmise à l’équipe support. Je reste disponible en attendant si vous souhaitez ajouter du contexte ou obtenir une première aide."
       : "Your request will be passed on to the support team. I remain available in the meantime if you want to add context or get initial help.";
-  }
-
-  if (standardSubcategories.includes("greeting")) {
-    return useFrench
-      ? "Bonjour, je suis l’assistant du support. Comment puis-je vous aider ?"
-      : "Hello, I’m the support assistant. How can I help?";
-  }
-
-  if (standardSubcategories.includes("unclear_message")) {
-    return useFrench
-      ? "Je n’ai pas bien compris votre demande. Pouvez-vous la reformuler ?"
-      : "I did not fully understand your request. Could you rephrase it?";
   }
 
   return useFrench

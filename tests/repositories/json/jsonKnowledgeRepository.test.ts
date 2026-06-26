@@ -30,6 +30,10 @@ function buildTopicEvidence(params: {
       {
         understandingId: "understanding_1",
         sourceSegmentIds: ["segment_1"],
+        messageKinds: [],
+        caseDetails: [],
+        attemptedActions: [],
+        supportMetadata: [],
         sourceVerbatims: [params.verbatim],
         summary: params.summary,
         primaryUserExpectation: "wants_solution",

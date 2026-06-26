@@ -120,10 +120,12 @@ export interface LLMClientResult {
 
 export interface CallLLMOptions {
   preset?: string;
+  stage?: string;
   config?: Partial<LLMModelConfig>;
   temperature?: number;
   maxTokens?: number;
   logUsage?: boolean;
+  logEstimates?: boolean;
 
   /**
    * Optional one-shot override.

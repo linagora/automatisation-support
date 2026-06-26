@@ -1,7 +1,10 @@
 import type {
   RecentInteractionContext,
+  ProposeTopicUpdatesOutput,
   SupportTopicKnowledge,
   TextUnderstanding,
+  TopicUpdateOp,
+  TopicUpdateOpsResponse,
   TopicUpdateProposal
 } from "../typesSupportProcessingPipelineV2.types";
 import type {
@@ -41,12 +44,12 @@ export type FormatProposeTopicUpdatesOutputInput = {
 export type ProposeTopicUpdatesValidationResult =
   | {
       status: "valid";
-      topicUpdateProposals: TopicUpdateProposal[];
+      topicUpdateOps: TopicUpdateOp[];
     }
   | {
       status: "invalid";
       reason: string;
-      topicUpdateProposals: TopicUpdateProposal[];
+      topicUpdateOps: TopicUpdateOp[];
     };
 
 export type ProposeTopicUpdatesInput = {
@@ -57,10 +60,10 @@ export type ProposeTopicUpdatesInput = {
   latestUserMessageContent?: string | null;
 };
 
-export type ProposeTopicUpdatesResult = {
-  topicUpdateProposals: TopicUpdateProposal[];
-};
+export type ProposeTopicUpdatesResult = ProposeTopicUpdatesOutput;
 
 export type {
+  TopicUpdateOp,
+  TopicUpdateOpsResponse,
   TopicUpdateProposal
 };

@@ -1,34 +1,12 @@
-const TOPIC_UPDATE_ACTIONS = [
-  "update_existing_topic",
-  "create_new_topic",
-  "no_topic_update",
-  "needs_review"
-] as const;
+import {
+  BROAD_CATEGORY_HINTS
+} from "../analyze-support-text/supportTextAnalysis.taxonomy";
 
-const TOPIC_UPDATE_RELATIONSHIPS = [
-  "continues_existing_issue",
-  "adds_new_information",
-  "answers_requested_field",
-  "reports_test_result",
-  "reports_resolution",
-  "reports_partial_resolution",
-  "corrects_previous_information",
-  "reopens_or_persists_issue",
-  "creates_distinct_topic",
-  "unclear"
-] as const;
-
-const TOPIC_STATUS_HINTS = [
-  "open",
-  "resolved",
-  "partially_resolved",
-  "unclear"
-] as const;
-
-const BLOCKING_ISSUE_VALUES = [
-  "yes",
-  "no",
-  "unknown"
+const TOPIC_UPDATE_OPS = [
+  "update",
+  "create",
+  "none",
+  "review"
 ] as const;
 
 function objectOf(
@@ -50,13 +28,10 @@ function arrayOf(items: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
-function nonEmptyArrayOf(items: Record<string, unknown>): Record<string, unknown> {
-  return {
-    type: "array",
-    minItems: 1,
-    items
-  };
-}
+const nonNegativeIntegerSchema = {
+  type: "integer",
+  minimum: 0
+} as const;
 
 const stringSchema = {
   type: "string"
@@ -69,76 +44,111 @@ const nullableStringSchema = {
   ]
 } as const;
 
-const updateIntentSchema = objectOf(
-  {
-    relationship: {
-      enum: TOPIC_UPDATE_RELATIONSHIPS
-    },
-    blockingIssue: {
-      enum: BLOCKING_ISSUE_VALUES
-    },
-    statusHint: {
-      enum: TOPIC_STATUS_HINTS
-    },
-    userGoal: nullableStringSchema,
-    correctionNote: nullableStringSchema
-  },
-  [
-    "relationship",
-    "blockingIssue",
-    "statusHint",
-    "userGoal",
-    "correctionNote"
+const nullableBroadCategoryHintSchema = {
+  anyOf: [
+    { enum: BROAD_CATEGORY_HINTS },
+    { type: "null" }
   ]
-);
+} as const;
 
-const newTopicSchema = objectOf(
+const referencePairSchema = {
+  type: "array",
+  prefixItems: [
+    nonNegativeIntegerSchema,
+    nonNegativeIntegerSchema
+  ],
+  minItems: 2,
+  maxItems: 2
+} as const;
+
+const topicPatchIdentitySchema = objectOf(
   {
-    title: stringSchema,
-    broadCategoryHint: nullableStringSchema,
-    userGoal: nullableStringSchema,
-    blockingIssue: {
-      enum: BLOCKING_ISSUE_VALUES
-    }
+    title: nullableStringSchema,
+    broadCategoryHint: nullableBroadCategoryHintSchema,
+    summary: nullableStringSchema
   },
   [
     "title",
     "broadCategoryHint",
-    "userGoal",
-    "blockingIssue"
+    "summary"
   ]
 );
 
-const proposalSchema = objectOf(
+const topicMergeRefsSchema = objectOf(
   {
-    action: {
-      enum: TOPIC_UPDATE_ACTIONS
-    },
-    fromUnderstandingIds: nonEmptyArrayOf(stringSchema),
-    topicId: nullableStringSchema,
-    selectedSourceVerbatims: arrayOf(stringSchema),
-    updateIntent: {
-      anyOf: [
-        updateIntentSchema,
-        { type: "null" }
-      ]
-    },
-    newTopic: {
-      anyOf: [
-        newTopicSchema,
-        { type: "null" }
-      ]
-    },
-    reason: stringSchema
+    caseDetails: arrayOf(referencePairSchema),
+    attemptedActions: arrayOf(referencePairSchema)
   },
   [
-    "action",
-    "fromUnderstandingIds",
+    "caseDetails",
+    "attemptedActions"
+  ]
+);
+
+const topicReplaceRefsSchema = objectOf(
+  {
+    caseDetails: arrayOf(objectOf(
+      {
+        key: stringSchema,
+        with: referencePairSchema
+      },
+      [
+        "key",
+        "with"
+      ]
+    )),
+    attemptedActions: arrayOf(objectOf(
+      {
+        targetIndex: nonNegativeIntegerSchema,
+        with: referencePairSchema
+      },
+      [
+        "targetIndex",
+        "with"
+      ]
+    ))
+  },
+  [
+    "caseDetails",
+    "attemptedActions"
+  ]
+);
+
+const topicUpdateOpSchema = objectOf(
+  {
+    op: {
+      enum: TOPIC_UPDATE_OPS
+    },
+    items: arrayOf(nonNegativeIntegerSchema),
+    topicId: nullableStringSchema,
+    topic: {
+      anyOf: [
+        topicPatchIdentitySchema,
+        { type: "null" }
+      ]
+    },
+    merge: {
+      anyOf: [
+        topicMergeRefsSchema,
+        { type: "null" }
+      ]
+    },
+    replace: {
+      anyOf: [
+        topicReplaceRefsSchema,
+        { type: "null" }
+      ]
+    },
+    review: nullableStringSchema
+  },
+  [
+    "op",
+    "items",
     "topicId",
-    "selectedSourceVerbatims",
-    "updateIntent",
-    "newTopic",
-    "reason"
+    "topic",
+    "merge",
+    "replace",
+    "review"
   ]
 );
 
@@ -149,17 +159,15 @@ const proposeTopicUpdatesResponseFormat = {
     strict: true,
     schema: objectOf(
       {
-        proposals: arrayOf(proposalSchema)
+        ops: arrayOf(topicUpdateOpSchema)
       },
-      ["proposals"]
+      ["ops"]
     )
   }
 } as const;
 
 export {
-  BLOCKING_ISSUE_VALUES,
-  TOPIC_STATUS_HINTS,
-  TOPIC_UPDATE_ACTIONS,
-  TOPIC_UPDATE_RELATIONSHIPS,
+  BROAD_CATEGORY_HINTS,
+  TOPIC_UPDATE_OPS,
   proposeTopicUpdatesResponseFormat
 };

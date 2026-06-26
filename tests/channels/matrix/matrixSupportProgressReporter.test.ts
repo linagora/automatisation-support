@@ -16,6 +16,9 @@ import type {
 import type {
   MatrixClientLike
 } from "../../../src/channels/matrix/typesMatrixChannel.types";
+import type {
+  ProgressContext
+} from "../../../src/orchestration/supportProgressReporter";
 
 function buildProgressConfig(
   overrides: Partial<MatrixSupportProgressReporterConfig> = {}
@@ -34,17 +37,17 @@ function buildProgressConfig(
   };
 }
 
-function buildContext(): {
-  roomId: string;
-  userId: string;
-  turnId: string;
-  messageCount: number;
-} {
+function buildContext(
+  overrides: Partial<ProgressContext> = {}
+): ProgressContext {
   return {
     roomId: "!room:example.org",
     userId: "@user:example.org",
     turnId: "$turn_1",
-    messageCount: 1
+    messageCount: 1,
+    userLanguage: "French",
+    progressLanguageReady: true,
+    ...overrides
   };
 }
 
@@ -116,11 +119,11 @@ describe("MatrixSupportProgressReporter", function () {
     }));
     expect(log).toHaveBeenCalledWith(expect.objectContaining({
       eventName: "matrix.v2.progress.status_create.simulated",
-      message: "progress.status_create simulated turnId=$turn_1 stage=buffer_flushed text=\"J’analyse votre demande…\""
+      message: "progress.status_create simulated turnId=$turn_1 stage=analyzing_support text=\"Je qualifie le problème rencontré…\""
     }));
     expect(log).toHaveBeenCalledWith(expect.objectContaining({
       eventName: "matrix.v2.progress.status_edit.simulated",
-      message: "progress.status_edit simulated turnId=$turn_1 stage=analyzing_support text=\"Je qualifie le problème rencontré…\""
+      message: "progress.status_edit simulated turnId=$turn_1 stage=rendering_response text=\"Je rédige la réponse…\""
     }));
     expect(log).toHaveBeenCalledWith(expect.objectContaining({
       eventName: "matrix.v2.progress.status_remove.simulated",
@@ -164,6 +167,8 @@ describe("MatrixSupportProgressReporter", function () {
     await reporter.startBuffer(context);
     await reporter.startTurn(context);
     currentTime = 1_500;
+    await reporter.stage(context, "analyzing_surface");
+    currentTime = 3_000;
     await reporter.stage(context, "analyzing_support");
     await reporter.finishTurn(context);
 
@@ -174,7 +179,7 @@ describe("MatrixSupportProgressReporter", function () {
     );
     expect(matrixClient.sendMessage).toHaveBeenCalledWith(context.roomId, {
       msgtype: "m.text",
-      body: "J’analyse votre demande…"
+      body: "Je comprends votre message…"
     });
     expect(matrixClient.sendMessage).toHaveBeenCalledWith(
       context.roomId,
@@ -199,6 +204,96 @@ describe("MatrixSupportProgressReporter", function () {
       context.roomId,
       false,
       0
+    );
+  });
+
+  it("does not send a visible status before the detected language is ready", async function () {
+    const matrixClient = buildMatrixClient();
+    const { logger } = buildLogger();
+    const reporter = createMatrixSupportProgressReporter({
+      matrixConfig: {
+        homeserverUrl: "https://matrix.example.org",
+        accessToken: "token"
+      },
+      progressConfig: buildProgressConfig(),
+      logger,
+      dependencies: {
+        createMatrixClient: vi.fn(() => matrixClient)
+      }
+    });
+    const context = buildContext({
+      userLanguage: undefined,
+      progressLanguageReady: false
+    });
+
+    await reporter.startTurn(context);
+    await reporter.stage(context, "analyzing_surface");
+    await reporter.stage(context, "analyzing_support");
+
+    expect(matrixClient.sendMessage).not.toHaveBeenCalled();
+
+    context.userLanguage = "English";
+    context.progressLanguageReady = true;
+    await reporter.stage(context, "analyzing_surface");
+
+    expect(matrixClient.sendMessage).toHaveBeenCalledWith(context.roomId, {
+      msgtype: "m.text",
+      body: "I understand your message..."
+    });
+  });
+
+  it("uses English for intermediate progress messages after English is detected", async function () {
+    const matrixClient = buildMatrixClient();
+    const { logger } = buildLogger();
+    let currentTime = 0;
+    const reporter = createMatrixSupportProgressReporter({
+      matrixConfig: {
+        homeserverUrl: "https://matrix.example.org",
+        accessToken: "token"
+      },
+      progressConfig: buildProgressConfig({
+        minStageIntervalMs: 0
+      }),
+      logger,
+      dependencies: {
+        createMatrixClient: vi.fn(() => matrixClient),
+        now: () => currentTime
+      }
+    });
+    const context = buildContext({
+      userLanguage: "English"
+    });
+
+    await reporter.startTurn(context);
+    await reporter.stage(context, "analyzing_surface");
+    currentTime = 1_500;
+    await reporter.stage(context, "analyzing");
+    currentTime = 3_000;
+    await reporter.stage(context, "rendering_response");
+
+    expect(matrixClient.sendMessage).toHaveBeenCalledWith(context.roomId, {
+      msgtype: "m.text",
+      body: "I understand your message..."
+    });
+    expect(matrixClient.sendMessage).toHaveBeenCalledWith(
+      context.roomId,
+      expect.objectContaining({
+        body: "* I'm analyzing your request...",
+        "m.new_content": {
+          msgtype: "m.text",
+          body: "I'm analyzing your request..."
+        }
+      })
+    );
+    expect(matrixClient.sendMessage).toHaveBeenCalledWith(
+      context.roomId,
+      expect.objectContaining({
+        body: "* I'm writing the response...",
+        "m.new_content": {
+          msgtype: "m.text",
+          body: "I'm writing the response..."
+        }
+      })
     );
   });
 
@@ -266,16 +361,207 @@ describe("MatrixSupportProgressReporter", function () {
     expect(matrixClient.sendMessage).toHaveBeenLastCalledWith(
       context.roomId,
       expect.objectContaining({
-        body: `* ${DEFAULT_MATRIX_PROGRESS_MESSAGES.done}`,
+        body: "* Ci-dessous, voici ma réponse générée automatiquement.",
         "m.new_content": {
           msgtype: "m.text",
-          body: DEFAULT_MATRIX_PROGRESS_MESSAGES.done
+          body: "Ci-dessous, voici ma réponse générée automatiquement."
         }
       })
     );
   });
 
+  it("formats the final intro in French when the detected user language is French", async function () {
+    const matrixClient = buildMatrixClient();
+    const { logger } = buildLogger();
+    let currentTime = 0;
+    const reporter = createMatrixSupportProgressReporter({
+      matrixConfig: {
+        homeserverUrl: "https://matrix.example.org",
+        accessToken: "token"
+      },
+      progressConfig: buildProgressConfig({
+        removeStatusOnDone: false,
+        finalMessageEnabled: true
+      }),
+      logger,
+      dependencies: {
+        createMatrixClient: vi.fn(() => matrixClient),
+        now: () => currentTime
+      }
+    });
+    const context = buildContext({
+      userLanguage: "French"
+    });
+
+    await reporter.startTurn(context);
+    currentTime = 1_500;
+    await reporter.stage(context, "rendering_response");
+    await reporter.finishTurn(context);
+
+    expect(matrixClient.sendMessage).toHaveBeenLastCalledWith(
+      context.roomId,
+      expect.objectContaining({
+        "m.new_content": {
+          msgtype: "m.text",
+          body: "Ci-dessous, voici ma réponse générée automatiquement."
+        }
+      })
+    );
+  });
+
+  it("formats the final intro in English when the detected user language is English", async function () {
+    const matrixClient = buildMatrixClient();
+    const { logger } = buildLogger();
+    let currentTime = 0;
+    const reporter = createMatrixSupportProgressReporter({
+      matrixConfig: {
+        homeserverUrl: "https://matrix.example.org",
+        accessToken: "token"
+      },
+      progressConfig: buildProgressConfig({
+        removeStatusOnDone: false,
+        finalMessageEnabled: true
+      }),
+      logger,
+      dependencies: {
+        createMatrixClient: vi.fn(() => matrixClient),
+        now: () => currentTime
+      }
+    });
+    const context = buildContext({
+      userLanguage: "English"
+    });
+
+    await reporter.startTurn(context);
+    currentTime = 1_500;
+    await reporter.stage(context, "rendering_response");
+    await reporter.finishTurn(context);
+
+    expect(matrixClient.sendMessage).toHaveBeenLastCalledWith(
+      context.roomId,
+      expect.objectContaining({
+        "m.new_content": {
+          msgtype: "m.text",
+          body: "Below is my automatically generated response."
+        }
+      })
+    );
+  });
+
+  it("uses the English final intro fallback for unsupported languages", async function () {
+    const matrixClient = buildMatrixClient();
+    const { logger } = buildLogger();
+    let currentTime = 0;
+    const reporter = createMatrixSupportProgressReporter({
+      matrixConfig: {
+        homeserverUrl: "https://matrix.example.org",
+        accessToken: "token"
+      },
+      progressConfig: buildProgressConfig({
+        removeStatusOnDone: false,
+        finalMessageEnabled: true
+      }),
+      logger,
+      dependencies: {
+        createMatrixClient: vi.fn(() => matrixClient),
+        now: () => currentTime
+      }
+    });
+    const context = buildContext({
+      userLanguage: "Unknown"
+    });
+
+    await reporter.startTurn(context);
+    currentTime = 1_500;
+    await reporter.stage(context, "rendering_response");
+    await reporter.finishTurn(context);
+
+    expect(matrixClient.sendMessage).toHaveBeenLastCalledWith(
+      context.roomId,
+      expect.objectContaining({
+        "m.new_content": {
+          msgtype: "m.text",
+          body: "Below is my automatically generated response."
+        }
+      })
+    );
+  });
+
+  it("uses English final intro fallback when userLanguage is missing", async function () {
+    const matrixClient = buildMatrixClient();
+    const { logger } = buildLogger();
+    let currentTime = 0;
+    const reporter = createMatrixSupportProgressReporter({
+      matrixConfig: {
+        homeserverUrl: "https://matrix.example.org",
+        accessToken: "token"
+      },
+      progressConfig: buildProgressConfig({
+        removeStatusOnDone: false,
+        finalMessageEnabled: true
+      }),
+      logger,
+      dependencies: {
+        createMatrixClient: vi.fn(() => matrixClient),
+        now: () => currentTime
+      }
+    });
+    const context = buildContext({
+      userLanguage: undefined
+    });
+
+    await reporter.startTurn(context);
+    currentTime = 1_500;
+    await reporter.stage(context, "rendering_response");
+    await reporter.finishTurn(context);
+
+    expect(matrixClient.sendMessage).toHaveBeenLastCalledWith(
+      context.roomId,
+      expect.objectContaining({
+        "m.new_content": {
+          msgtype: "m.text",
+          body: "Below is my automatically generated response."
+        }
+      })
+    );
+  });
+
+  it("logs language_missing when the final intro falls back because userLanguage is missing", async function () {
+    const matrixClient = buildMatrixClient();
+    const { logger, log } = buildLogger();
+    let currentTime = 0;
+    const reporter = createMatrixSupportProgressReporter({
+      matrixConfig: {
+        homeserverUrl: "https://matrix.example.org",
+        accessToken: "token"
+      },
+      progressConfig: buildProgressConfig({
+        removeStatusOnDone: false,
+        finalMessageEnabled: true
+      }),
+      logger,
+      dependencies: {
+        createMatrixClient: vi.fn(() => matrixClient),
+        now: () => currentTime
+      }
+    });
+    const context = buildContext({
+      userLanguage: undefined
+    });
+
+    await reporter.startTurn(context);
+    currentTime = 1_500;
+    await reporter.stage(context, "rendering_response");
+    await reporter.finishTurn(context);
+
+    expect(log).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "matrix.v2.progress.language_missing",
+      fallbackLanguage: "English"
+    }));
+  });
+
   it("keeps editable status messages isolated per turn", async function () {
+    let createdStatusCount = 0;
     const matrixClient = buildMatrixClient({
       sendMessage: vi.fn(async (_roomId, content) => {
         if (
@@ -285,9 +571,8 @@ describe("MatrixSupportProgressReporter", function () {
           return "$edit";
         }
 
-        return content.body === DEFAULT_MATRIX_PROGRESS_MESSAGES.buffer_flushed
-          ? `$status_${Math.random()}`
-          : "$status";
+        createdStatusCount += 1;
+        return `$status_${createdStatusCount}`;
       })
     });
     const { logger } = buildLogger();
@@ -319,6 +604,8 @@ describe("MatrixSupportProgressReporter", function () {
     currentTime = 3_000;
     await reporter.startTurn(secondTurn);
     currentTime = 4_500;
+    await reporter.stage(secondTurn, "analyzing_surface");
+    currentTime = 6_000;
     await reporter.stage(secondTurn, "analyzing_support");
 
     const sendMessage = vi.mocked(
@@ -333,9 +620,9 @@ describe("MatrixSupportProgressReporter", function () {
           content["m.relates_to"] !== null;
       });
 
-    expect(editContents).toHaveLength(3);
+    expect(editContents).toHaveLength(2);
     expect(editContents[0]["m.relates_to"]).not.toEqual(
-      editContents[2]["m.relates_to"]
+      editContents[1]["m.relates_to"]
     );
   });
 

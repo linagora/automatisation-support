@@ -109,22 +109,35 @@ function factsToTopicDetails(
   const topicDetails: TopicDetails = {};
 
   for (const understanding of understandings) {
-    for (const fact of understanding.facts) {
-      if (fact.type !== "catalogued_field") {
-        continue;
-      }
-
-      const value = String(fact.value);
+    for (const detail of understanding.caseDetails ?? []) {
+      const value = String(detail.value ?? "");
 
       if (value.trim() === "") {
         continue;
       }
 
-      topicDetails[fact.fieldName as keyof TopicDetails] = value as never;
+      topicDetails[detail.key as keyof TopicDetails] = value as never;
     }
   }
 
   return topicDetails;
+}
+
+function understandingEvidence(understanding: TextUnderstanding): string[] {
+  return [
+    ...(understanding.messageKinds ?? []).map((messageKind) => {
+      return messageKind.evidence;
+    }),
+    ...(understanding.caseDetails ?? []).map((detail) => {
+      return detail.evidence;
+    }),
+    ...(understanding.attemptedActions ?? []).map((action) => {
+      return action.evidence;
+    }),
+    ...(understanding.supportMetadata ?? []).map((metadata) => {
+      return metadata.evidence;
+    })
+  ];
 }
 
 function selectedVerbatims(params: {
@@ -134,7 +147,7 @@ function selectedVerbatims(params: {
   const verbatims = [
     ...params.proposal.selectedSourceVerbatims,
     ...params.understandings.flatMap((understanding) => {
-      return understanding.sourceVerbatims;
+      return understandingEvidence(understanding);
     })
   ];
   const uniqueVerbatims = [...new Set(verbatims)].filter((verbatim) => {
@@ -305,20 +318,34 @@ function topicUpdateProposalsToDeltaSegments(params: {
   };
 }
 
-function buildResponsePlanPatch(responsePlan: ResponsePlanV2 | undefined): ResponsePlan {
+function buildResponsePlanPatch(params: {
+  responsePlan: ResponsePlanV2 | undefined;
+  rawUserLanguage?: string;
+  normalizedResponseLanguage?: string;
+}): ResponsePlan {
   return {
     responseLanguage:
-      responsePlan?.rendererTask.targetLanguage === "French" ? "french" : "same_as_user",
+      params.responsePlan?.rendererTask.targetLanguage === "fr"
+        ? "french"
+        : "same_as_user",
     messagesPlan: {
       scopeBoundaryPlanMessages: [],
       topicPlanMessages: [],
       signalPlanMessages: [],
       handoverPlanMessages: []
     },
-    ...(responsePlan
+    ...(params.responsePlan ||
+      params.rawUserLanguage ||
+      params.normalizedResponseLanguage
       ? {
           metadata: {
-            v2ResponsePlan: responsePlan
+            ...(params.responsePlan
+              ? { v2ResponsePlan: params.responsePlan }
+              : {}),
+            language: {
+              rawUserLanguage: params.rawUserLanguage,
+              normalizedResponseLanguage: params.normalizedResponseLanguage
+            }
           }
         }
       : {})
@@ -326,10 +353,7 @@ function buildResponsePlanPatch(responsePlan: ResponsePlanV2 | undefined): Respo
 }
 
 function buildSupportPatchesV2(input: BuildSupportPatchesInput): Patches {
-  // TODO V2 cleanup: remove legacy responsePlan once downstream consumers use
-  // topicResponsePlans.
-  const legacyResponsePlan =
-    input.responsePlan ?? input.topicResponsePlans?.[0];
+  const responsePlan = input.topicResponsePlans?.[0];
   const {
     segmentsTopic,
     reviewProposals
@@ -344,7 +368,7 @@ function buildSupportPatchesV2(input: BuildSupportPatchesInput): Patches {
   return {
     analysisPatch: {
       turnUnderstandingDelta: {
-        user_language: "unknown",
+        user_language: input.rawUserLanguage ?? "unknown",
         segments_lack_comprehension: [],
         segments_topic: segmentsTopic,
         segments_signal: [],
@@ -361,7 +385,11 @@ function buildSupportPatchesV2(input: BuildSupportPatchesInput): Patches {
       }
     },
     responsePatch: {
-      responsePlan: buildResponsePlanPatch(legacyResponsePlan)
+      responsePlan: buildResponsePlanPatch({
+        responsePlan,
+        rawUserLanguage: input.rawUserLanguage,
+        normalizedResponseLanguage: input.normalizedResponseLanguage
+      })
     },
     metadataPatch: {
       generatedAt,

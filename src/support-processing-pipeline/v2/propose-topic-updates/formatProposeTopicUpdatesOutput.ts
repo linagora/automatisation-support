@@ -1,8 +1,6 @@
 import {
-  BLOCKING_ISSUE_VALUES,
-  TOPIC_STATUS_HINTS,
-  TOPIC_UPDATE_ACTIONS,
-  TOPIC_UPDATE_RELATIONSHIPS
+  BROAD_CATEGORY_HINTS,
+  TOPIC_UPDATE_OPS
 } from "./proposeTopicUpdates.schema";
 
 import type {
@@ -10,17 +8,14 @@ import type {
   ProposeTopicUpdatesValidationResult
 } from "./typesProposeTopicUpdates.types";
 import type {
-  BlockingIssueValue,
-  NewTopicDraft,
   TextUnderstanding,
-  TopicStatusHint,
-  TopicUpdateAction,
-  TopicUpdateIntent,
-  TopicUpdateProposal,
-  TopicUpdateRelationship
+  TopicItemReference,
+  TopicMergeRefs,
+  TopicPatchIdentity,
+  TopicReplaceRefs,
+  TopicUpdateOp,
+  TopicUpdateOperation
 } from "../typesSupportProcessingPipelineV2.types";
-
-type DraftProposal = Omit<TopicUpdateProposal, "proposalId">;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -30,19 +25,37 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim() !== "";
 }
 
-function oneOf<TValue extends string>(
-  value: unknown,
-  allowedValues: readonly TValue[]
-): value is TValue {
-  return typeof value === "string" && allowedValues.includes(value as TValue);
+function isTopicUpdateOperation(value: unknown): value is TopicUpdateOperation {
+  return typeof value === "string" &&
+    TOPIC_UPDATE_OPS.includes(value as TopicUpdateOperation);
 }
 
 function nullableString(value: unknown): string | null | undefined {
-  if (value === null) {
+  if (value === undefined || value === null) {
     return null;
   }
 
   return isNonEmptyString(value) ? value.trim() : undefined;
+}
+
+function normalizeBroadCategoryHint(
+  value: unknown
+): string | null | undefined {
+  const rawValue = nullableString(value);
+
+  if (rawValue === null || rawValue === undefined) {
+    return rawValue;
+  }
+
+  if (BROAD_CATEGORY_HINTS.includes(rawValue as typeof BROAD_CATEGORY_HINTS[number])) {
+    return rawValue;
+  }
+
+  if (rawValue === "notifications") {
+    return "bug";
+  }
+
+  return undefined;
 }
 
 function topicIdFromUnknown(topic: unknown): string | undefined {
@@ -51,9 +64,9 @@ function topicIdFromUnknown(topic: unknown): string | undefined {
   }
 
   const topicId =
+    topic.id ??
     topic.id_topic ??
     topic.topicId ??
-    topic.id ??
     topic.topic_id;
 
   if (typeof topicId === "string" && topicId.trim() !== "") {
@@ -67,36 +80,11 @@ function topicIdFromUnknown(topic: unknown): string | undefined {
   return undefined;
 }
 
-function buildFallbackProposal(
-  understanding: TextUnderstanding
-): DraftProposal {
-  return {
-    action: "needs_review",
-    fromUnderstandingIds: [understanding.understandingId],
-    topicId: null,
-    selectedSourceVerbatims: [],
-    updateIntent: {
-      relationship: "unclear",
-      blockingIssue: "unknown",
-      statusHint: "unclear",
-      userGoal: null,
-      correctionNote: null
-    },
-    newTopic: null,
-    reason: "No valid topic update proposal covered this understanding."
-  };
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
-function buildFallbackProposals(
-  textUnderstandings: TextUnderstanding[]
-): TopicUpdateProposal[] {
-  return textUnderstandings.map((understanding, index) => ({
-    proposalId: `topic_update_proposal_${index + 1}`,
-    ...buildFallbackProposal(understanding)
-  }));
-}
-
-function parseStringArray(value: unknown): string[] | undefined {
+function parseItemIndexes(value: unknown): number[] | undefined {
   if (value === undefined || value === null) {
     return [];
   }
@@ -105,31 +93,59 @@ function parseStringArray(value: unknown): string[] | undefined {
     return undefined;
   }
 
-  const output: string[] = [];
+  const indexes: number[] = [];
 
   for (const item of value) {
-    if (!isNonEmptyString(item)) {
+    if (!isNonNegativeInteger(item)) {
       return undefined;
     }
 
-    output.push(item.trim());
+    indexes.push(item);
   }
 
-  return output;
+  return Array.from(new Set(indexes));
 }
 
-function parseNonEmptyStringArray(value: unknown): string[] | undefined {
-  const output = parseStringArray(value);
-
-  if (output === undefined || output.length === 0) {
+function parseReferencePair(value: unknown): TopicItemReference | undefined {
+  if (!Array.isArray(value) || value.length !== 2) {
     return undefined;
   }
 
-  return output;
+  const [itemIndex, childIndex] = value;
+
+  if (!isNonNegativeInteger(itemIndex) || !isNonNegativeInteger(childIndex)) {
+    return undefined;
+  }
+
+  return [itemIndex, childIndex];
 }
 
-function parseUpdateIntent(value: unknown): TopicUpdateIntent | null | undefined {
-  if (value === null) {
+function parseReferencePairs(value: unknown): TopicItemReference[] | undefined {
+  if (value === undefined || value === null) {
+    return [];
+  }
+
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  const refs: TopicItemReference[] = [];
+
+  for (const item of value) {
+    const ref = parseReferencePair(item);
+
+    if (!ref) {
+      return undefined;
+    }
+
+    refs.push(ref);
+  }
+
+  return refs;
+}
+
+function parseTopic(value: unknown): TopicPatchIdentity | null | undefined {
+  if (value === undefined || value === null) {
     return null;
   }
 
@@ -137,216 +153,303 @@ function parseUpdateIntent(value: unknown): TopicUpdateIntent | null | undefined
     return undefined;
   }
 
-  const userGoal = nullableString(value.userGoal);
-  const correctionNote = nullableString(value.correctionNote);
+  const title = nullableString(value.title);
+  const broadCategoryHint = normalizeBroadCategoryHint(value.broadCategoryHint);
+  const summary = nullableString(value.summary);
 
   if (
-    !oneOf(value.relationship, TOPIC_UPDATE_RELATIONSHIPS) ||
-    !oneOf(value.blockingIssue, BLOCKING_ISSUE_VALUES) ||
-    !oneOf(value.statusHint, TOPIC_STATUS_HINTS) ||
-    userGoal === undefined ||
-    correctionNote === undefined
-  ) {
-    return undefined;
-  }
-
-  return {
-    relationship: value.relationship as TopicUpdateRelationship,
-    blockingIssue: value.blockingIssue as BlockingIssueValue,
-    statusHint: value.statusHint as TopicStatusHint,
-    userGoal,
-    correctionNote
-  };
-}
-
-function parseNewTopic(value: unknown): NewTopicDraft | null | undefined {
-  if (value === null) {
-    return null;
-  }
-
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  const broadCategoryHint = nullableString(value.broadCategoryHint);
-  const userGoal = nullableString(value.userGoal);
-
-  if (
-    !isNonEmptyString(value.title) ||
+    title === undefined ||
     broadCategoryHint === undefined ||
-    userGoal === undefined ||
-    !oneOf(value.blockingIssue, BLOCKING_ISSUE_VALUES)
+    summary === undefined
   ) {
     return undefined;
   }
 
   return {
-    title: value.title.trim(),
+    title,
     broadCategoryHint,
-    userGoal,
-    blockingIssue: value.blockingIssue as BlockingIssueValue
+    summary
   };
 }
 
-function validateReferencedVerbatims(params: {
-  selectedSourceVerbatims: string[];
-  fromUnderstandingIds: string[];
-  understandingById: Map<string, TextUnderstanding>;
-}): boolean {
-  const allowedVerbatims = new Set<string>();
-
-  for (const understandingId of params.fromUnderstandingIds) {
-    const understanding = params.understandingById.get(understandingId);
-
-    if (!understanding) {
-      return false;
-    }
-
-    for (const sourceVerbatim of understanding.sourceVerbatims) {
-      allowedVerbatims.add(sourceVerbatim);
-    }
+function parseMerge(value: unknown): TopicMergeRefs | null | undefined {
+  if (value === undefined || value === null) {
+    return null;
   }
 
-  return params.selectedSourceVerbatims.every((sourceVerbatim) => {
-    return allowedVerbatims.has(sourceVerbatim);
-  });
-}
-
-function normalizeProposal(params: {
-  rawProposal: unknown;
-  understandingById: Map<string, TextUnderstanding>;
-  existingTopicIds: Set<string>;
-}): DraftProposal | undefined {
-  if (!isRecord(params.rawProposal)) {
+  if (!isRecord(value)) {
     return undefined;
   }
 
-  if (!oneOf(params.rawProposal.action, TOPIC_UPDATE_ACTIONS)) {
-    return undefined;
-  }
+  const caseDetails = parseReferencePairs(value.caseDetails);
+  const attemptedActions = parseReferencePairs(value.attemptedActions);
 
-  const fromUnderstandingIds = parseNonEmptyStringArray(
-    params.rawProposal.fromUnderstandingIds
-  );
-  const selectedSourceVerbatims = parseStringArray(
-    params.rawProposal.selectedSourceVerbatims
-  );
-  const updateIntent = parseUpdateIntent(params.rawProposal.updateIntent);
-  const newTopic = parseNewTopic(params.rawProposal.newTopic);
-
-  if (
-    !fromUnderstandingIds ||
-    !selectedSourceVerbatims ||
-    updateIntent === undefined ||
-    newTopic === undefined ||
-    !isNonEmptyString(params.rawProposal.reason)
-  ) {
-    return undefined;
-  }
-
-  if (!fromUnderstandingIds.every((understandingId) => {
-    return params.understandingById.has(understandingId);
-  })) {
-    return undefined;
-  }
-
-  if (!validateReferencedVerbatims({
-    selectedSourceVerbatims,
-    fromUnderstandingIds,
-    understandingById: params.understandingById
-  })) {
-    return undefined;
-  }
-
-  const action = params.rawProposal.action as TopicUpdateAction;
-  const rawTopicId = params.rawProposal.topicId;
-  const topicId = rawTopicId === null
-    ? null
-    : isNonEmptyString(rawTopicId)
-      ? rawTopicId.trim()
-      : undefined;
-
-  if (topicId === undefined) {
-    return undefined;
-  }
-
-  if (action === "update_existing_topic") {
-    if (topicId === null || !params.existingTopicIds.has(topicId) || newTopic !== null) {
-      return undefined;
-    }
-  }
-
-  if (action === "create_new_topic") {
-    if (topicId !== null || newTopic === null) {
-      return undefined;
-    }
-  }
-
-  if (
-    (action === "no_topic_update" || action === "needs_review") &&
-    newTopic !== null
-  ) {
-    return undefined;
-  }
-
-  if (
-    topicId !== null &&
-    !params.existingTopicIds.has(topicId)
-  ) {
+  if (!caseDetails || !attemptedActions) {
     return undefined;
   }
 
   return {
-    action,
-    fromUnderstandingIds,
-    topicId,
-    selectedSourceVerbatims,
-    updateIntent,
-    newTopic,
-    reason: params.rawProposal.reason.trim()
+    caseDetails,
+    attemptedActions
   };
 }
 
-function assignProposalIds(
-  proposals: DraftProposal[]
-): TopicUpdateProposal[] {
-  return proposals.map((proposal, index) => ({
-    proposalId: `topic_update_proposal_${index + 1}`,
-    ...proposal
-  }));
+function parseReplace(value: unknown): TopicReplaceRefs | null | undefined {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  if (
+    !Array.isArray(value.caseDetails) ||
+    !Array.isArray(value.attemptedActions)
+  ) {
+    return undefined;
+  }
+
+  const caseDetails: TopicReplaceRefs["caseDetails"] = [];
+  const attemptedActions: TopicReplaceRefs["attemptedActions"] = [];
+
+  for (const item of value.caseDetails) {
+    if (!isRecord(item) || !isNonEmptyString(item.key)) {
+      return undefined;
+    }
+
+    const withRef = parseReferencePair(item.with);
+
+    if (!withRef) {
+      return undefined;
+    }
+
+    caseDetails.push({
+      key: item.key.trim(),
+      with: withRef
+    });
+  }
+
+  for (const item of value.attemptedActions) {
+    if (!isRecord(item) || !isNonNegativeInteger(item.targetIndex)) {
+      return undefined;
+    }
+
+    const withRef = parseReferencePair(item.with);
+
+    if (!withRef) {
+      return undefined;
+    }
+
+    attemptedActions.push({
+      targetIndex: item.targetIndex,
+      with: withRef
+    });
+  }
+
+  return {
+    caseDetails,
+    attemptedActions
+  };
+}
+
+function hasUsefulMergeOrReplace(
+  merge: TopicMergeRefs | null,
+  replace: TopicReplaceRefs | null
+): boolean {
+  return Boolean(
+    merge?.caseDetails.length ||
+      merge?.attemptedActions.length ||
+      replace?.caseDetails.length ||
+      replace?.attemptedActions.length
+  );
+}
+
+function referenceExists(params: {
+  ref: TopicItemReference;
+  textUnderstandings: TextUnderstanding[];
+  childKey: "caseDetails" | "attemptedActions";
+}): boolean {
+  const [itemIndex, childIndex] = params.ref;
+  const understanding = params.textUnderstandings[itemIndex];
+
+  return Boolean(understanding?.[params.childKey]?.[childIndex]);
+}
+
+function validateReferences(params: {
+  op: TopicUpdateOp;
+  textUnderstandings: TextUnderstanding[];
+}): boolean {
+  const mergeCaseDetails = params.op.merge?.caseDetails ?? [];
+  const mergeAttemptedActions = params.op.merge?.attemptedActions ?? [];
+  const replaceCaseDetails = params.op.replace?.caseDetails.map((item) => {
+    return item.with;
+  }) ?? [];
+  const replaceAttemptedActions = params.op.replace?.attemptedActions.map((item) => {
+    return item.with;
+  }) ?? [];
+
+  return mergeCaseDetails.every((ref) => {
+    return referenceExists({
+      ref,
+      textUnderstandings: params.textUnderstandings,
+      childKey: "caseDetails"
+    });
+  }) &&
+    replaceCaseDetails.every((ref) => {
+      return referenceExists({
+        ref,
+        textUnderstandings: params.textUnderstandings,
+        childKey: "caseDetails"
+      });
+    }) &&
+    mergeAttemptedActions.every((ref) => {
+      return referenceExists({
+        ref,
+        textUnderstandings: params.textUnderstandings,
+        childKey: "attemptedActions"
+      });
+    }) &&
+    replaceAttemptedActions.every((ref) => {
+      return referenceExists({
+        ref,
+        textUnderstandings: params.textUnderstandings,
+        childKey: "attemptedActions"
+      });
+    });
+}
+
+function buildReviewOp(params: {
+  items: number[];
+  reason: string;
+}): TopicUpdateOp {
+  return {
+    op: "review",
+    items: params.items,
+    topicId: null,
+    topic: null,
+    merge: null,
+    replace: null,
+    review: params.reason
+  };
+}
+
+function normalizeOp(params: {
+  rawOp: unknown;
+  textUnderstandings: TextUnderstanding[];
+  existingTopicIds: Set<string>;
+}): TopicUpdateOp | undefined {
+  if (!isRecord(params.rawOp) || !isTopicUpdateOperation(params.rawOp.op)) {
+    return undefined;
+  }
+
+  const items = parseItemIndexes(params.rawOp.items);
+  const topicId = nullableString(params.rawOp.topicId);
+  const topic = parseTopic(params.rawOp.topic);
+  const merge = parseMerge(params.rawOp.merge);
+  const replace = parseReplace(params.rawOp.replace);
+  const review = nullableString(params.rawOp.review);
+
+  if (
+    !items ||
+    topicId === undefined ||
+    topic === undefined ||
+    merge === undefined ||
+    replace === undefined ||
+    review === undefined
+  ) {
+    return undefined;
+  }
+
+  if (!items.every((itemIndex) => {
+    return params.textUnderstandings[itemIndex] !== undefined;
+  })) {
+    return undefined;
+  }
+
+  const op: TopicUpdateOp = {
+    op: params.rawOp.op,
+    items,
+    topicId,
+    topic,
+    merge,
+    replace,
+    review
+  };
+
+  if (!validateReferences({
+    op,
+    textUnderstandings: params.textUnderstandings
+  })) {
+    return buildReviewOp({
+      items,
+      reason: "Invalid topic update references."
+    });
+  }
+
+  if (op.op === "update") {
+    if (op.topicId === null || !params.existingTopicIds.has(op.topicId)) {
+      return buildReviewOp({
+        items,
+        reason: "Update operation does not reference an existing topic."
+      });
+    }
+  }
+
+  if (op.op === "create") {
+    if (op.topicId !== null || op.topic === null || op.replace !== null) {
+      return buildReviewOp({
+        items,
+        reason: "Create operation must use topicId null, include topic, and omit replace."
+      });
+    }
+  }
+
+  if (
+    (op.op === "none" || op.op === "review") &&
+    hasUsefulMergeOrReplace(op.merge, op.replace)
+  ) {
+    return buildReviewOp({
+      items,
+      reason: `${op.op} operation cannot include merge or replace references.`
+    });
+  }
+
+  return op;
+}
+
+function buildFallbackOps(
+  textUnderstandings: TextUnderstanding[]
+): TopicUpdateOp[] {
+  return textUnderstandings.map((_understanding, index) => {
+    return buildReviewOp({
+      items: [index],
+      reason: "No valid topic update op covered this understanding."
+    });
+  });
 }
 
 function formatProposeTopicUpdatesOutput(
   input: FormatProposeTopicUpdatesOutputInput
 ): ProposeTopicUpdatesValidationResult {
   if (input.rawProposeTopicUpdates.status !== "completed") {
-    const reason = "llm_call_failed";
-
     return {
       status: "invalid",
-      reason,
-      topicUpdateProposals: buildFallbackProposals(input.textUnderstandings)
+      reason: "llm_call_failed",
+      topicUpdateOps: buildFallbackOps(input.textUnderstandings)
     };
   }
 
   const parsedResponse = input.rawProposeTopicUpdates.parsedResponse;
 
-  if (!isRecord(parsedResponse) || !Array.isArray(parsedResponse.proposals)) {
-    const reason = "invalid_json";
-
+  if (!isRecord(parsedResponse) || !Array.isArray(parsedResponse.ops)) {
     return {
       status: "invalid",
-      reason,
-      topicUpdateProposals: buildFallbackProposals(input.textUnderstandings)
+      reason: "invalid_json",
+      topicUpdateOps: buildFallbackOps(input.textUnderstandings)
     };
   }
 
-  const understandingById = new Map(
-    input.textUnderstandings.map((understanding) => [
-      understanding.understandingId,
-      understanding
-    ])
-  );
   const existingTopicIds = new Set(
     input.existingTopics.flatMap((topic) => {
       const topicId = topicIdFromUnknown(topic);
@@ -354,55 +457,71 @@ function formatProposeTopicUpdatesOutput(
       return topicId ? [topicId] : [];
     })
   );
-  const draftProposals: DraftProposal[] = [];
-  const coveredUnderstandingIds = new Set<string>();
-  let rejectedProposalCount = 0;
+  const topicUpdateOps: TopicUpdateOp[] = [];
+  const coveredItems = new Set<number>();
+  let rejectedOpCount = 0;
+  let convertedReviewCount = 0;
 
-  for (const rawProposal of parsedResponse.proposals) {
-    const proposal = normalizeProposal({
-      rawProposal,
-      understandingById,
+  for (const rawOp of parsedResponse.ops) {
+    const op = normalizeOp({
+      rawOp,
+      textUnderstandings: input.textUnderstandings,
       existingTopicIds
     });
 
-    if (!proposal) {
-      rejectedProposalCount += 1;
+    if (!op) {
+      rejectedOpCount += 1;
       continue;
     }
 
-    draftProposals.push(proposal);
+    if (
+      op.op === "review" &&
+      op.review !== null &&
+      op.review !== (isRecord(rawOp) && typeof rawOp.review === "string"
+        ? rawOp.review.trim()
+        : null)
+    ) {
+      convertedReviewCount += 1;
+    }
 
-    for (const understandingId of proposal.fromUnderstandingIds) {
-      coveredUnderstandingIds.add(understandingId);
+    topicUpdateOps.push(op);
+
+    for (const itemIndex of op.items) {
+      coveredItems.add(itemIndex);
     }
   }
 
-  for (const understanding of input.textUnderstandings) {
-    if (!coveredUnderstandingIds.has(understanding.understandingId)) {
-      draftProposals.push(buildFallbackProposal(understanding));
+  for (let index = 0; index < input.textUnderstandings.length; index += 1) {
+    if (!coveredItems.has(index)) {
+      topicUpdateOps.push(buildReviewOp({
+        items: [index],
+        reason: "No valid topic update op covered this understanding."
+      }));
     }
   }
 
-  const topicUpdateProposals = assignProposalIds(draftProposals);
-
-  if (rejectedProposalCount > 0 || topicUpdateProposals.some((proposal) => {
-    return proposal.action === "needs_review" &&
-      proposal.reason === "No valid topic update proposal covered this understanding.";
-  })) {
+  if (
+    rejectedOpCount > 0 ||
+    convertedReviewCount > 0 ||
+    topicUpdateOps.some((op) => {
+      return op.op === "review" &&
+        op.review === "No valid topic update op covered this understanding.";
+    })
+  ) {
     return {
       status: "invalid",
-      reason: "invalid_proposals",
-      topicUpdateProposals
+      reason: "invalid_ops",
+      topicUpdateOps
     };
   }
 
   return {
     status: "valid",
-    topicUpdateProposals
+    topicUpdateOps
   };
 }
 
 export {
-  buildFallbackProposals,
+  buildFallbackOps,
   formatProposeTopicUpdatesOutput
 };

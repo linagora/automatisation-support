@@ -563,39 +563,60 @@ flowchart TB
     Await topicResponsePlan for every topic proposal branch."]
 
     %% =====================================================
-    %% 8. SUPPORT RESPONSE RENDERING
+    %% 8. SUPPORT RESPONSE COMPOSITION + RENDERING
     %% =====================================================
 
-    T_SUPPORT_RESPONSE_INPUT["<b>Prepare renderSupportResponseInput</b><br/>
+    T_SUPPORT_RESPONSE_INPUT["<b>Prepare composeSupportResponsePlanInput</b><br/>
     Convergence point for standard-only and deep-support branches.<br/>
     Deep branch receives all topic response plans."]
 
-    subgraph SUPPORT_RESPONSE_DATA["supportResponse = renderSupportResponse(renderSupportResponseInput)"]
+    subgraph SUPPORT_RESPONSE_DATA["composedSupportResponsePlan = composeSupportResponsePlan(composeSupportResponsePlanInput)"]
       direction TB
 
-      SUPPORT_RESPONSE_ROLE["<b>Rôle :</b> fusionner les formulations standards et les plans par topic pour produire une réponse unique, naturelle et adaptée au canal."]
+      SUPPORT_RESPONSE_ROLE["<b>Rôle :</b> faire la composition globale : ordre, fragments standards, questions redondantes, limite de questions, handover override, ton, transitions et forbidden claims."]
 
       subgraph SUPPORT_RESPONSE_IO[" "]
         direction LR
 
         SUPPORT_RESPONSE_INPUTS["<b>Input</b><br/>
-        topicResponsePlans[]?<br/>
+        topicResponsePlans[]<br/>
         standardResponseFragments<br/>
-        textSurfaceAnalysis?<br/>
-        accountProfile<br/>
+        supportResponseCues?<br/>
+        targetLanguage<br/>
         channel<br/><br/>
-        Standard-only : topicResponsePlans absent ou vide.<br/>
-        Deep : plusieurs topicResponsePlans peuvent être présents.<br/>
-        Le renderer produit une seule réponse finale,<br/>
-        sans concaténer rigidement topic par topic."]
+        Standard-only : topicResponsePlans vide.<br/>
+        Deep : plusieurs topicResponsePlans peuvent être présents."]
 
         SUPPORT_RESPONSE_OUTPUTS["<b>Output</b><br/>
-        supportResponse"]
+        composedSupportResponsePlan"]
 
         SUPPORT_RESPONSE_INPUTS --> SUPPORT_RESPONSE_OUTPUTS
       end
 
       SUPPORT_RESPONSE_ROLE ~~~ SUPPORT_RESPONSE_IO
+    end
+
+    subgraph SUPPORT_RENDER_DATA["supportResponse = renderSupportResponse(renderSupportResponseInput)"]
+      direction TB
+
+      SUPPORT_RENDER_ROLE["<b>Rôle :</b> écrire la réponse finale à partir du plan composé uniquement, sans décider, fusionner, diagnostiquer ni ajouter de contenu."]
+
+      subgraph SUPPORT_RENDER_IO[" "]
+        direction LR
+
+        SUPPORT_RENDER_INPUTS["<b>Input</b><br/>
+        composedSupportResponsePlan<br/><br/>
+        Pas de latestUserMessageContent.<br/>
+        Pas de standardResponseFragments bruts.<br/>
+        Pas de topicResponsePlans bruts."]
+
+        SUPPORT_RENDER_OUTPUTS["<b>Output</b><br/>
+        supportResponse"]
+
+        SUPPORT_RENDER_INPUTS --> SUPPORT_RENDER_OUTPUTS
+      end
+
+      SUPPORT_RENDER_ROLE ~~~ SUPPORT_RENDER_IO
     end
 
     %% =====================================================
@@ -843,8 +864,9 @@ Notes:
 * Si le RAG est activé pour un topic, la recherche RAG est suivie d’un LLM de synthèse/normalisation : `synthesizeRetrievedKnowledgeForTopic`.
 * Il n’y a plus de bloc `buildTopicKnowledgeBundle` : `planSupportResponseForTopic` reçoit directement `selectedCatalogKnowledge` et `topicRetrievedKnowledgeSynthesis?`.
 * `planSupportResponseForTopic` produit un plan de réponse pour un seul topic.
-* Tous les `topicResponsePlans` convergent ensuite dans un unique `renderSupportResponse`.
-* Le renderer reste global : il fusionne les fragments standards et les plans par topic en une réponse naturelle unique.
+* Tous les `topicResponsePlans` convergent ensuite dans `composeSupportResponsePlan`.
+* `composeSupportResponsePlan` est le dernier bloc qui réfléchit globalement : ordre, fusion des questions, handover override, ton, transitions, forbidden claims.
+* `renderSupportResponse` reçoit uniquement `composedSupportResponsePlan` et rédige la réponse finale sans voir le message utilisateur brut, les fragments standards bruts ni les plans topic bruts.
 * Le bloc résiduel `applyTopicUpdates postponed` est supprimé.
 
 ```
