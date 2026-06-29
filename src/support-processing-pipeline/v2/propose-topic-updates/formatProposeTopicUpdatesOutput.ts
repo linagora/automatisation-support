@@ -253,18 +253,6 @@ function parseReplace(value: unknown): TopicReplaceRefs | null | undefined {
   };
 }
 
-function hasUsefulMergeOrReplace(
-  merge: TopicMergeRefs | null,
-  replace: TopicReplaceRefs | null
-): boolean {
-  return Boolean(
-    merge?.caseDetails.length ||
-      merge?.attemptedActions.length ||
-      replace?.caseDetails.length ||
-      replace?.attemptedActions.length
-  );
-}
-
 function referenceExists(params: {
   ref: TopicItemReference;
   textUnderstandings: TextUnderstanding[];
@@ -319,21 +307,6 @@ function validateReferences(params: {
     });
 }
 
-function buildReviewOp(params: {
-  items: number[];
-  reason: string;
-}): TopicUpdateOp {
-  return {
-    op: "review",
-    items: params.items,
-    topicId: null,
-    topic: null,
-    merge: null,
-    replace: null,
-    review: params.reason
-  };
-}
-
 function normalizeOp(params: {
   rawOp: unknown;
   textUnderstandings: TextUnderstanding[];
@@ -348,15 +321,13 @@ function normalizeOp(params: {
   const topic = parseTopic(params.rawOp.topic);
   const merge = parseMerge(params.rawOp.merge);
   const replace = parseReplace(params.rawOp.replace);
-  const review = nullableString(params.rawOp.review);
 
   if (
     !items ||
     topicId === undefined ||
     topic === undefined ||
     merge === undefined ||
-    replace === undefined ||
-    review === undefined
+    replace === undefined
   ) {
     return undefined;
   }
@@ -374,59 +345,35 @@ function normalizeOp(params: {
     topic,
     merge,
     replace,
-    review
+    review: null
   };
 
   if (!validateReferences({
     op,
     textUnderstandings: params.textUnderstandings
   })) {
-    return buildReviewOp({
-      items,
-      reason: "Invalid topic update references."
-    });
+    return undefined;
   }
 
   if (op.op === "update") {
     if (op.topicId === null || !params.existingTopicIds.has(op.topicId)) {
-      return buildReviewOp({
-        items,
-        reason: "Update operation does not reference an existing topic."
-      });
+      return undefined;
     }
   }
 
   if (op.op === "create") {
     if (op.topicId !== null || op.topic === null || op.replace !== null) {
-      return buildReviewOp({
-        items,
-        reason: "Create operation must use topicId null, include topic, and omit replace."
-      });
+      return undefined;
     }
-  }
-
-  if (
-    (op.op === "none" || op.op === "review") &&
-    hasUsefulMergeOrReplace(op.merge, op.replace)
-  ) {
-    return buildReviewOp({
-      items,
-      reason: `${op.op} operation cannot include merge or replace references.`
-    });
   }
 
   return op;
 }
 
 function buildFallbackOps(
-  textUnderstandings: TextUnderstanding[]
+  _textUnderstandings: TextUnderstanding[]
 ): TopicUpdateOp[] {
-  return textUnderstandings.map((_understanding, index) => {
-    return buildReviewOp({
-      items: [index],
-      reason: "No valid topic update op covered this understanding."
-    });
-  });
+  return [];
 }
 
 function formatProposeTopicUpdatesOutput(
@@ -460,7 +407,6 @@ function formatProposeTopicUpdatesOutput(
   const topicUpdateOps: TopicUpdateOp[] = [];
   const coveredItems = new Set<number>();
   let rejectedOpCount = 0;
-  let convertedReviewCount = 0;
 
   for (const rawOp of parsedResponse.ops) {
     const op = normalizeOp({
@@ -474,16 +420,6 @@ function formatProposeTopicUpdatesOutput(
       continue;
     }
 
-    if (
-      op.op === "review" &&
-      op.review !== null &&
-      op.review !== (isRecord(rawOp) && typeof rawOp.review === "string"
-        ? rawOp.review.trim()
-        : null)
-    ) {
-      convertedReviewCount += 1;
-    }
-
     topicUpdateOps.push(op);
 
     for (const itemIndex of op.items) {
@@ -493,21 +429,11 @@ function formatProposeTopicUpdatesOutput(
 
   for (let index = 0; index < input.textUnderstandings.length; index += 1) {
     if (!coveredItems.has(index)) {
-      topicUpdateOps.push(buildReviewOp({
-        items: [index],
-        reason: "No valid topic update op covered this understanding."
-      }));
+      rejectedOpCount += 1;
     }
   }
 
-  if (
-    rejectedOpCount > 0 ||
-    convertedReviewCount > 0 ||
-    topicUpdateOps.some((op) => {
-      return op.op === "review" &&
-        op.review === "No valid topic update op covered this understanding.";
-    })
-  ) {
+  if (rejectedOpCount > 0) {
     return {
       status: "invalid",
       reason: "invalid_ops",

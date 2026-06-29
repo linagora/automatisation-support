@@ -10,7 +10,7 @@ function normalizeResponsePlanIdPart(value: string): string {
     .toLowerCase();
 }
 
-export function assignTopicResponsePlanIds(
+function assignTopicResponsePlanIds(
   entries: {
     proposalId: string;
     responsePlan: ResponsePlanV2;
@@ -39,10 +39,36 @@ export function assignTopicResponsePlanIds(
   });
 }
 
-export function buildTopicResponsePlanDebug(
+function buildTopicResponsePlanDebug(
   responsePlan: ResponsePlanV2 | undefined
-): { responsePlanId: string } | undefined {
-  return responsePlan
-    ? { responsePlanId: responsePlan.responsePlanId }
-    : undefined;
+): {
+  responsePlanId: string;
+  acknowledge: string[];
+  answer: ResponsePlanV2["answer"];
+  ask: ResponsePlanV2["ask"];
+  say: string[];
+  review: string | null;
+} | undefined {
+  if (!responsePlan) {
+    return undefined;
+  }
+
+  return {
+    responsePlanId: responsePlan.responsePlanId ?? "response_plan_unknown",
+    acknowledge: Array.isArray(responsePlan.acknowledge)
+      ? responsePlan.acknowledge
+      : [],
+    answer: Array.isArray(responsePlan.answer) ? responsePlan.answer : [],
+    ask: Array.isArray(responsePlan.ask) ? responsePlan.ask : [],
+    say: Array.isArray(responsePlan.say) ? responsePlan.say : [],
+    review: typeof responsePlan.review === "string" ||
+      responsePlan.review === null
+      ? responsePlan.review
+      : null
+  };
 }
+
+export {
+  assignTopicResponsePlanIds,
+  buildTopicResponsePlanDebug
+};

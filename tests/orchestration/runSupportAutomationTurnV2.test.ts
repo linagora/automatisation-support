@@ -101,17 +101,7 @@ function buildSteps(
   overrides: Partial<SupportProcessingPipelineV2Steps> = {}
 ): SupportProcessingPipelineV2Steps {
   const renderedSupportResponse: RenderedSupportResponse = {
-    renderedMessages: [
-      {
-        messageId: "rendered_1",
-        messageOrder: 1,
-        purpose: "standard_only",
-        relatedPlannedMessageOrders: [],
-        content: "Bonjour."
-      }
-    ],
-    finalResponseText: "Bonjour.",
-    internalRenderingNotes: "Dry-run test."
+    finalResponseText: "Bonjour."
   };
   const userResponse: UserResponse = {
     messages: [

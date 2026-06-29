@@ -258,9 +258,7 @@ export type TextUnderstanding = {
 
 export type TopicUpdateOperation =
   | "update"
-  | "create"
-  | "none"
-  | "review";
+  | "create";
 
 export type TopicPatchIdentity = {
   title: string | null;
@@ -425,22 +423,55 @@ export type SupportUnderstandingV2 = {
   appliedTopicUpdates: TopicUpdateProposal[];
 };
 
+export type RetrievalDesiredKnowledge =
+  | "known_behavior"
+  | "troubleshooting_steps"
+  | "safe_response"
+  | "fields_to_ask"
+  | "do_not_claim";
+
+export type RetrievalRequest = {
+  topicId: string | null;
+  searchPurpose: "support_answer_and_qualification";
+  queryText: string;
+  desiredKnowledge: RetrievalDesiredKnowledge[];
+  filters?: {
+    broadCategoryHint?: string;
+    productOrService?: string;
+    featureOrPage?: string;
+    platform?: string;
+    operatingSystem?: string;
+  };
+  context: {
+    topicSummary: string;
+    latestUserUpdate?: string;
+    knownDetails: {
+      key: string;
+      value: string | number | boolean | null;
+    }[];
+    attemptedActions: {
+      action: string;
+      outcome: string;
+    }[];
+  };
+};
+
 export type KnowledgeEnrichmentPlan = {
-  route: "no_retrieval" | "retrieve_knowledge" | "use_generic_fields";
-  retrievalRequests: {
-    topicId: SupportTopicId;
-    query: string;
-    filters?: Record<string, string | number | boolean | string[]>;
-  }[];
-  reason?: string;
+  route: "no_retrieval" | "retrieve_knowledge";
+  reason: string;
+  retrievalRequests: RetrievalRequest[];
 };
 
 export type KnowledgeChunk = {
-  topicId: SupportTopicId;
+  topicId: string | number | null;
   sourceId: string;
   content: string;
   score: number;
-  metadata?: Record<string, string | number | boolean>;
+  metadata?: Record<string, unknown>;
+};
+
+export type SupportKnowledgeRetriever = {
+  retrieve(input: RetrieveSupportKnowledgeInput): Promise<KnowledgeChunk[]>;
 };
 
 export type GenericFieldKnowledge = Record<string, never>;
@@ -456,7 +487,7 @@ export type RetrievedKnowledgeSynthesis = {
   ifUserConfirmsNotificationsEnabled?: string;
   doNotClaim?: string[];
   topics: {
-    topicId: SupportTopicId;
+    topicId: string | number | null;
     relevantFacts: string[];
     applicableInstructions?: string[];
     possibleFields?: FieldName[];
@@ -537,6 +568,7 @@ export type ApplyTopicUpdatesInput = {
 
 export type PlanKnowledgeEnrichmentInput = {
   topicEvidence: TopicEvidence;
+  topicSnapshot?: MergedTopicSnapshot;
   extractableFieldCatalog: ExtractableFieldDefinition[];
   recentInteractionContext?: RecentInteractionContext;
   targetLanguage?: string;
@@ -558,6 +590,12 @@ export type SelectCatalogKnowledgeForTopicInput = {
   topicUserMessageContent: string;
   topicEvidence: TopicEvidence;
   topicSnapshot?: MergedTopicSnapshot;
+  knownFields?: {
+    fieldName: string;
+    value: unknown;
+    evidence?: string;
+  }[];
+  candidateFields?: ExtractableFieldDefinition[];
   extractableFieldCatalog: ExtractableFieldDefinition[];
   recentInteractionContext?: unknown;
   targetLanguage?: string;
@@ -573,17 +611,21 @@ export type SelectedCatalogKnowledgeForTopic = {
 
 export type TopicKnowledgeBranchContext = {
   topicEvidence: TopicEvidence;
+  topicSnapshot?: MergedTopicSnapshot;
   selectedCatalogKnowledge: SelectedCatalogKnowledgeForTopic;
   topicKnowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
 };
 
 export type RetrieveSupportKnowledgeInput = TopicKnowledgeBranchContext & {
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
+  retriever?: SupportKnowledgeRetriever;
+  limit?: number;
 };
 
 export type SynthesizeRetrievedKnowledgeInput = TopicKnowledgeBranchContext & {
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
   knowledgeChunks: KnowledgeChunk[];
+  knowledgeRetrievalFailureReason?: string;
 };
 
 export type TopicKnowledgeEnrichmentPlanResult = {
@@ -615,50 +657,34 @@ export type PlanSupportResponseInput = {
   channel?: Channel;
 };
 
-export type ComposedResponseSectionKind =
-  | "standard_fragment"
-  | "topic"
-  | "handover"
-  | "safety"
-  | "review";
-
 export type ComposedResponseQuestion = {
-  fieldName: string;
   goal: string;
 };
 
-export type ComposedResponseSection = {
-  kind: ComposedResponseSectionKind;
-  topicId?: string | null;
-  purpose: string;
-  say: string[];
-  ask: ComposedResponseQuestion[];
-  forbid: string[];
+export type ComposedResponseAnswer = {
+  point: string;
+  support:
+    | "standard_fragment"
+    | "topic_plan"
+    | "support_cue"
+    | "policy";
 };
 
 export type ComposedSupportResponsePlan = {
-  targetLanguage: string;
-  channel: string;
+  topicId: null;
   messageIntent:
     | "support_reply"
     | "standard_reply"
     | "mixed_reply"
     | "handover_reply"
     | "review_reply";
-  globalTone: {
-    opening:
-      | "none"
-      | "brief_acknowledgement"
-      | "empathetic_acknowledgement";
-    empathy: "none" | "light" | "strong";
-    formality: "standard" | "friendly" | "formal";
-  };
-  sections: ComposedResponseSection[];
-  globalQuestions: (ComposedResponseQuestion & {
+  acknowledge: string[];
+  answer: ComposedResponseAnswer[];
+  ask: (ComposedResponseQuestion & {
     sourceTopicIds: string[];
   })[];
-  globalForbid: string[];
-  rendererInstructions: string[];
+  say: string[];
+  review: string | null;
 };
 
 export type ComposeSupportResponsePlanInput = {
@@ -673,6 +699,8 @@ export type ComposeSupportResponsePlanInput = {
 
 export type RenderSupportResponseInput = {
   composedSupportResponsePlan: ComposedSupportResponsePlan;
+  targetLanguage?: string;
+  channel?: string;
 };
 
 export type BuildUserResponseInput = {

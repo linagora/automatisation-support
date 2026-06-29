@@ -63,3 +63,232 @@ NEXT STEP :
 - preparer l'appel au rag réel pas jsute le faux knwoledge vite fait. 
 - alimenter le rag d'anciens topics.
 - tester l'évolution des réponses selons le rag 
+
+
+RAG : 
+-rendre plus clean la sortie et le synhtetizer pour envoyer quelque chose de simple au plan
+-j'ai eu des requetes qui on échoué pourquoi ?
+ERROR AbortError: This operation was aborted at node:internal/deps/undici/undici:14976:13 at process.processTicksAndRejections (node:internal/process/task_queues:103:5) at async HttpSupportKnowledgeRetriever.retrieveOne (/home/georges/automatisation-support/src/support-processing-pipeline/v2/retrieve-support-knowledge/retrievers/httpSupportKnowledgeRetriever.ts:164:24) at async HttpSupportKnowledgeRetriever.retrieve (/home/georges/automatisation-support/src/support-processing-pipeline/v2/retrieve-support-knowledge/retrievers/httpSupportKnowledgeRetriever.ts:128:23) at async <anonymous> (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1158:42) at async Promise.all (index 0) at async runKnowledgeStage (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1078:25) at async runCase (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1508:7) at async runAndLogCase (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1694:20) at async main (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1788:5) > automatisation-support@1.0.0 support:v2:text-dataset > tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case short-context --until render --debug 
+-Rajouter de nouveau issue et faire des tests en liens
+-Déterminer un système pour enrichir le RAG au maximum et pour mettre à jour le rag automatiquement
+avec les nouvelles issues
+
+PLAN : 
+- faire gaffe au affirmation alors que pas de source réel et aussi clarifier qu'on acknlodge ce que dis le user pas ce qu'a testé le support
+- faire gaffe de bien s'arrêter un moment de parler quand suffisament d'info et pas de solution
+
+MATRIX : 
+- SIMPLIFIER AVANT puis mettre à jour la gestiond donné matrix pour enovyer message depuis twake chat (CF au dessus)
+
+
+
+
+
+
+
+
+
+
+Oui, ton intuition est bonne : **l’ensemble est cohérent**, mais le maillon le plus dangereux est bien `responsePlan`. Il se permet parfois de transformer des éléments faibles en affirmations support.
+
+## Commandes simples fragments-only
+
+Tes cases `standard-greeting-only`, etc. n’existent pas encore dans le dataset actuel : on l’avait vu avec `Unknown case`. Mais une fois ajoutées, colle ça d’un coup :
+
+```bash id="4ptzzg"
+cd ~/automatisation-support
+
+npm run support:v2:text-dataset -- --case standard-greeting-only --until render --debug
+npm run support:v2:text-dataset -- --case standard-thanks-only --until render --debug
+npm run support:v2:text-dataset -- --case standard-disappointment-only --until render --debug
+npm run support:v2:text-dataset -- --case standard-apology-only --until render --debug
+npm run support:v2:text-dataset -- --case standard-goodbye-only --until render --debug
+npm run support:v2:text-dataset -- --case standard-smalltalk-only --until render --debug
+npm run support:v2:text-dataset -- --case standard-handover-only --until render --debug
+npm run support:v2:text-dataset -- --case standard-greeting-disappointment --until render --debug
+npm run support:v2:text-dataset -- --case standard-thanks-followup-empty --until render --debug
+npm run support:v2:text-dataset -- --case standard-unclear-help-request --until render --debug
+```
+
+À tester tout de suite avec les cases déjà visibles dans ton dataset :
+
+```bash id="c86evy"
+cd ~/automatisation-support
+
+npm run support:v2:text-dataset -- --case out-of-scope --until render --debug
+npm run support:v2:text-dataset -- --case safety --until render --debug
+npm run support:v2:text-dataset -- --case suspicious-blocked --until render --debug
+```
+
+## Analyse des logs
+
+Tu as réellement lancé **11 cas `real-*`**, pas les 20 cases simples. Les cas visibles sont notamment `real-offer-switch-discovery-onlyoffice-devices`, `real-password-reset-not-requested-security`, `real-bank-retired-churn`, `real-duplicate-monthly-charge-cozy-easypark`, `real-mfa-option-question`, `real-android-photos-tab-missing-sync`, etc. 
+
+### 1. Le pipeline est globalement stable
+
+Les sorties finales sont toutes au format attendu : `renderedSupportResponse` contient seulement `finalResponseText`, pas de `renderedMessages`, pas d’internal notes visibles. 
+
+Donc côté architecture :
+
+```text id="qj7vya"
+textSurface → supportText → topicUpdates → catalog/RAG → responsePlan → composer → renderer
+```
+
+ça tient.
+
+Le composer aussi semble beaucoup mieux : il ne produit plus directement une réponse finale dans `say[]`. Le problème s’est déplacé **avant**, dans ce que `responsePlan` met dans `answer[]` et `say[]`.
+
+### 2. Gros problème : `responsePlan` affirme des choses sans source solide
+
+Le meilleur exemple est la double facturation CozyCloud / Easypark. Le RAG est désactivé pour le billing :
+
+```json id="b7yzbr"
+"route": "no_retrieval",
+"reason": "rag_disabled_for_billing_topics"
+```
+
+
+
+Mais juste après, `responsePlan` affirme :
+
+```text id="mv0215"
+this is a known issue related to the migration and is being addressed
+```
+
+puis le renderer sort :
+
+```text id="xaeqiu"
+Il s'agit d'un problème connu lié à la migration, qui est actuellement en cours de résolution.
+```
+
+ 
+
+Ça, c’est exactement le danger que tu pointes : **il transforme une hypothèse plausible en statut officiel**.
+
+Même problème sur l’abonnement / suppression de données : pas de RAG, mais le plan affirme que les données sont conservées, puis le renderer dit “nous vous confirmons”.  
+
+Même problème sur MFA : pas de RAG, mais le plan affirme que l’option MFA n’est pas disponible dans les comptes Twake. 
+
+Conclusion : il faut durcir `planSupportResponse`.
+
+Règle à ajouter :
+
+```text id="vcxzoy"
+Do not create answer[] points that state product behavior, known issue status, roadmap status, migration cause, availability, data retention, billing cause, or feature availability unless supported by retrieved knowledge with sources or explicit selected catalog knowledge intended as customer-facing support knowledge.
+
+If support is only a field catalog, category hint, inferred topic, or generic selected_catalog_knowledge without explicit customer-facing text, do not answer. Ask or recommend handover instead.
+```
+
+### 3. Le RAG “no result” est encore mal classé
+
+Sur le cas La Banque Postale, OpenRAG dit clairement qu’il n’a pas d’information pertinente et que les documents récupérés parlent plutôt d’un autre sujet Android notifications. 
+
+Mais cette absence d’info devient quand même `relevantFacts`. C’est mauvais.
+
+Même chose sur le partage iOS / Cozy : RAG activé, `sourceCount: 0`, contenu “no relevant information”, mais ça part en `relevantFacts`. 
+
+À corriger :
+
+```text id="3pbp8x"
+If retrieved sourceCount === 0, or content explicitly says no relevant information was found, do not put it in relevantFacts.
+Put it in limitations or drop the retrieved chunk.
+```
+
+### 4. Le plan pose parfois des questions absurdes ou déjà répondues
+
+Cas La Banque Postale : le plan demande à l’utilisateur :
+
+```text id="2zu8hj"
+savez-vous si des solutions de contournement sont connues ?
+```
+
+
+
+Ça ne devrait pas être demandé à l’utilisateur. C’est au support / RAG / humain de savoir s’il existe un workaround. La réponse finale le reprend tel quel. 
+
+Règle à ajouter :
+
+```text id="cb7e2y"
+Never ask the user whether internal workarounds, known issues, roadmap status, or fixes are known.
+If this information is needed and not available, mark the topic for human review or ask only for user-observable facts.
+```
+
+Autre exemple : le gros cas connecteurs ENSAP / Netflix / Nespresso. Le système a bien extrait les connecteurs, mais la réponse finale redemande “quels connecteurs ne fonctionnent pas”. 
+
+Donc il faut aussi :
+
+```text id="rn87x2"
+Do not ask for a field already present in knownDetails/caseDetails unless the value is ambiguous, contradictory, or explicitly incomplete.
+```
+
+### 5. Sur les longs messages, le topic updater découpe trop
+
+Le cas connecteurs est le plus flagrant : il crée des topics pour “disponibilité pour démarches complémentaires” et “contexte utilisateur”, alors que ce sont des éléments de contexte, pas des sujets support autonomes. 
+
+Résultat : le composer se retrouve avec trop de questions, et la réponse devient lourde, répétitive, presque administrative. 
+
+À corriger dans `topic_update_proposal` :
+
+```text id="w7py1g"
+Do not create standalone topics for:
+- user availability,
+- politeness,
+- background context,
+- long-term user context,
+- generic willingness to provide more information.
+
+Attach these as context/caseDetails to the nearest actionable support topic when useful.
+```
+
+### 6. Le fallback en cas de JSON invalide est trop brutal
+
+Le cas `real-access-invalid-credentials-ios-voiceover-altcha` est important. Le message utilisateur est riche : iOS, invalid credentials, reset impossible, VoiceOver, AltCha. Mais `textSurface` tombe en fallback `invalid_json`, puis `supportText` n’est pas appelé, `topicUpdates` est skip, et la réponse finale devient une clarification ultra générique en anglais.  
+
+C’est probablement le plus gros bug technique du log.
+
+À corriger :
+
+```text id="v1xcbd"
+If textSurface rawResponse is invalid JSON but contains recoverable segments, attempt JSON repair or retry once before falling back.
+If fallback is required, preserve detected/likely user language and do not downgrade a long support message to generic lack_comprehension.
+```
+
+### 7. Le renderer réintroduit parfois “nous confirmons”
+
+Dans le cas Android Photos, le plan dit “Acknowledge successful account creation”, puis le renderer sort :
+
+```text id="owzfvp"
+nous confirmons que votre compte Twake a été créé avec succès
+```
+
+ 
+
+Même si l’utilisateur l’a dit, le support ne doit pas “confirmer”. Il doit dire :
+
+```text id="9b19gc"
+vous indiquez que le compte a bien été créé
+```
+
+Correction à ajouter au renderer **et** au composer :
+
+```text id="r3kggt"
+Do not turn "the user reports/says/indicates X" into "we confirm X".
+Use "you indicate", "you mention", or "you report" unless the pipeline has verified evidence.
+```
+
+## Modifs prioritaires à faire maintenant
+
+Je mettrais les corrections dans cet ordre :
+
+```text id="8sv2q6"
+1. ResponsePlan strict source policy
+2. RAG no-result filtering
+3. No already-known questions
+4. No internal workaround/status questions to user
+5. Topic updater: do not create topics from context/availability
+6. TextSurface invalid JSON retry/repair
+7. Renderer: never convert user report into support confirmation
+```
+
+Le plus important : **bloquer les affirmations non sourcées**. C’est ce qui peut vraiment créer une mauvaise réponse support. Le reste améliore surtout la qualité et la concision.
+

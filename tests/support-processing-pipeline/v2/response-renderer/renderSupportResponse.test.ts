@@ -16,52 +16,25 @@ import type {
 
 function composedPlan(): ComposedSupportResponsePlan {
   return {
-    targetLanguage: "fr",
-    channel: "email",
+    topicId: null,
     messageIntent: "support_reply",
-    globalTone: {
-      opening: "brief_acknowledgement",
-      empathy: "light",
-      formality: "standard"
-    },
-    sections: [
-      {
-        kind: "topic",
-        topicId: "topic_login",
-        purpose: "Acknowledge the login issue.",
-        say: [
-          "Acknowledge that the user cannot log in."
-        ],
-        ask: [
-          {
-            fieldName: "error_message",
-            goal: "Ask what exact error appears."
-          }
-        ],
-        forbid: [
-          "Do not promise a fix."
-        ]
-      }
-    ],
-    globalQuestions: [
-      {
-        fieldName: "error_message",
-        goal: "Ask what exact error appears.",
-        sourceTopicIds: ["topic_login"]
-      }
-    ],
-    globalForbid: [
+    acknowledge: [],
+    answer: [],
+    ask: [],
+    say: [
+      "Acknowledge that the user cannot log in.",
+      "Ask what exact error appears.",
       "Do not promise a fix."
     ],
-    rendererInstructions: [
-      "Write only from this composed plan."
-    ]
+    review: null
   };
 }
 
 function input(plan: ComposedSupportResponsePlan = composedPlan()): RenderSupportResponseInput {
   return {
-    composedSupportResponsePlan: plan
+    composedSupportResponsePlan: plan,
+    targetLanguage: "fr",
+    channel: "email"
   };
 }
 
@@ -75,7 +48,7 @@ describe("renderSupportResponse", function () {
   it("renders from a composed support response plan only", function () {
     const prompt = serializePrompt(input());
 
-    expect(prompt).toContain("composed support response plan");
+    expect(prompt).toContain("targetLanguage, channel, and say[] instructions");
     expect(prompt).toContain("Acknowledge that the user cannot log in.");
     expect(prompt).toContain("Ask what exact error appears.");
     expect(prompt).toContain("Do not promise a fix.");
@@ -92,9 +65,13 @@ describe("renderSupportResponse", function () {
   it("forbids renderer-side reasoning and content additions", function () {
     const prompt = serializePrompt(input());
 
-    expect(prompt).toContain("You must not:");
-    expect(prompt).toContain("merge or deduplicate questions");
-    expect(prompt).toContain("Do not add any support content that is absent from the plan.");
+    expect(prompt).toContain(
+      "You do not decide what to ask, answer, acknowledge, omit, merge, reorder, or emphasize."
+    );
+    expect(prompt).toContain("Do not add support content absent from say[].");
+    expect(prompt).toContain(
+      "Do not turn a reported user claim into a support-side confirmation."
+    );
   });
 
   it("falls back from the composed plan without old standard fragments", function () {
@@ -120,19 +97,8 @@ describe("renderSupportResponse", function () {
       rawRenderSupportResponse: {
         status: "completed",
         parsedResponse: {
-          renderedMessages: [
-            {
-              messageId: "rendered_message_1",
-              messageOrder: 1,
-              purpose: "clarification_request",
-              relatedPlannedMessageOrders: [],
-              content:
-                "Je comprends que vous ne pouvez pas vous connecter. Quel message d’erreur voyez-vous ?"
-            }
-          ],
           finalResponseText:
-            "Je comprends que vous ne pouvez pas vous connecter. Quel message d’erreur voyez-vous ?",
-          internalRenderingNotes: "Rendered from composed plan."
+            "Je comprends que vous ne pouvez pas vous connecter. Quel message d’erreur voyez-vous ?"
         }
       }
     });

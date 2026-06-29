@@ -8,9 +8,7 @@ import {
 
 const TOPIC_UPDATE_OPS = [
   "update",
-  "create",
-  "none",
-  "review"
+  "create"
 ] as const;
 
 function toPromptJson(value: unknown): string {
@@ -30,7 +28,9 @@ You receive:
 - analyzed support items from the latest user message;
 - recent interaction context.
 
-For each analyzed item, decide whether it updates an existing topic, creates a new topic, needs no persistent update, or needs review.
+For each analyzed item, choose exactly one business operation:
+- "update" = the item belongs to an existing topic;
+- "create" = the item is a new topic not covered by any existing topic.
 
 You do not build final topics.
 You only propose minimal deterministic update operations.
@@ -76,13 +76,9 @@ Use messageKinds to help decide the operation:
 - confirmation usually updates an existing topic, especially when it answers a recent bot question.
 - denial usually updates an existing topic, especially when it corrects or answers a recent bot question.
 - feedback can create or update a topic when it concerns a product/support issue, preference, complaint, or improvement.
-- support_context must not create a topic by itself.
+- support_context should be grouped with the related create/update operation when it is clearly related.
 
-A support_context-only item should usually:
-- be grouped with the nearest related issue item in the same operation when the relation is clear;
-- update the related topic summary only if the metadata is useful to persist;
-- use op "none" if it is valid but not worth persisting;
-- use op "review" if the related topic/item is unclear.
+A support_context-only item must not produce a separate operation; if it is not useful to persist, attach it to the closest clearly related create/update operation only when safe.
 
 A plain issue report is not automatically a question.
 A messageKind "question" matters only when the user actually asks for information, explanation, possibility, policy, compatibility, pricing, availability, or support clarification.
@@ -101,10 +97,6 @@ Use op "update" when an item:
 
 Use op "create" when an item is a distinct new issue, request, question, feedback, or objective not covered by existing topics.
 
-Use op "none" only when the item is valid but all useful information is already known or should not affect persistent topic state.
-
-Use op "review" when matching, splitting, merging, or replacing is unsafe or unclear.
-
 Do not create a new topic for a contextual answer to a recent question about an existing topic.
 Do not create a new topic for supportMetadata alone.
 Do not create a new topic for support_context alone.
@@ -112,7 +104,12 @@ Do not merge distinct issues merely because they appear in the same user message
 
 Several items may update the same topic when they describe the same persistent support issue.
 One operation may reference several item indexes when the items belong to the same persistent topic.
-One item may feed several operations only if its caseDetails, attemptedActions, or evidence clearly separate several subjects; otherwise use review.
+One item may feed several operations only if its caseDetails, attemptedActions, or evidence clearly separate several subjects.
+
+Prefer update when a matching existing topic exists.
+Use create only when no existing topic matches.
+If an existing topic has matching broadCategoryHint, title, summary, or known facts, update it.
+Example: duplicate_billing / invoice received twice + existing billing topic => update the existing billing topic.
 
 # Contextual answers
 
@@ -122,7 +119,7 @@ If the bot asked about an existing topic and the user gives a short answer such 
 - update the relevant existing topic;
 - do not create a new topic;
 - merge or replace the interpreted caseDetails when useful;
-- use review only if the related topic is unclear.
+- use create only if no existing topic plausibly matches.
 
 # Topic field
 
@@ -195,7 +192,7 @@ attemptedActions replacement format:
 }
 
 targetIndex is the index of the existing attemptedAction in the current topic.
-If the existing action to replace cannot be identified safely, use review.
+If the existing action to replace cannot be identified safely, use merge or omit the replace reference.
 
 For a new topic, use merge only, not replace.
 
@@ -203,7 +200,7 @@ For a new topic, use merge only, not replace.
 
 Do not merge information already present with the same meaning.
 
-If a detail or action already exists unchanged and no summary, title, or category update is needed, use op "none".
+If a detail or action already exists unchanged and no summary, title, or category update is needed, still choose the best matching "update" operation with empty merge/replace.
 
 If a latest detail explicitly corrects an existing value, use replace, not merge.
 
@@ -212,19 +209,6 @@ If the latest message adds a more precise value that should supersede an older v
 If the latest message adds a different complementary detail, use merge.
 
 If supportMetadata is already reflected in the topic summary, do not update only to repeat it.
-
-# Review
-
-Use review when:
-- an item could match multiple topics;
-- a replace target is unclear;
-- one item appears to contain several topics but cannot be safely split;
-- the operation would risk merging distinct issues;
-- support_context or supportMetadata appears related but the related topic is unclear;
-- the latest analysis is too ambiguous to apply.
-
-review must contain a short reason for op "review".
-For other ops, review must be null.
 
 # Allowed ops
 
@@ -235,7 +219,7 @@ ${TOPIC_UPDATE_OPS.join(" | ")}
 {
   "ops": [
     {
-      "op": "update|create|none|review",
+      "op": "update|create",
       "items": [0],
       "topicId": "existing topic id or null",
       "topic": {
@@ -260,8 +244,7 @@ ${TOPIC_UPDATE_OPS.join(" | ")}
             "with": [0, 0]
           }
         ]
-      } or null,
-      "review": "short review reason or null"
+      } or null
     }
   ]
 }
@@ -273,7 +256,6 @@ Before returning JSON, verify:
 - op "update" uses an existing topicId;
 - op "create" has topicId null and topic present;
 - op "create" does not use replace;
-- op "none" and op "review" do not merge or replace data;
 - no final topic id is generated;
 - merge does not duplicate already-known details/actions;
 - replace is used for explicit corrections or superseding values;
@@ -281,7 +263,7 @@ Before returning JSON, verify:
 - contextual answers update the relevant existing topic instead of creating a new topic;
 - support_context alone does not create a new topic;
 - supportMetadata alone does not create a new topic;
-- uncertain matching uses review.
+- duplicate invoice/billing reports update an existing billing topic when one exists.
 
 Return only JSON.
 `.trim();

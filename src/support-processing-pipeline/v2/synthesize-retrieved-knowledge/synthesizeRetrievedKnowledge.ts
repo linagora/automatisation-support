@@ -1,7 +1,5 @@
 import type {
-  ExtractableFieldDefinition,
   RetrievedKnowledgeSynthesis,
-  SelectedCatalogKnowledgeForTopic,
   SynthesizeRetrievedKnowledgeInput
 } from "../typesSupportProcessingPipelineV2.types";
 import type {
@@ -25,10 +23,21 @@ function unique(values: string[]): string[] {
   return [...new Set(values.filter((value) => value.trim() !== ""))];
 }
 
-function getTopicId(input: SynthesizeRetrievedKnowledgeInput): number {
+function getTopicId(
+  input: SynthesizeRetrievedKnowledgeInput
+): string | number | null {
   return input.knowledgeChunks[0]?.topicId ??
     input.knowledgeEnrichmentPlan.retrievalRequests[0]?.topicId ??
-    0;
+    input.topicEvidence.topicId ??
+    null;
+}
+
+function technicalLimitations(
+  input: SynthesizeRetrievedKnowledgeInput
+): string[] {
+  return input.knowledgeRetrievalFailureReason
+    ? ["Knowledge retrieval failed or timed out for this topic."]
+    : [];
 }
 
 function synthesizeRetrievedKnowledge(
@@ -39,11 +48,18 @@ function synthesizeRetrievedKnowledge(
 
     return item ? [item] : [];
   });
-  const relevantFacts = unique(items.flatMap((item) => [
-    ...item.knownBehavior,
-    ...item.expectedBehavior,
-    ...item.acceptanceCriteria
-  ]));
+  const genericChunks = input.knowledgeChunks.filter((chunk) => {
+    return !parseKnowledgeItem(chunk.content) && chunk.content.trim() !== "";
+  });
+  const genericFacts = genericChunks.map((chunk) => chunk.content.trim());
+  const relevantFacts = unique([
+    ...items.flatMap((item) => [
+      ...item.knownBehavior,
+      ...item.expectedBehavior,
+      ...item.acceptanceCriteria
+    ]),
+    ...genericFacts
+  ]);
   const applicableInstructions = unique(items.flatMap((item) => [
     ...item.safeResponseStrategy,
     ...item.questionsToAskFirst
@@ -54,10 +70,17 @@ function synthesizeRetrievedKnowledge(
   const unresolvedPoints = unique(items.flatMap((item) => {
     return item.questionsToAskFirst;
   }));
-  const sourceReferences = unique(items.map((item) => {
-    return item.source.issueUrl ?? item.knowledgeId;
-  }));
+  const sourceReferences = unique([
+    ...items.map((item) => {
+      return item.source.issueUrl ?? item.knowledgeId;
+    }),
+    ...genericChunks.map((chunk) => chunk.sourceId)
+  ]);
   const doNotClaim = unique(items.flatMap((item) => item.doNotClaim));
+  const limitations = unique([
+    ...technicalLimitations(input),
+    ...doNotClaim
+  ]);
   const recommendedFirstAnswer = items.find((item) => {
     return typeof item.recommendedFirstAnswer === "string";
   })?.recommendedFirstAnswer;
@@ -72,7 +95,7 @@ function synthesizeRetrievedKnowledge(
     possibleFields,
     unresolvedPoints,
     sourceReferences,
-    limitations: doNotClaim,
+    limitations,
     ...(recommendedFirstAnswer ? { recommendedFirstAnswer } : {}),
     ...(ifUserConfirmsNotificationsEnabled
       ? { ifUserConfirmsNotificationsEnabled }
@@ -91,47 +114,6 @@ function synthesizeRetrievedKnowledge(
   };
 }
 
-function enrichSelectedCatalogKnowledgeWithSynthesis(params: {
-  selectedCatalogKnowledge: SelectedCatalogKnowledgeForTopic;
-  extractableFieldCatalog: ExtractableFieldDefinition[];
-  synthesis: RetrievedKnowledgeSynthesis | null;
-}): SelectedCatalogKnowledgeForTopic {
-  const possibleFields = new Set(params.synthesis?.possibleFields ?? []);
-  const selectedFieldNames = new Set(
-    params.selectedCatalogKnowledge.selectedFields.map((field) => {
-      return field.fieldName;
-    })
-  );
-  const knowledgeFields = params.extractableFieldCatalog.filter((field) => {
-    return possibleFields.has(field.fieldName) &&
-      !selectedFieldNames.has(field.fieldName);
-  });
-  const knowledgeFieldNames = new Set(
-    knowledgeFields.map((field) => field.fieldName)
-  );
-
-  if (knowledgeFields.length === 0) {
-    return params.selectedCatalogKnowledge;
-  }
-
-  return {
-    ...params.selectedCatalogKnowledge,
-    selectedFields: [
-      ...params.selectedCatalogKnowledge.selectedFields,
-      ...knowledgeFields
-    ],
-    rejectedFieldNames:
-      params.selectedCatalogKnowledge.rejectedFieldNames.filter((fieldName) => {
-        return !knowledgeFieldNames.has(fieldName);
-      }),
-    warnings: [
-      ...(params.selectedCatalogKnowledge.warnings ?? []),
-      "Some selected fields were added from topic-specific retrieved knowledge."
-    ]
-  };
-}
-
 export {
-  enrichSelectedCatalogKnowledgeWithSynthesis,
   synthesizeRetrievedKnowledge
 };

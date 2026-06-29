@@ -325,7 +325,7 @@ function buildResponsePlanPatch(params: {
 }): ResponsePlan {
   return {
     responseLanguage:
-      params.responsePlan?.rendererTask.targetLanguage === "fr"
+      params.normalizedResponseLanguage === "fr"
         ? "french"
         : "same_as_user",
     messagesPlan: {

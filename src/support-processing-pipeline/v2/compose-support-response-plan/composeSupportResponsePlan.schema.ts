@@ -28,116 +28,71 @@ const nullableStringSchema = {
   ]
 } as const;
 
+const nullSchema = {
+  type: "null"
+} as const;
+
 const stringArraySchema = arrayOf(stringSchema);
 
-const questionSchema = objectOf(
+const messageIntentSchema = {
+  enum: [
+    "support_reply",
+    "standard_reply",
+    "mixed_reply",
+    "handover_reply",
+    "review_reply"
+  ]
+} as const;
+
+const answerSupportSchema = {
+  enum: [
+    "standard_fragment",
+    "topic_plan",
+    "support_cue",
+    "policy"
+  ]
+} as const;
+
+const answerSchema = objectOf(
   {
-    fieldName: stringSchema,
-    goal: stringSchema
+    point: stringSchema,
+    support: answerSupportSchema
   },
   [
-    "fieldName",
-    "goal"
+    "point",
+    "support"
   ]
 );
 
-const globalQuestionSchema = objectOf(
+const askSchema = objectOf(
   {
-    fieldName: stringSchema,
     goal: stringSchema,
     sourceTopicIds: stringArraySchema
   },
   [
-    "fieldName",
     "goal",
     "sourceTopicIds"
   ]
 );
 
-const sectionSchema = objectOf(
-  {
-    kind: {
-      enum: [
-        "standard_fragment",
-        "topic",
-        "handover",
-        "safety",
-        "review"
-      ]
-    },
-    topicId: nullableStringSchema,
-    purpose: stringSchema,
-    say: stringArraySchema,
-    ask: arrayOf(questionSchema),
-    forbid: stringArraySchema
-  },
-  [
-    "kind",
-    "topicId",
-    "purpose",
-    "say",
-    "ask",
-    "forbid"
-  ]
-);
-
 const composedSupportResponsePlanSchema = objectOf(
   {
-    targetLanguage: stringSchema,
-    channel: stringSchema,
-    messageIntent: {
-      enum: [
-        "support_reply",
-        "standard_reply",
-        "mixed_reply",
-        "handover_reply",
-        "review_reply"
-      ]
-    },
-    globalTone: objectOf(
-      {
-        opening: {
-          enum: [
-            "none",
-            "brief_acknowledgement",
-            "empathetic_acknowledgement"
-          ]
-        },
-        empathy: {
-          enum: [
-            "none",
-            "light",
-            "strong"
-          ]
-        },
-        formality: {
-          enum: [
-            "standard",
-            "friendly",
-            "formal"
-          ]
-        }
-      },
-      [
-        "opening",
-        "empathy",
-        "formality"
-      ]
-    ),
-    sections: arrayOf(sectionSchema),
-    globalQuestions: arrayOf(globalQuestionSchema),
-    globalForbid: stringArraySchema,
-    rendererInstructions: stringArraySchema
+    topicId: nullSchema,
+    messageIntent: messageIntentSchema,
+    acknowledge: stringArraySchema,
+    answer: arrayOf(answerSchema),
+    ask: arrayOf(askSchema),
+    say: stringArraySchema,
+    review: nullableStringSchema
   },
   [
-    "targetLanguage",
-    "channel",
+    "topicId",
     "messageIntent",
-    "globalTone",
-    "sections",
-    "globalQuestions",
-    "globalForbid",
-    "rendererInstructions"
+    "acknowledge",
+    "answer",
+    "ask",
+    "say",
+    "review"
   ]
 );
 

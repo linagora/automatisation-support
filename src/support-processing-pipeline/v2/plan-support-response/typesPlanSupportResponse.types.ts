@@ -16,47 +16,34 @@ export type ResponsePlanningPolicy = {
   maxTotalQuestions: number;
 };
 
-export type KnowledgeMode =
-  | "knowledge_available"
-  | "knowledge_missing"
-  | "rag_not_enabled";
+export type PlannedAnswerSupport =
+  | "retrieved_knowledge"
+  | "selected_catalog_knowledge"
+  | "topic"
+  | "attachment"
+  | "policy";
 
-export type AllowedResponseMove =
-  | "acknowledge"
-  | "ask_missing_fields"
-  | "answer_with_knowledge"
-  | "standard_acknowledgement"
-  | "handover_acknowledgement"
-  | "safety_or_boundary";
-
-export type KnowledgeGate = {
-  knowledgeMode: KnowledgeMode;
-  solutionAllowed: boolean;
-  allowedMoves: AllowedResponseMove[];
-  reason: string;
+export type PlannedAnswerPoint = {
+  point: string;
+  support: PlannedAnswerSupport;
 };
 
-export type QuestionDecision = {
-  shouldAskQuestion: boolean;
-  plannedQuestionCount: number;
-  fieldNames: string[];
-  questionInstruction: string | null;
-  reason: string;
+export type PlannedAskField = {
+  fieldName: string;
+  goal: string;
 };
 
-export type RendererTask = {
-  targetLanguage: string;
-  prompt: string;
-  questionFieldNames: string[];
-  forbiddenClaims: string[];
+export type PlannedTopicResponse = {
+  topicId: string | null;
+  acknowledge: string[];
+  answer: PlannedAnswerPoint[];
+  ask: PlannedAskField[];
+  say: string[];
+  review: string | null;
 };
 
-export type SupportResponsePlan = {
-  responsePlanId: string;
-  knowledgeGate: KnowledgeGate;
-  questionDecision: QuestionDecision;
-  rendererTask: RendererTask;
-  internalRationale: string;
+export type SupportResponsePlan = PlannedTopicResponse & {
+  responsePlanId?: string;
 };
 
 export type BuildPlanSupportResponsePromptInput = {
@@ -89,34 +76,23 @@ export type RawPlanSupportResponse = {
   };
 };
 
-export type RawKnowledgeGate = {
-  knowledgeMode?: unknown;
-  solutionAllowed?: unknown;
-  allowedMoves?: unknown;
-  reason?: unknown;
+export type RawPlannedAnswerPoint = {
+  point?: unknown;
+  support?: unknown;
 };
 
-export type RawQuestionDecision = {
-  shouldAskQuestion?: unknown;
-  plannedQuestionCount?: unknown;
-  fieldNames?: unknown;
-  questionInstruction?: unknown;
-  reason?: unknown;
-};
-
-export type RawRendererTask = {
-  targetLanguage?: unknown;
-  prompt?: unknown;
-  questionFieldNames?: unknown;
-  forbiddenClaims?: unknown;
+export type RawPlannedAskField = {
+  fieldName?: unknown;
+  goal?: unknown;
 };
 
 export type RawSupportResponsePlan = {
-  responsePlanId?: unknown;
-  knowledgeGate?: unknown;
-  questionDecision?: unknown;
-  rendererTask?: unknown;
-  internalRationale?: unknown;
+  topicId?: unknown;
+  acknowledge?: unknown;
+  answer?: unknown;
+  ask?: unknown;
+  say?: unknown;
+  review?: unknown;
 };
 
 export type FormatPlanSupportResponseOutputInput = {

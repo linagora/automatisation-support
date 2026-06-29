@@ -6,17 +6,16 @@ import type {
   RawSelectedCatalogKnowledgeForTopic,
   SelectedCatalogKnowledgeForTopic
 } from "./typesSelectCatalogKnowledgeForTopic.types";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+import {
+  buildCandidateFieldsForTopicSelector
+} from "./buildCandidateFieldsForTopicSelector";
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim() !== "";
 }
 
-function asString(value: unknown): string | null {
-  return isNonEmptyString(value) ? value.trim() : null;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function stringArray(value: unknown): string[] | undefined {
@@ -52,98 +51,6 @@ function mapSelectedFields(params: {
   });
 }
 
-const BILLING_FIELD_NAMES = new Set([
-  "plan_or_subscription",
-  "billing_or_payment_status",
-  "billing_issue_type",
-  "duplicate_billing_impact",
-  "billing_provider",
-  "amount",
-  "currency",
-  "billing_date_or_period",
-  "payment_method"
-]);
-
-const ACCESS_FIELD_NAMES = new Set([
-  "account_status",
-  "access_action",
-  "auth_method",
-  "server_or_instance",
-  "recovery_channel",
-  "user_role_or_permission",
-  "mfa_status"
-]);
-
-function getTopicCategoryHints(
-  input: FormatSelectCatalogKnowledgeForTopicOutputInput
-): Set<string> {
-  const hints = new Set<string>();
-  const existingTopic = input.input.topicEvidence.existingTopic;
-
-  if (isRecord(existingTopic)) {
-    const existingTopicHint = asString(
-      existingTopic.broadCategoryHint ??
-        existingTopic.topic_category ??
-        existingTopic.category
-    );
-
-    if (existingTopicHint) {
-      hints.add(existingTopicHint);
-    }
-  }
-
-  for (const understanding of input.input.topicEvidence.relatedTextUnderstandings) {
-    const caseDetailKeys = new Set(
-      (understanding.caseDetails ?? []).map((detail) => detail.key)
-    );
-
-    if (
-      caseDetailKeys.has("billing_issue_type") ||
-      caseDetailKeys.has("billing_date_or_period") ||
-      caseDetailKeys.has("amount") ||
-      caseDetailKeys.has("currency")
-    ) {
-      hints.add("billing");
-    }
-
-    if (
-      caseDetailKeys.has("access_action") ||
-      caseDetailKeys.has("auth_method") ||
-      caseDetailKeys.has("account_status")
-    ) {
-      hints.add("access_security");
-    }
-
-    if (
-      caseDetailKeys.has("feature_or_page") ||
-      caseDetailKeys.has("trigger_action") ||
-      caseDetailKeys.has("error_message") ||
-      caseDetailKeys.has("observed_result")
-    ) {
-      hints.add("bug");
-    }
-  }
-
-  return hints;
-}
-
-function isCrossTopicField(params: {
-  fieldName: string;
-  topicCategoryHints: Set<string>;
-}): boolean {
-  if (
-    params.topicCategoryHints.has("access_security") &&
-    !params.topicCategoryHints.has("billing") &&
-    BILLING_FIELD_NAMES.has(params.fieldName)
-  ) {
-    return true;
-  }
-
-  return params.topicCategoryHints.has("billing") &&
-    !params.topicCategoryHints.has("access_security") &&
-    ACCESS_FIELD_NAMES.has(params.fieldName);
-}
-
 function buildFallback(
   input: FormatSelectCatalogKnowledgeForTopicOutputInput,
   reason: string
@@ -154,6 +61,47 @@ function buildFallback(
     scopeReason: `catalog_selection_fallback:${reason}`,
     rejectedFieldNames: [],
     warnings: [reason]
+  };
+}
+
+function resolveSelectorFields(
+  input: FormatSelectCatalogKnowledgeForTopicOutputInput["input"]
+): {
+  knownFieldNames: Set<string>;
+  candidateFields: ExtractableFieldDefinition[];
+} {
+  if (input.knownFields && input.candidateFields) {
+    return {
+      knownFieldNames: new Set(input.knownFields.map((field) => {
+        return field.fieldName;
+      })),
+      candidateFields: input.candidateFields
+    };
+  }
+
+  const topicSnapshot = input.topicSnapshot ?? input.topicEvidence.topicSnapshot;
+
+  if (!topicSnapshot) {
+    return {
+      knownFieldNames: new Set(input.knownFields?.map((field) => {
+        return field.fieldName;
+      }) ?? []),
+      candidateFields: input.candidateFields ?? input.extractableFieldCatalog
+    };
+  }
+
+  const selectorFields = buildCandidateFieldsForTopicSelector({
+    topicSnapshot,
+    extractableFieldCatalog: input.extractableFieldCatalog
+  });
+
+  return {
+    knownFieldNames: new Set(
+      (input.knownFields ?? selectorFields.knownFields).map((field) => {
+        return field.fieldName;
+      })
+    ),
+    candidateFields: input.candidateFields ?? selectorFields.candidateFields
   };
 }
 
@@ -175,76 +123,40 @@ function formatSelectCatalogKnowledgeForTopicOutput(
   const raw = input.rawSelectCatalogKnowledgeForTopic
     .parsedResponse as RawSelectedCatalogKnowledgeForTopic;
   const selectedFieldNames = stringArray(raw.selectedFieldNames);
-  const selectedGenericKnowledgeIds = stringArray(
-    raw.selectedGenericKnowledgeIds
-  );
-  const rejectedFieldNames = stringArray(raw.rejectedFieldNames);
-  const warnings = stringArray(raw.warnings);
 
-  if (
-    !selectedFieldNames ||
-    !selectedGenericKnowledgeIds ||
-    !rejectedFieldNames ||
-    !warnings ||
-    !isNonEmptyString(raw.scopeReason)
-  ) {
+  if (!selectedFieldNames) {
     return buildFallback(input, "invalid_selection_contract");
   }
 
-  const allowedFieldNames = new Set(
-    input.input.extractableFieldCatalog.map((field) => field.fieldName)
+  const selectorFields = resolveSelectorFields(input.input);
+  const askableFieldNames = new Set(
+    input.input.extractableFieldCatalog.filter((field) => {
+      return field.askableByUser !== false;
+    }).map((field) => {
+      return field.fieldName;
+    })
   );
-  const topicCategoryHints = getTopicCategoryHints(input);
-  const unknownSelectedFields = selectedFieldNames.filter((fieldName) => {
-    return !allowedFieldNames.has(fieldName);
-  });
-  const crossTopicSelectedFields = selectedFieldNames.filter((fieldName) => {
-    return allowedFieldNames.has(fieldName) &&
-      isCrossTopicField({
-        fieldName,
-        topicCategoryHints
-      });
-  });
+  const candidateFieldNames = new Set(selectorFields.candidateFields.map(
+    (field) => {
+      return field.fieldName;
+    }
+  ));
   const validSelectedFieldNames = selectedFieldNames.filter((fieldName) => {
-    return allowedFieldNames.has(fieldName) &&
-      !crossTopicSelectedFields.includes(fieldName);
-  });
-  const validRejectedFieldNames = rejectedFieldNames.filter((fieldName) => {
-    return allowedFieldNames.has(fieldName) &&
-      !validSelectedFieldNames.includes(fieldName);
+    return candidateFieldNames.has(fieldName) &&
+      !selectorFields.knownFieldNames.has(fieldName) &&
+      askableFieldNames.has(fieldName);
   });
   const selectedFields = mapSelectedFields({
-    fieldNames: validSelectedFieldNames,
-    catalog: input.input.extractableFieldCatalog
+    fieldNames: Array.from(new Set(validSelectedFieldNames)),
+    catalog: selectorFields.candidateFields
   });
 
   return {
     selectedFields,
     selectedGenericKnowledge: [],
-    scopeReason: raw.scopeReason.trim(),
-    rejectedFieldNames: Array.from(new Set([
-      ...validRejectedFieldNames,
-      ...crossTopicSelectedFields
-    ])),
-    ...(warnings.length > 0 ||
-      unknownSelectedFields.length > 0 ||
-      crossTopicSelectedFields.length > 0 ||
-      selectedGenericKnowledgeIds.length > 0
-      ? {
-          warnings: Array.from(new Set([
-            ...warnings,
-            ...unknownSelectedFields.map((fieldName) => {
-              return `unknown_selected_field:${fieldName}`;
-            }),
-            ...crossTopicSelectedFields.map((fieldName) => {
-              return `cross_topic_field_rejected:${fieldName}`;
-            }),
-            ...(selectedGenericKnowledgeIds.length > 0
-              ? ["generic_knowledge_not_available_in_input"]
-              : [])
-          ]))
-        }
-      : {})
+    scopeReason: "selected_candidate_fields",
+    rejectedFieldNames: [],
+    warnings: []
   };
 }
 

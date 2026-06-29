@@ -1,0 +1,3567 @@
+
+================ support-facts-tested-action ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case support-facts-tested-action --until response-plan --debug
+
+
+============================================================
+CASE support-facts-tested-action — Explicit support issue with facts and tested action
+UNTIL response-plan
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_support-facts-tested-action",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Sur le web, mon compte affiche l'erreur Token expired. J'ai déjà réessayé de me connecter et ça échoue toujours."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 1,
+  "existingTopics": [
+    {
+      "id": "topic_1",
+      "title": "Compte bloqué",
+      "summary": "L'utilisateur indique que son compte est bloqué.",
+      "broadCategoryHint": "access_security",
+      "caseDetails": [],
+      "attemptedActions": []
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM usage] stage=text_surface_analysis preset=quickDecision model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=2377, completion_tokens=92, total_tokens=2469
+[LLM usage] stage=support_text_analysis preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3420, completion_tokens=376, total_tokens=3796
+[LLM usage] stage=topic_update_proposal preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=4664, completion_tokens=191, total_tokens=4855
+[LLM usage] stage=catalog_field_selection preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=2080, completion_tokens=18, total_tokens=2098
+[LLM usage] stage=response_plan preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3417, completion_tokens=184, total_tokens=3601
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Sur le web, mon compte affiche l'erreur Token expired. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "J'ai déjà réessayé de me connecter et ça échoue toujours.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "mon compte affiche l'erreur Token expired"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "web",
+        "evidence": "Sur le web"
+      },
+      {
+        "key": "error_message",
+        "value": "Token expired",
+        "evidence": "Token expired"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "Error message 'Token expired' on web account"
+  },
+  {
+    "understandingId": "text_understanding_2",
+    "sourceSegmentIds": [
+      "text_segment_2"
+    ],
+    "messageKinds": [
+      {
+        "kind": "info_update",
+        "evidence": "J'ai déjà réessayé de me connecter"
+      },
+      {
+        "kind": "issue_report",
+        "evidence": "et ça échoue toujours"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "trigger_action",
+        "value": "reconnect",
+        "evidence": "me connecter"
+      },
+      {
+        "key": "observed_result",
+        "value": "failed",
+        "evidence": "ça échoue toujours"
+      }
+    ],
+    "attemptedActions": [
+      {
+        "action": "reconnect",
+        "outcome": "failed",
+        "evidence": "J'ai déjà réessayé de me connecter et ça échoue toujours"
+      }
+    ],
+    "supportMetadata": [],
+    "summary": "Failed reconnection attempt"
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateOps
+[
+  {
+    "op": "update",
+    "items": [
+      0,
+      1
+    ],
+    "topicId": "topic_1",
+    "topic": {
+      "title": "Compte bloqué avec erreur Token expired",
+      "broadCategoryHint": "access_security",
+      "summary": "L'utilisateur indique que son compte est bloqué. Erreur 'Token expired' sur le compte web. L'utilisateur a déjà réessayé de se connecter et ça échoue toujours."
+    },
+    "merge": {
+      "caseDetails": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "attemptedActions": [
+        [
+          1,
+          0
+        ]
+      ]
+    },
+    "replace": null,
+    "review": null
+  }
+]
+
+8. topicPatches
+[
+  {
+    "patchId": "topic_patch_1",
+    "op": "update",
+    "items": [
+      0,
+      1
+    ],
+    "topicId": "topic_1",
+    "temporaryTopicId": null,
+    "topic": {
+      "title": "Compte bloqué avec erreur Token expired",
+      "broadCategoryHint": "access_security",
+      "summary": "L'utilisateur indique que son compte est bloqué. Erreur 'Token expired' sur le compte web. L'utilisateur a déjà réessayé de se connecter et ça échoue toujours."
+    },
+    "merge": {
+      "caseDetails": [
+        {
+          "key": "product_or_service",
+          "value": "web",
+          "evidence": "Sur le web"
+        },
+        {
+          "key": "error_message",
+          "value": "Token expired",
+          "evidence": "Token expired"
+        },
+        {
+          "key": "trigger_action",
+          "value": "reconnect",
+          "evidence": "me connecter"
+        },
+        {
+          "key": "observed_result",
+          "value": "failed",
+          "evidence": "ça échoue toujours"
+        }
+      ],
+      "attemptedActions": [
+        {
+          "action": "reconnect",
+          "outcome": "failed",
+          "evidence": "J'ai déjà réessayé de me connecter et ça échoue toujours"
+        }
+      ]
+    },
+    "replace": {
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    "review": null,
+    "sourceUnderstandingIds": [
+      "text_understanding_1",
+      "text_understanding_2"
+    ],
+    "selectedSourceVerbatims": [
+      "Error message 'Token expired' on web account",
+      "Failed reconnection attempt"
+    ]
+  }
+]
+
+9. mergedTopicSnapshots
+[
+  {
+    "snapshotId": "topic_patch_1",
+    "topicId": "topic_1",
+    "temporaryTopicId": null,
+    "isNewTopic": false,
+    "title": "Compte bloqué avec erreur Token expired",
+    "broadCategoryHint": "access_security",
+    "summary": "L'utilisateur indique que son compte est bloqué. Erreur 'Token expired' sur le compte web. L'utilisateur a déjà réessayé de se connecter et ça échoue toujours.",
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "web",
+        "evidence": "Sur le web"
+      },
+      {
+        "key": "error_message",
+        "value": "Token expired",
+        "evidence": "Token expired"
+      },
+      {
+        "key": "trigger_action",
+        "value": "reconnect",
+        "evidence": "me connecter"
+      },
+      {
+        "key": "observed_result",
+        "value": "failed",
+        "evidence": "ça échoue toujours"
+      }
+    ],
+    "attemptedActions": [
+      {
+        "action": "reconnect",
+        "outcome": "failed",
+        "evidence": "J'ai déjà réessayé de me connecter et ça échoue toujours"
+      }
+    ],
+    "topic_details": {
+      "product_or_service": "web",
+      "error_message": "Token expired",
+      "trigger_action": "reconnect",
+      "observed_result": "failed"
+    },
+    "sourceUnderstandingIds": [
+      "text_understanding_1",
+      "text_understanding_2"
+    ],
+    "sourceVerbatims": [
+      "Error message 'Token expired' on web account",
+      "Failed reconnection attempt"
+    ],
+    "sourceOpIndex": 0,
+    "baseTopic": {
+      "id": "topic_1",
+      "title": "Compte bloqué",
+      "summary": "L'utilisateur indique que son compte est bloqué.",
+      "broadCategoryHint": "access_security",
+      "caseDetails": [],
+      "attemptedActions": []
+    }
+  }
+]
+
+10. knowledgeEnrichmentPlan
+{
+  "route": "no_retrieval",
+  "retrievalRequests": [],
+  "reason": "no_matching_mock_knowledge"
+}
+
+11. retrievedSupportKnowledge
+[]
+
+12. synthesizedRetrievedKnowledge
+null
+
+13. responsePlan
+{
+  "topicId": "topic_1",
+  "acknowledge": [
+    "I understand that you're seeing a 'Token expired' error when trying to reconnect to your web account, and that your attempts to reconnect have failed."
+  ],
+  "answer": [],
+  "ask": [
+    {
+      "fieldName": "user_identifier",
+      "goal": "to identify the affected account"
+    },
+    {
+      "fieldName": "auth_method",
+      "goal": "to understand the authentication method used"
+    }
+  ],
+  "say": [
+    "Acknowledge that the user is experiencing a 'Token expired' error on their web account and that reconnection attempts have failed. Ask for the user identifier to identify the affected account and the authentication method to understand how the user is trying to log in."
+  ],
+  "review": null,
+  "responsePlanId": "response_plan_topic_patch_1"
+}
+
+14. topicResponsePlans
+[
+  {
+    "topicId": "topic_1",
+    "acknowledge": [
+      "I understand that you're seeing a 'Token expired' error when trying to reconnect to your web account, and that your attempts to reconnect have failed."
+    ],
+    "answer": [],
+    "ask": [
+      {
+        "fieldName": "user_identifier",
+        "goal": "to identify the affected account"
+      },
+      {
+        "fieldName": "auth_method",
+        "goal": "to understand the authentication method used"
+      }
+    ],
+    "say": [
+      "Acknowledge that the user is experiencing a 'Token expired' error on their web account and that reconnection attempts have failed. Ask for the user identifier to identify the affected account and the authentication method to understand how the user is trying to log in."
+    ],
+    "review": null,
+    "responsePlanId": "response_plan_topic_patch_1"
+  }
+]
+
+15. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n\"userLanguage\": \"fr\",\n\"segments\": [\n{\n\"verbatim\": \"Sur le web, mon compte affiche l'erreur Token expired.\",\n\"category\": \"support_relevant\",\n\"standardSubcategory\": null\n},\n{\n\"verbatim\": \"J'ai déjà réessayé de me connecter et ça échoue toujours.\",\n\"category\": \"support_relevant\",\n\"standardSubcategory\": null\n}\n]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"mon compte affiche l'erreur Token expired\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"product_or_service\",\n          \"value\": \"web\",\n          \"evidence\": \"Sur le web\"\n        },\n        {\n          \"key\": \"error_message\",\n          \"value\": \"Token expired\",\n          \"evidence\": \"Token expired\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"Error message 'Token expired' on web account\"\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_2\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"info_update\",\n          \"evidence\": \"J'ai déjà réessayé de me connecter\"\n        },\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"et ça échoue toujours\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"trigger_action\",\n          \"value\": \"reconnect\",\n          \"evidence\": \"me connecter\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"failed\",\n          \"evidence\": \"ça échoue toujours\"\n        }\n      ],\n      \"attemptedActions\": [\n        {\n          \"action\": \"reconnect\",\n          \"outcome\": \"failed\",\n          \"evidence\": \"J'ai déjà réessayé de me connecter et ça échoue toujours\"\n        }\n      ],\n      \"supportMetadata\": [],\n      \"summary\": \"Failed reconnection attempt\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "mon compte affiche l'erreur Token expired"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "web",
+              "evidence": "Sur le web"
+            },
+            {
+              "key": "error_message",
+              "value": "Token expired",
+              "evidence": "Token expired"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "Error message 'Token expired' on web account"
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_2"
+          ],
+          "messageKinds": [
+            {
+              "kind": "info_update",
+              "evidence": "J'ai déjà réessayé de me connecter"
+            },
+            {
+              "kind": "issue_report",
+              "evidence": "et ça échoue toujours"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "trigger_action",
+              "value": "reconnect",
+              "evidence": "me connecter"
+            },
+            {
+              "key": "observed_result",
+              "value": "failed",
+              "evidence": "ça échoue toujours"
+            }
+          ],
+          "attemptedActions": [
+            {
+              "action": "reconnect",
+              "outcome": "failed",
+              "evidence": "J'ai déjà réessayé de me connecter et ça échoue toujours"
+            }
+          ],
+          "supportMetadata": [],
+          "summary": "Failed reconnection attempt"
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      }
+    ]
+  },
+  "topicUpdates": {
+    "callPerformed": true,
+    "topicPatches": [
+      {
+        "patchId": "topic_patch_1",
+        "op": "update",
+        "items": [
+          0,
+          1
+        ],
+        "topicId": "topic_1",
+        "temporaryTopicId": null,
+        "topic": {
+          "title": "Compte bloqué avec erreur Token expired",
+          "broadCategoryHint": "access_security",
+          "summary": "L'utilisateur indique que son compte est bloqué. Erreur 'Token expired' sur le compte web. L'utilisateur a déjà réessayé de se connecter et ça échoue toujours."
+        },
+        "merge": {
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "web",
+              "evidence": "Sur le web"
+            },
+            {
+              "key": "error_message",
+              "value": "Token expired",
+              "evidence": "Token expired"
+            },
+            {
+              "key": "trigger_action",
+              "value": "reconnect",
+              "evidence": "me connecter"
+            },
+            {
+              "key": "observed_result",
+              "value": "failed",
+              "evidence": "ça échoue toujours"
+            }
+          ],
+          "attemptedActions": [
+            {
+              "action": "reconnect",
+              "outcome": "failed",
+              "evidence": "J'ai déjà réessayé de me connecter et ça échoue toujours"
+            }
+          ]
+        },
+        "replace": {
+          "caseDetails": [],
+          "attemptedActions": []
+        },
+        "review": null,
+        "sourceUnderstandingIds": [
+          "text_understanding_1",
+          "text_understanding_2"
+        ],
+        "selectedSourceVerbatims": [
+          "Error message 'Token expired' on web account",
+          "Failed reconnection attempt"
+        ]
+      }
+    ],
+    "mergedTopicSnapshots": [
+      {
+        "snapshotId": "topic_patch_1",
+        "topicId": "topic_1",
+        "temporaryTopicId": null,
+        "isNewTopic": false,
+        "title": "Compte bloqué avec erreur Token expired",
+        "broadCategoryHint": "access_security",
+        "summary": "L'utilisateur indique que son compte est bloqué. Erreur 'Token expired' sur le compte web. L'utilisateur a déjà réessayé de se connecter et ça échoue toujours.",
+        "caseDetails": [
+          {
+            "key": "product_or_service",
+            "value": "web",
+            "evidence": "Sur le web"
+          },
+          {
+            "key": "error_message",
+            "value": "Token expired",
+            "evidence": "Token expired"
+          },
+          {
+            "key": "trigger_action",
+            "value": "reconnect",
+            "evidence": "me connecter"
+          },
+          {
+            "key": "observed_result",
+            "value": "failed",
+            "evidence": "ça échoue toujours"
+          }
+        ],
+        "attemptedActions": [
+          {
+            "action": "reconnect",
+            "outcome": "failed",
+            "evidence": "J'ai déjà réessayé de me connecter et ça échoue toujours"
+          }
+        ],
+        "topic_details": {
+          "product_or_service": "web",
+          "error_message": "Token expired",
+          "trigger_action": "reconnect",
+          "observed_result": "failed"
+        },
+        "sourceUnderstandingIds": [
+          "text_understanding_1",
+          "text_understanding_2"
+        ],
+        "sourceVerbatims": [
+          "Error message 'Token expired' on web account",
+          "Failed reconnection attempt"
+        ],
+        "sourceOpIndex": 0,
+        "baseTopic": {
+          "id": "topic_1",
+          "title": "Compte bloqué",
+          "summary": "L'utilisateur indique que son compte est bloqué.",
+          "broadCategoryHint": "access_security",
+          "caseDetails": [],
+          "attemptedActions": []
+        }
+      }
+    ]
+  },
+  "topicCatalogSelections": [
+    {
+      "proposalId": "topic_patch_1",
+      "topicId": "topic_1",
+      "topicSourceVerbatims": [
+        "Error message 'Token expired' on web account",
+        "Failed reconnection attempt"
+      ],
+      "relatedUnderstandingIds": [
+        "text_understanding_1",
+        "text_understanding_2"
+      ],
+      "selectedFields": [
+        {
+          "fieldName": "user_identifier",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "auth_method",
+          "askableByUser": true
+        }
+      ],
+      "selectedGenericKnowledge": [],
+      "rejectedFieldNames": [],
+      "warnings": [],
+      "scopeReason": "selected_candidate_fields",
+      "topicKnowledgeEnrichmentRoute": "no_retrieval",
+      "retrievedChunkCount": 0,
+      "topicRetrievedKnowledgeSynthesis": null,
+      "topicResponsePlan": {
+        "responsePlanId": "response_plan_topic_patch_1",
+        "acknowledge": [
+          "I understand that you're seeing a 'Token expired' error when trying to reconnect to your web account, and that your attempts to reconnect have failed."
+        ],
+        "answer": [],
+        "ask": [
+          {
+            "fieldName": "user_identifier",
+            "goal": "to identify the affected account"
+          },
+          {
+            "fieldName": "auth_method",
+            "goal": "to understand the authentication method used"
+          }
+        ],
+        "say": [
+          "Acknowledge that the user is experiencing a 'Token expired' error on their web account and that reconnection attempts have failed. Ask for the user identifier to identify the affected account and the authentication method to understand how the user is trying to log in."
+        ],
+        "review": null
+      }
+    }
+  ]
+}
+
+================ multi-support-needs ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case multi-support-needs --until response-plan --debug
+
+
+============================================================
+CASE multi-support-needs — One support macro-segment with independent needs
+UNTIL response-plan
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_multi-support-needs",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Sur Android, les notifications ne partent plus. Aussi, je n'arrive pas à télécharger ma facture de mai."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 0,
+  "existingTopics": [],
+  "extractableFieldCatalogCount": 55
+}
+[LLM usage] stage=text_surface_analysis preset=quickDecision model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=2373, completion_tokens=102, total_tokens=2475
+[LLM usage] stage=support_text_analysis preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3417, completion_tokens=454, total_tokens=3871
+[LLM usage] stage=topic_update_proposal preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=4669, completion_tokens=297, total_tokens=4966
+[LLM usage] stage=catalog_field_selection preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=1625, completion_tokens=20, total_tokens=1645
+[LLM usage] stage=catalog_field_selection preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=1675, completion_tokens=23, total_tokens=1698
+[LLM usage] stage=response_plan preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3299, completion_tokens=183, total_tokens=3482
+[LLM usage] stage=response_plan preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=4525, completion_tokens=291, total_tokens=4816
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Sur Android, les notifications ne partent plus. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "Aussi, je n'arrive pas à télécharger ma facture de mai.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "les notifications ne partent plus"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "notifications",
+        "evidence": "les notifications"
+      },
+      {
+        "key": "platform",
+        "value": "mobile app",
+        "evidence": "Sur Android"
+      },
+      {
+        "key": "operating_system",
+        "value": "Android",
+        "evidence": "Sur Android"
+      },
+      {
+        "key": "observed_result",
+        "value": "notifications not sent",
+        "evidence": "les notifications ne partent plus"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "Notifications not being sent on Android"
+  },
+  {
+    "understandingId": "text_understanding_2",
+    "sourceSegmentIds": [
+      "text_segment_2"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "je n'arrive pas à télécharger ma facture de mai"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "billing",
+        "evidence": "télécharger ma facture"
+      },
+      {
+        "key": "feature_or_page",
+        "value": "invoice download",
+        "evidence": "télécharger ma facture"
+      },
+      {
+        "key": "billing_date_or_period",
+        "value": "May",
+        "evidence": "facture de mai"
+      },
+      {
+        "key": "observed_result",
+        "value": "unable to download invoice",
+        "evidence": "je n'arrive pas à télécharger ma facture"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "Unable to download May invoice"
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateOps
+[
+  {
+    "op": "create",
+    "items": [
+      0
+    ],
+    "topicId": null,
+    "topic": {
+      "title": "Notifications not being sent on Android",
+      "broadCategoryHint": "bug",
+      "summary": "Notifications are not being sent on the mobile app for Android. The user reports that notifications are not being sent."
+    },
+    "merge": {
+      "caseDetails": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "attemptedActions": []
+    },
+    "replace": null,
+    "review": null
+  },
+  {
+    "op": "create",
+    "items": [
+      1
+    ],
+    "topicId": null,
+    "topic": {
+      "title": "Unable to download May invoice",
+      "broadCategoryHint": "billing",
+      "summary": "The user is unable to download the invoice for May. The issue occurs when trying to download the invoice."
+    },
+    "merge": {
+      "caseDetails": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "attemptedActions": []
+    },
+    "replace": null,
+    "review": null
+  }
+]
+
+8. topicPatches
+[
+  {
+    "patchId": "topic_patch_1",
+    "op": "create",
+    "items": [
+      0
+    ],
+    "topicId": null,
+    "temporaryTopicId": "new_topic_1",
+    "topic": {
+      "title": "Notifications not being sent on Android",
+      "broadCategoryHint": "bug",
+      "summary": "Notifications are not being sent on the mobile app for Android. The user reports that notifications are not being sent."
+    },
+    "merge": {
+      "caseDetails": [
+        {
+          "key": "product_or_service",
+          "value": "notifications",
+          "evidence": "les notifications"
+        },
+        {
+          "key": "platform",
+          "value": "mobile app",
+          "evidence": "Sur Android"
+        },
+        {
+          "key": "operating_system",
+          "value": "Android",
+          "evidence": "Sur Android"
+        },
+        {
+          "key": "observed_result",
+          "value": "notifications not sent",
+          "evidence": "les notifications ne partent plus"
+        }
+      ],
+      "attemptedActions": []
+    },
+    "replace": {
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    "review": null,
+    "sourceUnderstandingIds": [
+      "text_understanding_1"
+    ],
+    "selectedSourceVerbatims": [
+      "Notifications not being sent on Android"
+    ]
+  },
+  {
+    "patchId": "topic_patch_2",
+    "op": "create",
+    "items": [
+      1
+    ],
+    "topicId": null,
+    "temporaryTopicId": "new_topic_2",
+    "topic": {
+      "title": "Unable to download May invoice",
+      "broadCategoryHint": "billing",
+      "summary": "The user is unable to download the invoice for May. The issue occurs when trying to download the invoice."
+    },
+    "merge": {
+      "caseDetails": [
+        {
+          "key": "product_or_service",
+          "value": "billing",
+          "evidence": "télécharger ma facture"
+        },
+        {
+          "key": "feature_or_page",
+          "value": "invoice download",
+          "evidence": "télécharger ma facture"
+        },
+        {
+          "key": "billing_date_or_period",
+          "value": "May",
+          "evidence": "facture de mai"
+        },
+        {
+          "key": "observed_result",
+          "value": "unable to download invoice",
+          "evidence": "je n'arrive pas à télécharger ma facture"
+        }
+      ],
+      "attemptedActions": []
+    },
+    "replace": {
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    "review": null,
+    "sourceUnderstandingIds": [
+      "text_understanding_2"
+    ],
+    "selectedSourceVerbatims": [
+      "Unable to download May invoice"
+    ]
+  }
+]
+
+9. mergedTopicSnapshots
+[
+  {
+    "snapshotId": "new_topic_1",
+    "topicId": null,
+    "temporaryTopicId": "new_topic_1",
+    "isNewTopic": true,
+    "title": "Notifications not being sent on Android",
+    "broadCategoryHint": "bug",
+    "summary": "Notifications are not being sent on the mobile app for Android. The user reports that notifications are not being sent.",
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "notifications",
+        "evidence": "les notifications"
+      },
+      {
+        "key": "platform",
+        "value": "mobile app",
+        "evidence": "Sur Android"
+      },
+      {
+        "key": "operating_system",
+        "value": "Android",
+        "evidence": "Sur Android"
+      },
+      {
+        "key": "observed_result",
+        "value": "notifications not sent",
+        "evidence": "les notifications ne partent plus"
+      }
+    ],
+    "attemptedActions": [],
+    "topic_details": {
+      "product_or_service": "notifications",
+      "platform": "mobile app",
+      "operating_system": "Android",
+      "observed_result": "notifications not sent"
+    },
+    "sourceUnderstandingIds": [
+      "text_understanding_1"
+    ],
+    "sourceVerbatims": [
+      "Notifications not being sent on Android"
+    ],
+    "sourceOpIndex": 0,
+    "baseTopic": null
+  },
+  {
+    "snapshotId": "new_topic_2",
+    "topicId": null,
+    "temporaryTopicId": "new_topic_2",
+    "isNewTopic": true,
+    "title": "Unable to download May invoice",
+    "broadCategoryHint": "billing",
+    "summary": "The user is unable to download the invoice for May. The issue occurs when trying to download the invoice.",
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "billing",
+        "evidence": "télécharger ma facture"
+      },
+      {
+        "key": "feature_or_page",
+        "value": "invoice download",
+        "evidence": "télécharger ma facture"
+      },
+      {
+        "key": "billing_date_or_period",
+        "value": "May",
+        "evidence": "facture de mai"
+      },
+      {
+        "key": "observed_result",
+        "value": "unable to download invoice",
+        "evidence": "je n'arrive pas à télécharger ma facture"
+      }
+    ],
+    "attemptedActions": [],
+    "topic_details": {
+      "product_or_service": "billing",
+      "feature_or_page": "invoice download",
+      "billing_date_or_period": "May",
+      "observed_result": "unable to download invoice"
+    },
+    "sourceUnderstandingIds": [
+      "text_understanding_2"
+    ],
+    "sourceVerbatims": [
+      "Unable to download May invoice"
+    ],
+    "sourceOpIndex": 1,
+    "baseTopic": null
+  }
+]
+
+10. knowledgeEnrichmentPlan
+{
+  "route": "retrieve_knowledge",
+  "retrievalRequests": [
+    {
+      "topicId": 1,
+      "query": "notification notifications Android mobile mobile_app",
+      "filters": {
+        "knowledgeIds": [
+          "android_push_notification_not_received"
+        ]
+      }
+    }
+  ],
+  "reason": "matching_mock_knowledge_available"
+}
+
+11. retrievedSupportKnowledge
+[
+  {
+    "topicId": 1,
+    "sourceId": "android_push_notification_not_received",
+    "content": "{\"knowledgeId\":\"android_push_notification_not_received\",\"title\":\"Android push notification not received after new email\",\"status\":\"active\",\"source\":{\"type\":\"github_issue\",\"repository\":\"linagora/tmail-flutter\",\"issueId\":4322,\"issueTitle\":\"Notification not received on Android mobile\",\"issueUrl\":\"https://github.com/linagora/tmail-flutter/issues/4322\",\"labels\":[\"0.29.x\",\"Critical\",\"bug\",\"customer\"]},\"scope\":{\"productOrService\":[\"TMail mobile app\",\"Android mobile app\"],\"broadCategoryHints\":[\"notifications\",\"mobile_app\",\"bug\"],\"supportNeeds\":[\"possible_notification_issue\",\"possible_mobile_app_issue\",\"possible_android_permission_issue\"],\"topicKeywords\":[\"Android\",\"mobile\",\"notification\",\"notifications\",\"push notification\",\"new email\",\"email received\",\"app installed\",\"Android 13\",\"notification permission\",\"notification channel\"],\"relatedFieldNames\":[\"platform\",\"operating_system\",\"app_version\",\"device\",\"trigger_action\",\"observed_result\",\"expected_result\",\"notification_permission_status\",\"notification_channel_status\",\"frequency\",\"affected_scope\",\"affected_users\",\"user_impact\"]},\"knownBehavior\":[\"Some Android users report that they do not receive push notifications in the mobile application after receiving new emails.\",\"The current observed behavior is that no push notification is displayed on the user's Android device when a new email is received, even though the mobile application is installed.\"],\"expectedBehavior\":[\"When a user receives a new email, the Android mobile application should immediately send a push notification to the user's device.\",\"This expected behavior applies according to the app's notification settings and the operating system permissions.\",\"If notifications are disabled at OS level or for the app's relevant notification channel, the absence of a notification is considered compliant behavior.\"],\"acceptanceCriteria\":[\"Each time a user receives a new email, if the Android mobile application is installed and notifications are enabled for the app and the relevant notification channel, the user receives a push notification on their device.\",\"The behavior should be verified on supported Android OS versions and devices.\",\"Android 13+ requires runtime notification permission.\",\"If notifications are disabled at OS level or for the app's notification channel, the application does not send a notification and this is compliant behavior.\"],\"safeResponseStrategy\":[\"Acknowledge the Android notification issue.\",\"Explain that the expected behavior is to receive a push notification when a new email arrives, if notifications are enabled for the app and allowed by Android.\",\"First check whether notifications are enabled at Android OS level, app level, and notification channel level.\",\"If the user is on Android 13 or later, ask whether the runtime notification permission has been granted.\",\"If notification settings are enabled, collect technical details needed to qualify the issue.\",\"Stay factual and avoid promising an immediate fix.\"],\"questionsToAskFirst\":[\"Are you using the Android mobile application?\",\"Are notifications enabled for the app in Android settings?\",\"If you are using Android 13 or later, has the notification permission been granted to the app?\",\"Is the relevant notification channel enabled?\",\"Which Android version are you using?\",\"Which app version are you using?\",\"What is the device model?\",\"Does the issue happen for every new email or only in some cases?\",\"Does it affect only one device/user or several devices/users?\"],\"recommendedFirstAnswer\":\"I understand that you are not receiving Android push notifications when a new email arrives. The expected behavior is that a push notification appears if the mobile app is installed and notifications are allowed by Android and by the app's notification settings. Could you first check whether notifications are enabled for the app in Android settings, and if you are on Android 13 or later, whether the notification permission has been granted?\",\"ifUserConfirmsNotificationsEnabled\":\"Thanks for checking. To qualify the issue, could you share your Android version, device model, app version, and whether the missing notification happens for every new email or only in specific cases?\",\"doNotClaim\":[\"Do not say that the issue is fixed.\",\"Do not say that a fix is already available.\",\"Do not promise a resolution timeline.\",\"Do not claim that a support team is already investigating.\",\"Do not blame the user or state that the phone is misconfigured.\",\"Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.\",\"Do not ask for logs first unless the basic notification permissions and app/device details have already been checked.\"]}",
+    "score": 19,
+    "metadata": {
+      "sourceType": "github_issue",
+      "title": "Android push notification not received after new email"
+    }
+  }
+]
+
+12. synthesizedRetrievedKnowledge
+{
+  "relevantFacts": [
+    "Some Android users report that they do not receive push notifications in the mobile application after receiving new emails.",
+    "The current observed behavior is that no push notification is displayed on the user's Android device when a new email is received, even though the mobile application is installed.",
+    "When a user receives a new email, the Android mobile application should immediately send a push notification to the user's device.",
+    "This expected behavior applies according to the app's notification settings and the operating system permissions.",
+    "If notifications are disabled at OS level or for the app's relevant notification channel, the absence of a notification is considered compliant behavior.",
+    "Each time a user receives a new email, if the Android mobile application is installed and notifications are enabled for the app and the relevant notification channel, the user receives a push notification on their device.",
+    "The behavior should be verified on supported Android OS versions and devices.",
+    "Android 13+ requires runtime notification permission.",
+    "If notifications are disabled at OS level or for the app's notification channel, the application does not send a notification and this is compliant behavior."
+  ],
+  "applicableInstructions": [
+    "Acknowledge the Android notification issue.",
+    "Explain that the expected behavior is to receive a push notification when a new email arrives, if notifications are enabled for the app and allowed by Android.",
+    "First check whether notifications are enabled at Android OS level, app level, and notification channel level.",
+    "If the user is on Android 13 or later, ask whether the runtime notification permission has been granted.",
+    "If notification settings are enabled, collect technical details needed to qualify the issue.",
+    "Stay factual and avoid promising an immediate fix.",
+    "Are you using the Android mobile application?",
+    "Are notifications enabled for the app in Android settings?",
+    "If you are using Android 13 or later, has the notification permission been granted to the app?",
+    "Is the relevant notification channel enabled?",
+    "Which Android version are you using?",
+    "Which app version are you using?",
+    "What is the device model?",
+    "Does the issue happen for every new email or only in some cases?",
+    "Does it affect only one device/user or several devices/users?"
+  ],
+  "possibleFields": [
+    "platform",
+    "operating_system",
+    "app_version",
+    "device",
+    "trigger_action",
+    "observed_result",
+    "expected_result",
+    "notification_permission_status",
+    "notification_channel_status",
+    "frequency",
+    "affected_scope",
+    "affected_users",
+    "user_impact"
+  ],
+  "unresolvedPoints": [
+    "Are you using the Android mobile application?",
+    "Are notifications enabled for the app in Android settings?",
+    "If you are using Android 13 or later, has the notification permission been granted to the app?",
+    "Is the relevant notification channel enabled?",
+    "Which Android version are you using?",
+    "Which app version are you using?",
+    "What is the device model?",
+    "Does the issue happen for every new email or only in some cases?",
+    "Does it affect only one device/user or several devices/users?"
+  ],
+  "sourceReferences": [
+    "https://github.com/linagora/tmail-flutter/issues/4322"
+  ],
+  "limitations": [
+    "Do not say that the issue is fixed.",
+    "Do not say that a fix is already available.",
+    "Do not promise a resolution timeline.",
+    "Do not claim that a support team is already investigating.",
+    "Do not blame the user or state that the phone is misconfigured.",
+    "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+    "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
+  ],
+  "recommendedFirstAnswer": "I understand that you are not receiving Android push notifications when a new email arrives. The expected behavior is that a push notification appears if the mobile app is installed and notifications are allowed by Android and by the app's notification settings. Could you first check whether notifications are enabled for the app in Android settings, and if you are on Android 13 or later, whether the notification permission has been granted?",
+  "ifUserConfirmsNotificationsEnabled": "Thanks for checking. To qualify the issue, could you share your Android version, device model, app version, and whether the missing notification happens for every new email or only in specific cases?",
+  "doNotClaim": [
+    "Do not say that the issue is fixed.",
+    "Do not say that a fix is already available.",
+    "Do not promise a resolution timeline.",
+    "Do not claim that a support team is already investigating.",
+    "Do not blame the user or state that the phone is misconfigured.",
+    "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+    "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
+  ],
+  "topics": [
+    {
+      "topicId": 1,
+      "relevantFacts": [
+        "Some Android users report that they do not receive push notifications in the mobile application after receiving new emails.",
+        "The current observed behavior is that no push notification is displayed on the user's Android device when a new email is received, even though the mobile application is installed.",
+        "When a user receives a new email, the Android mobile application should immediately send a push notification to the user's device.",
+        "This expected behavior applies according to the app's notification settings and the operating system permissions.",
+        "If notifications are disabled at OS level or for the app's relevant notification channel, the absence of a notification is considered compliant behavior.",
+        "Each time a user receives a new email, if the Android mobile application is installed and notifications are enabled for the app and the relevant notification channel, the user receives a push notification on their device.",
+        "The behavior should be verified on supported Android OS versions and devices.",
+        "Android 13+ requires runtime notification permission.",
+        "If notifications are disabled at OS level or for the app's notification channel, the application does not send a notification and this is compliant behavior."
+      ],
+      "applicableInstructions": [
+        "Acknowledge the Android notification issue.",
+        "Explain that the expected behavior is to receive a push notification when a new email arrives, if notifications are enabled for the app and allowed by Android.",
+        "First check whether notifications are enabled at Android OS level, app level, and notification channel level.",
+        "If the user is on Android 13 or later, ask whether the runtime notification permission has been granted.",
+        "If notification settings are enabled, collect technical details needed to qualify the issue.",
+        "Stay factual and avoid promising an immediate fix.",
+        "Are you using the Android mobile application?",
+        "Are notifications enabled for the app in Android settings?",
+        "If you are using Android 13 or later, has the notification permission been granted to the app?",
+        "Is the relevant notification channel enabled?",
+        "Which Android version are you using?",
+        "Which app version are you using?",
+        "What is the device model?",
+        "Does the issue happen for every new email or only in some cases?",
+        "Does it affect only one device/user or several devices/users?"
+      ],
+      "possibleFields": [
+        "platform",
+        "operating_system",
+        "app_version",
+        "device",
+        "trigger_action",
+        "observed_result",
+        "expected_result",
+        "notification_permission_status",
+        "notification_channel_status",
+        "frequency",
+        "affected_scope",
+        "affected_users",
+        "user_impact"
+      ],
+      "unresolvedPoints": [
+        "Are you using the Android mobile application?",
+        "Are notifications enabled for the app in Android settings?",
+        "If you are using Android 13 or later, has the notification permission been granted to the app?",
+        "Is the relevant notification channel enabled?",
+        "Which Android version are you using?",
+        "Which app version are you using?",
+        "What is the device model?",
+        "Does the issue happen for every new email or only in some cases?",
+        "Does it affect only one device/user or several devices/users?"
+      ],
+      "sourceReferences": [
+        "https://github.com/linagora/tmail-flutter/issues/4322"
+      ]
+    }
+  ]
+}
+
+13. responsePlan
+{
+  "topicId": "new_topic_1",
+  "acknowledge": [
+    "I understand that you are not receiving Android push notifications when a new email arrives."
+  ],
+  "answer": [
+    {
+      "point": "The expected behavior is that a push notification appears if the mobile app is installed and notifications are allowed by Android and by the app's notification settings.",
+      "support": "retrieved_knowledge"
+    }
+  ],
+  "ask": [
+    {
+      "fieldName": "notification_permission_status",
+      "goal": "Check whether notifications are enabled for the app in Android settings and if the notification permission has been granted if on Android 13 or later."
+    },
+    {
+      "fieldName": "app_version",
+      "goal": "Collect technical details needed to qualify the issue."
+    },
+    {
+      "fieldName": "device",
+      "goal": "Collect technical details needed to qualify the issue."
+    }
+  ],
+  "say": [
+    "Acknowledge that you understand the issue with Android push notifications not being received. Explain the expected behavior regarding notifications. Ask the user to check if notifications are enabled for the app in Android settings and if the notification permission has been granted if on Android 13 or later. Additionally, ask for the app version and device model to collect necessary technical details."
+  ],
+  "review": null,
+  "responsePlanId": "response_plan_new_topic_1"
+}
+
+14. topicResponsePlans
+[
+  {
+    "topicId": "new_topic_1",
+    "acknowledge": [
+      "I understand that you are not receiving Android push notifications when a new email arrives."
+    ],
+    "answer": [
+      {
+        "point": "The expected behavior is that a push notification appears if the mobile app is installed and notifications are allowed by Android and by the app's notification settings.",
+        "support": "retrieved_knowledge"
+      }
+    ],
+    "ask": [
+      {
+        "fieldName": "notification_permission_status",
+        "goal": "Check whether notifications are enabled for the app in Android settings and if the notification permission has been granted if on Android 13 or later."
+      },
+      {
+        "fieldName": "app_version",
+        "goal": "Collect technical details needed to qualify the issue."
+      },
+      {
+        "fieldName": "device",
+        "goal": "Collect technical details needed to qualify the issue."
+      }
+    ],
+    "say": [
+      "Acknowledge that you understand the issue with Android push notifications not being received. Explain the expected behavior regarding notifications. Ask the user to check if notifications are enabled for the app in Android settings and if the notification permission has been granted if on Android 13 or later. Additionally, ask for the app version and device model to collect necessary technical details."
+    ],
+    "review": null,
+    "responsePlanId": "response_plan_new_topic_1"
+  },
+  {
+    "topicId": "new_topic_2",
+    "acknowledge": [
+      "I understand that you are unable to download the invoice for May."
+    ],
+    "answer": [],
+    "ask": [
+      {
+        "fieldName": "billing_or_payment_status",
+        "goal": "Determine the current status of the billing or payment to understand if it's affecting the invoice download."
+      },
+      {
+        "fieldName": "billing_issue_type",
+        "goal": "Identify the specific type of billing issue to provide the most relevant assistance."
+      }
+    ],
+    "say": [
+      "I understand that you are unable to download the invoice for May. To assist you better, could you please provide the current status of your billing or payment and specify the type of billing issue you are experiencing?"
+    ],
+    "review": null,
+    "responsePlanId": "response_plan_new_topic_2"
+  }
+]
+
+15. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Sur Android, les notifications ne partent plus.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Aussi, je n'arrive pas à télécharger ma facture de mai.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"les notifications ne partent plus\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"product_or_service\",\n          \"value\": \"notifications\",\n          \"evidence\": \"les notifications\"\n        },\n        {\n          \"key\": \"platform\",\n          \"value\": \"mobile app\",\n          \"evidence\": \"Sur Android\"\n        },\n        {\n          \"key\": \"operating_system\",\n          \"value\": \"Android\",\n          \"evidence\": \"Sur Android\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"notifications not sent\",\n          \"evidence\": \"les notifications ne partent plus\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"Notifications not being sent on Android\"\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_2\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"je n'arrive pas à télécharger ma facture de mai\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"product_or_service\",\n          \"value\": \"billing\",\n          \"evidence\": \"télécharger ma facture\"\n        },\n        {\n          \"key\": \"feature_or_page\",\n          \"value\": \"invoice download\",\n          \"evidence\": \"télécharger ma facture\"\n        },\n        {\n          \"key\": \"billing_date_or_period\",\n          \"value\": \"May\",\n          \"evidence\": \"facture de mai\"\n        },\n        {\n          \"key\": \"observed_result\",\n          \"value\": \"unable to download invoice\",\n          \"evidence\": \"je n'arrive pas à télécharger ma facture\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"Unable to download May invoice\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "les notifications ne partent plus"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "notifications",
+              "evidence": "les notifications"
+            },
+            {
+              "key": "platform",
+              "value": "mobile app",
+              "evidence": "Sur Android"
+            },
+            {
+              "key": "operating_system",
+              "value": "Android",
+              "evidence": "Sur Android"
+            },
+            {
+              "key": "observed_result",
+              "value": "notifications not sent",
+              "evidence": "les notifications ne partent plus"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "Notifications not being sent on Android"
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_2"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "je n'arrive pas à télécharger ma facture de mai"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "billing",
+              "evidence": "télécharger ma facture"
+            },
+            {
+              "key": "feature_or_page",
+              "value": "invoice download",
+              "evidence": "télécharger ma facture"
+            },
+            {
+              "key": "billing_date_or_period",
+              "value": "May",
+              "evidence": "facture de mai"
+            },
+            {
+              "key": "observed_result",
+              "value": "unable to download invoice",
+              "evidence": "je n'arrive pas à télécharger ma facture"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "Unable to download May invoice"
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      }
+    ]
+  },
+  "topicUpdates": {
+    "callPerformed": true,
+    "topicPatches": [
+      {
+        "patchId": "topic_patch_1",
+        "op": "create",
+        "items": [
+          0
+        ],
+        "topicId": null,
+        "temporaryTopicId": "new_topic_1",
+        "topic": {
+          "title": "Notifications not being sent on Android",
+          "broadCategoryHint": "bug",
+          "summary": "Notifications are not being sent on the mobile app for Android. The user reports that notifications are not being sent."
+        },
+        "merge": {
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "notifications",
+              "evidence": "les notifications"
+            },
+            {
+              "key": "platform",
+              "value": "mobile app",
+              "evidence": "Sur Android"
+            },
+            {
+              "key": "operating_system",
+              "value": "Android",
+              "evidence": "Sur Android"
+            },
+            {
+              "key": "observed_result",
+              "value": "notifications not sent",
+              "evidence": "les notifications ne partent plus"
+            }
+          ],
+          "attemptedActions": []
+        },
+        "replace": {
+          "caseDetails": [],
+          "attemptedActions": []
+        },
+        "review": null,
+        "sourceUnderstandingIds": [
+          "text_understanding_1"
+        ],
+        "selectedSourceVerbatims": [
+          "Notifications not being sent on Android"
+        ]
+      },
+      {
+        "patchId": "topic_patch_2",
+        "op": "create",
+        "items": [
+          1
+        ],
+        "topicId": null,
+        "temporaryTopicId": "new_topic_2",
+        "topic": {
+          "title": "Unable to download May invoice",
+          "broadCategoryHint": "billing",
+          "summary": "The user is unable to download the invoice for May. The issue occurs when trying to download the invoice."
+        },
+        "merge": {
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "billing",
+              "evidence": "télécharger ma facture"
+            },
+            {
+              "key": "feature_or_page",
+              "value": "invoice download",
+              "evidence": "télécharger ma facture"
+            },
+            {
+              "key": "billing_date_or_period",
+              "value": "May",
+              "evidence": "facture de mai"
+            },
+            {
+              "key": "observed_result",
+              "value": "unable to download invoice",
+              "evidence": "je n'arrive pas à télécharger ma facture"
+            }
+          ],
+          "attemptedActions": []
+        },
+        "replace": {
+          "caseDetails": [],
+          "attemptedActions": []
+        },
+        "review": null,
+        "sourceUnderstandingIds": [
+          "text_understanding_2"
+        ],
+        "selectedSourceVerbatims": [
+          "Unable to download May invoice"
+        ]
+      }
+    ],
+    "mergedTopicSnapshots": [
+      {
+        "snapshotId": "new_topic_1",
+        "topicId": null,
+        "temporaryTopicId": "new_topic_1",
+        "isNewTopic": true,
+        "title": "Notifications not being sent on Android",
+        "broadCategoryHint": "bug",
+        "summary": "Notifications are not being sent on the mobile app for Android. The user reports that notifications are not being sent.",
+        "caseDetails": [
+          {
+            "key": "product_or_service",
+            "value": "notifications",
+            "evidence": "les notifications"
+          },
+          {
+            "key": "platform",
+            "value": "mobile app",
+            "evidence": "Sur Android"
+          },
+          {
+            "key": "operating_system",
+            "value": "Android",
+            "evidence": "Sur Android"
+          },
+          {
+            "key": "observed_result",
+            "value": "notifications not sent",
+            "evidence": "les notifications ne partent plus"
+          }
+        ],
+        "attemptedActions": [],
+        "topic_details": {
+          "product_or_service": "notifications",
+          "platform": "mobile app",
+          "operating_system": "Android",
+          "observed_result": "notifications not sent"
+        },
+        "sourceUnderstandingIds": [
+          "text_understanding_1"
+        ],
+        "sourceVerbatims": [
+          "Notifications not being sent on Android"
+        ],
+        "sourceOpIndex": 0,
+        "baseTopic": null
+      },
+      {
+        "snapshotId": "new_topic_2",
+        "topicId": null,
+        "temporaryTopicId": "new_topic_2",
+        "isNewTopic": true,
+        "title": "Unable to download May invoice",
+        "broadCategoryHint": "billing",
+        "summary": "The user is unable to download the invoice for May. The issue occurs when trying to download the invoice.",
+        "caseDetails": [
+          {
+            "key": "product_or_service",
+            "value": "billing",
+            "evidence": "télécharger ma facture"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "invoice download",
+            "evidence": "télécharger ma facture"
+          },
+          {
+            "key": "billing_date_or_period",
+            "value": "May",
+            "evidence": "facture de mai"
+          },
+          {
+            "key": "observed_result",
+            "value": "unable to download invoice",
+            "evidence": "je n'arrive pas à télécharger ma facture"
+          }
+        ],
+        "attemptedActions": [],
+        "topic_details": {
+          "product_or_service": "billing",
+          "feature_or_page": "invoice download",
+          "billing_date_or_period": "May",
+          "observed_result": "unable to download invoice"
+        },
+        "sourceUnderstandingIds": [
+          "text_understanding_2"
+        ],
+        "sourceVerbatims": [
+          "Unable to download May invoice"
+        ],
+        "sourceOpIndex": 1,
+        "baseTopic": null
+      }
+    ]
+  },
+  "topicCatalogSelections": [
+    {
+      "proposalId": "new_topic_1",
+      "topicId": "new_topic_1",
+      "topicSourceVerbatims": [
+        "Notifications not being sent on Android"
+      ],
+      "relatedUnderstandingIds": [
+        "text_understanding_1"
+      ],
+      "selectedFields": [
+        {
+          "fieldName": "app_version",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "device",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "trigger_action",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "platform",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "operating_system",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "notification_permission_status",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "notification_channel_status",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "observed_result",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "expected_result",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "frequency",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "affected_scope",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "affected_users",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "user_impact",
+          "askableByUser": true
+        }
+      ],
+      "selectedGenericKnowledge": [],
+      "rejectedFieldNames": [],
+      "warnings": [
+        "Some selected fields were added from topic-specific retrieved knowledge."
+      ],
+      "scopeReason": "selected_candidate_fields",
+      "topicKnowledgeEnrichmentRoute": "retrieve_knowledge",
+      "retrievedChunkCount": 1,
+      "topicRetrievedKnowledgeSynthesis": {
+        "relevantFacts": [
+          "Some Android users report that they do not receive push notifications in the mobile application after receiving new emails.",
+          "The current observed behavior is that no push notification is displayed on the user's Android device when a new email is received, even though the mobile application is installed.",
+          "When a user receives a new email, the Android mobile application should immediately send a push notification to the user's device.",
+          "This expected behavior applies according to the app's notification settings and the operating system permissions.",
+          "If notifications are disabled at OS level or for the app's relevant notification channel, the absence of a notification is considered compliant behavior.",
+          "Each time a user receives a new email, if the Android mobile application is installed and notifications are enabled for the app and the relevant notification channel, the user receives a push notification on their device.",
+          "The behavior should be verified on supported Android OS versions and devices.",
+          "Android 13+ requires runtime notification permission.",
+          "If notifications are disabled at OS level or for the app's notification channel, the application does not send a notification and this is compliant behavior."
+        ],
+        "applicableInstructions": [
+          "Acknowledge the Android notification issue.",
+          "Explain that the expected behavior is to receive a push notification when a new email arrives, if notifications are enabled for the app and allowed by Android.",
+          "First check whether notifications are enabled at Android OS level, app level, and notification channel level.",
+          "If the user is on Android 13 or later, ask whether the runtime notification permission has been granted.",
+          "If notification settings are enabled, collect technical details needed to qualify the issue.",
+          "Stay factual and avoid promising an immediate fix.",
+          "Are you using the Android mobile application?",
+          "Are notifications enabled for the app in Android settings?",
+          "If you are using Android 13 or later, has the notification permission been granted to the app?",
+          "Is the relevant notification channel enabled?",
+          "Which Android version are you using?",
+          "Which app version are you using?",
+          "What is the device model?",
+          "Does the issue happen for every new email or only in some cases?",
+          "Does it affect only one device/user or several devices/users?"
+        ],
+        "possibleFields": [
+          "platform",
+          "operating_system",
+          "app_version",
+          "device",
+          "trigger_action",
+          "observed_result",
+          "expected_result",
+          "notification_permission_status",
+          "notification_channel_status",
+          "frequency",
+          "affected_scope",
+          "affected_users",
+          "user_impact"
+        ],
+        "unresolvedPoints": [
+          "Are you using the Android mobile application?",
+          "Are notifications enabled for the app in Android settings?",
+          "If you are using Android 13 or later, has the notification permission been granted to the app?",
+          "Is the relevant notification channel enabled?",
+          "Which Android version are you using?",
+          "Which app version are you using?",
+          "What is the device model?",
+          "Does the issue happen for every new email or only in some cases?",
+          "Does it affect only one device/user or several devices/users?"
+        ],
+        "sourceReferences": [
+          "https://github.com/linagora/tmail-flutter/issues/4322"
+        ],
+        "limitations": [
+          "Do not say that the issue is fixed.",
+          "Do not say that a fix is already available.",
+          "Do not promise a resolution timeline.",
+          "Do not claim that a support team is already investigating.",
+          "Do not blame the user or state that the phone is misconfigured.",
+          "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+          "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
+        ],
+        "recommendedFirstAnswer": "I understand that you are not receiving Android push notifications when a new email arrives. The expected behavior is that a push notification appears if the mobile app is installed and notifications are allowed by Android and by the app's notification settings. Could you first check whether notifications are enabled for the app in Android settings, and if you are on Android 13 or later, whether the notification permission has been granted?",
+        "ifUserConfirmsNotificationsEnabled": "Thanks for checking. To qualify the issue, could you share your Android version, device model, app version, and whether the missing notification happens for every new email or only in specific cases?",
+        "doNotClaim": [
+          "Do not say that the issue is fixed.",
+          "Do not say that a fix is already available.",
+          "Do not promise a resolution timeline.",
+          "Do not claim that a support team is already investigating.",
+          "Do not blame the user or state that the phone is misconfigured.",
+          "Do not say the issue is caused by Android 13 unless the user's OS version and permission status confirm it.",
+          "Do not ask for logs first unless the basic notification permissions and app/device details have already been checked."
+        ],
+        "topics": [
+          {
+            "topicId": 1,
+            "relevantFacts": [
+              "Some Android users report that they do not receive push notifications in the mobile application after receiving new emails.",
+              "The current observed behavior is that no push notification is displayed on the user's Android device when a new email is received, even though the mobile application is installed.",
+              "When a user receives a new email, the Android mobile application should immediately send a push notification to the user's device.",
+              "This expected behavior applies according to the app's notification settings and the operating system permissions.",
+              "If notifications are disabled at OS level or for the app's relevant notification channel, the absence of a notification is considered compliant behavior.",
+              "Each time a user receives a new email, if the Android mobile application is installed and notifications are enabled for the app and the relevant notification channel, the user receives a push notification on their device.",
+              "The behavior should be verified on supported Android OS versions and devices.",
+              "Android 13+ requires runtime notification permission.",
+              "If notifications are disabled at OS level or for the app's notification channel, the application does not send a notification and this is compliant behavior."
+            ],
+            "applicableInstructions": [
+              "Acknowledge the Android notification issue.",
+              "Explain that the expected behavior is to receive a push notification when a new email arrives, if notifications are enabled for the app and allowed by Android.",
+              "First check whether notifications are enabled at Android OS level, app level, and notification channel level.",
+              "If the user is on Android 13 or later, ask whether the runtime notification permission has been granted.",
+              "If notification settings are enabled, collect technical details needed to qualify the issue.",
+              "Stay factual and avoid promising an immediate fix.",
+              "Are you using the Android mobile application?",
+              "Are notifications enabled for the app in Android settings?",
+              "If you are using Android 13 or later, has the notification permission been granted to the app?",
+              "Is the relevant notification channel enabled?",
+              "Which Android version are you using?",
+              "Which app version are you using?",
+              "What is the device model?",
+              "Does the issue happen for every new email or only in some cases?",
+              "Does it affect only one device/user or several devices/users?"
+            ],
+            "possibleFields": [
+              "platform",
+              "operating_system",
+              "app_version",
+              "device",
+              "trigger_action",
+              "observed_result",
+              "expected_result",
+              "notification_permission_status",
+              "notification_channel_status",
+              "frequency",
+              "affected_scope",
+              "affected_users",
+              "user_impact"
+            ],
+            "unresolvedPoints": [
+              "Are you using the Android mobile application?",
+              "Are notifications enabled for the app in Android settings?",
+              "If you are using Android 13 or later, has the notification permission been granted to the app?",
+              "Is the relevant notification channel enabled?",
+              "Which Android version are you using?",
+              "Which app version are you using?",
+              "What is the device model?",
+              "Does the issue happen for every new email or only in some cases?",
+              "Does it affect only one device/user or several devices/users?"
+            ],
+            "sourceReferences": [
+              "https://github.com/linagora/tmail-flutter/issues/4322"
+            ]
+          }
+        ]
+      },
+      "topicResponsePlan": {
+        "responsePlanId": "response_plan_new_topic_1",
+        "acknowledge": [
+          "I understand that you are not receiving Android push notifications when a new email arrives."
+        ],
+        "answer": [
+          {
+            "point": "The expected behavior is that a push notification appears if the mobile app is installed and notifications are allowed by Android and by the app's notification settings.",
+            "support": "retrieved_knowledge"
+          }
+        ],
+        "ask": [
+          {
+            "fieldName": "notification_permission_status",
+            "goal": "Check whether notifications are enabled for the app in Android settings and if the notification permission has been granted if on Android 13 or later."
+          },
+          {
+            "fieldName": "app_version",
+            "goal": "Collect technical details needed to qualify the issue."
+          },
+          {
+            "fieldName": "device",
+            "goal": "Collect technical details needed to qualify the issue."
+          }
+        ],
+        "say": [
+          "Acknowledge that you understand the issue with Android push notifications not being received. Explain the expected behavior regarding notifications. Ask the user to check if notifications are enabled for the app in Android settings and if the notification permission has been granted if on Android 13 or later. Additionally, ask for the app version and device model to collect necessary technical details."
+        ],
+        "review": null
+      }
+    },
+    {
+      "proposalId": "new_topic_2",
+      "topicId": "new_topic_2",
+      "topicSourceVerbatims": [
+        "Unable to download May invoice"
+      ],
+      "relatedUnderstandingIds": [
+        "text_understanding_2"
+      ],
+      "selectedFields": [
+        {
+          "fieldName": "billing_or_payment_status",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "billing_issue_type",
+          "askableByUser": true
+        }
+      ],
+      "selectedGenericKnowledge": [],
+      "rejectedFieldNames": [],
+      "warnings": [],
+      "scopeReason": "selected_candidate_fields",
+      "topicKnowledgeEnrichmentRoute": "no_retrieval",
+      "retrievedChunkCount": 0,
+      "topicRetrievedKnowledgeSynthesis": null,
+      "topicResponsePlan": {
+        "responsePlanId": "response_plan_new_topic_2",
+        "acknowledge": [
+          "I understand that you are unable to download the invoice for May."
+        ],
+        "answer": [],
+        "ask": [
+          {
+            "fieldName": "billing_or_payment_status",
+            "goal": "Determine the current status of the billing or payment to understand if it's affecting the invoice download."
+          },
+          {
+            "fieldName": "billing_issue_type",
+            "goal": "Identify the specific type of billing issue to provide the most relevant assistance."
+          }
+        ],
+        "say": [
+          "I understand that you are unable to download the invoice for May. To assist you better, could you please provide the current status of your billing or payment and specify the type of billing issue you are experiencing?"
+        ],
+        "review": null
+      }
+    }
+  ]
+}
+
+================ topic-two-subjects ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case topic-two-subjects --until response-plan --debug
+
+
+============================================================
+CASE topic-two-subjects — LLM3 two support subjects with existing topics
+UNTIL response-plan
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_topic-two-subjects",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Mon compte est toujours bloqué. Et j’ai reçu ma facture de mai deux fois."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 2,
+  "existingTopics": [
+    {
+      "id": "topic_1",
+      "title": "Compte bloqué",
+      "summary": "L'utilisateur indique que son compte est bloqué.",
+      "broadCategoryHint": "access_security",
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    {
+      "id": "topic_2",
+      "title": "Problème de facturation",
+      "summary": "L'utilisateur a un sujet ouvert lié à la facturation.",
+      "broadCategoryHint": "billing",
+      "caseDetails": [],
+      "attemptedActions": []
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM usage] stage=text_surface_analysis preset=quickDecision model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=2365, completion_tokens=93, total_tokens=2458
+[LLM usage] stage=support_text_analysis preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3408, completion_tokens=286, total_tokens=3694
+[LLM usage] stage=topic_update_proposal preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=4661, completion_tokens=288, total_tokens=4949
+[LLM usage] stage=catalog_field_selection preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=1893, completion_tokens=18, total_tokens=1911
+[LLM usage] stage=catalog_field_selection preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=1601, completion_tokens=21, total_tokens=1622
+[LLM usage] stage=response_plan preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3116, completion_tokens=151, total_tokens=3267
+[LLM usage] stage=response_plan preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3197, completion_tokens=162, total_tokens=3359
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Mon compte est toujours bloqué. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "Et j’ai reçu ma facture de mai deux fois.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_1"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "Mon compte est toujours bloqué"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "account_status",
+        "value": "bloqué",
+        "evidence": "Mon compte est toujours bloqué"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "Account is still blocked"
+  },
+  {
+    "understandingId": "text_understanding_2",
+    "sourceSegmentIds": [
+      "text_segment_2"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "j’ai reçu ma facture de mai deux fois"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "billing_issue_type",
+        "value": "duplicate_billing",
+        "evidence": "ma facture de mai deux fois"
+      },
+      {
+        "key": "billing_date_or_period",
+        "value": "mai",
+        "evidence": "ma facture de mai deux fois"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "Received duplicate May invoice"
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateOps
+[
+  {
+    "op": "update",
+    "items": [
+      0
+    ],
+    "topicId": "topic_1",
+    "topic": {
+      "title": "Compte bloqué",
+      "broadCategoryHint": "access_security",
+      "summary": "L'utilisateur indique que son compte est bloqué et confirme qu'il est toujours bloqué."
+    },
+    "merge": {
+      "caseDetails": [
+        [
+          0,
+          0
+        ]
+      ],
+      "attemptedActions": []
+    },
+    "replace": {
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    "review": null
+  },
+  {
+    "op": "update",
+    "items": [
+      1
+    ],
+    "topicId": "topic_2",
+    "topic": {
+      "title": "Problème de facturation",
+      "broadCategoryHint": "billing",
+      "summary": "L'utilisateur a un sujet ouvert lié à la facturation et a reçu sa facture de mai deux fois."
+    },
+    "merge": {
+      "caseDetails": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "attemptedActions": []
+    },
+    "replace": {
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    "review": null
+  }
+]
+
+8. topicPatches
+[
+  {
+    "patchId": "topic_patch_1",
+    "op": "update",
+    "items": [
+      0
+    ],
+    "topicId": "topic_1",
+    "temporaryTopicId": null,
+    "topic": {
+      "title": "Compte bloqué",
+      "broadCategoryHint": "access_security",
+      "summary": "L'utilisateur indique que son compte est bloqué et confirme qu'il est toujours bloqué."
+    },
+    "merge": {
+      "caseDetails": [
+        {
+          "key": "account_status",
+          "value": "bloqué",
+          "evidence": "Mon compte est toujours bloqué"
+        }
+      ],
+      "attemptedActions": []
+    },
+    "replace": {
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    "review": null,
+    "sourceUnderstandingIds": [
+      "text_understanding_1"
+    ],
+    "selectedSourceVerbatims": [
+      "Account is still blocked"
+    ]
+  },
+  {
+    "patchId": "topic_patch_2",
+    "op": "update",
+    "items": [
+      1
+    ],
+    "topicId": "topic_2",
+    "temporaryTopicId": null,
+    "topic": {
+      "title": "Problème de facturation",
+      "broadCategoryHint": "billing",
+      "summary": "L'utilisateur a un sujet ouvert lié à la facturation et a reçu sa facture de mai deux fois."
+    },
+    "merge": {
+      "caseDetails": [
+        {
+          "key": "billing_issue_type",
+          "value": "duplicate_billing",
+          "evidence": "ma facture de mai deux fois"
+        },
+        {
+          "key": "billing_date_or_period",
+          "value": "mai",
+          "evidence": "ma facture de mai deux fois"
+        }
+      ],
+      "attemptedActions": []
+    },
+    "replace": {
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    "review": null,
+    "sourceUnderstandingIds": [
+      "text_understanding_2"
+    ],
+    "selectedSourceVerbatims": [
+      "Received duplicate May invoice"
+    ]
+  }
+]
+
+9. mergedTopicSnapshots
+[
+  {
+    "snapshotId": "topic_patch_1",
+    "topicId": "topic_1",
+    "temporaryTopicId": null,
+    "isNewTopic": false,
+    "title": "Compte bloqué",
+    "broadCategoryHint": "access_security",
+    "summary": "L'utilisateur indique que son compte est bloqué et confirme qu'il est toujours bloqué.",
+    "caseDetails": [
+      {
+        "key": "account_status",
+        "value": "bloqué",
+        "evidence": "Mon compte est toujours bloqué"
+      }
+    ],
+    "attemptedActions": [],
+    "topic_details": {
+      "account_status": "bloqué"
+    },
+    "sourceUnderstandingIds": [
+      "text_understanding_1"
+    ],
+    "sourceVerbatims": [
+      "Account is still blocked"
+    ],
+    "sourceOpIndex": 0,
+    "baseTopic": {
+      "id": "topic_1",
+      "title": "Compte bloqué",
+      "summary": "L'utilisateur indique que son compte est bloqué.",
+      "broadCategoryHint": "access_security",
+      "caseDetails": [],
+      "attemptedActions": []
+    }
+  },
+  {
+    "snapshotId": "topic_patch_2",
+    "topicId": "topic_2",
+    "temporaryTopicId": null,
+    "isNewTopic": false,
+    "title": "Problème de facturation",
+    "broadCategoryHint": "billing",
+    "summary": "L'utilisateur a un sujet ouvert lié à la facturation et a reçu sa facture de mai deux fois.",
+    "caseDetails": [
+      {
+        "key": "billing_issue_type",
+        "value": "duplicate_billing",
+        "evidence": "ma facture de mai deux fois"
+      },
+      {
+        "key": "billing_date_or_period",
+        "value": "mai",
+        "evidence": "ma facture de mai deux fois"
+      }
+    ],
+    "attemptedActions": [],
+    "topic_details": {
+      "billing_issue_type": "duplicate_billing",
+      "billing_date_or_period": "mai"
+    },
+    "sourceUnderstandingIds": [
+      "text_understanding_2"
+    ],
+    "sourceVerbatims": [
+      "Received duplicate May invoice"
+    ],
+    "sourceOpIndex": 1,
+    "baseTopic": {
+      "id": "topic_2",
+      "title": "Problème de facturation",
+      "summary": "L'utilisateur a un sujet ouvert lié à la facturation.",
+      "broadCategoryHint": "billing",
+      "caseDetails": [],
+      "attemptedActions": []
+    }
+  }
+]
+
+10. knowledgeEnrichmentPlan
+{
+  "route": "no_retrieval",
+  "retrievalRequests": [],
+  "reason": "no_matching_mock_knowledge"
+}
+
+11. retrievedSupportKnowledge
+[]
+
+12. synthesizedRetrievedKnowledge
+null
+
+13. responsePlan
+{
+  "topicId": "topic_1",
+  "acknowledge": [
+    "L'utilisateur indique que son compte est toujours bloqué."
+  ],
+  "answer": [],
+  "ask": [
+    {
+      "fieldName": "user_identifier",
+      "goal": "Identifier l'utilisateur pour vérifier le statut du compte."
+    },
+    {
+      "fieldName": "error_message",
+      "goal": "Obtenir le message d'erreur exact pour diagnostiquer le problème."
+    }
+  ],
+  "say": [
+    "Acknowledge that the account is still blocked. Ask for the user identifier and the exact error message to help diagnose the issue."
+  ],
+  "review": null,
+  "responsePlanId": "response_plan_topic_patch_1"
+}
+
+14. topicResponsePlans
+[
+  {
+    "topicId": "topic_1",
+    "acknowledge": [
+      "L'utilisateur indique que son compte est toujours bloqué."
+    ],
+    "answer": [],
+    "ask": [
+      {
+        "fieldName": "user_identifier",
+        "goal": "Identifier l'utilisateur pour vérifier le statut du compte."
+      },
+      {
+        "fieldName": "error_message",
+        "goal": "Obtenir le message d'erreur exact pour diagnostiquer le problème."
+      }
+    ],
+    "say": [
+      "Acknowledge that the account is still blocked. Ask for the user identifier and the exact error message to help diagnose the issue."
+    ],
+    "review": null,
+    "responsePlanId": "response_plan_topic_patch_1"
+  },
+  {
+    "topicId": "topic_2",
+    "acknowledge": [
+      "I understand that you received your May invoice twice."
+    ],
+    "answer": [],
+    "ask": [
+      {
+        "fieldName": "duplicate_billing_impact",
+        "goal": "To determine if the duplicate invoice also means a duplicate payment or charge."
+      },
+      {
+        "fieldName": "reference_id",
+        "goal": "To identify the specific invoice or transaction for further investigation."
+      }
+    ],
+    "say": [
+      "Acknowledge that the duplicate May invoice was received. Ask if the duplicate invoice also means a duplicate payment or charge, and request the reference ID of the invoice for further investigation."
+    ],
+    "review": null,
+    "responsePlanId": "response_plan_topic_patch_2"
+  }
+]
+
+15. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"userLanguage\": \"fr\",\n  \"segments\": [\n    {\n      \"verbatim\": \"Mon compte est toujours bloqué.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    },\n    {\n      \"verbatim\": \"Et j’ai reçu ma facture de mai deux fois.\",\n      \"category\": \"support_relevant\",\n      \"standardSubcategory\": null\n    }\n  ]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_1\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"Mon compte est toujours bloqué\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"account_status\",\n          \"value\": \"bloqué\",\n          \"evidence\": \"Mon compte est toujours bloqué\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"Account is still blocked\"\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_2\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"j’ai reçu ma facture de mai deux fois\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"billing_issue_type\",\n          \"value\": \"duplicate_billing\",\n          \"evidence\": \"ma facture de mai deux fois\"\n        },\n        {\n          \"key\": \"billing_date_or_period\",\n          \"value\": \"mai\",\n          \"evidence\": \"ma facture de mai deux fois\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"Received duplicate May invoice\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_1"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "Mon compte est toujours bloqué"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "account_status",
+              "value": "bloqué",
+              "evidence": "Mon compte est toujours bloqué"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "Account is still blocked"
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_2"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "j’ai reçu ma facture de mai deux fois"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "billing_issue_type",
+              "value": "duplicate_billing",
+              "evidence": "ma facture de mai deux fois"
+            },
+            {
+              "key": "billing_date_or_period",
+              "value": "mai",
+              "evidence": "ma facture de mai deux fois"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "Received duplicate May invoice"
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_1",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_2",
+        "fallbackUsed": false
+      }
+    ]
+  },
+  "topicUpdates": {
+    "callPerformed": true,
+    "topicPatches": [
+      {
+        "patchId": "topic_patch_1",
+        "op": "update",
+        "items": [
+          0
+        ],
+        "topicId": "topic_1",
+        "temporaryTopicId": null,
+        "topic": {
+          "title": "Compte bloqué",
+          "broadCategoryHint": "access_security",
+          "summary": "L'utilisateur indique que son compte est bloqué et confirme qu'il est toujours bloqué."
+        },
+        "merge": {
+          "caseDetails": [
+            {
+              "key": "account_status",
+              "value": "bloqué",
+              "evidence": "Mon compte est toujours bloqué"
+            }
+          ],
+          "attemptedActions": []
+        },
+        "replace": {
+          "caseDetails": [],
+          "attemptedActions": []
+        },
+        "review": null,
+        "sourceUnderstandingIds": [
+          "text_understanding_1"
+        ],
+        "selectedSourceVerbatims": [
+          "Account is still blocked"
+        ]
+      },
+      {
+        "patchId": "topic_patch_2",
+        "op": "update",
+        "items": [
+          1
+        ],
+        "topicId": "topic_2",
+        "temporaryTopicId": null,
+        "topic": {
+          "title": "Problème de facturation",
+          "broadCategoryHint": "billing",
+          "summary": "L'utilisateur a un sujet ouvert lié à la facturation et a reçu sa facture de mai deux fois."
+        },
+        "merge": {
+          "caseDetails": [
+            {
+              "key": "billing_issue_type",
+              "value": "duplicate_billing",
+              "evidence": "ma facture de mai deux fois"
+            },
+            {
+              "key": "billing_date_or_period",
+              "value": "mai",
+              "evidence": "ma facture de mai deux fois"
+            }
+          ],
+          "attemptedActions": []
+        },
+        "replace": {
+          "caseDetails": [],
+          "attemptedActions": []
+        },
+        "review": null,
+        "sourceUnderstandingIds": [
+          "text_understanding_2"
+        ],
+        "selectedSourceVerbatims": [
+          "Received duplicate May invoice"
+        ]
+      }
+    ],
+    "mergedTopicSnapshots": [
+      {
+        "snapshotId": "topic_patch_1",
+        "topicId": "topic_1",
+        "temporaryTopicId": null,
+        "isNewTopic": false,
+        "title": "Compte bloqué",
+        "broadCategoryHint": "access_security",
+        "summary": "L'utilisateur indique que son compte est bloqué et confirme qu'il est toujours bloqué.",
+        "caseDetails": [
+          {
+            "key": "account_status",
+            "value": "bloqué",
+            "evidence": "Mon compte est toujours bloqué"
+          }
+        ],
+        "attemptedActions": [],
+        "topic_details": {
+          "account_status": "bloqué"
+        },
+        "sourceUnderstandingIds": [
+          "text_understanding_1"
+        ],
+        "sourceVerbatims": [
+          "Account is still blocked"
+        ],
+        "sourceOpIndex": 0,
+        "baseTopic": {
+          "id": "topic_1",
+          "title": "Compte bloqué",
+          "summary": "L'utilisateur indique que son compte est bloqué.",
+          "broadCategoryHint": "access_security",
+          "caseDetails": [],
+          "attemptedActions": []
+        }
+      },
+      {
+        "snapshotId": "topic_patch_2",
+        "topicId": "topic_2",
+        "temporaryTopicId": null,
+        "isNewTopic": false,
+        "title": "Problème de facturation",
+        "broadCategoryHint": "billing",
+        "summary": "L'utilisateur a un sujet ouvert lié à la facturation et a reçu sa facture de mai deux fois.",
+        "caseDetails": [
+          {
+            "key": "billing_issue_type",
+            "value": "duplicate_billing",
+            "evidence": "ma facture de mai deux fois"
+          },
+          {
+            "key": "billing_date_or_period",
+            "value": "mai",
+            "evidence": "ma facture de mai deux fois"
+          }
+        ],
+        "attemptedActions": [],
+        "topic_details": {
+          "billing_issue_type": "duplicate_billing",
+          "billing_date_or_period": "mai"
+        },
+        "sourceUnderstandingIds": [
+          "text_understanding_2"
+        ],
+        "sourceVerbatims": [
+          "Received duplicate May invoice"
+        ],
+        "sourceOpIndex": 1,
+        "baseTopic": {
+          "id": "topic_2",
+          "title": "Problème de facturation",
+          "summary": "L'utilisateur a un sujet ouvert lié à la facturation.",
+          "broadCategoryHint": "billing",
+          "caseDetails": [],
+          "attemptedActions": []
+        }
+      }
+    ]
+  },
+  "topicCatalogSelections": [
+    {
+      "proposalId": "topic_patch_1",
+      "topicId": "topic_1",
+      "topicSourceVerbatims": [
+        "Account is still blocked"
+      ],
+      "relatedUnderstandingIds": [
+        "text_understanding_1"
+      ],
+      "selectedFields": [
+        {
+          "fieldName": "user_identifier",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "error_message",
+          "askableByUser": true
+        }
+      ],
+      "selectedGenericKnowledge": [],
+      "rejectedFieldNames": [],
+      "warnings": [],
+      "scopeReason": "selected_candidate_fields",
+      "topicKnowledgeEnrichmentRoute": "no_retrieval",
+      "retrievedChunkCount": 0,
+      "topicRetrievedKnowledgeSynthesis": null,
+      "topicResponsePlan": {
+        "responsePlanId": "response_plan_topic_patch_1",
+        "acknowledge": [
+          "L'utilisateur indique que son compte est toujours bloqué."
+        ],
+        "answer": [],
+        "ask": [
+          {
+            "fieldName": "user_identifier",
+            "goal": "Identifier l'utilisateur pour vérifier le statut du compte."
+          },
+          {
+            "fieldName": "error_message",
+            "goal": "Obtenir le message d'erreur exact pour diagnostiquer le problème."
+          }
+        ],
+        "say": [
+          "Acknowledge that the account is still blocked. Ask for the user identifier and the exact error message to help diagnose the issue."
+        ],
+        "review": null
+      }
+    },
+    {
+      "proposalId": "topic_patch_2",
+      "topicId": "topic_2",
+      "topicSourceVerbatims": [
+        "Received duplicate May invoice"
+      ],
+      "relatedUnderstandingIds": [
+        "text_understanding_2"
+      ],
+      "selectedFields": [
+        {
+          "fieldName": "duplicate_billing_impact",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "reference_id",
+          "askableByUser": true
+        }
+      ],
+      "selectedGenericKnowledge": [],
+      "rejectedFieldNames": [],
+      "warnings": [],
+      "scopeReason": "selected_candidate_fields",
+      "topicKnowledgeEnrichmentRoute": "no_retrieval",
+      "retrievedChunkCount": 0,
+      "topicRetrievedKnowledgeSynthesis": null,
+      "topicResponsePlan": {
+        "responsePlanId": "response_plan_topic_patch_2",
+        "acknowledge": [
+          "I understand that you received your May invoice twice."
+        ],
+        "answer": [],
+        "ask": [
+          {
+            "fieldName": "duplicate_billing_impact",
+            "goal": "To determine if the duplicate invoice also means a duplicate payment or charge."
+          },
+          {
+            "fieldName": "reference_id",
+            "goal": "To identify the specific invoice or transaction for further investigation."
+          }
+        ],
+        "say": [
+          "Acknowledge that the duplicate May invoice was received. Ask if the duplicate invoice also means a duplicate payment or charge, and request the reference ID of the invoice for further investigation."
+        ],
+        "review": null
+      }
+    }
+  ]
+}
+
+================ multi-topic-access-billing ================
+
+> automatisation-support@1.0.0 support:v2:text-dataset
+> tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case multi-topic-access-billing --until response-plan --debug
+
+
+============================================================
+CASE multi-topic-access-billing — Multi-topic access and duplicate invoice with standard opening
+UNTIL response-plan
+============================================================
+
+INPUT
+{
+  "latestUserMessage": {
+    "id": "v2_text_multi-topic-access-billing",
+    "channel": "email",
+    "sentAt": "2026-06-12T10:00:00.000Z",
+    "content": "Bonjour, je suis déçu. Mon compte est toujours bloqué. Et j’ai aussi reçu ma facture deux fois."
+  },
+  "latestUserAttachmentsCount": 0,
+  "accountTrustStatus": {
+    "status": "trusted",
+    "reasons": [
+      "manualDataset",
+      "trustedBaseline"
+    ]
+  },
+  "recentInteractionContext": {
+    "previousUserMessageSummary": "No relevant previous user message.",
+    "previousBotResponseSummary": "No relevant previous bot response."
+  },
+  "existingTopicsCount": 2,
+  "existingTopics": [
+    {
+      "id": "topic_1",
+      "title": "Compte bloqué",
+      "summary": "L'utilisateur indique que son compte est bloqué.",
+      "broadCategoryHint": "access_security",
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    {
+      "id": "topic_2",
+      "title": "Problème de facturation",
+      "summary": "L'utilisateur a un sujet ouvert lié à la facturation.",
+      "broadCategoryHint": "billing",
+      "caseDetails": [],
+      "attemptedActions": []
+    }
+  ],
+  "extractableFieldCatalogCount": 55
+}
+[LLM usage] stage=text_surface_analysis preset=quickDecision model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=2372, completion_tokens=138, total_tokens=2510
+[LLM usage] stage=support_text_analysis preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3407, completion_tokens=297, total_tokens=3704
+[LLM usage] stage=topic_update_proposal preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=4660, completion_tokens=166, total_tokens=4826
+[LLM usage] stage=catalog_field_selection preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=1567, completion_tokens=21, total_tokens=1588
+[LLM usage] stage=catalog_field_selection preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=1905, completion_tokens=18, total_tokens=1923
+[LLM usage] stage=response_plan preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3135, completion_tokens=136, total_tokens=3271
+[LLM usage] stage=response_plan preset=fullWeightMessageAnalysis model=mistralai/mistral-small-3.2-24b-instruct-2506 prompt_tokens=3162, completion_tokens=180, total_tokens=3342
+
+1. promptSecuritySignals
+{
+  "matchedPatternIds": []
+}
+
+2. turnAnalysisPlan
+{
+  "analyzeText": true,
+  "analyzeAttachments": false,
+  "matchedPatternIds": []
+}
+
+3. textSurfaceAnalysis
+{
+  "userLanguage": "fr",
+  "segments": [
+    {
+      "segmentId": "text_segment_1",
+      "verbatim": "Bonjour, ",
+      "category": "standard_interaction",
+      "standardSubcategory": "greeting"
+    },
+    {
+      "segmentId": "text_segment_2",
+      "verbatim": "je suis déçu. ",
+      "category": "standard_interaction",
+      "standardSubcategory": "disappointment"
+    },
+    {
+      "segmentId": "text_segment_3",
+      "verbatim": "Mon compte est toujours bloqué. ",
+      "category": "support_relevant"
+    },
+    {
+      "segmentId": "text_segment_4",
+      "verbatim": "Et j’ai aussi reçu ma facture deux fois.",
+      "category": "support_relevant"
+    }
+  ]
+}
+
+4. standardResponseFragments
+[
+  {
+    "category": "standard_interaction",
+    "standardSubcategory": "greeting",
+    "sourceSegmentId": "text_segment_1",
+    "sourceVerbatim": "Bonjour, ",
+    "content": "Acknowledge the greeting naturally. Briefly introduce the assistant as the support assistant. Invite the user to explain what they need help with. Do not claim that a human support agent has already been notified."
+  },
+  {
+    "category": "standard_interaction",
+    "standardSubcategory": "disappointment",
+    "sourceSegmentId": "text_segment_2",
+    "sourceVerbatim": "je suis déçu. ",
+    "content": "Acknowledge the user's disappointment empathetically. If no concrete support issue is present, invite the user to explain what happened or what needs to be fixed. Do not invent a resolution."
+  }
+]
+
+5. textUnderstandings
+[
+  {
+    "understandingId": "text_understanding_1",
+    "sourceSegmentIds": [
+      "text_segment_3"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "Mon compte est toujours bloqué"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "account",
+        "evidence": "Mon compte"
+      },
+      {
+        "key": "account_status",
+        "value": "blocked",
+        "evidence": "bloqué"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "Account remains blocked"
+  },
+  {
+    "understandingId": "text_understanding_2",
+    "sourceSegmentIds": [
+      "text_segment_4"
+    ],
+    "messageKinds": [
+      {
+        "kind": "issue_report",
+        "evidence": "j’ai aussi reçu ma facture deux fois"
+      }
+    ],
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "billing",
+        "evidence": "facture"
+      },
+      {
+        "key": "billing_issue_type",
+        "value": "duplicate",
+        "evidence": "deux fois"
+      }
+    ],
+    "attemptedActions": [],
+    "supportMetadata": [],
+    "summary": "Duplicate billing invoice received"
+  }
+]
+
+6. supportResponseCues
+[]
+
+7. topicUpdateOps
+[
+  {
+    "op": "update",
+    "items": [
+      0
+    ],
+    "topicId": "topic_1",
+    "topic": null,
+    "merge": {
+      "caseDetails": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "attemptedActions": []
+    },
+    "replace": null,
+    "review": null
+  },
+  {
+    "op": "update",
+    "items": [
+      1
+    ],
+    "topicId": "topic_2",
+    "topic": null,
+    "merge": {
+      "caseDetails": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "attemptedActions": []
+    },
+    "replace": null,
+    "review": null
+  }
+]
+
+8. topicPatches
+[
+  {
+    "patchId": "topic_patch_1",
+    "op": "update",
+    "items": [
+      0
+    ],
+    "topicId": "topic_1",
+    "temporaryTopicId": null,
+    "topic": null,
+    "merge": {
+      "caseDetails": [
+        {
+          "key": "product_or_service",
+          "value": "account",
+          "evidence": "Mon compte"
+        },
+        {
+          "key": "account_status",
+          "value": "blocked",
+          "evidence": "bloqué"
+        }
+      ],
+      "attemptedActions": []
+    },
+    "replace": {
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    "review": null,
+    "sourceUnderstandingIds": [
+      "text_understanding_1"
+    ],
+    "selectedSourceVerbatims": [
+      "Account remains blocked"
+    ]
+  },
+  {
+    "patchId": "topic_patch_2",
+    "op": "update",
+    "items": [
+      1
+    ],
+    "topicId": "topic_2",
+    "temporaryTopicId": null,
+    "topic": null,
+    "merge": {
+      "caseDetails": [
+        {
+          "key": "product_or_service",
+          "value": "billing",
+          "evidence": "facture"
+        },
+        {
+          "key": "billing_issue_type",
+          "value": "duplicate",
+          "evidence": "deux fois"
+        }
+      ],
+      "attemptedActions": []
+    },
+    "replace": {
+      "caseDetails": [],
+      "attemptedActions": []
+    },
+    "review": null,
+    "sourceUnderstandingIds": [
+      "text_understanding_2"
+    ],
+    "selectedSourceVerbatims": [
+      "Duplicate billing invoice received"
+    ]
+  }
+]
+
+9. mergedTopicSnapshots
+[
+  {
+    "snapshotId": "topic_patch_1",
+    "topicId": "topic_1",
+    "temporaryTopicId": null,
+    "isNewTopic": false,
+    "title": "Compte bloqué",
+    "broadCategoryHint": "access_security",
+    "summary": "L'utilisateur indique que son compte est bloqué.",
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "account",
+        "evidence": "Mon compte"
+      },
+      {
+        "key": "account_status",
+        "value": "blocked",
+        "evidence": "bloqué"
+      }
+    ],
+    "attemptedActions": [],
+    "topic_details": {
+      "product_or_service": "account",
+      "account_status": "blocked"
+    },
+    "sourceUnderstandingIds": [
+      "text_understanding_1"
+    ],
+    "sourceVerbatims": [
+      "Account remains blocked"
+    ],
+    "sourceOpIndex": 0,
+    "baseTopic": {
+      "id": "topic_1",
+      "title": "Compte bloqué",
+      "summary": "L'utilisateur indique que son compte est bloqué.",
+      "broadCategoryHint": "access_security",
+      "caseDetails": [],
+      "attemptedActions": []
+    }
+  },
+  {
+    "snapshotId": "topic_patch_2",
+    "topicId": "topic_2",
+    "temporaryTopicId": null,
+    "isNewTopic": false,
+    "title": "Problème de facturation",
+    "broadCategoryHint": "billing",
+    "summary": "L'utilisateur a un sujet ouvert lié à la facturation.",
+    "caseDetails": [
+      {
+        "key": "product_or_service",
+        "value": "billing",
+        "evidence": "facture"
+      },
+      {
+        "key": "billing_issue_type",
+        "value": "duplicate",
+        "evidence": "deux fois"
+      }
+    ],
+    "attemptedActions": [],
+    "topic_details": {
+      "product_or_service": "billing",
+      "billing_issue_type": "duplicate"
+    },
+    "sourceUnderstandingIds": [
+      "text_understanding_2"
+    ],
+    "sourceVerbatims": [
+      "Duplicate billing invoice received"
+    ],
+    "sourceOpIndex": 1,
+    "baseTopic": {
+      "id": "topic_2",
+      "title": "Problème de facturation",
+      "summary": "L'utilisateur a un sujet ouvert lié à la facturation.",
+      "broadCategoryHint": "billing",
+      "caseDetails": [],
+      "attemptedActions": []
+    }
+  }
+]
+
+10. knowledgeEnrichmentPlan
+{
+  "route": "no_retrieval",
+  "retrievalRequests": [],
+  "reason": "no_matching_mock_knowledge"
+}
+
+11. retrievedSupportKnowledge
+[]
+
+12. synthesizedRetrievedKnowledge
+null
+
+13. responsePlan
+{
+  "topicId": "topic_1",
+  "acknowledge": [
+    "We understand that your account is still blocked."
+  ],
+  "answer": [],
+  "ask": [
+    {
+      "fieldName": "user_identifier",
+      "goal": "To identify the account in question."
+    },
+    {
+      "fieldName": "access_action",
+      "goal": "To understand the specific access action that failed."
+    }
+  ],
+  "say": [
+    "Acknowledge that the account is still blocked. Ask for the user identifier and the specific access action that failed."
+  ],
+  "review": null,
+  "responsePlanId": "response_plan_topic_patch_1"
+}
+
+14. topicResponsePlans
+[
+  {
+    "topicId": "topic_1",
+    "acknowledge": [
+      "We understand that your account is still blocked."
+    ],
+    "answer": [],
+    "ask": [
+      {
+        "fieldName": "user_identifier",
+        "goal": "To identify the account in question."
+      },
+      {
+        "fieldName": "access_action",
+        "goal": "To understand the specific access action that failed."
+      }
+    ],
+    "say": [
+      "Acknowledge that the account is still blocked. Ask for the user identifier and the specific access action that failed."
+    ],
+    "review": null,
+    "responsePlanId": "response_plan_topic_patch_1"
+  },
+  {
+    "topicId": "topic_2",
+    "acknowledge": [
+      "I understand that you received a duplicate billing invoice."
+    ],
+    "answer": [],
+    "ask": [
+      {
+        "fieldName": "duplicate_billing_impact",
+        "goal": "To determine if the duplicate billing refers to the document only or also to the payment/charge."
+      },
+      {
+        "fieldName": "reference_id",
+        "goal": "To identify the specific invoice or transaction for further investigation."
+      }
+    ],
+    "say": [
+      "Acknowledge that you understand the user received a duplicate billing invoice. Ask the user to confirm if the duplicate billing refers to the document only or also to the payment/charge, and request the reference ID of the duplicate invoice for further investigation."
+    ],
+    "review": null,
+    "responsePlanId": "response_plan_topic_patch_2"
+  }
+]
+
+15. renderedSupportResponse
+"SKIPPED"
+
+DEBUG
+{
+  "textSurface": {
+    "fallbackUsed": false,
+    "llmStatus": "completed",
+    "rawResponse": "{\n\"userLanguage\": \"fr\",\n\"segments\": [\n{\n\"verbatim\": \"Bonjour\",\n\"category\": \"standard_interaction\",\n\"standardSubcategory\": \"greeting\"\n},\n{\n\"verbatim\": \"je suis déçu\",\n\"category\": \"standard_interaction\",\n\"standardSubcategory\": \"disappointment\"\n},\n{\n\"verbatim\": \"Mon compte est toujours bloqué\",\n\"category\": \"support_relevant\",\n\"standardSubcategory\": null\n},\n{\n\"verbatim\": \"Et j’ai aussi reçu ma facture deux fois\",\n\"category\": \"support_relevant\",\n\"standardSubcategory\": null\n}\n]\n}"
+  },
+  "supportText": {
+    "callPerformed": true,
+    "llmStatus": "completed",
+    "rawResponse": "{\n  \"items\": [\n    {\n      \"sourceSegmentIds\": [\"text_segment_3\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"Mon compte est toujours bloqué\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"product_or_service\",\n          \"value\": \"account\",\n          \"evidence\": \"Mon compte\"\n        },\n        {\n          \"key\": \"account_status\",\n          \"value\": \"blocked\",\n          \"evidence\": \"bloqué\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"Account remains blocked\"\n    },\n    {\n      \"sourceSegmentIds\": [\"text_segment_4\"],\n      \"messageKinds\": [\n        {\n          \"kind\": \"issue_report\",\n          \"evidence\": \"j’ai aussi reçu ma facture deux fois\"\n        }\n      ],\n      \"caseDetails\": [\n        {\n          \"key\": \"product_or_service\",\n          \"value\": \"billing\",\n          \"evidence\": \"facture\"\n        },\n        {\n          \"key\": \"billing_issue_type\",\n          \"value\": \"duplicate\",\n          \"evidence\": \"deux fois\"\n        }\n      ],\n      \"attemptedActions\": [],\n      \"supportMetadata\": [],\n      \"summary\": \"Duplicate billing invoice received\"\n    }\n  ]\n}",
+    "parsedResponse": {
+      "items": [
+        {
+          "sourceSegmentIds": [
+            "text_segment_3"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "Mon compte est toujours bloqué"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "account",
+              "evidence": "Mon compte"
+            },
+            {
+              "key": "account_status",
+              "value": "blocked",
+              "evidence": "bloqué"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "Account remains blocked"
+        },
+        {
+          "sourceSegmentIds": [
+            "text_segment_4"
+          ],
+          "messageKinds": [
+            {
+              "kind": "issue_report",
+              "evidence": "j’ai aussi reçu ma facture deux fois"
+            }
+          ],
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "billing",
+              "evidence": "facture"
+            },
+            {
+              "key": "billing_issue_type",
+              "value": "duplicate",
+              "evidence": "deux fois"
+            }
+          ],
+          "attemptedActions": [],
+          "supportMetadata": [],
+          "summary": "Duplicate billing invoice received"
+        }
+      ]
+    },
+    "fallbackScope": "none",
+    "rejectedUnits": [],
+    "removedSecondaryElements": [],
+    "segments": [
+      {
+        "segmentId": "text_segment_3",
+        "fallbackUsed": false
+      },
+      {
+        "segmentId": "text_segment_4",
+        "fallbackUsed": false
+      }
+    ]
+  },
+  "topicUpdates": {
+    "callPerformed": true,
+    "topicPatches": [
+      {
+        "patchId": "topic_patch_1",
+        "op": "update",
+        "items": [
+          0
+        ],
+        "topicId": "topic_1",
+        "temporaryTopicId": null,
+        "topic": null,
+        "merge": {
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "account",
+              "evidence": "Mon compte"
+            },
+            {
+              "key": "account_status",
+              "value": "blocked",
+              "evidence": "bloqué"
+            }
+          ],
+          "attemptedActions": []
+        },
+        "replace": {
+          "caseDetails": [],
+          "attemptedActions": []
+        },
+        "review": null,
+        "sourceUnderstandingIds": [
+          "text_understanding_1"
+        ],
+        "selectedSourceVerbatims": [
+          "Account remains blocked"
+        ]
+      },
+      {
+        "patchId": "topic_patch_2",
+        "op": "update",
+        "items": [
+          1
+        ],
+        "topicId": "topic_2",
+        "temporaryTopicId": null,
+        "topic": null,
+        "merge": {
+          "caseDetails": [
+            {
+              "key": "product_or_service",
+              "value": "billing",
+              "evidence": "facture"
+            },
+            {
+              "key": "billing_issue_type",
+              "value": "duplicate",
+              "evidence": "deux fois"
+            }
+          ],
+          "attemptedActions": []
+        },
+        "replace": {
+          "caseDetails": [],
+          "attemptedActions": []
+        },
+        "review": null,
+        "sourceUnderstandingIds": [
+          "text_understanding_2"
+        ],
+        "selectedSourceVerbatims": [
+          "Duplicate billing invoice received"
+        ]
+      }
+    ],
+    "mergedTopicSnapshots": [
+      {
+        "snapshotId": "topic_patch_1",
+        "topicId": "topic_1",
+        "temporaryTopicId": null,
+        "isNewTopic": false,
+        "title": "Compte bloqué",
+        "broadCategoryHint": "access_security",
+        "summary": "L'utilisateur indique que son compte est bloqué.",
+        "caseDetails": [
+          {
+            "key": "product_or_service",
+            "value": "account",
+            "evidence": "Mon compte"
+          },
+          {
+            "key": "account_status",
+            "value": "blocked",
+            "evidence": "bloqué"
+          }
+        ],
+        "attemptedActions": [],
+        "topic_details": {
+          "product_or_service": "account",
+          "account_status": "blocked"
+        },
+        "sourceUnderstandingIds": [
+          "text_understanding_1"
+        ],
+        "sourceVerbatims": [
+          "Account remains blocked"
+        ],
+        "sourceOpIndex": 0,
+        "baseTopic": {
+          "id": "topic_1",
+          "title": "Compte bloqué",
+          "summary": "L'utilisateur indique que son compte est bloqué.",
+          "broadCategoryHint": "access_security",
+          "caseDetails": [],
+          "attemptedActions": []
+        }
+      },
+      {
+        "snapshotId": "topic_patch_2",
+        "topicId": "topic_2",
+        "temporaryTopicId": null,
+        "isNewTopic": false,
+        "title": "Problème de facturation",
+        "broadCategoryHint": "billing",
+        "summary": "L'utilisateur a un sujet ouvert lié à la facturation.",
+        "caseDetails": [
+          {
+            "key": "product_or_service",
+            "value": "billing",
+            "evidence": "facture"
+          },
+          {
+            "key": "billing_issue_type",
+            "value": "duplicate",
+            "evidence": "deux fois"
+          }
+        ],
+        "attemptedActions": [],
+        "topic_details": {
+          "product_or_service": "billing",
+          "billing_issue_type": "duplicate"
+        },
+        "sourceUnderstandingIds": [
+          "text_understanding_2"
+        ],
+        "sourceVerbatims": [
+          "Duplicate billing invoice received"
+        ],
+        "sourceOpIndex": 1,
+        "baseTopic": {
+          "id": "topic_2",
+          "title": "Problème de facturation",
+          "summary": "L'utilisateur a un sujet ouvert lié à la facturation.",
+          "broadCategoryHint": "billing",
+          "caseDetails": [],
+          "attemptedActions": []
+        }
+      }
+    ]
+  },
+  "topicCatalogSelections": [
+    {
+      "proposalId": "topic_patch_1",
+      "topicId": "topic_1",
+      "topicSourceVerbatims": [
+        "Account remains blocked"
+      ],
+      "relatedUnderstandingIds": [
+        "text_understanding_1"
+      ],
+      "selectedFields": [
+        {
+          "fieldName": "user_identifier",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "access_action",
+          "askableByUser": true
+        }
+      ],
+      "selectedGenericKnowledge": [],
+      "rejectedFieldNames": [],
+      "warnings": [],
+      "scopeReason": "selected_candidate_fields",
+      "topicKnowledgeEnrichmentRoute": "no_retrieval",
+      "retrievedChunkCount": 0,
+      "topicRetrievedKnowledgeSynthesis": null,
+      "topicResponsePlan": {
+        "responsePlanId": "response_plan_topic_patch_1",
+        "acknowledge": [
+          "We understand that your account is still blocked."
+        ],
+        "answer": [],
+        "ask": [
+          {
+            "fieldName": "user_identifier",
+            "goal": "To identify the account in question."
+          },
+          {
+            "fieldName": "access_action",
+            "goal": "To understand the specific access action that failed."
+          }
+        ],
+        "say": [
+          "Acknowledge that the account is still blocked. Ask for the user identifier and the specific access action that failed."
+        ],
+        "review": null
+      }
+    },
+    {
+      "proposalId": "topic_patch_2",
+      "topicId": "topic_2",
+      "topicSourceVerbatims": [
+        "Duplicate billing invoice received"
+      ],
+      "relatedUnderstandingIds": [
+        "text_understanding_2"
+      ],
+      "selectedFields": [
+        {
+          "fieldName": "duplicate_billing_impact",
+          "askableByUser": true
+        },
+        {
+          "fieldName": "reference_id",
+          "askableByUser": true
+        }
+      ],
+      "selectedGenericKnowledge": [],
+      "rejectedFieldNames": [],
+      "warnings": [],
+      "scopeReason": "selected_candidate_fields",
+      "topicKnowledgeEnrichmentRoute": "no_retrieval",
+      "retrievedChunkCount": 0,
+      "topicRetrievedKnowledgeSynthesis": null,
+      "topicResponsePlan": {
+        "responsePlanId": "response_plan_topic_patch_2",
+        "acknowledge": [
+          "I understand that you received a duplicate billing invoice."
+        ],
+        "answer": [],
+        "ask": [
+          {
+            "fieldName": "duplicate_billing_impact",
+            "goal": "To determine if the duplicate billing refers to the document only or also to the payment/charge."
+          },
+          {
+            "fieldName": "reference_id",
+            "goal": "To identify the specific invoice or transaction for further investigation."
+          }
+        ],
+        "say": [
+          "Acknowledge that you understand the user received a duplicate billing invoice. Ask the user to confirm if the duplicate billing refers to the document only or also to the payment/charge, and request the reference ID of the duplicate invoice for further investigation."
+        ],
+        "review": null
+      }
+    }
+  ]
+}

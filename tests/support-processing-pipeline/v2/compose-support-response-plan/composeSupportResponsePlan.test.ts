@@ -32,35 +32,34 @@ function plan(params: {
   forbid?: string[];
 }): ResponsePlanV2 {
   const fields = params.fields ?? [];
+  const forbid = params.forbid ?? [];
 
   return {
     responsePlanId: params.id,
-    knowledgeGate: {
-      knowledgeMode: "rag_not_enabled",
-      solutionAllowed: false,
-      allowedMoves: ["acknowledge"],
-      reason: "test"
-    },
-    questionDecision: {
-      shouldAskQuestion: fields.length > 0,
-      plannedQuestionCount: fields.length,
-      fieldNames: fields,
-      questionInstruction: fields.length
-        ? `Ask for ${fields.join(", ")}.`
-        : null,
-      reason: "test"
-    },
-    rendererTask: {
-      targetLanguage: "fr",
-      prompt: params.prompt ?? "Acknowledge the topic.",
-      questionFieldNames: fields,
-      forbiddenClaims: params.forbid ?? []
-    },
-    internalRationale: "test"
+    topicId: params.id,
+    acknowledge: [],
+    answer: [],
+    ask: fields.map((fieldName) => ({
+      fieldName,
+      goal: `Ask for ${fieldName}.`
+    })),
+    say: [
+      params.prompt ??
+        [
+          "Acknowledge the topic.",
+          ...(fields.length > 0
+            ? [`Ask for ${fields.join(", ")}.`]
+            : []),
+          ...forbid
+        ].join(" ")
+    ],
+    review: null
   };
 }
 
-function input(params: Partial<ComposeSupportResponsePlanInput> = {}): ComposeSupportResponsePlanInput {
+function input(
+  params: Partial<ComposeSupportResponsePlanInput> = {}
+): ComposeSupportResponsePlanInput {
   return {
     standardResponseFragments: [],
     topicResponsePlans: [],
@@ -84,80 +83,132 @@ function fallbackPlan(inputValue: ComposeSupportResponsePlanInput) {
   }).composedSupportResponsePlan;
 }
 
+function expectNoLegacyComposerFields(composed: unknown): void {
+  expect(composed).not.toHaveProperty("sections");
+  expect(composed).not.toHaveProperty("globalTone");
+  expect(composed).not.toHaveProperty("globalQuestions");
+  expect(composed).not.toHaveProperty("globalForbid");
+  expect(composed).not.toHaveProperty("rendererInstructions");
+  expect(composed).not.toHaveProperty("targetLanguage");
+  expect(composed).not.toHaveProperty("channel");
+}
+
 describe("composeSupportResponsePlan", function () {
-  it("builds a prompt for standard fragments only", function () {
+  it("builds a prompt for the new global say-only contract", function () {
     const prompt = buildComposeSupportResponsePlanPrompt(input({
-      standardResponseFragments: [greetingFragment]
+      standardResponseFragments: [greetingFragment],
+      topicResponsePlans: [plan({ id: "plan_login" })]
     }));
     const content = prompt.messages.map((message) => message.content).join("\n");
 
-    expect(content).toContain("global support response composer");
-    expect(content).toContain("Acknowledge the greeting naturally.");
+    expect(content).toContain("global response plan synthesizer");
     expect(content).toContain("standardResponseFragments");
+    expect(content).toContain("topicResponsePlans");
+    expect(content).toContain("This is the only field consumed downstream by the renderer");
+    expect(content).toContain("Do not output targetLanguage or channel");
   });
 
-  it("composes standard fragments only in fallback", function () {
+  it("sanitizes unusable topic response plans before prompt serialization", function () {
+    const prompt = buildComposeSupportResponsePlanPrompt(input({
+      topicResponsePlans: [
+        undefined as unknown as ResponsePlanV2,
+        {
+          topicId: "empty_say",
+          acknowledge: [],
+          answer: [],
+          ask: [],
+          say: [],
+          review: null
+        } as ResponsePlanV2,
+        plan({
+          id: "usable_plan",
+          prompt: "Use this usable topic instruction."
+        })
+      ]
+    }));
+    const content = prompt.messages.map((message) => message.content).join("\n");
+
+    expect(content).toContain("Use this usable topic instruction.");
+    expect(content).not.toContain("empty_say");
+  });
+
+  it("formats a valid new composed plan", function () {
+    const output = formatComposeSupportResponsePlanOutput({
+      input: input({
+        standardResponseFragments: [greetingFragment],
+        topicResponsePlans: [plan({ id: "plan_login" })]
+      }),
+      rawComposeSupportResponsePlan: {
+        status: "completed",
+        parsedResponse: {
+          topicId: null,
+          messageIntent: "mixed_reply",
+          acknowledge: [
+            "Acknowledge the greeting."
+          ],
+          answer: [
+            {
+              point: "Address the login topic.",
+              support: "topic_plan"
+            }
+          ],
+          ask: [
+            {
+              goal: "Ask what exact login error appears.",
+              sourceTopicIds: ["plan_login"]
+            }
+          ],
+          say: [
+            "Start naturally, acknowledge the login issue, and ask what exact login error appears."
+          ],
+          review: null
+        }
+      }
+    });
+    const composed = output.composedSupportResponsePlan;
+
+    expect(output.validation.status).toBe("valid");
+    expect(composed).toMatchObject({
+      topicId: null,
+      messageIntent: "mixed_reply",
+      acknowledge: ["Acknowledge the greeting."],
+      answer: [
+        {
+          point: "Address the login topic.",
+          support: "topic_plan"
+        }
+      ],
+      ask: [
+        {
+          goal: "Ask what exact login error appears.",
+          sourceTopicIds: ["plan_login"]
+        }
+      ],
+      say: [
+        "Start naturally, acknowledge the login issue, and ask what exact login error appears."
+      ],
+      review: null
+    });
+    expectNoLegacyComposerFields(composed);
+  });
+
+  it("falls back to a say-only standard reply", function () {
     const composed = fallbackPlan(input({
       standardResponseFragments: [greetingFragment]
     }));
 
     expect(composed.messageIntent).toBe("standard_reply");
-    expect(composed.sections).toHaveLength(1);
-    expect(composed.sections[0]?.kind).toBe("standard_fragment");
-  });
-
-  it("composes a single topic", function () {
-    const composed = fallbackPlan(input({
-      topicResponsePlans: [
-        plan({
-          id: "plan_login",
-          fields: ["error_message"]
-        })
-      ]
-    }));
-
-    expect(composed.messageIntent).toBe("support_reply");
-    expect(composed.sections[0]).toMatchObject({
-      kind: "topic",
-      topicId: "plan_login"
-    });
-    expect(composed.globalQuestions).toEqual([
-      {
-        fieldName: "error_message",
-        goal: "Ask for error_message.",
-        sourceTopicIds: ["plan_login"]
-      }
+    expect(composed.acknowledge).toEqual([
+      "Standard interaction detected: greeting."
     ]);
+    expect(composed.answer).toEqual([]);
+    expect(composed.ask).toEqual([]);
+    expect(composed.say[0]).toContain("Acknowledge the greeting naturally.");
+    expect(composed.review).toBe("Composer fallback used: test_fallback");
+    expectNoLegacyComposerFields(composed);
   });
 
-  it("composes multiple topics", function () {
-    const composed = fallbackPlan(input({
-      topicResponsePlans: [
-        plan({ id: "plan_drive" }),
-        plan({ id: "plan_mail" })
-      ]
-    }));
-
-    expect(composed.sections.map((section) => section.topicId)).toEqual([
-      "plan_drive",
-      "plan_mail"
-    ]);
-  });
-
-  it("composes mixed standard fragments and topics", function () {
-    const composed = fallbackPlan(input({
-      standardResponseFragments: [greetingFragment],
-      topicResponsePlans: [plan({ id: "plan_login" })]
-    }));
-
-    expect(composed.messageIntent).toBe("mixed_reply");
-    expect(composed.sections.map((section) => section.kind)).toEqual([
-      "standard_fragment",
-      "topic"
-    ]);
-  });
-
-  it("merges redundant questions", function () {
+  it("falls back to a say-only support reply with grouped ask metadata", function () {
     const composed = fallbackPlan(input({
       topicResponsePlans: [
         plan({ id: "plan_one", fields: ["platform"] }),
@@ -165,16 +216,18 @@ describe("composeSupportResponsePlan", function () {
       ]
     }));
 
-    expect(composed.globalQuestions).toEqual([
+    expect(composed.messageIntent).toBe("support_reply");
+    expect(composed.ask).toEqual([
       {
-        fieldName: "platform",
         goal: "Ask for platform.",
         sourceTopicIds: ["plan_one", "plan_two"]
       }
     ]);
+    expect(composed.say[0]).toContain("Ask for platform.");
+    expectNoLegacyComposerFields(composed);
   });
 
-  it("limits the total number of questions from policy", function () {
+  it("keeps policy question limiting out of topic ask fields", function () {
     const composed = fallbackPlan(input({
       responsePlanningPolicy: {
         maxTotalQuestions: 1
@@ -185,11 +238,22 @@ describe("composeSupportResponsePlan", function () {
       ]
     }));
 
-    expect(composed.globalQuestions).toHaveLength(1);
-    expect(composed.sections.flatMap((section) => section.ask)).toHaveLength(1);
+    expect(composed.ask).toEqual([
+      {
+        goal: "Ask for platform.",
+        sourceTopicIds: ["plan_one"]
+      },
+      {
+        goal: "Ask for error_message.",
+        sourceTopicIds: ["plan_two"]
+      }
+    ]);
+    expect(composed.say[0]).toContain("Ask for platform.");
+    expect(composed.say[0]).toContain("Ask for error_message.");
+    expectNoLegacyComposerFields(composed);
   });
 
-  it("consolidates forbidden claims", function () {
+  it("preserves safety limits inside say instead of global forbid", function () {
     const composed = fallbackPlan(input({
       topicResponsePlans: [
         plan({ id: "plan_one", forbid: ["No promise."] }),
@@ -197,13 +261,12 @@ describe("composeSupportResponsePlan", function () {
       ]
     }));
 
-    expect(composed.globalForbid).toEqual([
-      "No promise.",
-      "No refund."
-    ]);
+    expect(composed.say[0]).toContain("No promise.");
+    expect(composed.say[0]).toContain("No refund.");
+    expectNoLegacyComposerFields(composed);
   });
 
-  it("applies handover override", function () {
+  it("applies handover override without old sections", function () {
     const composed = fallbackPlan(input({
       standardResponseFragments: [handoverFragment],
       topicResponsePlans: [
@@ -212,7 +275,9 @@ describe("composeSupportResponsePlan", function () {
     }));
 
     expect(composed.messageIntent).toBe("handover_reply");
-    expect(composed.globalQuestions).toEqual([]);
-    expect(composed.sections.flatMap((section) => section.ask)).toEqual([]);
+    expect(composed.say[0]).toContain(
+      "Accept the request to speak with a human support person."
+    );
+    expectNoLegacyComposerFields(composed);
   });
 });

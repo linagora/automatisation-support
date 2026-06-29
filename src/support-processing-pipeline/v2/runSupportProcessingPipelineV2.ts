@@ -26,12 +26,14 @@ import {
   retrieveSupportKnowledge
 } from "./retrieve-support-knowledge/retrieveSupportKnowledge";
 import {
-  enrichSelectedCatalogKnowledgeWithSynthesis,
   synthesizeRetrievedKnowledge
 } from "./synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
 import {
   selectCatalogKnowledgeForTopic
 } from "./select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic";
+import {
+  buildCandidateFieldsForTopicSelector
+} from "./select-catalog-knowledge-for-topic/buildCandidateFieldsForTopicSelector";
 import {
   planSupportResponse
 } from "./plan-support-response/planSupportResponse";
@@ -134,6 +136,41 @@ function isProposeTopicUpdatesOutput(
   value: ProposeTopicUpdatesOutput | TopicUpdateProposal[]
 ): value is ProposeTopicUpdatesOutput {
   return !Array.isArray(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isUsableResponsePlan(value: unknown): value is ResponsePlanV2 {
+  return isRecord(value) &&
+    Array.isArray(value.acknowledge) &&
+    Array.isArray(value.answer) &&
+    Array.isArray(value.ask) &&
+    Array.isArray(value.say) &&
+    value.say.some((item) => {
+      return typeof item === "string" && item.trim() !== "";
+    }) &&
+    (
+      value.review === null ||
+      typeof value.review === "string"
+    );
+}
+
+function buildFallbackTopicResponsePlan(params: {
+  branchId: string;
+  topicId: string | null;
+}): ResponsePlanV2 {
+  return {
+    topicId: params.topicId ?? params.branchId,
+    acknowledge: [],
+    answer: [],
+    ask: [],
+    say: [
+      "Acknowledge the user's topic without making unsupported claims. Ask for clarification only if necessary."
+    ],
+    review: `topic_response_plan_fallback:${params.branchId}`
+  };
 }
 
 function findExistingTopicForProposal(
@@ -381,6 +418,40 @@ async function skipSteps(
   for (const stepName of stepNames) {
     await skipStep(runtime, stepName);
   }
+}
+
+function ragRetrievalFailureReason(error: unknown): string {
+  if (error instanceof Error && error.name === "AbortError") {
+    return "abort_error";
+  }
+
+  if (
+    error instanceof Error &&
+    /abort|timeout|timed out/i.test(error.message)
+  ) {
+    return "timeout";
+  }
+
+  return "retrieval_error";
+}
+
+function debugLogRagRetrievalError(error: unknown): void {
+  if (process.env.SUPPORT_RAG_DEBUG !== "true") {
+    return;
+  }
+
+  const name = error instanceof Error ? error.name : "unknown";
+  const rawMessage = error instanceof Error ? error.message : String(error);
+  const secret = process.env.SUPPORT_RAG_API_KEY;
+  const message = secret
+    ? rawMessage.replaceAll(secret, "[redacted]")
+    : rawMessage;
+
+  console.debug({
+    eventName: "support.v2.rag_retrieval_failed",
+    errorName: name,
+    errorMessage: message.replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+  });
 }
 
 async function runSupportProcessingPipelineV2(
@@ -741,6 +812,12 @@ async function runSupportProcessingPipelineV2(
           const topicEvidence = topicBranchSource.topicEvidence;
           const topicUserMessageContent =
             buildTopicUserMessageContent(topicEvidence);
+          const selectorFields = topicBranchSource.topicSnapshot
+            ? buildCandidateFieldsForTopicSelector({
+                topicSnapshot: topicBranchSource.topicSnapshot,
+                extractableFieldCatalog
+              })
+            : undefined;
           const selectedCatalogKnowledgePromise = runStep(
             runtime,
             "selectCatalogKnowledgeForTopic",
@@ -750,6 +827,12 @@ async function runSupportProcessingPipelineV2(
               topicEvidence,
               ...(topicBranchSource.topicSnapshot
                 ? { topicSnapshot: topicBranchSource.topicSnapshot }
+                : {}),
+              ...(selectorFields
+                ? {
+                    knownFields: selectorFields.knownFields,
+                    candidateFields: selectorFields.candidateFields
+                  }
                 : {}),
               extractableFieldCatalog,
               recentInteractionContext,
@@ -771,6 +854,9 @@ async function runSupportProcessingPipelineV2(
             pipelineSteps.planKnowledgeEnrichment,
             {
               topicEvidence,
+              ...(topicBranchSource.topicSnapshot
+                ? { topicSnapshot: topicBranchSource.topicSnapshot }
+                : {}),
               extractableFieldCatalog,
               recentInteractionContext,
               targetLanguage: responseLanguage
@@ -789,17 +875,29 @@ async function runSupportProcessingPipelineV2(
             | null = null;
 
           if (topicKnowledgeEnrichmentPlan.route === "retrieve_knowledge") {
-            topicRetrievedSupportKnowledge = await runStep(
-              runtime,
-              "retrieveSupportKnowledge",
-              pipelineSteps.retrieveSupportKnowledge,
-              {
-                knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
-                topicEvidence,
-                selectedCatalogKnowledge,
-                topicKnowledgeEnrichmentPlan
-              }
-            );
+            let knowledgeRetrievalFailureReason: string | undefined;
+
+            try {
+              topicRetrievedSupportKnowledge = await runStep(
+                runtime,
+                "retrieveSupportKnowledge",
+                pipelineSteps.retrieveSupportKnowledge,
+                {
+                  knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
+                  topicEvidence,
+                  ...(topicBranchSource.topicSnapshot
+                    ? { topicSnapshot: topicBranchSource.topicSnapshot }
+                    : {}),
+                  selectedCatalogKnowledge,
+                  topicKnowledgeEnrichmentPlan
+                }
+              );
+            } catch (error) {
+              knowledgeRetrievalFailureReason =
+                ragRetrievalFailureReason(error);
+              topicRetrievedSupportKnowledge = [];
+              debugLogRagRetrievalError(error);
+            }
             topicRetrievedKnowledgeSynthesis = await runStep(
               runtime,
               "synthesizeRetrievedKnowledge",
@@ -808,8 +906,14 @@ async function runSupportProcessingPipelineV2(
                 knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
                 knowledgeChunks: topicRetrievedSupportKnowledge,
                 topicEvidence,
+                ...(topicBranchSource.topicSnapshot
+                  ? { topicSnapshot: topicBranchSource.topicSnapshot }
+                  : {}),
                 selectedCatalogKnowledge,
-                topicKnowledgeEnrichmentPlan
+                topicKnowledgeEnrichmentPlan,
+                ...(knowledgeRetrievalFailureReason
+                  ? { knowledgeRetrievalFailureReason }
+                  : {})
               }
             );
           } else {
@@ -818,13 +922,6 @@ async function runSupportProcessingPipelineV2(
               "synthesizeRetrievedKnowledge"
             ]);
           }
-          const plannerSelectedCatalogKnowledge =
-            enrichSelectedCatalogKnowledgeWithSynthesis({
-              selectedCatalogKnowledge,
-              extractableFieldCatalog,
-              synthesis: topicRetrievedKnowledgeSynthesis
-            });
-
           const topicResponsePlan = await runStep(
             runtime,
             "planSupportResponse",
@@ -833,7 +930,7 @@ async function runSupportProcessingPipelineV2(
               topicUserMessageContent,
               topicEvidence,
               targetLanguage: responseLanguage,
-              selectedCatalogKnowledge: plannerSelectedCatalogKnowledge,
+              selectedCatalogKnowledge,
               topicKnowledgeEnrichmentPlan,
               topicRetrievedKnowledgeSynthesis,
               responsePlanningPolicy,
@@ -845,7 +942,7 @@ async function runSupportProcessingPipelineV2(
             branchId: topicBranchSource.branchId,
             topicId: topicBranchSource.topicId,
             topicEvidence,
-            selectedCatalogKnowledge: plannerSelectedCatalogKnowledge,
+            selectedCatalogKnowledge,
             topicKnowledgeEnrichmentPlan,
             topicRetrievedSupportKnowledge,
             topicRetrievedKnowledgeSynthesis,
@@ -857,7 +954,12 @@ async function runSupportProcessingPipelineV2(
       topicResponsePlans = assignTopicResponsePlanIds(
         topicBranchResults.map((result) => ({
           proposalId: result.branchId,
-          responsePlan: result.topicResponsePlan
+          responsePlan: isUsableResponsePlan(result.topicResponsePlan)
+            ? result.topicResponsePlan
+            : buildFallbackTopicResponsePlan({
+                branchId: result.branchId,
+                topicId: result.topicId
+              })
         }))
       );
       topicKnowledgeEnrichmentPlans = topicBranchResults.map((result) => ({
@@ -901,7 +1003,9 @@ async function runSupportProcessingPipelineV2(
   );
 
   const renderSupportResponseInput: RenderSupportResponseInput = {
-    composedSupportResponsePlan
+    composedSupportResponsePlan,
+    targetLanguage: responseLanguage,
+    channel: latestUserMessage.channel
   };
 
   const renderedSupportResponse = await runStep(

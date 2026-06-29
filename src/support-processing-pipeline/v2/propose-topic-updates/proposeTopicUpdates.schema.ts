@@ -4,9 +4,7 @@ import {
 
 const TOPIC_UPDATE_OPS = [
   "update",
-  "create",
-  "none",
-  "review"
+  "create"
 ] as const;
 
 function objectOf(
@@ -138,8 +136,7 @@ const topicUpdateOpSchema = objectOf(
         topicReplaceRefsSchema,
         { type: "null" }
       ]
-    },
-    review: nullableStringSchema
+    }
   },
   [
     "op",
@@ -147,8 +144,7 @@ const topicUpdateOpSchema = objectOf(
     "topicId",
     "topic",
     "merge",
-    "replace",
-    "review"
+    "replace"
   ]
 );
 

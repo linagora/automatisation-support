@@ -359,7 +359,7 @@ describe("formatProposeTopicUpdatesOutput", function () {
     expect(JSON.stringify(output.topicUpdateOps)).not.toContain("still blocked");
   });
 
-  it("converts an invalid item reference into deterministic review fallback", function () {
+  it("rejects an invalid item reference without creating a review op", function () {
     const output = formatProposeTopicUpdatesOutput({
       existingTopics: [accountTopic],
       textUnderstandings: [
@@ -380,21 +380,11 @@ describe("formatProposeTopicUpdatesOutput", function () {
     expect(output).toEqual({
       status: "invalid",
       reason: "invalid_ops",
-      topicUpdateOps: [
-        {
-          op: "review",
-          items: [0],
-          topicId: null,
-          topic: null,
-          merge: null,
-          replace: null,
-          review: "No valid topic update op covered this understanding."
-        }
-      ]
+      topicUpdateOps: []
     });
   });
 
-  it("converts invalid caseDetails references to review", function () {
+  it("rejects invalid caseDetails references without creating a review op", function () {
     const output = formatProposeTopicUpdatesOutput({
       existingTopics: [accountTopic],
       textUnderstandings: [
@@ -417,14 +407,10 @@ describe("formatProposeTopicUpdatesOutput", function () {
     });
 
     expect(output.status).toBe("invalid");
-    expect(output.topicUpdateOps[0]).toMatchObject({
-      op: "review",
-      items: [0],
-      review: "Invalid topic update references."
-    });
+    expect(output.topicUpdateOps).toEqual([]);
   });
 
-  it("converts invalid attemptedActions references to review", function () {
+  it("rejects invalid attemptedActions references without creating a review op", function () {
     const output = formatProposeTopicUpdatesOutput({
       existingTopics: [accountTopic],
       textUnderstandings: [
@@ -447,11 +433,7 @@ describe("formatProposeTopicUpdatesOutput", function () {
     });
 
     expect(output.status).toBe("invalid");
-    expect(output.topicUpdateOps[0]).toMatchObject({
-      op: "review",
-      items: [0],
-      review: "Invalid topic update references."
-    });
+    expect(output.topicUpdateOps).toEqual([]);
   });
 
   it("accepts update only when it references an existing topic", function () {
@@ -576,7 +558,7 @@ describe("formatProposeTopicUpdatesOutput", function () {
     );
   });
 
-  it("accepts none without merge or replace", function () {
+  it("rejects none because LLM ops are limited to create or update", function () {
     const output = formatProposeTopicUpdatesOutput({
       existingTopics: [accountTopic],
       textUnderstandings: [
@@ -600,18 +582,14 @@ describe("formatProposeTopicUpdatesOutput", function () {
       })
     });
 
-    expect(output).toMatchObject({
-      status: "valid",
-      topicUpdateOps: [
-        {
-          op: "none",
-          items: [0]
-        }
-      ]
+    expect(output).toEqual({
+      status: "invalid",
+      reason: "invalid_ops",
+      topicUpdateOps: []
     });
   });
 
-  it("accepts review with a reason", function () {
+  it("rejects review because it is not a business op", function () {
     const output = formatProposeTopicUpdatesOutput({
       existingTopics: [accountTopic],
       textUnderstandings: [
@@ -635,14 +613,10 @@ describe("formatProposeTopicUpdatesOutput", function () {
       })
     });
 
-    expect(output).toMatchObject({
-      status: "valid",
-      topicUpdateOps: [
-        {
-          op: "review",
-          review: "Ambiguous topic match."
-        }
-      ]
+    expect(output).toEqual({
+      status: "invalid",
+      reason: "invalid_ops",
+      topicUpdateOps: []
     });
   });
 
@@ -758,7 +732,8 @@ describe("buildProposeTopicUpdatesPrompt", function () {
     }).join("\n");
 
     expect(content).toContain("\"ops\"");
-    expect(content).toContain("\"op\": \"update|create|none|review\"");
+    expect(content).toContain("\"op\": \"update|create\"");
+    expect(content).not.toContain("\"op\": \"update|create|none|review\"");
     expect(content).toContain("Allowed broadCategoryHint values:");
     expect(content).toContain("bug | access_security | billing");
     expect(content).toContain("Do not invent narrow category values");
@@ -767,5 +742,7 @@ describe("buildProposeTopicUpdatesPrompt", function () {
     expect(content).not.toContain("update_existing_topic");
     expect(content).not.toContain("selectedSourceVerbatims");
     expect(content).not.toContain("fromUnderstandingIds");
+    expect(content).not.toContain("op \"review\"");
+    expect(content).not.toContain("op \"none\"");
   });
 });

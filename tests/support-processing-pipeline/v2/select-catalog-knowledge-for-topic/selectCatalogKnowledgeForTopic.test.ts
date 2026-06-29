@@ -4,6 +4,9 @@ import {
   callLLM
 } from "../../../../src/llm/llm-client";
 import {
+  buildCandidateFieldsForTopicSelector
+} from "../../../../src/support-processing-pipeline/v2/select-catalog-knowledge-for-topic/buildCandidateFieldsForTopicSelector";
+import {
   buildSelectCatalogKnowledgeForTopicPrompt
 } from "../../../../src/support-processing-pipeline/v2/select-catalog-knowledge-for-topic/buildSelectCatalogKnowledgeForTopicPrompt";
 import {
@@ -18,6 +21,7 @@ import {
 
 import type {
   ExtractableFieldDefinition,
+  MergedTopicSnapshot,
   TextUnderstanding,
   TopicEvidence
 } from "../../../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
@@ -33,52 +37,49 @@ vi.mock("../../../../src/llm/llm-client", function () {
 
 const callLLMMock = vi.mocked(callLLM);
 
+function field(
+  fieldName: string,
+  askableByUser = true
+): ExtractableFieldDefinition {
+  return {
+    fieldName,
+    description: `${fieldName} description.`,
+    askableByUser
+  };
+}
+
 const catalog: ExtractableFieldDefinition[] = [
-  {
-    fieldName: "error_message",
-    description: "Exact error message.",
-    askableByUser: true
-  },
-  {
-    fieldName: "access_action",
-    description: "Login or access action.",
-    askableByUser: true
-  },
-  {
-    fieldName: "auth_method",
-    description: "Authentication method.",
-    askableByUser: true
-  },
-  {
-    fieldName: "account_status",
-    description: "Internal account status.",
-    askableByUser: false
-  },
-  {
-    fieldName: "browser",
-    description: "Browser.",
-    askableByUser: true
-  },
-  {
-    fieldName: "visual_evidence",
-    description: "Screenshot, photo, or video.",
-    askableByUser: true
-  },
-  {
-    fieldName: "duplicate_billing_impact",
-    description: "Duplicate document versus duplicate charge.",
-    askableByUser: true
-  },
-  {
-    fieldName: "amount",
-    description: "Amount.",
-    askableByUser: true
-  },
-  {
-    fieldName: "currency",
-    description: "Currency.",
-    askableByUser: true
-  }
+  field("user_identifier"),
+  field("account_identifier"),
+  field("account_status", false),
+  field("product_or_service"),
+  field("feature_or_page"),
+  field("platform"),
+  field("operating_system"),
+  field("browser"),
+  field("app_version"),
+  field("device"),
+  field("access_action"),
+  field("auth_method"),
+  field("recovery_channel"),
+  field("mfa_status"),
+  field("error_message"),
+  field("observed_result"),
+  field("expected_result"),
+  field("trigger_action"),
+  field("frequency"),
+  field("affected_scope"),
+  field("affected_users"),
+  field("user_impact"),
+  field("billing_or_payment_status"),
+  field("billing_issue_type"),
+  field("duplicate_billing_impact"),
+  field("amount"),
+  field("currency"),
+  field("billing_date_or_period"),
+  field("payment_method"),
+  field("reference_id"),
+  field("visual_evidence")
 ];
 
 function understanding(
@@ -96,50 +97,83 @@ function understanding(
   };
 }
 
+function snapshot(
+  overrides: Partial<MergedTopicSnapshot> = {}
+): MergedTopicSnapshot {
+  return {
+    snapshotId: "snapshot_1",
+    topicId: null,
+    temporaryTopicId: "new_topic_1",
+    isNewTopic: true,
+    title: "Login problem",
+    broadCategoryHint: "access_security",
+    summary: "Login problem",
+    caseDetails: [],
+    attemptedActions: [],
+    topic_details: {},
+    sourceUnderstandingIds: ["understanding_1"],
+    sourceVerbatims: ["Login error"],
+    sourceOpIndex: 0,
+    baseTopic: null,
+    ...overrides
+  };
+}
+
 type SelectorTestOverrides = Omit<
   Partial<SelectCatalogKnowledgeForTopicInput>,
   "topicUserMessageContent" | "topicEvidence"
 > & {
   latestUserMessageContent?: string;
   topicEvidence?: Partial<TopicEvidence>;
-  existingTopic?: unknown;
   relatedTextUnderstandings?: TextUnderstanding[];
-  relatedAttachmentUnderstandings?: SelectCatalogKnowledgeForTopicInput[
-    "topicEvidence"
-  ]["relatedAttachmentUnderstandings"];
 };
 
 function input(
   overrides: SelectorTestOverrides = {}
 ): SelectCatalogKnowledgeForTopicInput {
   const {
-    latestUserMessageContent =
-      "Erreur de login, mon mot de passe n’est pas bon.",
+    latestUserMessageContent = "Erreur de login.",
     topicEvidence,
-    existingTopic,
     relatedTextUnderstandings = [understanding()],
-    relatedAttachmentUnderstandings = [],
     ...inputOverrides
   } = overrides;
+  const topicSnapshot = inputOverrides.topicSnapshot ?? snapshot();
 
   return {
     topicUserMessageContent: latestUserMessageContent,
     topicEvidence: {
-      proposalId: "topic_update_op_1",
-      topicId: null,
+      proposalId: topicSnapshot.snapshotId,
+      topicId: topicSnapshot.topicId ?? topicSnapshot.temporaryTopicId,
+      topicSnapshot,
       topicSourceVerbatims: [latestUserMessageContent],
       relatedUnderstandingIds: relatedTextUnderstandings.map((item) => {
         return item.understandingId;
       }),
       relatedTextUnderstandings,
-      relatedAttachmentUnderstandings,
+      relatedAttachmentUnderstandings: [],
       relatedSupportResponseCues: [],
-      ...(existingTopic ? { existingTopic } : {}),
+      existingTopic: topicSnapshot,
       ...topicEvidence
     },
+    topicSnapshot,
     extractableFieldCatalog: catalog,
     targetLanguage: "French",
     ...inputOverrides
+  };
+}
+
+function withSelectorFields(
+  baseInput: SelectCatalogKnowledgeForTopicInput
+): SelectCatalogKnowledgeForTopicInput {
+  const selectorFields = buildCandidateFieldsForTopicSelector({
+    topicSnapshot: baseInput.topicSnapshot ?? baseInput.topicEvidence.topicSnapshot!,
+    extractableFieldCatalog: baseInput.extractableFieldCatalog
+  });
+
+  return {
+    ...baseInput,
+    knownFields: selectorFields.knownFields,
+    candidateFields: selectorFields.candidateFields
   };
 }
 
@@ -156,20 +190,18 @@ describe("selectCatalogKnowledgeForTopic", function () {
     callLLMMock.mockReset();
   });
 
-  it("uses one strict JSON-schema LLM call", async function () {
+  it("uses one strict minimal JSON-schema LLM call", async function () {
     callLLMMock.mockResolvedValue({
       success: true,
       content: JSON.stringify({
-        selectedFieldNames: [],
-        selectedGenericKnowledgeIds: [],
-        scopeReason: "No useful field.",
-        rejectedFieldNames: [],
-        warnings: []
+        selectedFieldNames: []
       })
     });
 
     await requestSelectCatalogKnowledgeForTopic({
-      prompt: buildSelectCatalogKnowledgeForTopicPrompt(input())
+      prompt: buildSelectCatalogKnowledgeForTopicPrompt(
+        withSelectorFields(input())
+      )
     });
 
     expect(callLLMMock).toHaveBeenCalledWith(
@@ -183,244 +215,245 @@ describe("selectCatalogKnowledgeForTopic", function () {
     );
   });
 
-  it("keeps login selection narrow and preserves askable metadata", function () {
-    const output = formatSelectCatalogKnowledgeForTopicOutput({
-      input: input({
-        relatedTextUnderstandings: [
-          understanding({
-            caseDetails: [
-              {
-                key: "error_message",
-                value: "mot de passe incorrect",
-                evidence: "mot de passe n’est pas bon"
-              }
-            ]
-          })
-        ]
-      }),
-      rawSelectCatalogKnowledgeForTopic: completed({
-        selectedFieldNames: ["access_action", "auth_method"],
-        selectedGenericKnowledgeIds: [],
-        scopeReason: "Keep only access qualification fields still useful.",
-        rejectedFieldNames: [
-          "error_message",
-          "account_status",
-          "browser"
-        ],
-        warnings: []
-      })
-    });
-
-    expect(output.selectedFields.map((field) => field.fieldName)).toEqual([
-      "access_action",
-      "auth_method"
-    ]);
-    expect(output.rejectedFieldNames).toContain("error_message");
-  });
-
-  it("preserves account_status as non-askable internal context", function () {
-    const output = formatSelectCatalogKnowledgeForTopicOutput({
-      input: input(),
-      rawSelectCatalogKnowledgeForTopic: completed({
-        selectedFieldNames: ["account_status"],
-        selectedGenericKnowledgeIds: [],
-        scopeReason: "Internal context may matter.",
-        rejectedFieldNames: [],
-        warnings: []
-      })
-    });
-
-    expect(output.selectedFields).toEqual([
-      expect.objectContaining({
-        fieldName: "account_status",
-        askableByUser: false
-      })
-    ]);
-  });
-
-  it("does not select visual evidence automatically for a bug without attachment", function () {
-    const prompt = buildSelectCatalogKnowledgeForTopicPrompt(input({
-      latestUserMessageContent: "La page se ferme.",
-      relatedTextUnderstandings: [
-        understanding({
-          summary: "Page crash",
-          caseDetails: [
-            {
-              key: "observed_result",
-              value: "page closes",
-              evidence: "La page se ferme"
-            }
-          ]
-        })
-      ]
-    })).messages.map((message) => message.content).join("\n");
-
-    expect(prompt).toContain(
-      "Do not select visual_evidence by default for every bug."
-    );
-    expect(prompt).toContain('"relatedAttachmentUnderstandings": []');
-  });
-
-  it("allows visual evidence when a related attachment exists", function () {
-    const output = formatSelectCatalogKnowledgeForTopicOutput({
-      input: input({
-        relatedAttachmentUnderstandings: [
+  it("builds knownFields and candidateFields from the merged topic snapshot", function () {
+    const selectorFields = buildCandidateFieldsForTopicSelector({
+      topicSnapshot: snapshot({
+        broadCategoryHint: "access_security",
+        caseDetails: [
           {
-            attachmentIndex: 0,
-            status: "analyzed",
-            summary: "Screenshot of the failing page"
+            key: "platform",
+            value: "web",
+            evidence: "sur le web"
+          },
+          {
+            key: "error_message",
+            value: "Token expired",
+            evidence: "Token expired"
           }
         ]
       }),
-      rawSelectCatalogKnowledgeForTopic: completed({
-        selectedFieldNames: ["visual_evidence"],
-        selectedGenericKnowledgeIds: [],
-        scopeReason: "The linked screenshot must be evaluated.",
-        rejectedFieldNames: [],
-        warnings: []
-      })
+      extractableFieldCatalog: catalog
     });
 
-    expect(output.selectedFields.map((field) => field.fieldName)).toEqual([
-      "visual_evidence"
+    expect(selectorFields.knownFields).toEqual([
+      {
+        fieldName: "platform",
+        value: "web",
+        evidence: "sur le web"
+      },
+      {
+        fieldName: "error_message",
+        value: "Token expired",
+        evidence: "Token expired"
+      }
     ]);
+    expect(selectorFields.candidateFields.map((item) => item.fieldName))
+      .toContain("access_action");
+    expect(selectorFields.candidateFields.map((item) => item.fieldName))
+      .not.toEqual(expect.arrayContaining([
+        "platform",
+        "error_message",
+        "account_status"
+      ]));
   });
 
-  it("prioritizes duplicate_billing_impact over amount and currency", function () {
-    const output = formatSelectCatalogKnowledgeForTopicOutput({
-      input: input({
-        latestUserMessageContent: "J’ai reçu ma facture deux fois.",
-        relatedTextUnderstandings: [
-          understanding({
-            summary: "Duplicate invoice",
-            caseDetails: [
-              {
-                key: "billing_issue_type",
-                value: "duplicate invoice",
-                evidence: "facture deux fois"
-              }
-            ]
-          })
+  it("drops known fields selected by the raw LLM output", function () {
+    const baseInput = withSelectorFields(input({
+      topicSnapshot: snapshot({
+        broadCategoryHint: "access_security",
+        caseDetails: [
+          {
+            key: "platform",
+            value: "web",
+            evidence: "web"
+          },
+          {
+            key: "error_message",
+            value: "Token expired",
+            evidence: "Token expired"
+          },
+          {
+            key: "observed_result",
+            value: "failed",
+            evidence: "failed"
+          }
         ]
-      }),
-      rawSelectCatalogKnowledgeForTopic: completed({
-        selectedFieldNames: ["duplicate_billing_impact"],
-        selectedGenericKnowledgeIds: [],
-        scopeReason: "Clarify document duplication versus duplicate charge.",
-        rejectedFieldNames: ["amount", "currency"],
-        warnings: []
       })
-    });
-
-    expect(output.selectedFields.map((field) => field.fieldName)).toEqual([
-      "duplicate_billing_impact"
-    ]);
-    expect(output.rejectedFieldNames).toEqual(["amount", "currency"]);
-  });
-
-  it("defensively rejects billing fields from an access-only topic", function () {
+    }));
     const output = formatSelectCatalogKnowledgeForTopicOutput({
-      input: input({
-        relatedTextUnderstandings: [
-          understanding({
-            caseDetails: [
-              {
-                key: "access_action",
-                value: "login",
-                evidence: "Erreur de login"
-              }
-            ]
-          })
-        ]
-      }),
+      input: baseInput,
       rawSelectCatalogKnowledgeForTopic: completed({
         selectedFieldNames: [
-          "access_action",
-          "duplicate_billing_impact",
-          "amount",
-          "currency"
-        ],
-        selectedGenericKnowledgeIds: [],
-        scopeReason: "Mixed selection returned by the model.",
-        rejectedFieldNames: [],
-        warnings: []
-      })
-    });
-
-    expect(output.selectedFields.map((field) => field.fieldName)).toEqual([
-      "access_action"
-    ]);
-    expect(output.rejectedFieldNames).toEqual([
-      "duplicate_billing_impact",
-      "amount",
-      "currency"
-    ]);
-    expect(output.warnings).toEqual(expect.arrayContaining([
-      "cross_topic_field_rejected:duplicate_billing_impact",
-      "cross_topic_field_rejected:amount",
-      "cross_topic_field_rejected:currency"
-    ]));
-  });
-
-  it("defensively rejects access fields from a billing-only topic", function () {
-    const output = formatSelectCatalogKnowledgeForTopicOutput({
-      input: input({
-        latestUserMessageContent: "J’ai reçu ma facture deux fois.",
-        relatedTextUnderstandings: [
-          understanding({
-            understandingId: "understanding_billing",
-            summary: "Duplicate invoice",
-            caseDetails: [
-              {
-                key: "billing_issue_type",
-                value: "duplicate invoice",
-                evidence: "facture deux fois"
-              }
-            ]
-          })
-        ]
-      }),
-      rawSelectCatalogKnowledgeForTopic: completed({
-        selectedFieldNames: [
-          "duplicate_billing_impact",
-          "account_status",
+          "platform",
+          "error_message",
+          "observed_result",
           "access_action",
           "auth_method"
-        ],
-        selectedGenericKnowledgeIds: [],
-        scopeReason: "Mixed selection returned by the model.",
-        rejectedFieldNames: [],
-        warnings: []
+        ]
       })
     });
 
-    expect(output.selectedFields.map((field) => field.fieldName)).toEqual([
-      "duplicate_billing_impact"
-    ]);
-    expect(output.rejectedFieldNames).toEqual([
-      "account_status",
+    expect(output.selectedFields.map((item) => item.fieldName)).toEqual([
       "access_action",
       "auth_method"
     ]);
+    expect(output.rejectedFieldNames).toEqual([]);
+    expect(output.scopeReason).toBe("selected_candidate_fields");
   });
 
-  it("rejects unknown selected field names and reports a warning", function () {
+  it("drops fields outside candidateFields", function () {
+    const baseInput = withSelectorFields(input({
+      topicSnapshot: snapshot({
+        broadCategoryHint: "billing"
+      })
+    }));
     const output = formatSelectCatalogKnowledgeForTopicOutput({
-      input: input(),
+      input: baseInput,
       rawSelectCatalogKnowledgeForTopic: completed({
-        selectedFieldNames: ["error_message", "invented_field"],
-        selectedGenericKnowledgeIds: [],
-        scopeReason: "Select the useful error field.",
-        rejectedFieldNames: [],
-        warnings: []
+        selectedFieldNames: [
+          "duplicate_billing_impact",
+          "auth_method"
+        ]
       })
     });
 
-    expect(output.selectedFields.map((field) => field.fieldName)).toEqual([
-      "error_message"
+    expect(output.selectedFields.map((item) => item.fieldName)).toEqual([
+      "duplicate_billing_impact"
     ]);
-    expect(output.warnings).toContain(
-      "unknown_selected_field:invented_field"
-    );
+  });
+
+  it("drops askable false fields", function () {
+    const output = formatSelectCatalogKnowledgeForTopicOutput({
+      input: {
+        ...input(),
+        knownFields: [],
+        candidateFields: [
+          field("account_status", false),
+          field("access_action")
+        ]
+      },
+      rawSelectCatalogKnowledgeForTopic: completed({
+        selectedFieldNames: [
+          "account_status",
+          "access_action"
+        ]
+      })
+    });
+
+    expect(output.selectedFields.map((item) => item.fieldName)).toEqual([
+      "access_action"
+    ]);
+  });
+
+  it("does not include visual_evidence for a notification Android bug shortlist", function () {
+    const baseInput = withSelectorFields(input({
+      topicSnapshot: snapshot({
+        title: "Android notifications",
+        broadCategoryHint: "bug",
+        caseDetails: [
+          {
+            key: "product_or_service",
+            value: "notifications",
+            evidence: "notifications"
+          },
+          {
+            key: "platform",
+            value: "Android",
+            evidence: "Android"
+          },
+          {
+            key: "observed_result",
+            value: "notifications not sent",
+            evidence: "notifications pas envoyées"
+          }
+        ]
+      })
+    }));
+    const candidateFieldNames = baseInput.candidateFields?.map((item) => {
+      return item.fieldName;
+    }) ?? [];
+    const output = formatSelectCatalogKnowledgeForTopicOutput({
+      input: baseInput,
+      rawSelectCatalogKnowledgeForTopic: completed({
+        selectedFieldNames: [
+          "product_or_service",
+          "platform",
+          "observed_result",
+          "visual_evidence",
+          "app_version",
+          "device"
+        ]
+      })
+    });
+
+    expect(candidateFieldNames).not.toContain("visual_evidence");
+    expect(output.selectedFields.map((item) => item.fieldName)).toEqual([
+      "app_version",
+      "device"
+    ]);
+  });
+
+  it("does not reselect known duplicate billing fields", function () {
+    const baseInput = withSelectorFields(input({
+      topicSnapshot: snapshot({
+        title: "Duplicate billing",
+        broadCategoryHint: "billing",
+        caseDetails: [
+          {
+            key: "billing_issue_type",
+            value: "duplicate invoice",
+            evidence: "facture deux fois"
+          },
+          {
+            key: "billing_date_or_period",
+            value: "June",
+            evidence: "juin"
+          }
+        ]
+      })
+    }));
+    const output = formatSelectCatalogKnowledgeForTopicOutput({
+      input: baseInput,
+      rawSelectCatalogKnowledgeForTopic: completed({
+        selectedFieldNames: [
+          "billing_issue_type",
+          "billing_date_or_period",
+          "duplicate_billing_impact",
+          "reference_id"
+        ]
+      })
+    });
+
+    expect(output.selectedFields.map((item) => item.fieldName)).toEqual([
+      "duplicate_billing_impact",
+      "reference_id"
+    ]);
+    expect(output.rejectedFieldNames).toEqual([]);
+  });
+
+  it("prompts with a shortlist instead of the full catalog", function () {
+    const baseInput = withSelectorFields(input({
+      topicSnapshot: snapshot({
+        broadCategoryHint: "billing",
+        caseDetails: [
+          {
+            key: "billing_issue_type",
+            value: "duplicate invoice",
+            evidence: "facture deux fois"
+          }
+        ]
+      })
+    }));
+    const prompt = buildSelectCatalogKnowledgeForTopicPrompt(
+      baseInput
+    ).messages.map((message) => message.content).join("\n");
+    const candidateFieldCount = baseInput.candidateFields?.length ?? 0;
+
+    expect(candidateFieldCount).toBeLessThan(catalog.length);
+    expect(prompt).toContain('"knownFields"');
+    expect(prompt).toContain('"candidateFields"');
+    expect(prompt).toContain('"duplicate_billing_impact"');
+    expect(prompt).not.toContain('"account_status"');
+    expect(prompt).not.toContain('"extractableFieldCatalog"');
   });
 });

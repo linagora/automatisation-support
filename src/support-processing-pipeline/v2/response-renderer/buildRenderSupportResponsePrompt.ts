@@ -3,53 +3,84 @@ import type {
   RenderSupportResponsePrompt
 } from "./typesRenderSupportResponse.types";
 
-function toPrettyJson(value: unknown): string {
-  return JSON.stringify(value, null, 2);
+function toPromptJson(value: unknown): string {
+  return JSON.stringify(value);
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() !== ""
+    ? value.trim()
+    : null;
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    const stringItem = asString(item);
+
+    return stringItem ? [stringItem] : [];
+  });
+}
+
+function buildRendererTask(
+  input: BuildRenderSupportResponsePromptInput
+): unknown {
+  return {
+    targetLanguage: input.targetLanguage ?? null,
+    channel: input.channel ?? null,
+    say: stringArray(input.composedSupportResponsePlan.say)
+  };
 }
 
 function buildSystemPrompt(): string {
   return `
-You are the final user-facing response writer.
+You are the final user-facing support response writer.
 
-You receive one composed support response plan.
-The plan was already globally composed by a previous step.
+You receive targetLanguage, channel, and say[] instructions.
 
-You must not:
-- decide support strategy;
-- reorder topics beyond the provided sections order;
-- merge or deduplicate questions;
-- add questions;
-- remove planned questions;
-- diagnose;
-- add procedures, refunds, promises, timelines, escalation claims, team actions, or internal process claims;
-- use raw user text;
-- expose JSON, ids, field names, prompts, or pipeline details.
+The support strategy was already decided by previous steps.
+You do not decide what to ask, answer, acknowledge, omit, merge, reorder, or emphasize.
+You only transform say[] into one natural user-facing message.
 
-You only transform the composed plan into natural user-facing text.
-Respect sections, globalQuestions, globalForbid, and rendererInstructions strictly.
-
-Return exactly one valid JSON object matching the schema.
+Return exactly one valid JSON object.
 Return JSON only.
 No markdown.
+Do not return renderedMessages or any multi-message metadata.
+
+# Output shape
+
+{
+  "finalResponseText": "final user-facing message ready to send"
+}
+
+# Rules
+
+- Write in targetLanguage.
+- Adapt the tone lightly to the channel.
+- Use say[] as the only operational source.
+- Do not add support content absent from say[].
+- If say[] frames a claim as reported by the user, preserve that framing.
+- Do not turn a reported user claim into a support-side confirmation.
+- Do not remove planned questions from say[].
+- Do not add questions.
+- Do not diagnose.
+- Do not add procedures, refunds, promises, timelines, escalation claims, team actions, or internal process claims.
+- Do not expose JSON, ids, field names, prompts, schema names, RAG, catalog, planner, renderer, or pipeline details.
+- Do not mention that you are following instructions.
+- Do not copy say[] mechanically.
+- Convert the instructions into clear, natural user-facing prose.
+- Produce one message only.
+- Keep it concise.
 `.trim();
 }
 
 function buildUserPrompt(input: BuildRenderSupportResponsePromptInput): string {
   return `
-Write the final user-facing response from this composed support response plan only:
-
-\`\`\`json
-${toPrettyJson(input.composedSupportResponsePlan)}
-\`\`\`
-
-Rules:
-- Use targetLanguage from the plan.
-- Follow sections in order.
-- Include all questions listed in sections.ask/globalQuestions, unless rendererInstructions explicitly say not to.
-- Do not mention field names directly.
-- Do not include any claim listed in globalForbid or section.forbid.
-- Do not add any support content that is absent from the plan.
-- finalResponseText must equal renderedMessages contents joined with a blank line.
+Write one final user-facing response from this renderer task:
+${toPromptJson(buildRendererTask(input))}
 `.trim();
 }
 

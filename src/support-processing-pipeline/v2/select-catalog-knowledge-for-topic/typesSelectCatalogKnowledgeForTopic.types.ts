@@ -5,6 +5,9 @@ import type {
 import type {
   LLMMessage
 } from "../../../llm/llm-client";
+import type {
+  KnownTopicField
+} from "./buildCandidateFieldsForTopicSelector";
 
 export type SelectCatalogKnowledgeForTopicPrompt = {
   messages: LLMMessage[];
@@ -30,10 +33,10 @@ export type FormatSelectCatalogKnowledgeForTopicOutputInput = {
 
 export type RawSelectedCatalogKnowledgeForTopic = {
   selectedFieldNames?: unknown;
-  selectedGenericKnowledgeIds?: unknown;
-  scopeReason?: unknown;
-  rejectedFieldNames?: unknown;
-  warnings?: unknown;
+};
+
+export type {
+  KnownTopicField
 };
 
 export type {

@@ -1,8 +1,3 @@
-import {
-  ALLOWED_RESPONSE_MOVE_VALUES,
-  KNOWLEDGE_MODE_VALUES
-} from "./planSupportResponse.taxonomy";
-
 function objectOf(
   properties: Record<string, unknown>,
   required: string[]
@@ -26,14 +21,6 @@ const stringSchema = {
   type: "string"
 } as const;
 
-const numberSchema = {
-  type: "number"
-} as const;
-
-const booleanSchema = {
-  type: "boolean"
-} as const;
-
 const nullableStringSchema = {
   anyOf: [
     { type: "string" },
@@ -41,73 +28,54 @@ const nullableStringSchema = {
   ]
 } as const;
 
-const stringArraySchema = arrayOf(stringSchema);
+const plannedAnswerSupportSchema = {
+  enum: [
+    "retrieved_knowledge",
+    "selected_catalog_knowledge",
+    "topic",
+    "attachment",
+    "policy"
+  ]
+} as const;
 
-const knowledgeGateSchema = objectOf(
+const plannedAnswerPointSchema = objectOf(
   {
-    knowledgeMode: {
-      enum: KNOWLEDGE_MODE_VALUES
-    },
-    solutionAllowed: booleanSchema,
-    allowedMoves: arrayOf({
-      enum: ALLOWED_RESPONSE_MOVE_VALUES
-    }),
-    reason: stringSchema
+    point: stringSchema,
+    support: plannedAnswerSupportSchema
   },
   [
-    "knowledgeMode",
-    "solutionAllowed",
-    "allowedMoves",
-    "reason"
+    "point",
+    "support"
   ]
 );
 
-const questionDecisionSchema = objectOf(
+const plannedAskFieldSchema = objectOf(
   {
-    shouldAskQuestion: booleanSchema,
-    plannedQuestionCount: numberSchema,
-    fieldNames: stringArraySchema,
-    questionInstruction: nullableStringSchema,
-    reason: stringSchema
+    fieldName: stringSchema,
+    goal: stringSchema
   },
   [
-    "shouldAskQuestion",
-    "plannedQuestionCount",
-    "fieldNames",
-    "questionInstruction",
-    "reason"
-  ]
-);
-
-const rendererTaskSchema = objectOf(
-  {
-    targetLanguage: stringSchema,
-    prompt: stringSchema,
-    questionFieldNames: stringArraySchema,
-    forbiddenClaims: stringArraySchema
-  },
-  [
-    "targetLanguage",
-    "prompt",
-    "questionFieldNames",
-    "forbiddenClaims"
+    "fieldName",
+    "goal"
   ]
 );
 
 const supportResponsePlanSchema = objectOf(
   {
-    responsePlanId: stringSchema,
-    knowledgeGate: knowledgeGateSchema,
-    questionDecision: questionDecisionSchema,
-    rendererTask: rendererTaskSchema,
-    internalRationale: stringSchema
+    topicId: nullableStringSchema,
+    acknowledge: arrayOf(stringSchema),
+    answer: arrayOf(plannedAnswerPointSchema),
+    ask: arrayOf(plannedAskFieldSchema),
+    say: arrayOf(stringSchema),
+    review: nullableStringSchema
   },
   [
-    "responsePlanId",
-    "knowledgeGate",
-    "questionDecision",
-    "rendererTask",
-    "internalRationale"
+    "topicId",
+    "acknowledge",
+    "answer",
+    "ask",
+    "say",
+    "review"
   ]
 );
 

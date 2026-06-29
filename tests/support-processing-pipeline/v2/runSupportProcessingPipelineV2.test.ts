@@ -37,7 +37,11 @@ import type {
   SupportProcessingPipelineV2Steps,
   TextSurfaceAnalysis,
   TextUnderstanding,
+  TopicPatch,
+  MergedTopicSnapshot,
+  TopicUpdateOp,
   TopicUpdateProposal,
+  ProposeTopicUpdatesOutput,
   UserResponse
 } from "../../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
 import type {
@@ -244,8 +248,21 @@ const ragPlan: KnowledgeEnrichmentPlan = {
   route: "retrieve_knowledge",
   retrievalRequests: [
     {
-      topicId: 1,
-      query: "login password error"
+      topicId: "1",
+      searchPurpose: "support_answer_and_qualification",
+      queryText: "Support issue: login password error.",
+      desiredKnowledge: [
+        "known_behavior",
+        "troubleshooting_steps",
+        "safe_response",
+        "fields_to_ask",
+        "do_not_claim"
+      ],
+      context: {
+        topicSummary: "Login password error",
+        knownDetails: [],
+        attemptedActions: []
+      }
     }
   ],
   reason: "Topic requires support knowledge."
@@ -253,7 +270,7 @@ const ragPlan: KnowledgeEnrichmentPlan = {
 
 const knowledgeChunks: KnowledgeChunk[] = [
   {
-    topicId: 1,
+    topicId: "1",
     sourceId: "doc_1",
     content: "Reset password instructions",
     score: 0.9
@@ -263,7 +280,7 @@ const knowledgeChunks: KnowledgeChunk[] = [
 const retrievedKnowledgeSynthesis = {
   topics: [
     {
-      topicId: 1,
+      topicId: "1",
       relevantFacts: ["Reset password is available"],
       sourceReferences: ["doc_1"]
     }
@@ -272,31 +289,16 @@ const retrievedKnowledgeSynthesis = {
 
 const responsePlan: ResponsePlanV2 = {
   responsePlanId: "response_plan_test",
-  knowledgeGate: {
-    knowledgeMode: "rag_not_enabled",
-    solutionAllowed: false,
-    allowedMoves: [
-      "acknowledge"
-    ],
-    reason: "RAG is not enabled in this test fixture."
-  },
-  questionDecision: {
-    shouldAskQuestion: false,
-    plannedQuestionCount: 0,
-    fieldNames: [],
-    questionInstruction: null,
-    reason: "No clarification question is needed in this fixture.",
-  },
-  rendererTask: {
-    targetLanguage: "French",
-    prompt: "Write a concise acknowledgement without inventing a solution.",
-    questionFieldNames: [],
-    forbiddenClaims: [
-      "No question.",
-      "No solution."
-    ]
-  },
-  internalRationale: "Test fixture."
+  topicId: "topic_update_proposal_1",
+  acknowledge: [
+    "Acknowledge the topic."
+  ],
+  answer: [],
+  ask: [],
+  say: [
+    "Write a concise acknowledgement without inventing a solution. Do not ask a question or provide a solution."
+  ],
+  review: null
 };
 
 const expectedTopicResponsePlan: ResponsePlanV2 = {
@@ -305,51 +307,19 @@ const expectedTopicResponsePlan: ResponsePlanV2 = {
 };
 
 const composedSupportResponsePlan: ComposedSupportResponsePlan = {
-  targetLanguage: "fr",
-  channel: "email",
+  topicId: null,
   messageIntent: "support_reply",
-  globalTone: {
-    opening: "brief_acknowledgement",
-    empathy: "light",
-    formality: "standard"
-  },
-  sections: [
-    {
-      kind: "topic",
-      topicId: "topic_update_proposal_1",
-      purpose: "Render the login topic.",
-      say: [
-        "Write a concise acknowledgement without inventing a solution."
-      ],
-      ask: [],
-      forbid: [
-        "No question.",
-        "No solution."
-      ]
-    }
+  acknowledge: [],
+  answer: [],
+  ask: [],
+  say: [
+    "Write a concise acknowledgement without inventing a solution. Do not ask a question or provide a solution."
   ],
-  globalQuestions: [],
-  globalForbid: [
-    "No question.",
-    "No solution."
-  ],
-  rendererInstructions: [
-    "Write only from this composed plan."
-  ]
+  review: null
 };
 
 const renderedSupportResponse: RenderedSupportResponse = {
-  renderedMessages: [
-    {
-      messageId: "rendered_message_test",
-      messageOrder: 1,
-      purpose: "support_response",
-      relatedPlannedMessageOrders: [],
-      content: "Voici quoi faire."
-    }
-  ],
-  finalResponseText: "Voici quoi faire.",
-  internalRenderingNotes: "Test fixture."
+  finalResponseText: "Voici quoi faire."
 };
 
 const userResponse: UserResponse = {
@@ -476,9 +446,13 @@ describe("runSupportProcessingPipelineV2", function () {
       topicResponsePlans: [],
       channel: input.latestUserMessage.channel
     }));
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan,
+        targetLanguage: "en",
+        channel: input.latestUserMessage.channel
+      })
+    );
     expect(steps.buildUserResponse).toHaveBeenCalledWith({
       renderedSupportResponse
     });
@@ -517,9 +491,13 @@ describe("runSupportProcessingPipelineV2", function () {
       topicResponsePlans: [],
       channel: input.latestUserMessage.channel
     }));
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan,
+        targetLanguage: "fr",
+        channel: input.latestUserMessage.channel
+      })
+    );
   });
 
   it("runs text deep analysis when text surface has support content", async function () {
@@ -541,9 +519,13 @@ describe("runSupportProcessingPipelineV2", function () {
       standardResponseFragments: [],
       channel: buildInput().latestUserMessage.channel
     }));
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan,
+        targetLanguage: "fr",
+        channel: buildInput().latestUserMessage.channel
+      })
+    );
     expect(steps.proposeTopicUpdates).toHaveBeenCalledWith({
       textUnderstandings,
       supportTopicKnowledge: buildInput().supportTopicKnowledge,
@@ -678,6 +660,43 @@ describe("runSupportProcessingPipelineV2", function () {
     );
   });
 
+  it("falls back before composition when a topic response plan is unusable", async function () {
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      planSupportResponse: vi.fn(async () => {
+        return undefined as unknown as ResponsePlanV2;
+      })
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(output.topicResponsePlans).toHaveLength(1);
+    expect(output.topicResponsePlans?.[0]).toMatchObject({
+      topicId: topicUpdateProposals[0].proposalId,
+      acknowledge: [],
+      answer: [],
+      ask: [],
+      say: [
+        "Acknowledge the user's topic without making unsupported claims. Ask for clarification only if necessary."
+      ],
+      review:
+        `topic_response_plan_fallback:${topicUpdateProposals[0].proposalId}`
+    });
+    expect(output.topicResponsePlans?.[0]?.responsePlanId).toBe(
+      `response_plan_${topicUpdateProposals[0].proposalId}`
+    );
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicResponsePlans: output.topicResponsePlans
+      })
+    );
+  });
+
   it("passes the current turn language to the renderer despite French previous bot context", async function () {
     const input = buildInput();
     input.latestUserMessage.content =
@@ -706,9 +725,13 @@ describe("runSupportProcessingPipelineV2", function () {
         targetLanguage: "en"
       })
     );
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan,
+        targetLanguage: "en",
+        channel: input.latestUserMessage.channel
+      })
+    );
   });
 
   it("normalizes legacy Other surface languages before planner and renderer inputs", async function () {
@@ -738,9 +761,13 @@ describe("runSupportProcessingPipelineV2", function () {
         targetLanguage: "en"
       })
     );
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan,
+        targetLanguage: "en",
+        channel: input.latestUserMessage.channel
+      })
+    );
   });
 
   it("passes a German surface language through planner and renderer despite French previous context", async function () {
@@ -775,9 +802,13 @@ describe("runSupportProcessingPipelineV2", function () {
         targetLanguage: "de"
       })
     );
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan,
+        targetLanguage: "de",
+        channel: input.latestUserMessage.channel
+      })
+    );
   });
 
   it("plans every actionable topic with its related evidence", async function () {
@@ -927,14 +958,22 @@ describe("runSupportProcessingPipelineV2", function () {
         topicResponsePlans
       })
     );
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan
+      })
+    );
+    expect(buildTopicResponsePlanDebug(firstTopicResponsePlan)).toMatchObject({
+      responsePlanId: firstTopicResponsePlan.responsePlanId,
+      say: firstTopicResponsePlan.say,
+      ask: firstTopicResponsePlan.ask,
+      review: firstTopicResponsePlan.review
     });
-    expect(buildTopicResponsePlanDebug(firstTopicResponsePlan)).toEqual({
-      responsePlanId: firstTopicResponsePlan.responsePlanId
-    });
-    expect(buildTopicResponsePlanDebug(secondTopicResponsePlan)).toEqual({
-      responsePlanId: secondTopicResponsePlan.responsePlanId
+    expect(buildTopicResponsePlanDebug(secondTopicResponsePlan)).toMatchObject({
+      responsePlanId: secondTopicResponsePlan.responsePlanId,
+      say: secondTopicResponsePlan.say,
+      ask: secondTopicResponsePlan.ask,
+      review: secondTopicResponsePlan.review
     });
     expect(output).not.toHaveProperty("responsePlan");
   });
@@ -1081,6 +1120,263 @@ describe("runSupportProcessingPipelineV2", function () {
       })
     );
     expect(JSON.stringify(billingPlannerInput)).not.toContain("compte");
+  });
+
+  it("updates existing access and billing topics in the multi-topic access billing flow", async function () {
+    const mixedInput = buildInput();
+    mixedInput.latestUserMessage.content =
+      "Mon compte est toujours bloqué. Et j’ai aussi reçu ma facture deux fois.";
+    mixedInput.supportTopicKnowledge = {
+      segments_topic: [
+        {
+          id_topic: "topic_1",
+          topic_title: "Compte bloqué",
+          topic_category: "access_security",
+          topic_summary: "Le compte de l'utilisateur est bloqué.",
+          topic_details: {}
+        },
+        {
+          id_topic: "topic_2",
+          topic_title: "Problème de facturation",
+          topic_category: "billing",
+          topic_summary: "L'utilisateur a un problème de facturation.",
+          topic_details: {}
+        }
+      ]
+    } as unknown as SupportProcessingPipelineV2Input["supportTopicKnowledge"];
+
+    const accessUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      sourceVerbatims: ["Mon compte est toujours bloqué."],
+      summary: "Compte toujours bloqué",
+      broadCategoryHint: "access_security",
+      caseDetails: [
+        {
+          key: "observed_result",
+          value: "account_still_blocked",
+          evidence: "Mon compte est toujours bloqué."
+        }
+      ]
+    };
+    const billingUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      understandingId: "text_understanding_2",
+      sourceSegmentIds: ["seg_support_2"],
+      sourceVerbatims: ["J’ai aussi reçu ma facture deux fois."],
+      summary: "Facture reçue deux fois",
+      broadCategoryHint: "billing",
+      supportNeeds: ["possible_billing_or_payment_action"],
+      caseDetails: [
+        {
+          key: "billing_issue_type",
+          value: "duplicate_billing",
+          evidence: "J’ai aussi reçu ma facture deux fois."
+        }
+      ]
+    };
+    const topicUpdateOps: TopicUpdateOp[] = [
+      {
+        op: "update",
+        items: [0],
+        topicId: "topic_1",
+        topic: null,
+        merge: {
+          caseDetails: [[0, 0]],
+          attemptedActions: []
+        },
+        replace: null,
+        review: null
+      },
+      {
+        op: "update",
+        items: [1],
+        topicId: "topic_2",
+        topic: null,
+        merge: {
+          caseDetails: [[1, 0]],
+          attemptedActions: []
+        },
+        replace: null,
+        review: null
+      }
+    ];
+    const topicPatches: TopicPatch[] = [
+      {
+        patchId: "topic_patch_1",
+        op: "update",
+        items: [0],
+        topicId: "topic_1",
+        temporaryTopicId: null,
+        topic: null,
+        merge: {
+          caseDetails: accessUnderstanding.caseDetails,
+          attemptedActions: []
+        },
+        replace: {
+          caseDetails: [],
+          attemptedActions: []
+        },
+        review: null,
+        sourceUnderstandingIds: ["text_understanding_1"],
+        selectedSourceVerbatims: ["Mon compte est toujours bloqué."]
+      },
+      {
+        patchId: "topic_patch_2",
+        op: "update",
+        items: [1],
+        topicId: "topic_2",
+        temporaryTopicId: null,
+        topic: null,
+        merge: {
+          caseDetails: billingUnderstanding.caseDetails,
+          attemptedActions: []
+        },
+        replace: {
+          caseDetails: [],
+          attemptedActions: []
+        },
+        review: null,
+        sourceUnderstandingIds: ["text_understanding_2"],
+        selectedSourceVerbatims: ["J’ai aussi reçu ma facture deux fois."]
+      }
+    ];
+    const mergedTopicSnapshots: MergedTopicSnapshot[] = [
+      {
+        snapshotId: "topic_patch_1",
+        topicId: "topic_1",
+        temporaryTopicId: null,
+        isNewTopic: false,
+        title: "Compte bloqué",
+        broadCategoryHint: "access_security",
+        summary: "Le compte de l'utilisateur est toujours bloqué.",
+        caseDetails: accessUnderstanding.caseDetails,
+        attemptedActions: [],
+        topic_details: {
+          observed_result: "account_still_blocked"
+        },
+        sourceUnderstandingIds: ["text_understanding_1"],
+        sourceVerbatims: ["Mon compte est toujours bloqué."],
+        sourceOpIndex: 0,
+        baseTopic: mixedInput.supportTopicKnowledge.segments_topic[0]
+      },
+      {
+        snapshotId: "topic_patch_2",
+        topicId: "topic_2",
+        temporaryTopicId: null,
+        isNewTopic: false,
+        title: "Problème de facturation",
+        broadCategoryHint: "billing",
+        summary: "L'utilisateur indique avoir reçu sa facture deux fois.",
+        caseDetails: billingUnderstanding.caseDetails,
+        attemptedActions: [],
+        topic_details: {
+          billing_issue_type: "duplicate_billing"
+        },
+        sourceUnderstandingIds: ["text_understanding_2"],
+        sourceVerbatims: ["J’ai aussi reçu ma facture deux fois."],
+        sourceOpIndex: 1,
+        baseTopic: mixedInput.supportTopicKnowledge.segments_topic[1]
+      }
+    ];
+    const proposedTopicUpdates: ProposeTopicUpdatesOutput = {
+      topicUpdateOps,
+      topicPatches,
+      mergedTopicSnapshots,
+      topicUpdateProposals: []
+    };
+    const composedPlanForBothTopics: ComposedSupportResponsePlan = {
+      topicId: null,
+      messageIntent: "support_reply",
+      acknowledge: [],
+      answer: [],
+      ask: [],
+      say: [
+        "Acknowledge that the user reports the account is still blocked.",
+        "Acknowledge that the user reports receiving the invoice twice."
+      ],
+      review: null
+    };
+    const renderedBothTopics: RenderedSupportResponse = {
+      finalResponseText:
+        "Je comprends que votre compte est toujours bloqué et que vous indiquez avoir reçu votre facture deux fois."
+    };
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async (): Promise<TextSurfaceAnalysis> => ({
+        userLanguage: "French",
+        segments: [
+          {
+            segmentId: "seg_support",
+            verbatim: "Mon compte est toujours bloqué.",
+            category: "support_relevant"
+          },
+          {
+            segmentId: "seg_support_2",
+            verbatim: "J’ai aussi reçu ma facture deux fois.",
+            category: "support_relevant"
+          }
+        ]
+      })),
+      analyzeSupportText: vi.fn(async () => ({
+        textUnderstandings: [accessUnderstanding, billingUnderstanding],
+        supportResponseCues: []
+      })),
+      proposeTopicUpdates: vi.fn(async () => proposedTopicUpdates),
+      planSupportResponse: vi.fn(async (plannerInput) => ({
+        responsePlanId: "response_plan_test",
+        topicId: plannerInput.topicEvidence.topicId,
+        acknowledge: [],
+        answer: [],
+        ask: [],
+        say: [
+          `Acknowledge ${plannerInput.topicEvidence.topicId}.`
+        ],
+        review: null
+      })),
+      composeSupportResponsePlan: vi.fn(async () => composedPlanForBothTopics),
+      renderSupportResponse: vi.fn(async () => renderedBothTopics),
+      buildUserResponse: vi.fn(async ({ renderedSupportResponse }) => ({
+        messages: [
+          {
+            type: "topic_response",
+            content: renderedSupportResponse.finalResponseText
+          }
+        ]
+      } satisfies UserResponse))
+    });
+
+    const output = await runSupportProcessingPipelineV2(mixedInput, steps);
+
+    expect(output.topicUpdateOps).toEqual(topicUpdateOps);
+    expect(output.topicUpdateOps?.map((op) => [op.op, op.topicId])).toEqual([
+      ["update", "topic_1"],
+      ["update", "topic_2"]
+    ]);
+    expect(output.mergedTopicSnapshots?.map((snapshot) => {
+      return snapshot.topicId;
+    })).toEqual(["topic_1", "topic_2"]);
+    expect(output.topicResponsePlans).toHaveLength(2);
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicResponsePlans: output.topicResponsePlans
+      })
+    );
+    expect(composedPlanForBothTopics.say.join(" ")).toContain(
+      "account is still blocked"
+    );
+    expect(composedPlanForBothTopics.say.join(" ")).toContain(
+      "receiving the invoice twice"
+    );
+    expect(output.userResponse.messages[0]?.content).toContain(
+      "compte est toujours bloqué"
+    );
+    expect(output.userResponse.messages[0]?.content).toContain(
+      "facture deux fois"
+    );
   });
 
   it("does not silently rebuild topic verbatims when the proposal has none", async function () {
@@ -1250,6 +1546,63 @@ describe("runSupportProcessingPipelineV2", function () {
     ]);
   });
 
+  it("continues to render when RAG retrieval aborts", async function () {
+    const abortError = new Error("The operation was aborted.");
+    abortError.name = "AbortError";
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      planKnowledgeEnrichment: vi.fn(async () => ragPlan),
+      retrieveSupportKnowledge: vi.fn(async () => {
+        throw abortError;
+      }),
+      synthesizeRetrievedKnowledge: vi.fn(synthesizeRetrievedKnowledge)
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+    const plannerInput = vi.mocked(steps.planSupportResponse).mock.calls[0][0];
+
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledTimes(1);
+    expect(steps.synthesizeRetrievedKnowledge).toHaveBeenCalledWith(
+      expect.objectContaining({
+        knowledgeChunks: [],
+        knowledgeRetrievalFailureReason: "abort_error"
+      })
+    );
+    expect(output.topicRetrievedSupportKnowledge).toEqual([
+      {
+        proposalId: topicUpdateProposals[0].proposalId,
+        topicId: null,
+        knowledgeChunks: []
+      }
+    ]);
+    expect(plannerInput.topicRetrievedKnowledgeSynthesis).toEqual(
+      expect.objectContaining({
+        relevantFacts: [],
+        limitations: [
+          "Knowledge retrieval failed or timed out for this topic."
+        ]
+      })
+    );
+    expect(steps.planSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedCatalogKnowledge: expect.objectContaining({
+          scopeReason: "test_catalog_selection"
+        })
+      })
+    );
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan
+      })
+    );
+    expect(output.userResponse).toBe(userResponse);
+  });
+
   it("runs RAG only for the topic whose enrichment plan requests it", async function () {
     const secondUnderstanding: TextUnderstanding = {
       ...textUnderstandings[0],
@@ -1326,6 +1679,65 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(secondTopicPlannerInput?.topicRetrievedKnowledgeSynthesis).toEqual(
       retrievedKnowledgeSynthesis
     );
+  });
+
+  it("keeps catalog selection independent from RAG synthesis before planning", async function () {
+    const ragSynthesisWithPossibleFields = {
+      relevantFacts: ["Notification permission status can affect diagnosis."],
+      applicableInstructions: [
+        "Ask for notification_permission_status only if the catalog selected it."
+      ],
+      possibleFields: ["notification_permission_status"],
+      unresolvedPoints: ["notification_permission_status"],
+      sourceReferences: ["doc_1"],
+      limitations: [],
+      doNotClaim: [],
+      topics: []
+    };
+    const selectedCatalogKnowledge = {
+      selectedFields: [
+        {
+          fieldName: "app_version",
+          description: "App version.",
+          askableByUser: true
+        }
+      ],
+      selectedGenericKnowledge: [],
+      scopeReason: "catalog_did_not_select_notification_permission_status",
+      rejectedFieldNames: ["notification_permission_status"]
+    };
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      planKnowledgeEnrichment: vi.fn(async () => ragPlan),
+      selectCatalogKnowledgeForTopic: vi.fn(async () => selectedCatalogKnowledge),
+      synthesizeRetrievedKnowledge: vi.fn(
+        async () => ragSynthesisWithPossibleFields
+      )
+    });
+
+    await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.planSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedCatalogKnowledge,
+        topicRetrievedKnowledgeSynthesis: ragSynthesisWithPossibleFields
+      })
+    );
+
+    const plannerInput = vi.mocked(steps.planSupportResponse).mock.calls[0][0] as {
+      selectedCatalogKnowledge: typeof selectedCatalogKnowledge;
+    };
+
+    expect(plannerInput.selectedCatalogKnowledge.selectedFields.map((field) => {
+      return field.fieldName;
+    })).toEqual(["app_version"]);
+    expect(plannerInput.selectedCatalogKnowledge.rejectedFieldNames)
+      .toContain("notification_permission_status");
   });
 
   it("retrieves mock knowledge only for the matching topic in a multi-topic turn", async function () {
@@ -1476,7 +1888,7 @@ describe("runSupportProcessingPipelineV2", function () {
     const secondRetrieval = createDeferred<KnowledgeChunk[]>();
     const firstChunks: KnowledgeChunk[] = [
       {
-        topicId: 1,
+        topicId: "1",
         sourceId: "access_doc",
         content: "Access knowledge",
         score: 0.9
@@ -1484,7 +1896,7 @@ describe("runSupportProcessingPipelineV2", function () {
     ];
     const secondChunks: KnowledgeChunk[] = [
       {
-        topicId: 2,
+        topicId: "2",
         sourceId: "billing_doc",
         content: "Billing knowledge",
         score: 0.8
@@ -1493,7 +1905,7 @@ describe("runSupportProcessingPipelineV2", function () {
     const firstSynthesis = {
       topics: [
         {
-          topicId: 1,
+          topicId: "1",
           relevantFacts: ["Access fact"],
           sourceReferences: ["access_doc"]
         }
@@ -1502,7 +1914,7 @@ describe("runSupportProcessingPipelineV2", function () {
     const secondSynthesis = {
       topics: [
         {
-          topicId: 2,
+          topicId: "2",
           relevantFacts: ["Billing fact"],
           sourceReferences: ["billing_doc"]
         }
@@ -1590,12 +2002,26 @@ describe("runSupportProcessingPipelineV2", function () {
       route: "retrieve_knowledge",
       retrievalRequests: [
         {
-          topicId: 1,
-          query: "access error"
+          topicId: "1",
+          searchPurpose: "support_answer_and_qualification",
+          queryText: "Support issue: access error.",
+          desiredKnowledge: ["known_behavior"],
+          context: {
+            topicSummary: "Access error",
+            knownDetails: [],
+            attemptedActions: []
+          }
         },
         {
-          topicId: 1,
-          query: "password reset"
+          topicId: "1",
+          searchPurpose: "support_answer_and_qualification",
+          queryText: "Support issue: password reset.",
+          desiredKnowledge: ["troubleshooting_steps"],
+          context: {
+            topicSummary: "Password reset",
+            knownDetails: [],
+            attemptedActions: []
+          }
         }
       ],
       reason: "Two knowledge queries are useful."
@@ -1603,7 +2029,7 @@ describe("runSupportProcessingPipelineV2", function () {
     const mergedChunks: KnowledgeChunk[] = [
       ...knowledgeChunks,
       {
-        topicId: 1,
+        topicId: "1",
         sourceId: "doc_2",
         content: "Password reset knowledge",
         score: 0.8
@@ -1663,9 +2089,11 @@ describe("runSupportProcessingPipelineV2", function () {
         topicResponsePlans: []
       })
     );
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan
+      })
+    );
     expect(output.topicResponsePlans).toEqual([]);
     expect(output).not.toHaveProperty("responsePlan");
   });
@@ -1689,9 +2117,11 @@ describe("runSupportProcessingPipelineV2", function () {
       standardResponseFragments: [],
       channel: input.latestUserMessage.channel
     }));
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan
+      })
+    );
   });
 
   it("passes support response plans and standard fragments together to the composer", async function () {
@@ -1714,9 +2144,11 @@ describe("runSupportProcessingPipelineV2", function () {
       standardResponseFragments: [standardFragment],
       channel: input.latestUserMessage.channel
     }));
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan
+      })
+    );
   });
 
   it("composes multiple standard fragments before one renderer call", async function () {
@@ -1741,9 +2173,11 @@ describe("runSupportProcessingPipelineV2", function () {
       channel: input.latestUserMessage.channel
     }));
     expect(steps.renderSupportResponse).toHaveBeenCalledTimes(1);
-    expect(steps.renderSupportResponse).toHaveBeenCalledWith({
-      composedSupportResponsePlan
-    });
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan
+      })
+    );
   });
 
   it("does not send standard fragments directly to buildUserResponse", async function () {

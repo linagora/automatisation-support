@@ -2,6 +2,10 @@ export {
   buildSelectCatalogKnowledgeForTopicPrompt
 } from "./buildSelectCatalogKnowledgeForTopicPrompt";
 export {
+  CATEGORY_CANDIDATE_FIELD_NAMES,
+  buildCandidateFieldsForTopicSelector
+} from "./buildCandidateFieldsForTopicSelector";
+export {
   formatSelectCatalogKnowledgeForTopicOutput
 } from "./formatSelectCatalogKnowledgeForTopicOutput";
 export {

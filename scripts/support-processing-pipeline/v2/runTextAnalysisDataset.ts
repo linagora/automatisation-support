@@ -62,15 +62,20 @@ import {
   retrieveSupportKnowledge
 } from "../../../src/support-processing-pipeline/v2/retrieve-support-knowledge/retrieveSupportKnowledge";
 import {
-  enrichSelectedCatalogKnowledgeWithSynthesis,
   synthesizeRetrievedKnowledge
 } from "../../../src/support-processing-pipeline/v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
 import {
   planSupportResponse
 } from "../../../src/support-processing-pipeline/v2/plan-support-response/planSupportResponse";
 import {
+  composeSupportResponsePlan
+} from "../../../src/support-processing-pipeline/v2/compose-support-response-plan/composeSupportResponsePlan";
+import {
   selectCatalogKnowledgeForTopic
 } from "../../../src/support-processing-pipeline/v2/select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic";
+import {
+  buildCandidateFieldsForTopicSelector
+} from "../../../src/support-processing-pipeline/v2/select-catalog-knowledge-for-topic/buildCandidateFieldsForTopicSelector";
 import {
   renderSupportResponse
 } from "../../../src/support-processing-pipeline/v2/response-renderer/renderSupportResponse";
@@ -90,6 +95,7 @@ import {
 import type {
   KnowledgeChunk,
   KnowledgeEnrichmentPlan,
+  ComposedSupportResponsePlan,
   RetrievedKnowledgeSynthesis,
   SelectedCatalogKnowledgeForTopic,
   StandardResponseFragment,
@@ -97,6 +103,8 @@ import type {
   TextSurfaceAnalysis,
   TextUnderstanding,
   TopicUpdateOp,
+  TopicPatch,
+  MergedTopicSnapshot,
   TopicEvidence
 } from "../../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
 import type {
@@ -115,6 +123,7 @@ const DATASET_STOP_STAGES = [
   "topics",
   "knowledge",
   "response-plan",
+  "compose",
   "render",
   "all"
 ] as const;
@@ -131,11 +140,14 @@ type CaseRunOutput = {
   textUnderstandings: TextUnderstanding[] | "SKIPPED";
   supportResponseCues: SupportResponseCue[] | "SKIPPED";
   topicUpdateOps: TopicUpdateOp[] | "SKIPPED";
+  topicPatches?: TopicPatch[] | "SKIPPED";
+  mergedTopicSnapshots?: MergedTopicSnapshot[] | "SKIPPED";
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan | "SKIPPED";
   retrievedSupportKnowledge: KnowledgeChunk[] | "SKIPPED";
   synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null | "SKIPPED";
   responsePlan: SupportResponsePlan | "SKIPPED";
   topicResponsePlans?: SupportResponsePlan[] | "SKIPPED";
+  composedSupportResponsePlan?: ComposedSupportResponsePlan | "SKIPPED";
   renderedSupportResponse: RenderedSupportResponse | "SKIPPED";
   debug?: {
     textSurface?: TextSurfaceDebugInfo;
@@ -185,7 +197,8 @@ type TopicCatalogSelectionDebugInfo = {
 };
 
 type TopicDatasetBranch = {
-  topicUpdateOp: TopicUpdateOp;
+  topicUpdateOp?: TopicUpdateOp;
+  topicSnapshot?: MergedTopicSnapshot;
   topicUpdateOpId: string;
   topicEvidence: TopicEvidence;
   existingTopic?: unknown;
@@ -238,6 +251,8 @@ type SupportTextDebugInfo = {
 type TopicUpdatesDebugInfo = {
   callPerformed: boolean;
   skippedReason?: string;
+  topicPatches?: TopicPatch[];
+  mergedTopicSnapshots?: MergedTopicSnapshot[];
 };
 
 function compactSelectedField(field: unknown): TopicCatalogSelectionDebugInfo[
@@ -275,7 +290,11 @@ function buildTopicCatalogSelectionsDebug(
 
     return {
       proposalId: branch.topicUpdateOpId,
-      topicId: branch.topicUpdateOp.topicId,
+      topicId:
+        branch.topicSnapshot?.topicId ??
+        branch.topicSnapshot?.temporaryTopicId ??
+        branch.topicUpdateOp?.topicId ??
+        null,
       topicSourceVerbatims: branch.topicEvidence.topicSourceVerbatims,
       relatedUnderstandingIds: branch.topicEvidence.relatedUnderstandingIds,
       selectedFields: branch.selectedCatalogKnowledge.selectedFields.flatMap(
@@ -304,6 +323,31 @@ function buildTopicCatalogSelectionsDebug(
 function getArgValue(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
   return index === -1 ? undefined : args[index + 1];
+}
+
+function ragRetrievalFailureReason(error: unknown): string {
+  if (error instanceof Error && error.name === "AbortError") {
+    return "abort_error";
+  }
+
+  if (
+    error instanceof Error &&
+    /abort|timeout|timed out/i.test(error.message)
+  ) {
+    return "timeout";
+  }
+
+  return "retrieval_error";
+}
+
+function sanitizeRagErrorMessage(error: unknown): string {
+  const rawMessage = error instanceof Error ? error.message : String(error);
+  const secret = process.env.SUPPORT_RAG_API_KEY;
+  const withoutSecret = secret
+    ? rawMessage.replaceAll(secret, "[redacted]")
+    : rawMessage;
+
+  return withoutSecret.replace(/Bearer\s+\S+/gi, "Bearer [redacted]");
 }
 
 function parseUntil(args: string[]): DatasetStopStage {
@@ -881,11 +925,15 @@ async function runTopicUpdatesStage(params: {
   textUnderstandings: TextUnderstanding[] | undefined;
 }): Promise<{
   topicUpdateOps: TopicUpdateOp[] | undefined;
+  topicPatches: TopicPatch[] | undefined;
+  mergedTopicSnapshots: MergedTopicSnapshot[] | undefined;
   topicUpdatesDebug: TopicUpdatesDebugInfo | undefined;
 }> {
   if (!params.textUnderstandings || params.textUnderstandings.length === 0) {
     return {
       topicUpdateOps: undefined,
+      topicPatches: undefined,
+      mergedTopicSnapshots: undefined,
       topicUpdatesDebug: {
         callPerformed: false,
         skippedReason: "no_text_understandings"
@@ -907,8 +955,12 @@ async function runTopicUpdatesStage(params: {
 
   return {
     topicUpdateOps: topicUpdatesResult.topicUpdateOps,
+    topicPatches: topicUpdatesResult.topicPatches,
+    mergedTopicSnapshots: topicUpdatesResult.mergedTopicSnapshots,
     topicUpdatesDebug: {
-      callPerformed: true
+      callPerformed: true,
+      topicPatches: topicUpdatesResult.topicPatches,
+      mergedTopicSnapshots: topicUpdatesResult.mergedTopicSnapshots
     }
   };
 }
@@ -997,6 +1049,39 @@ function buildDatasetTopicEvidence(params: {
   };
 }
 
+function buildDatasetTopicEvidenceFromSnapshot(params: {
+  snapshot: MergedTopicSnapshot;
+  textUnderstandings: TextUnderstanding[];
+  supportResponseCues: SupportResponseCue[];
+}): TopicEvidence {
+  const relatedUnderstandingIds = new Set(
+    params.snapshot.sourceUnderstandingIds
+  );
+  const relatedTextUnderstandings = params.textUnderstandings.filter(
+    (understanding) => {
+      return relatedUnderstandingIds.has(understanding.understandingId);
+    }
+  );
+  const relatedSupportResponseCues = params.supportResponseCues.filter((cue) => {
+    return cue.relatedUnderstandingIds.length > 0 &&
+      cue.relatedUnderstandingIds.every((understandingId) => {
+        return relatedUnderstandingIds.has(understandingId);
+      });
+  });
+
+  return {
+    proposalId: params.snapshot.snapshotId,
+    topicId: params.snapshot.topicId ?? params.snapshot.temporaryTopicId,
+    topicSnapshot: params.snapshot,
+    topicSourceVerbatims: Array.from(new Set(params.snapshot.sourceVerbatims)),
+    relatedUnderstandingIds: params.snapshot.sourceUnderstandingIds,
+    relatedTextUnderstandings,
+    relatedAttachmentUnderstandings: [],
+    relatedSupportResponseCues,
+    existingTopic: params.snapshot
+  };
+}
+
 async function runKnowledgeStage(params: {
   testCase: TextAnalysisDatasetCase;
   textSurfaceAnalysis: TextSurfaceAnalysis | undefined;
@@ -1004,29 +1089,60 @@ async function runKnowledgeStage(params: {
   textUnderstandings: TextUnderstanding[] | undefined;
   supportResponseCues: SupportResponseCue[] | undefined;
   topicUpdateOps: TopicUpdateOp[] | undefined;
+  mergedTopicSnapshots: MergedTopicSnapshot[] | undefined;
+  debug: boolean;
 }): Promise<{
   topicBranches: TopicDatasetBranch[];
   knowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
   retrievedSupportKnowledge: KnowledgeChunk[];
   synthesizedRetrievedKnowledge: RetrievedKnowledgeSynthesis | null;
 }> {
-  const actionableOps = (params.topicUpdateOps ?? []).filter(
-    isActionableTopicUpdateOp
-  );
+  const actionableSnapshots = params.mergedTopicSnapshots ?? [];
+  const actionableOps = actionableSnapshots.length > 0
+    ? []
+    : (params.topicUpdateOps ?? []).filter(isActionableTopicUpdateOp);
   const topicBranches = await Promise.all(
-    actionableOps.map(async (topicUpdateOp) => {
-      const opIndex = params.topicUpdateOps?.indexOf(topicUpdateOp) ?? 0;
-      const existingTopic = findExistingTopic(
-        topicUpdateOp,
-        params.testCase.existingTopics
-      );
-      const topicEvidence = buildDatasetTopicEvidence({
-        op: topicUpdateOp,
-        opIndex,
-        ...(existingTopic ? { existingTopic } : {}),
-        textUnderstandings: params.textUnderstandings ?? [],
-        supportResponseCues: params.supportResponseCues ?? []
-      });
+    (actionableSnapshots.length > 0
+      ? actionableSnapshots
+      : actionableOps
+    ).map(async (topicBranchSource) => {
+      const topicSnapshot = "snapshotId" in topicBranchSource
+        ? topicBranchSource
+        : undefined;
+      const topicUpdateOp = "snapshotId" in topicBranchSource
+        ? undefined
+        : topicBranchSource;
+      const opIndex = topicUpdateOp
+        ? params.topicUpdateOps?.indexOf(topicUpdateOp) ?? 0
+        : 0;
+      const existingTopic = topicUpdateOp
+        ? findExistingTopic(
+            topicUpdateOp,
+            params.testCase.existingTopics
+          )
+        : undefined;
+      if (!topicSnapshot && !topicUpdateOp) {
+        throw new Error("Topic branch source is neither snapshot nor update op.");
+      }
+      const topicEvidence = topicSnapshot
+        ? buildDatasetTopicEvidenceFromSnapshot({
+            snapshot: topicSnapshot,
+            textUnderstandings: params.textUnderstandings ?? [],
+            supportResponseCues: params.supportResponseCues ?? []
+          })
+        : buildDatasetTopicEvidence({
+            op: topicUpdateOp,
+            opIndex,
+            ...(existingTopic ? { existingTopic } : {}),
+            textUnderstandings: params.textUnderstandings ?? [],
+            supportResponseCues: params.supportResponseCues ?? []
+          });
+      const selectorFields = topicSnapshot
+        ? buildCandidateFieldsForTopicSelector({
+            topicSnapshot,
+            extractableFieldCatalog: params.testCase.extractableFieldCatalog
+          })
+        : undefined;
       const topicUserMessageContent =
         topicEvidence.topicSourceVerbatims.join(" ").trim();
       const [
@@ -1036,6 +1152,13 @@ async function runKnowledgeStage(params: {
         selectCatalogKnowledgeForTopic({
           topicUserMessageContent,
           topicEvidence,
+          ...(topicSnapshot ? { topicSnapshot } : {}),
+          ...(selectorFields
+            ? {
+                knownFields: selectorFields.knownFields,
+                candidateFields: selectorFields.candidateFields
+              }
+            : {}),
           extractableFieldCatalog: params.testCase.extractableFieldCatalog,
           recentInteractionContext: params.testCase.recentInteractionContext,
           ...(params.textSurfaceAnalysis?.userLanguage
@@ -1058,36 +1181,49 @@ async function runKnowledgeStage(params: {
         | null = null;
 
       if (topicKnowledgeEnrichmentPlan.route === "retrieve_knowledge") {
-        topicRetrievedSupportKnowledge = await retrieveSupportKnowledge({
-          knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
-          topicEvidence,
-          selectedCatalogKnowledge,
-          topicKnowledgeEnrichmentPlan
-        });
+        let knowledgeRetrievalFailureReason: string | undefined;
+
+        try {
+          topicRetrievedSupportKnowledge = await retrieveSupportKnowledge({
+            knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
+            topicEvidence,
+            selectedCatalogKnowledge,
+            topicKnowledgeEnrichmentPlan
+          });
+        } catch (error) {
+          knowledgeRetrievalFailureReason = ragRetrievalFailureReason(error);
+          topicRetrievedSupportKnowledge = [];
+
+          if (params.debug) {
+            console.debug({
+              eventName: "support.v2.dataset.rag_retrieval_failed",
+              errorName: error instanceof Error ? error.name : "unknown",
+              errorMessage: sanitizeRagErrorMessage(error)
+            });
+          }
+        }
+
         topicRetrievedKnowledgeSynthesis = synthesizeRetrievedKnowledge({
           knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
           knowledgeChunks: topicRetrievedSupportKnowledge,
           topicEvidence,
           selectedCatalogKnowledge,
-          topicKnowledgeEnrichmentPlan
+          topicKnowledgeEnrichmentPlan,
+          ...(knowledgeRetrievalFailureReason
+            ? { knowledgeRetrievalFailureReason }
+            : {})
         });
       }
-      const plannerSelectedCatalogKnowledge =
-        enrichSelectedCatalogKnowledgeWithSynthesis({
-          selectedCatalogKnowledge,
-          extractableFieldCatalog: params.testCase.extractableFieldCatalog,
-          synthesis: topicRetrievedKnowledgeSynthesis
-        });
-
       return {
-        topicUpdateOp,
+        ...(topicUpdateOp ? { topicUpdateOp } : {}),
+        ...(topicSnapshot ? { topicSnapshot } : {}),
         topicUpdateOpId: topicEvidence.proposalId,
         topicEvidence,
         ...(existingTopic ? { existingTopic } : {}),
         relatedTextUnderstandings: topicEvidence.relatedTextUnderstandings,
         relatedSupportResponseCues:
           topicEvidence.relatedSupportResponseCues,
-        selectedCatalogKnowledge: plannerSelectedCatalogKnowledge,
+        selectedCatalogKnowledge,
         topicKnowledgeEnrichmentPlan,
         topicRetrievedSupportKnowledge,
         topicRetrievedKnowledgeSynthesis
@@ -1162,8 +1298,7 @@ async function runResponsePlanStage(params: {
 async function runRenderStage(params: {
   testCase: TextAnalysisDatasetCase;
   textSurfaceAnalysis: TextSurfaceAnalysis | undefined;
-  standardResponseFragments: StandardResponseFragment[];
-  topicResponsePlans: SupportResponsePlan[];
+  composedSupportResponsePlan: ComposedSupportResponsePlan;
 }): Promise<RenderedSupportResponse> {
   assertPresetEnvConfigured({
     presetName: "fullWeightMessageAnalysis",
@@ -1171,16 +1306,38 @@ async function runRenderStage(params: {
   });
 
   const result = await renderSupportResponse({
-    latestUserMessageContent: params.testCase.latestUserMessage.content,
+    composedSupportResponsePlan: params.composedSupportResponsePlan,
     ...(params.textSurfaceAnalysis?.userLanguage
       ? { targetLanguage: params.textSurfaceAnalysis.userLanguage }
       : {}),
-    standardResponseFragments: params.standardResponseFragments,
-    topicResponsePlans: params.topicResponsePlans,
     channel: params.testCase.latestUserMessage.channel
   });
 
   return result.renderedResponse;
+}
+
+async function runComposeStage(params: {
+  testCase: TextAnalysisDatasetCase;
+  textSurfaceAnalysis: TextSurfaceAnalysis | undefined;
+  standardResponseFragments: StandardResponseFragment[];
+  supportResponseCues: SupportResponseCue[] | undefined;
+  topicResponsePlans: SupportResponsePlan[];
+}): Promise<ComposedSupportResponsePlan> {
+  assertPresetEnvConfigured({
+    presetName: "fullWeightMessageAnalysis",
+    prefix: "LLM_FULL"
+  });
+
+  const result = await composeSupportResponsePlan({
+    standardResponseFragments: params.standardResponseFragments,
+    topicResponsePlans: params.topicResponsePlans,
+    supportResponseCues: params.supportResponseCues ?? [],
+    targetLanguage: params.textSurfaceAnalysis?.userLanguage ?? "unknown",
+    channel: params.testCase.latestUserMessage.channel,
+    recentInteractionContext: params.testCase.recentInteractionContext
+  });
+
+  return result.composedSupportResponsePlan;
 }
 
 async function runCase(
@@ -1207,6 +1364,7 @@ async function runCase(
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
       responsePlan: "SKIPPED",
+      composedSupportResponsePlan: "SKIPPED",
       renderedSupportResponse: "SKIPPED"
     };
   }
@@ -1231,6 +1389,7 @@ async function runCase(
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
       responsePlan: "SKIPPED",
+      composedSupportResponsePlan: "SKIPPED",
       renderedSupportResponse: "SKIPPED"
     };
   }
@@ -1259,6 +1418,7 @@ async function runCase(
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
       responsePlan: "SKIPPED",
+      composedSupportResponsePlan: "SKIPPED",
       renderedSupportResponse: "SKIPPED",
       ...(options.debug
         ? {
@@ -1293,6 +1453,7 @@ async function runCase(
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
       responsePlan: "SKIPPED",
+      composedSupportResponsePlan: "SKIPPED",
       renderedSupportResponse: "SKIPPED",
       ...(options.debug
         ? {
@@ -1330,6 +1491,7 @@ async function runCase(
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
       responsePlan: "SKIPPED",
+      composedSupportResponsePlan: "SKIPPED",
       renderedSupportResponse: "SKIPPED",
       ...(options.debug
         ? {
@@ -1344,6 +1506,8 @@ async function runCase(
 
   const {
     topicUpdateOps,
+    topicPatches,
+    mergedTopicSnapshots,
     topicUpdatesDebug
   } = await runTopicUpdatesStage({
     testCase,
@@ -1361,10 +1525,13 @@ async function runCase(
       textUnderstandings: textUnderstandings ?? "SKIPPED",
       supportResponseCues: supportResponseCues ?? "SKIPPED",
       topicUpdateOps: topicUpdateOps ?? "SKIPPED",
+      topicPatches: topicPatches ?? "SKIPPED",
+      mergedTopicSnapshots: mergedTopicSnapshots ?? "SKIPPED",
       knowledgeEnrichmentPlan: "SKIPPED",
       retrievedSupportKnowledge: "SKIPPED",
       synthesizedRetrievedKnowledge: "SKIPPED",
       responsePlan: "SKIPPED",
+      composedSupportResponsePlan: "SKIPPED",
       renderedSupportResponse: "SKIPPED",
       ...(options.debug
         ? {
@@ -1389,7 +1556,9 @@ async function runCase(
     standardResponseFragments,
     textUnderstandings,
     supportResponseCues,
-    topicUpdateOps
+    topicUpdateOps,
+    mergedTopicSnapshots,
+    debug: options.debug
   });
 
   if (!shouldRunStage(options.until, "response-plan")) {
@@ -1403,10 +1572,13 @@ async function runCase(
       textUnderstandings: textUnderstandings ?? "SKIPPED",
       supportResponseCues: supportResponseCues ?? "SKIPPED",
       topicUpdateOps: topicUpdateOps ?? "SKIPPED",
+      topicPatches: topicPatches ?? "SKIPPED",
+      mergedTopicSnapshots: mergedTopicSnapshots ?? "SKIPPED",
       knowledgeEnrichmentPlan,
       retrievedSupportKnowledge,
       synthesizedRetrievedKnowledge,
       responsePlan: "SKIPPED",
+      composedSupportResponsePlan: "SKIPPED",
       renderedSupportResponse: "SKIPPED",
       ...(options.debug
         ? {
@@ -1432,6 +1604,48 @@ async function runCase(
   });
   const responsePlan = topicResponsePlans[0];
 
+  if (!shouldRunStage(options.until, "compose")) {
+    return {
+      promptSecuritySignals,
+      turnAnalysisPlan,
+      textSurfaceAnalysis: textSurfaceAnalysis
+        ? compactTextSurfaceAnalysis(textSurfaceAnalysis)
+        : "SKIPPED",
+      standardResponseFragments,
+      textUnderstandings: textUnderstandings ?? "SKIPPED",
+      supportResponseCues: supportResponseCues ?? "SKIPPED",
+      topicUpdateOps: topicUpdateOps ?? "SKIPPED",
+      topicPatches: topicPatches ?? "SKIPPED",
+      mergedTopicSnapshots: mergedTopicSnapshots ?? "SKIPPED",
+      knowledgeEnrichmentPlan,
+      retrievedSupportKnowledge,
+      synthesizedRetrievedKnowledge,
+      responsePlan: responsePlan ?? "SKIPPED",
+      topicResponsePlans,
+      composedSupportResponsePlan: "SKIPPED",
+      renderedSupportResponse: "SKIPPED",
+      ...(options.debug
+        ? {
+            debug: {
+              textSurface: textSurfaceDebug,
+              supportText: supportTextDebug,
+              topicUpdates: topicUpdatesDebug,
+              topicCatalogSelections:
+                buildTopicCatalogSelectionsDebug(plannedTopicBranches)
+            }
+          }
+        : {})
+    };
+  }
+
+  const composedSupportResponsePlan = await runComposeStage({
+    testCase,
+    textSurfaceAnalysis,
+    standardResponseFragments,
+    supportResponseCues,
+    topicResponsePlans
+  });
+
   if (!shouldRunStage(options.until, "render")) {
     return {
       promptSecuritySignals,
@@ -1443,11 +1657,14 @@ async function runCase(
       textUnderstandings: textUnderstandings ?? "SKIPPED",
       supportResponseCues: supportResponseCues ?? "SKIPPED",
       topicUpdateOps: topicUpdateOps ?? "SKIPPED",
+      topicPatches: topicPatches ?? "SKIPPED",
+      mergedTopicSnapshots: mergedTopicSnapshots ?? "SKIPPED",
       knowledgeEnrichmentPlan,
       retrievedSupportKnowledge,
       synthesizedRetrievedKnowledge,
       responsePlan: responsePlan ?? "SKIPPED",
       topicResponsePlans,
+      composedSupportResponsePlan,
       renderedSupportResponse: "SKIPPED",
       ...(options.debug
         ? {
@@ -1466,8 +1683,7 @@ async function runCase(
   const renderedSupportResponse = await runRenderStage({
     testCase,
     textSurfaceAnalysis,
-    standardResponseFragments,
-    topicResponsePlans
+    composedSupportResponsePlan
   });
 
   return {
@@ -1480,11 +1696,14 @@ async function runCase(
     textUnderstandings: textUnderstandings ?? "SKIPPED",
     supportResponseCues: supportResponseCues ?? "SKIPPED",
     topicUpdateOps: topicUpdateOps ?? "SKIPPED",
+    topicPatches: topicPatches ?? "SKIPPED",
+    mergedTopicSnapshots: mergedTopicSnapshots ?? "SKIPPED",
     knowledgeEnrichmentPlan,
     retrievedSupportKnowledge,
     synthesizedRetrievedKnowledge,
     responsePlan: responsePlan ?? "SKIPPED",
     topicResponsePlans,
+    composedSupportResponsePlan,
     renderedSupportResponse,
     ...(options.debug
       ? {
@@ -1530,18 +1749,30 @@ async function runAndLogCase(
     logSection("5. textUnderstandings", output.textUnderstandings);
     logSection("6. supportResponseCues", output.supportResponseCues);
     logSection("7. topicUpdateOps", output.topicUpdateOps);
-    logSection("8. knowledgeEnrichmentPlan", output.knowledgeEnrichmentPlan);
-    logSection("9. retrievedSupportKnowledge", output.retrievedSupportKnowledge);
+    logSection("8. topicPatches", output.topicPatches ?? "SKIPPED");
     logSection(
-      "10. synthesizedRetrievedKnowledge",
+      "9. mergedTopicSnapshots",
+      output.mergedTopicSnapshots ?? "SKIPPED"
+    );
+    logSection("10. knowledgeEnrichmentPlan", output.knowledgeEnrichmentPlan);
+    logSection(
+      "11. retrievedSupportKnowledge",
+      output.retrievedSupportKnowledge
+    );
+    logSection(
+      "12. synthesizedRetrievedKnowledge",
       output.synthesizedRetrievedKnowledge
     );
-    logSection("11. responsePlan", output.responsePlan);
+    logSection("13. responsePlan", output.responsePlan);
     logSection(
-      "12. topicResponsePlans",
+      "14. topicResponsePlans",
       output.topicResponsePlans ?? "SKIPPED"
     );
-    logSection("13. renderedSupportResponse", output.renderedSupportResponse);
+    logSection(
+      "15. composedSupportResponsePlan",
+      output.composedSupportResponsePlan ?? "SKIPPED"
+    );
+    logSection("16. renderedSupportResponse", output.renderedSupportResponse);
 
     if (output.renderedSupportResponse !== "SKIPPED") {
       console.log("\nFINAL RESPONSE TEXT");
@@ -1566,7 +1797,7 @@ async function runAndLogCase(
     }
   } catch (error) {
     console.error("\nERROR");
-    console.error(error instanceof Error ? error.message : error);
+    console.error(error instanceof Error ? error.stack : error);
     process.exitCode = 1;
   }
 }
@@ -1593,7 +1824,7 @@ async function main(): Promise<void> {
     until = parseUntil(args);
     selectedCases = selectCases(args);
   } catch (error) {
-    console.error(error instanceof Error ? error.message : error);
+    console.error(error instanceof Error ? error.stack : error);
     listCases();
     process.exitCode = 1;
     return;
@@ -1609,7 +1840,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  console.error(error instanceof Error ? error.stack : error);
   process.exitCode = 1;
 });
 

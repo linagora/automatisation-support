@@ -10,29 +10,19 @@ function objectOf(
   };
 }
 
-const stringSchema = {
-  type: "string"
-} as const;
-
 const stringArraySchema = {
   type: "array",
-  items: stringSchema
+  items: {
+    type: "string"
+  }
 } as const;
 
 const selectedCatalogKnowledgeForTopicSchema = objectOf(
   {
-    selectedFieldNames: stringArraySchema,
-    selectedGenericKnowledgeIds: stringArraySchema,
-    scopeReason: stringSchema,
-    rejectedFieldNames: stringArraySchema,
-    warnings: stringArraySchema
+    selectedFieldNames: stringArraySchema
   },
   [
-    "selectedFieldNames",
-    "selectedGenericKnowledgeIds",
-    "scopeReason",
-    "rejectedFieldNames",
-    "warnings"
+    "selectedFieldNames"
   ]
 );
 

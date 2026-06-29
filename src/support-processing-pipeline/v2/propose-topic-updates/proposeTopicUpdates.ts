@@ -28,20 +28,6 @@ function getExistingTopics(input: ProposeTopicUpdatesInput): unknown[] {
 function buildTopicUpdateIntent(
   patch: TopicPatch
 ): TopicUpdateProposal["updateIntent"] {
-  if (patch.op === "review") {
-    return {
-      relationship: "unclear",
-      blockingIssue: "unknown",
-      statusHint: "unclear",
-      userGoal: null,
-      correctionNote: patch.review
-    };
-  }
-
-  if (patch.op === "none") {
-    return null;
-  }
-
   return {
     relationship: patch.op === "create"
       ? "creates_distinct_topic"
@@ -78,11 +64,7 @@ function buildTopicUpdateProposals(params: {
       proposalId: patch.patchId,
       action: patch.op === "create"
         ? "create_new_topic"
-        : patch.op === "update"
-          ? "update_existing_topic"
-          : patch.op === "review"
-            ? "needs_review"
-            : "no_topic_update",
+        : "update_existing_topic",
       fromUnderstandingIds: patch.sourceUnderstandingIds,
       topicId: patch.topicId,
       selectedSourceVerbatims: patch.selectedSourceVerbatims,
@@ -99,9 +81,7 @@ function buildTopicUpdateProposals(params: {
       reason: patch.review ??
         (patch.op === "create"
           ? "Create topic update op."
-          : patch.op === "update"
-            ? "Update topic update op."
-            : "No topic update op.")
+          : "Update topic update op.")
     };
   });
 }
