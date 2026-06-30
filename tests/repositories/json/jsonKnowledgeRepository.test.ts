@@ -9,7 +9,7 @@ import {
 
 import type {
   TopicEvidence
-} from "../../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 function buildTopicEvidence(params: {
   verbatim: string;

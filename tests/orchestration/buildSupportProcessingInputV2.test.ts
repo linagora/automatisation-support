@@ -4,10 +4,12 @@ import * as path from "path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { matchBufferedMessages } from "../../src/matching/matchBufferedMessages";
 import {
   buildSupportProcessingInputV2
 } from "../../src/orchestration/buildSupportProcessingInputV2";
+import {
+  buildSupportTurnIdentityV2
+} from "../../src/orchestration/v2/buildSupportTurnIdentityV2";
 import { JsonTicketRepository } from "../../src/repositories/json/jsonTicketRepository";
 import { JsonUserRepository } from "../../src/repositories/json/jsonUserRepository";
 
@@ -20,6 +22,9 @@ import type {
 import type {
   ConversationHistory
 } from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+import type {
+  LiveMemoryContext
+} from "../../src/persistence/live-memory-context/typesLiveMemoryContext.types";
 
 function buildConversationHistory(params: {
   userSummary: string;
@@ -79,6 +84,7 @@ function buildTicket(params: {
   userSummary: string;
   botSummary: string;
   botQuestionFieldNames?: string[];
+  supportTopicKnowledge?: JsonTicket["supportTopicKnowledge"];
 }): JsonTicket {
   return {
     ticketId: params.ticketId,
@@ -87,7 +93,7 @@ function buildTicket(params: {
     threadId: params.threadId,
     userId: "@user:example.org",
     status: "active",
-    supportTopicKnowledge: {
+    supportTopicKnowledge: params.supportTopicKnowledge ?? {
       segments_topic: []
     },
     conversationHistory: buildConversationHistory(params),
@@ -124,6 +130,13 @@ function buildBufferedMessages(params: {
   };
 }
 
+function buildInputParams(bufferedMessages: BufferedMessages) {
+  return {
+    bufferedMessages,
+    turnIdentity: buildSupportTurnIdentityV2(bufferedMessages)
+  };
+}
+
 describe("buildSupportProcessingInputV2", function () {
   let tempDir: string;
   let ticketRepository: JsonTicketRepository;
@@ -148,23 +161,36 @@ describe("buildSupportProcessingInputV2", function () {
     });
   });
 
-  it("uses distinct latest user and bot summaries from the same conversation", async function () {
+  it("ignores legacy ticket context when live memory is absent", async function () {
     await ticketRepository.upsert(buildTicket({
       ticketId: "thread_one",
       threadId: "$thread-one",
-      userSummary: "Le compte reste bloqué.",
-      botSummary: "Le bot a demandé si une erreur est affichée.",
-      botQuestionFieldNames: ["error_message"]
+      userSummary: "Ancien contexte Pixel 6 version 2.1.3 notifications.",
+      botSummary: "Ancien bot a demandé la version Android.",
+      botQuestionFieldNames: ["device", "app_version"],
+      supportTopicKnowledge: {
+        segments_topic: [
+          {
+            id_topic: 99,
+            topic_category: "bug",
+            topic_label: "Legacy notifications Pixel 6",
+            topic_details: {
+              device: "Pixel 6",
+              app_version: "2.1.3"
+            },
+            user_goal: "Legacy notification issue",
+            blocking_issue: "no"
+          }
+        ]
+      }
     }));
 
-    const matchingResult = await matchBufferedMessages({
-      bufferedMessages: buildBufferedMessages({
-        threadId: "$thread-one"
-      }),
-      ticketRepository,
-      userRepository
+    const bufferedMessages = buildBufferedMessages({
+      threadId: "$thread-one"
     });
-    const input = buildSupportProcessingInputV2(matchingResult);
+    const input = buildSupportProcessingInputV2(
+      buildInputParams(bufferedMessages)
+    );
 
     expect(input.latestUserMessage.content).toBe("Oui");
     expect(input.conversationScope).toEqual({
@@ -173,15 +199,120 @@ describe("buildSupportProcessingInputV2", function () {
       threadId: "$thread-one",
       userId: "@user:example.org"
     });
-    expect(input.recentInteractionContext).toEqual({
-      previousUserMessageSummary: "Le compte reste bloqué.",
-      previousBotResponseSummary:
-        "Le bot a demandé si une erreur est affichée.",
-      previousBotQuestionFieldNames: ["error_message"]
+    expect(input.supportTopicKnowledge).toEqual({
+      segments_topic: []
     });
+    expect(input.conversationHistory).toEqual([]);
+    expect(input.recentInteractionContext).toEqual({
+      previousUserMessageSummary: "No relevant previous user message.",
+      previousBotResponseSummary: "No relevant previous bot response.",
+      previousBotQuestionFieldNames: []
+    });
+    expect(JSON.stringify(input)).not.toContain("Pixel 6");
+    expect(JSON.stringify(input)).not.toContain("2.1.3");
+    expect(JSON.stringify(input)).not.toContain("notifications");
   });
 
-  it("does not reuse recent context from another thread or room", async function () {
+  it("uses live memory topics and recent verbatims before legacy ticket context", async function () {
+    await ticketRepository.upsert({
+      ...buildTicket({
+        ticketId: "thread_one",
+        threadId: "$thread-one",
+        userSummary: "Ancien résumé utilisateur.",
+        botSummary: "Ancienne réponse bot.",
+        botQuestionFieldNames: ["error_message"]
+      }),
+      supportTopicKnowledge: {
+        segments_topic: [
+          {
+            id_topic: 99,
+            topic_category: "billing",
+            topic_label: "Legacy topic",
+            topic_details: {},
+            user_goal: "Legacy goal",
+            blocking_issue: "no"
+          }
+        ]
+      }
+    });
+
+    const liveMemoryContext: LiveMemoryContext = {
+      topics: [
+        {
+          topicId: "topic_42",
+          title: "Notifications Android",
+          broadCategoryHint: "bug",
+          summary: "Les notifications Android ne se déclenchent plus.",
+          caseDetails: [
+            {
+              key: "platform",
+              value: "Android",
+              evidence: "Android"
+            },
+            {
+              key: "error_message",
+              value: null,
+              evidence: "Pas de message d'erreur"
+            }
+          ],
+          attemptedActions: [
+            {
+              action: "Réinstaller l'application",
+              outcome: "failed",
+              evidence: "déjà réinstallé"
+            }
+          ]
+        }
+      ],
+      lastUserVerbatim: "Toujours rien après réinstallation.",
+      lastBotVerbatim: "Pouvez-vous confirmer la version Android ?",
+      userState: {
+        status: "normal",
+        flags: []
+      }
+    };
+    const bufferedMessages = buildBufferedMessages({
+      threadId: "$thread-one"
+    });
+    const input = buildSupportProcessingInputV2({
+      ...buildInputParams(bufferedMessages),
+      liveMemoryContext
+    });
+
+    expect(input.supportTopicKnowledge.segments_topic).toEqual([
+      {
+        id_topic: 42,
+        topic_category: "bug",
+        topic_label: "Notifications Android",
+        topic_details: {
+          platform: "Android"
+        },
+        tested_actions: [
+          {
+            tested_action: "Réinstaller l'application",
+            outcome_tested_action: "failed"
+          }
+        ],
+        user_goal: "Les notifications Android ne se déclenchent plus.",
+        blocking_issue: "no"
+      }
+    ]);
+    expect(input.conversationHistory).toEqual([]);
+    expect(input.recentInteractionContext).toEqual({
+      previousUserMessageSummary: "Toujours rien après réinstallation.",
+      previousBotResponseSummary:
+        "Pouvez-vous confirmer la version Android ?",
+      previousBotQuestionFieldNames: []
+    });
+    expect(JSON.stringify(input.supportTopicKnowledge)).not.toContain(
+      "Legacy topic"
+    );
+    expect(JSON.stringify(input.recentInteractionContext)).not.toContain(
+      "Ancien"
+    );
+  });
+
+  it("does not reuse legacy recent context from any thread or room", async function () {
     await ticketRepository.upsert(buildTicket({
       ticketId: "thread_one",
       threadId: "$thread-one",
@@ -195,33 +326,31 @@ describe("buildSupportProcessingInputV2", function () {
       botSummary: "Réponse du second thread."
     }));
 
-    const otherThreadMatch = await matchBufferedMessages({
-      bufferedMessages: buildBufferedMessages({
-        threadId: "$thread-two"
-      }),
-      ticketRepository,
-      userRepository
+    const otherThreadMessages = buildBufferedMessages({
+      threadId: "$thread-two"
     });
-    const otherRoomMatch = await matchBufferedMessages({
-      bufferedMessages: buildBufferedMessages({
-        roomId: "!other-room:example.org",
-        threadId: "$thread-one"
-      }),
-      ticketRepository,
-      userRepository
+    const otherRoomMessages = buildBufferedMessages({
+      roomId: "!other-room:example.org",
+      threadId: "$thread-one"
     });
 
     expect(
-      buildSupportProcessingInputV2(otherThreadMatch).recentInteractionContext
+      buildSupportProcessingInputV2(
+        buildInputParams(otherThreadMessages)
+      ).recentInteractionContext
     ).toEqual({
-      previousUserMessageSummary: "Contexte du second thread.",
-      previousBotResponseSummary: "Réponse du second thread."
+      previousUserMessageSummary: "No relevant previous user message.",
+      previousBotResponseSummary: "No relevant previous bot response.",
+      previousBotQuestionFieldNames: []
     });
     expect(
-      buildSupportProcessingInputV2(otherRoomMatch).recentInteractionContext
+      buildSupportProcessingInputV2(
+        buildInputParams(otherRoomMessages)
+      ).recentInteractionContext
     ).toEqual({
-      previousUserMessageSummary: "No previous user message summary.",
-      previousBotResponseSummary: "No previous bot response summary."
+      previousUserMessageSummary: "No relevant previous user message.",
+      previousBotResponseSummary: "No relevant previous bot response.",
+      previousBotQuestionFieldNames: []
     });
   });
 });

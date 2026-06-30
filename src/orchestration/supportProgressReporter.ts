@@ -1,7 +1,7 @@
 import type {
   SupportProcessingProgressEvent,
   SupportProcessingStepName
-} from "../support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
+} from "../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 type SupportProgressStage =
   | "buffer_started"

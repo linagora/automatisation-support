@@ -1,7 +1,0 @@
-FAILED: standard-greeting-only
-FAILED: disappointment-only
-FAILED: disappointment-unclear
-FAILED: access-blocked-simple
-FAILED: access-blocked-followup
-FAILED: duplicate-invoice-document
-FAILED: duplicate-payment-explicit

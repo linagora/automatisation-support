@@ -7,6 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   runSupportAutomationTurnV2
 } from "../../src/orchestration/runSupportAutomationTurnV2";
+import {
+  buildSupportTurnIdentityV2
+} from "../../src/orchestration/v2/buildSupportTurnIdentityV2";
+import {
+  writeLiveMemoryContext
+} from "../../src/persistence/live-memory-context/liveMemoryContextStore";
 import { JsonMessageRepository } from "../../src/repositories/json/jsonMessageRepository";
 import { JsonTicketRepository } from "../../src/repositories/json/jsonTicketRepository";
 import { JsonUserRepository } from "../../src/repositories/json/jsonUserRepository";
@@ -19,15 +25,18 @@ import type {
   JsonUser
 } from "../../src/repositories/json/typesJsonRepositories.types";
 import type {
-  SupportProcessingPipelineV2Steps
-} from "../../src/support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
+  LiveMemoryContext
+} from "../../src/persistence/live-memory-context/typesLiveMemoryContext.types";
 import type {
-  Patches,
+  SupportProcessingPipelineV2Steps,
+  SupportProcessingPersistenceEffectsV2
+} from "../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+import type {
   UserResponse
 } from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
 import type {
   RenderedSupportResponse
-} from "../../src/support-processing-pipeline/v2/response-renderer/typesRenderSupportResponse.types";
+} from "../../src/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
 
 function buildTicket(): JsonTicket {
   return {
@@ -111,40 +120,25 @@ function buildSteps(
       }
     ]
   };
-  const patches: Patches = {
-    analysisPatch: {
-      turnUnderstandingDelta: {
-        user_language: "french",
-        segments_lack_comprehension: [],
-        segments_topic: [],
-        segments_signal: [],
-        segments_scope_boundary: [],
-        segments_suspicious: []
+  const persistenceEffects: SupportProcessingPersistenceEffectsV2 = {
+    liveMemoryUpdate: {
+      mode: "merge",
+      topics: [],
+      lastUserVerbatim: "Bonjour",
+      lastBotVerbatim: "Bonjour.",
+      userState: {
+        status: "normal",
+        flags: []
       }
     },
-    securityPatch: {
-      securityGateSummary: {
-        gateChecked: {
-          matchedPatternIds: []
-        },
-        gateFailed: []
-      }
+    openTelemetry: {
+      status: "mocked_empty",
+      spans: [],
+      metrics: [],
+      events: [],
+      resourceAttributes: {}
     },
-    responsePatch: {
-      responsePlan: {
-        responseLanguage: "french",
-        messagesPlan: {
-          scopeBoundaryPlanMessages: [],
-          topicPlanMessages: [],
-          signalPlanMessages: [],
-          handoverPlanMessages: []
-        }
-      }
-    },
-    metadataPatch: {
-      generatedAt: "2026-06-22T10:01:03.000Z",
-      source: "support-processing-pipeline"
-    }
+    otherSupportPipelineInformation: {}
   };
 
   return {
@@ -159,13 +153,14 @@ function buildSteps(
     buildStandardResponseFragments: vi.fn(async () => []),
     renderSupportResponse: vi.fn(async () => renderedSupportResponse),
     buildUserResponse: vi.fn(async () => userResponse),
-    buildSupportPatches: vi.fn(async () => patches),
+    buildSupportPatches: vi.fn(async () => persistenceEffects),
     ...overrides
   };
 }
 
 describe("runSupportAutomationTurnV2", function () {
   let tempDir: string;
+  let previousLiveMemoryContextDir: string | undefined;
   let ticketRepository: JsonTicketRepository;
   let userRepository: JsonUserRepository;
   let messageRepository: JsonMessageRepository;
@@ -183,9 +178,19 @@ describe("runSupportAutomationTurnV2", function () {
     messageRepository = new JsonMessageRepository(
       path.join(tempDir, "messages.json")
     );
+    previousLiveMemoryContextDir = process.env.LIVE_MEMORY_CONTEXT_DIR;
+    process.env.LIVE_MEMORY_CONTEXT_DIR = path.join(
+      tempDir,
+      "live-memory-context"
+    );
   });
 
   afterEach(async function () {
+    if (previousLiveMemoryContextDir === undefined) {
+      delete process.env.LIVE_MEMORY_CONTEXT_DIR;
+    } else {
+      process.env.LIVE_MEMORY_CONTEXT_DIR = previousLiveMemoryContextDir;
+    }
     await fs.rm(tempDir, {
       recursive: true,
       force: true
@@ -204,10 +209,6 @@ describe("runSupportAutomationTurnV2", function () {
 
     const result = await runSupportAutomationTurnV2({
       bufferedMessages: buildBufferedMessages(),
-      ticketRepository,
-      userRepository,
-      messageRepository,
-      persist: false,
       steps: buildSteps()
     });
 
@@ -217,12 +218,9 @@ describe("runSupportAutomationTurnV2", function () {
         content: "Bonjour."
       }
     ]);
-    expect(result.persistenceResult).toEqual({
-      storedIncomingMessageIds: [],
-      storedOutgoingMessageIds: [],
-      patchStatus: "skipped",
-      warnings: ["persistence disabled for dry-run"]
-    });
+    expect(result.persistenceEffects).toEqual(
+      result.supportProcessingOutput.persistenceEffects
+    );
     expect(await ticketRepository.list()).toEqual(before.tickets);
     expect(await userRepository.list()).toEqual(before.users);
     expect(await messageRepository.list()).toEqual(before.messages);
@@ -254,10 +252,6 @@ describe("runSupportAutomationTurnV2", function () {
       bufferedMessages: buildBufferedMessages({
         content: "Hello, I need help."
       }),
-      ticketRepository,
-      userRepository,
-      messageRepository,
-      persist: false,
       progressReporter,
       steps: buildSteps({
         planTurnAnalysis: vi.fn(async () => ({
@@ -286,7 +280,7 @@ describe("runSupportAutomationTurnV2", function () {
     });
     expect(stageCalls).toContainEqual({
       stage: "analyzing_surface",
-      userLanguage: "English",
+      userLanguage: "en",
       progressLanguageReady: true
     });
   });
@@ -317,10 +311,6 @@ describe("runSupportAutomationTurnV2", function () {
       bufferedMessages: buildBufferedMessages({
         content: "Guten mein freunde"
       }),
-      ticketRepository,
-      userRepository,
-      messageRepository,
-      persist: false,
       progressReporter,
       steps: buildSteps({
         planTurnAnalysis: vi.fn(async () => ({
@@ -344,12 +334,12 @@ describe("runSupportAutomationTurnV2", function () {
 
     expect(stageCalls).toContainEqual({
       stage: "analyzing_surface",
-      userLanguage: "English",
+      userLanguage: "en",
       progressLanguageReady: true
     });
   });
 
-  it("builds the next turn context in logical support-turn order", async function () {
+  it("does not send persisted legacy conversation context to V2 on the next turn", async function () {
     await ticketRepository.upsert(buildTicket());
     await userRepository.upsert(buildUser());
 
@@ -359,9 +349,6 @@ describe("runSupportAutomationTurnV2", function () {
         content: "Message A",
         createdAt: "2026-06-22T10:01:00.000Z"
       }),
-      ticketRepository,
-      userRepository,
-      messageRepository,
       steps: buildSteps()
     });
 
@@ -371,38 +358,188 @@ describe("runSupportAutomationTurnV2", function () {
         content: "Message B",
         createdAt: "2026-06-22T10:01:01.000Z"
       }),
-      ticketRepository,
-      userRepository,
-      messageRepository,
       steps: buildSteps()
     });
 
     expect(secondTurnResult.supportProcessingInput.latestUserMessage.content)
       .toBe("Message B");
-    expect(secondTurnResult.supportProcessingInput.conversationHistory.map(
-      (event) => event.role
-    )).toEqual(["user", "bot"]);
-    expect(secondTurnResult.supportProcessingInput.conversationHistory[0])
-      .toMatchObject({
-        role: "user",
-        summary: "Message A"
+    expect(secondTurnResult.supportProcessingInput.supportTopicKnowledge)
+      .toEqual({
+        segments_topic: []
       });
-    expect(secondTurnResult.supportProcessingInput.conversationHistory[1])
-      .toMatchObject({
-        role: "bot",
-        summary: "Bonjour."
-      });
+    expect(secondTurnResult.supportProcessingInput.conversationHistory)
+      .toEqual([]);
     expect(secondTurnResult.supportProcessingInput.recentInteractionContext)
-      .toMatchObject({
-        previousUserMessageSummary: "Message A",
-        previousBotResponseSummary: "Bonjour."
+      .toEqual({
+        previousUserMessageSummary: "No relevant previous user message.",
+        previousBotResponseSummary: "No relevant previous bot response.",
+        previousBotQuestionFieldNames: []
       });
 
     const ticket = await ticketRepository.findById("ticket_1");
 
-    expect(ticket?.conversationHistory.map((event) => event.role))
-      .toEqual(["user", "bot", "user", "bot"]);
-    expect(ticket?.conversationHistory.map((event) => event.summary))
-      .toEqual(["Message A", "Bonjour.", "Message B", "Bonjour."]);
+    expect(ticket?.conversationHistory).toEqual([]);
+  });
+
+  it("does not send polluted legacy ticket context to the V2 pipeline when live memory is absent", async function () {
+    await ticketRepository.upsert({
+      ...buildTicket(),
+      supportTopicKnowledge: {
+        segments_topic: [
+          {
+            id_topic: 5,
+            topic_category: "bug",
+            topic_label: "Legacy Pixel notification issue",
+            topic_details: {
+              device: "Pixel 6",
+              app_version: "2.1.3"
+            },
+            user_goal: "Legacy notification issue",
+            blocking_issue: "no"
+          }
+        ]
+      },
+      conversationHistory: [
+        {
+          id: "legacy_user",
+          message_id: "$legacy_user",
+          created_at: "2026-06-22T09:58:00.000Z",
+          role: "user",
+          summary: "Legacy user used Pixel 6 version 2.1.3 for notifications.",
+          turnUnderstandingDelta: {
+            user_language: "french",
+            segments_lack_comprehension: [],
+            segments_topic: [],
+            segments_signal: [],
+            segments_scope_boundary: [],
+            segments_suspicious: []
+          }
+        },
+        {
+          id: "legacy_bot",
+          message_id: "$legacy_bot",
+          created_at: "2026-06-22T09:59:00.000Z",
+          role: "bot",
+          summary: "Legacy bot asked for app version.",
+          responsePlan: {
+            responseLanguage: "french",
+            messagesPlan: {
+              scopeBoundaryPlanMessages: [],
+              topicPlanMessages: [],
+              signalPlanMessages: [],
+              handoverPlanMessages: []
+            },
+            metadata: {
+              v2ResponsePlan: {
+                questionDecision: {
+                  fieldNames: ["device", "app_version"]
+                }
+              }
+            }
+          }
+        }
+      ] as JsonTicket["conversationHistory"]
+    });
+    await userRepository.upsert(buildUser());
+
+    const result = await runSupportAutomationTurnV2({
+      bufferedMessages: buildBufferedMessages({
+        content: "Je n'arrive pas a ouvrir mon Drive."
+      }),
+      steps: buildSteps()
+    });
+
+    expect(result.supportProcessingInput.supportTopicKnowledge).toEqual({
+      segments_topic: []
+    });
+    expect(result.supportProcessingInput.conversationHistory).toEqual([]);
+    expect(result.supportProcessingInput.recentInteractionContext).toEqual({
+      previousUserMessageSummary: "No relevant previous user message.",
+      previousBotResponseSummary: "No relevant previous bot response.",
+      previousBotQuestionFieldNames: []
+    });
+    expect(JSON.stringify(result.supportProcessingInput)).not.toContain(
+      "Pixel 6"
+    );
+    expect(JSON.stringify(result.supportProcessingInput)).not.toContain(
+      "2.1.3"
+    );
+    expect(JSON.stringify(result.supportProcessingInput)).not.toContain(
+      "notifications"
+    );
+  });
+
+  it("loads live memory as the next turn topic and short-context source", async function () {
+    await ticketRepository.upsert({
+      ...buildTicket(),
+      supportTopicKnowledge: {
+        segments_topic: [
+          {
+            id_topic: 7,
+            topic_category: "billing",
+            topic_label: "Legacy billing topic",
+            topic_details: {},
+            user_goal: "Legacy issue",
+            blocking_issue: "no"
+          }
+        ]
+      }
+    });
+    await userRepository.upsert(buildUser());
+
+    const liveMemoryContext: LiveMemoryContext = {
+      topics: [
+        {
+          topicId: "topic_12",
+          title: "Connexion impossible",
+          broadCategoryHint: "access_security",
+          summary: "Le compte refuse la connexion.",
+          caseDetails: [
+            {
+              key: "auth_method",
+              value: "SSO",
+              evidence: "SSO"
+            }
+          ],
+          attemptedActions: []
+        }
+      ],
+      lastUserVerbatim: "Je suis toujours bloqué avec le SSO.",
+      lastBotVerbatim: "Le bot a demandé le fournisseur SSO.",
+      userState: {
+        status: "normal",
+        flags: []
+      }
+    };
+
+    await writeLiveMemoryContext(
+      buildSupportTurnIdentityV2(buildBufferedMessages()).conversationKey,
+      liveMemoryContext
+    );
+
+    const result = await runSupportAutomationTurnV2({
+      bufferedMessages: buildBufferedMessages(),
+      steps: buildSteps()
+    });
+
+    expect(result.supportProcessingInput.supportTopicKnowledge.segments_topic)
+      .toEqual([
+        {
+          id_topic: 12,
+          topic_category: "access_security",
+          topic_label: "Connexion impossible",
+          topic_details: {
+            auth_method: "SSO"
+          },
+          user_goal: "Le compte refuse la connexion.",
+          blocking_issue: "no"
+        }
+      ]);
+    expect(result.supportProcessingInput.conversationHistory).toEqual([]);
+    expect(result.supportProcessingInput.recentInteractionContext).toEqual({
+      previousUserMessageSummary: "Je suis toujours bloqué avec le SSO.",
+      previousBotResponseSummary: "Le bot a demandé le fournisseur SSO.",
+      previousBotQuestionFieldNames: []
+    });
   });
 });

@@ -8,26 +8,18 @@
     "test:run": "vitest run",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
+
     "test:local:image": "tsx -r dotenv/config scripts/attachment-analysis/test-local-image.ts",
     "test:online:image": "tsx -r dotenv/config scripts/attachment-analysis/test-online-image.ts",
     "test:local:video": "tsx -r dotenv/config scripts/attachment-analysis/test-local-video.ts",
     "test:online:video": "tsx -r dotenv/config scripts/attachment-analysis/test-online-video.ts",
-    "test:llm:guard": "tsx -r dotenv/config scripts/attachment-analysis/test-token-budget-guard.ts",
-    "test:fullweight": "tsx scripts/message-analysis/test-full-weight-analysis.ts",
-    "test:llm-truster": "tsx scripts/message-analysis/test-llm-truster-review.ts",
-    "test:message-analysis": "tsx scripts/message-analysis/test-message-analysis.ts",
-    "test:support-processing-pipeline": "tsx tests/support-processing-pipeline/test-support-processing-pipeline.ts",
-    "test:support-processing": "tsx scripts/support-processing/test-support-processing.ts",
-    "test:support-processing:mini": "tsx scripts/support-processing/test-support-processing-mini-suite.ts",
-    "test:support-processing:quality": "tsx scripts/support-processing/test-support-processing-quality.ts",
-    "test:support-processing:quality:full": "tsx scripts/support-processing/test-support-processing-quality.ts --full",
-    "support:matrix": "tsx scripts/matrix/run-matrix-support-automation.ts",
-    "support:matrix:check": "tsx scripts/matrix/check-matrix-config.ts",
-    "support:debug:ticket-context": "tsx -r dotenv/config scripts/support/debug-ticket-context.ts",
-    "support:v2:text-dataset": "tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts",
-    "support:v2:matrix": "tsx scripts/support-processing-pipeline/v2/runMatrixSupportProcessingV2.ts",
-    "matrix:send-test": "tsx scripts/matrix/send-test-matrix-message.ts",
-    "matrix:listen": "tsx scripts/matrix/listen-matrix-messages.ts"
+
+    "matrix:check": "tsx scripts/matrix/matrix-tools.ts check",
+    "matrix:listen": "tsx scripts/matrix/matrix-tools.ts listen",
+    "matrix:send-test": "tsx scripts/matrix/matrix-tools.ts send-test",
+
+    "support:v2:matrix": "tsx scripts/support-processing-pipeline-v2/runMatrixSupportProcessingV2.ts",
+    "support:v2:dataset": "tsx scripts/support-processing-pipeline-v2/runTextAnalysisDataset.ts"
   },
   "repository": {
     "type": "git",

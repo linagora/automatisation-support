@@ -66,6 +66,7 @@ NEXT STEP :
 
 
 RAG : 
+-corrgier les dernières erreur relevés par chatgpt
 -rendre plus clean la sortie et le synhtetizer pour envoyer quelque chose de simple au plan
 -j'ai eu des requetes qui on échoué pourquoi ?
 ERROR AbortError: This operation was aborted at node:internal/deps/undici/undici:14976:13 at process.processTicksAndRejections (node:internal/process/task_queues:103:5) at async HttpSupportKnowledgeRetriever.retrieveOne (/home/georges/automatisation-support/src/support-processing-pipeline/v2/retrieve-support-knowledge/retrievers/httpSupportKnowledgeRetriever.ts:164:24) at async HttpSupportKnowledgeRetriever.retrieve (/home/georges/automatisation-support/src/support-processing-pipeline/v2/retrieve-support-knowledge/retrievers/httpSupportKnowledgeRetriever.ts:128:23) at async <anonymous> (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1158:42) at async Promise.all (index 0) at async runKnowledgeStage (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1078:25) at async runCase (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1508:7) at async runAndLogCase (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1694:20) at async main (/home/georges/automatisation-support/scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts:1788:5) > automatisation-support@1.0.0 support:v2:text-dataset > tsx scripts/support-processing-pipeline/v2/runTextAnalysisDataset.ts --case short-context --until render --debug 
@@ -80,9 +81,10 @@ PLAN :
 MATRIX : 
 - SIMPLIFIER AVANT puis mettre à jour la gestiond donné matrix pour enovyer message depuis twake chat (CF au dessus)
 
+PIPELINE: 
+-pour les standrad resposne pas besoin de passer par le compose quand il n'y a pas de cas support
 
-
-
+PERSISTENCE : CORRIGER la mémoire de live memory et l'attribution des topcis qui se duplqiue en cmmneçant parfois par new au lieu de mettre juste un chiffrE.
 
 
 

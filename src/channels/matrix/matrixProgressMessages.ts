@@ -1,6 +1,6 @@
 import {
   normalizeUserLanguageForTemplate
-} from "../../support-processing-pipeline/v2/response-language/normalizeUserLanguageForResponse";
+} from "../../support-processing-pipeline-v2/response-language/normalizeUserLanguageForResponse";
 
 const FRENCH_MATRIX_PROGRESS_MESSAGES = {
   buffer_started: "Je vous lis…",

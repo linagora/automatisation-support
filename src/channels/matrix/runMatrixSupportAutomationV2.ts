@@ -2,10 +2,15 @@ import { InMemoryMessageBuffer } from "../../messaging/buffer/inMemoryMessageBuf
 import {
   runSupportAutomationTurnV2
 } from "../../orchestration/runSupportAutomationTurnV2";
-import { applyDeliveryResult } from "../../persistence/applyDeliveryResult";
-import { JsonMessageRepository } from "../../repositories/json/jsonMessageRepository";
-import { JsonTicketRepository } from "../../repositories/json/jsonTicketRepository";
-import { JsonUserRepository } from "../../repositories/json/jsonUserRepository";
+import {
+  applyLiveMemoryUpdate
+} from "../../persistence/live-memory-context/applyLiveMemoryUpdate";
+import {
+  noopSupportPipelineInformationRepository
+} from "../../persistence/support-pipeline-information/noopSupportPipelineInformationRepository";
+import {
+  noopTelemetryEmitter
+} from "../../persistence/telemetry/noopTelemetryEmitter";
 import { listenMatrixEvents } from "./listenMatrixEvents";
 import {
   createMatrixSupportProgressReporter
@@ -26,11 +31,17 @@ import type {
   SupportAutomationTurnV2Result
 } from "../../orchestration/runSupportAutomationTurnV2";
 import type {
-  DeliveryResultPersistenceResult
-} from "../../persistence/applyDeliveryResult";
+  ApplyLiveMemoryUpdateDeliveryResult
+} from "../../persistence/live-memory-context/applyLiveMemoryUpdate";
+import type {
+  SupportPipelineInformationRepository
+} from "../../persistence/support-pipeline-information/noopSupportPipelineInformationRepository";
+import type {
+  TelemetryEmitter
+} from "../../persistence/telemetry/noopTelemetryEmitter";
 import type {
   SupportProcessingPipelineV2Steps
-} from "../../support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
+} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   MatrixSupportAutomationLogger
 } from "./matrixSupportAutomationLogger";
@@ -58,19 +69,21 @@ const DEFAULT_MATRIX_STARTUP_GRACE_MS = 5000;
 type RunSupportAutomationTurnV2Function = typeof runSupportAutomationTurnV2;
 type ListenMatrixEventsFunction = typeof listenMatrixEvents;
 type SendMatrixDeliveryMessagesFunction = typeof sendMatrixDeliveryMessages;
-type ApplyDeliveryResultFunction = typeof applyDeliveryResult;
+type ApplyLiveMemoryUpdateFunction = typeof applyLiveMemoryUpdate;
 
 type MatrixSupportAutomationV2Dependencies = {
   listenMatrixEvents?: ListenMatrixEventsFunction;
   sendMatrixDeliveryMessages?: SendMatrixDeliveryMessagesFunction;
   runSupportAutomationTurnV2?: RunSupportAutomationTurnV2Function;
-  applyDeliveryResult?: ApplyDeliveryResultFunction;
+  applyLiveMemoryUpdate?: ApplyLiveMemoryUpdateFunction;
+  telemetryEmitter?: TelemetryEmitter;
+  supportPipelineInformationRepository?: SupportPipelineInformationRepository;
 };
 
 type MatrixSupportAutomationV2RunRecord = {
   supportAutomationTurnResult: SupportAutomationTurnV2Result;
   matrixDeliveryResults: MatrixDeliveryResult[];
-  deliveryResultPersistenceResult?: DeliveryResultPersistenceResult;
+  liveMemoryUpdateStatus?: "skipped" | "applied";
 };
 
 type MatrixSupportAutomationV2Handle = {
@@ -82,9 +95,6 @@ type RunMatrixSupportAutomationV2Params = {
   config: MatrixChannelConfig;
   inactivityTimeoutMs?: number;
   maxWaitMs?: number;
-  ticketRepository?: JsonTicketRepository;
-  userRepository?: JsonUserRepository;
-  messageRepository?: JsonMessageRepository;
   steps?: SupportProcessingPipelineV2Steps;
   logger?: MatrixSupportAutomationLogger;
   dependencies?: MatrixSupportAutomationV2Dependencies;
@@ -110,6 +120,40 @@ function getBufferedMessageIds(bufferedMessages: BufferedMessages): string[] {
   return bufferedMessages.messages.map((message) => {
     return message.messageId;
   });
+}
+
+function toLiveMemoryDeliveryResult(
+  matrixDeliveryResults: MatrixDeliveryResult[]
+): ApplyLiveMemoryUpdateDeliveryResult {
+  const deliveredMessages = matrixDeliveryResults.flatMap((result) => {
+    return result.deliveredMessages.map((message) => {
+      return {
+        content: message.content
+      };
+    });
+  });
+  const failedCount = matrixDeliveryResults.reduce((count, result) => {
+    return count + result.failedMessages.length;
+  }, 0);
+
+  if (deliveredMessages.length > 0 && failedCount > 0) {
+    return {
+      status: "partial",
+      deliveredMessages
+    };
+  }
+
+  if (deliveredMessages.length > 0) {
+    return {
+      status: "sent",
+      deliveredMessages
+    };
+  }
+
+  return {
+    status: "failed",
+    deliveredMessages: []
+  };
 }
 
 function shouldIgnoreHistoricalMessage(params: {
@@ -140,12 +184,6 @@ async function runMatrixSupportAutomationV2(
   params: RunMatrixSupportAutomationV2Params
 ): Promise<MatrixSupportAutomationV2Handle> {
   const logger = params.logger ?? console;
-  const ticketRepository =
-    params.ticketRepository ?? new JsonTicketRepository();
-  const userRepository =
-    params.userRepository ?? new JsonUserRepository();
-  const messageRepository =
-    params.messageRepository ?? new JsonMessageRepository();
   const runTurn =
     params.dependencies?.runSupportAutomationTurnV2 ?? runSupportAutomationTurnV2;
   const listenEvents =
@@ -153,8 +191,13 @@ async function runMatrixSupportAutomationV2(
   const sendDelivery =
     params.dependencies?.sendMatrixDeliveryMessages ??
     sendMatrixDeliveryMessages;
-  const persistDeliveryResult =
-    params.dependencies?.applyDeliveryResult ?? applyDeliveryResult;
+  const persistLiveMemory =
+    params.dependencies?.applyLiveMemoryUpdate ?? applyLiveMemoryUpdate;
+  const telemetryEmitter =
+    params.dependencies?.telemetryEmitter ?? noopTelemetryEmitter;
+  const supportPipelineInformationRepository =
+    params.dependencies?.supportPipelineInformationRepository ??
+    noopSupportPipelineInformationRepository;
   const dryRun = params.dryRun === true;
   const inactivityTimeoutMs =
     params.inactivityTimeoutMs ?? DEFAULT_MATRIX_BUFFER_INACTIVITY_MS;
@@ -179,6 +222,7 @@ async function runMatrixSupportAutomationV2(
   const activeProcessingScopeKeys = new Set<string>();
   const activeProcessingTurnIdsByKey = new Map<string, string>();
   const activeProcessingPromises = new Set<Promise<unknown>>();
+  const seenMessageKeys = new Set<string>();
 
   logInfo({
     logger,
@@ -230,10 +274,6 @@ async function runMatrixSupportAutomationV2(
     try {
       supportAutomationTurnResult = await runTurn({
         bufferedMessages,
-        ticketRepository,
-        userRepository,
-        messageRepository,
-        persist: !dryRun,
         steps: params.steps,
         progressReporter,
         progressContext
@@ -251,7 +291,7 @@ async function runMatrixSupportAutomationV2(
         userId: bufferedMessages.userId,
         deliveryMessageCount:
           supportAutomationTurnResult.deliveryMessages.length,
-        persistenceResult: supportAutomationTurnResult.persistenceResult
+        turnIdentity: supportAutomationTurnResult.turnIdentity
       }
     });
 
@@ -294,15 +334,40 @@ async function runMatrixSupportAutomationV2(
       }
     });
 
-    const deliveryResultPersistenceResult = await persistDeliveryResult({
-      matrixDeliveryResults,
-      messageRepository
-    });
+    let liveMemoryUpdateStatus: "skipped" | "applied" = "skipped";
+
+    try {
+      await persistLiveMemory({
+        turnIdentity: supportAutomationTurnResult.turnIdentity,
+        liveMemoryUpdate:
+          supportAutomationTurnResult.persistenceEffects.liveMemoryUpdate,
+        deliveryResult: toLiveMemoryDeliveryResult(matrixDeliveryResults)
+      });
+
+      await telemetryEmitter.emit(
+        supportAutomationTurnResult.persistenceEffects.openTelemetry
+      );
+      await supportPipelineInformationRepository.persist(
+        supportAutomationTurnResult.persistenceEffects
+          .otherSupportPipelineInformation
+      );
+      liveMemoryUpdateStatus = "applied";
+    } catch (error) {
+      logError({
+        logger,
+        eventName: "support_v2_persistence_failed",
+        metadata: {
+          roomId: bufferedMessages.roomId,
+          userId: bufferedMessages.userId,
+          error: getErrorMessage(error)
+        }
+      });
+    }
 
     return {
       supportAutomationTurnResult,
       matrixDeliveryResults,
-      deliveryResultPersistenceResult
+      liveMemoryUpdateStatus
     };
   }
 
@@ -466,13 +531,9 @@ async function runMatrixSupportAutomationV2(
         return;
       }
 
-      const existingMessage =
-        await messageRepository.findByChannelAndMessageId(
-          event.channel,
-          event.messageId
-        );
+      const messageKey = `${event.channel}:${event.messageId}`;
 
-      if (existingMessage !== undefined) {
+      if (seenMessageKeys.has(messageKey)) {
         logWarn({
           logger,
           eventName: "matrix.v2.message.ignored_duplicate",
@@ -484,6 +545,8 @@ async function runMatrixSupportAutomationV2(
         });
         return;
       }
+
+      seenMessageKeys.add(messageKey);
 
       const accepted = buffer.addMessage(event);
 

@@ -1,26 +1,45 @@
 import {
-  buildSupportProcessingInput
+  buildDefaultAccountInteractionTraits,
+  buildDefaultAccountProfile,
+  buildDefaultAccountTrustStatus,
+  buildEmptyConversationHistory,
+  buildEmptySupportTopicKnowledge,
+  buildLatestUserMessageFromBufferedMessages
 } from "./buildSupportProcessingInput";
 import {
-  buildConversationScopeKey
-} from "../messaging/conversationScope";
+  convertLiveMemoryContextToSupportTopicKnowledge
+} from "../persistence/live-memory-context/convertLiveMemoryContextToSupportTopicKnowledge";
 
 import type {
-  MatchingResult
-} from "../matching/typesMatching.types";
+  BufferedMessages,
+  MessagingAttachment,
+  MessagingEvent
+} from "../messaging/typesMessaging.types";
 import type {
+  LiveMemoryContext
+} from "../persistence/live-memory-context/typesLiveMemoryContext.types";
+import type {
+  SupportTurnIdentityV2
+} from "./v2/buildSupportTurnIdentityV2";
+import type {
+  LatestUserAttachment,
   SupportProcessingPipelineV2Input
-} from "../support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
-import type {
-  ConversationHistory
-} from "../support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 const MAX_RECENT_SUMMARY_LENGTH = 500;
+const EMPTY_PREVIOUS_USER_MESSAGE_SUMMARY =
+  "No relevant previous user message.";
+const EMPTY_PREVIOUS_BOT_RESPONSE_SUMMARY =
+  "No relevant previous bot response.";
 
-type ResponsePlanWithV2Metadata = {
-  metadata?: {
-    v2ResponsePlan?: unknown;
-  };
+type BuildSupportProcessingInputV2Options = {
+  liveMemoryContext?: LiveMemoryContext | null;
+};
+
+type BuildSupportProcessingInputV2Params = {
+  bufferedMessages: BufferedMessages;
+  turnIdentity: SupportTurnIdentityV2;
+  liveMemoryContext?: LiveMemoryContext | null;
 };
 
 function truncateSummary(value: string): string {
@@ -33,164 +52,131 @@ function truncateSummary(value: string): string {
   return `${normalized.slice(0, MAX_RECENT_SUMMARY_LENGTH - 3)}...`;
 }
 
-function findLatestEventByRole(
-  conversationHistory: ConversationHistory,
-  role: "user" | "bot"
-): ConversationHistory[number] | undefined {
-  return [...conversationHistory].reverse().find((event) => {
-    return event.role === role;
-  });
-}
-
-function buildSummaryFromCompactLogs(params: {
-  conversationHistory: ConversationHistory;
-  eventId: string;
-  role: "user" | "bot";
-}): string | undefined {
-  const prefix = params.role === "user" ? "User(" : "Bot(";
-  const lines = (params.conversationHistory.compactInteractionLogs ?? [])
-    .filter((log) => {
-      return (
-        log.line.startsWith(prefix) &&
-        log.source_event_ids?.includes(params.eventId) === true
-      );
-    })
-    .slice(-4)
-    .map((log) => log.line);
-
-  return lines.length > 0 ? truncateSummary(lines.join(" ")) : undefined;
-}
-
-function buildUserEventFallbackSummary(
-  event: Extract<ConversationHistory[number], { role: "user" }>
-): string | undefined {
-  const topicSummaries = event.turnUnderstandingDelta.segments_topic.flatMap(
-    (topic) => {
-      const verbatim = topic.segment_verbatims?.find((value) => {
-        return value.trim() !== "";
-      });
-
-      return verbatim
-        ? [verbatim]
-        : [topic.topic_label, topic.user_goal].filter(
-            (value): value is string => {
-              return typeof value === "string" && value.trim() !== "";
-            }
-          );
-    }
-  );
-
-  return topicSummaries.length > 0
-    ? truncateSummary(topicSummaries.slice(-2).join(" "))
-    : undefined;
-}
-
-function buildRecentEventSummary(params: {
-  conversationHistory: ConversationHistory;
-  role: "user" | "bot";
-}): string | undefined {
-  const event = findLatestEventByRole(
-    params.conversationHistory,
-    params.role
-  );
-
-  if (!event) {
-    return undefined;
-  }
-
-  if (event.summary?.trim()) {
-    return truncateSummary(event.summary);
-  }
-
-  const compactSummary = buildSummaryFromCompactLogs({
-    conversationHistory: params.conversationHistory,
-    eventId: event.id,
-    role: params.role
-  });
-
-  if (compactSummary) {
-    return compactSummary;
-  }
-
-  return event.role === "user"
-    ? buildUserEventFallbackSummary(event)
-    : undefined;
-}
-
-function buildRecentInteractionContext(
-  matchingResult: MatchingResult
-): SupportProcessingPipelineV2Input["recentInteractionContext"] {
-  const conversationHistory = matchingResult.ticket?.conversationHistory;
-  const previousBotEvent = conversationHistory
-    ? findLatestEventByRole(conversationHistory, "bot")
-    : undefined;
-  const previousUserMessageSummary = conversationHistory
-    ? buildRecentEventSummary({
-        conversationHistory,
-        role: "user"
-      })
-    : undefined;
-  const previousBotResponseSummary = conversationHistory
-    ? buildRecentEventSummary({
-        conversationHistory,
-        role: "bot"
-      })
-    : undefined;
-  const previousBotQuestionFieldNames =
-    previousBotEvent?.role === "bot"
-      ? (
-          (
-            previousBotEvent.responsePlan as ResponsePlanWithV2Metadata
-          ).metadata?.v2ResponsePlan as
-            | {
-                questionDecision?: {
-                  fieldNames?: unknown;
-                };
-              }
-            | undefined
-        )?.questionDecision?.fieldNames
-      : undefined;
-  const normalizedPreviousBotQuestionFieldNames =
-    Array.isArray(previousBotQuestionFieldNames)
-      ? previousBotQuestionFieldNames.filter(
-          (fieldName): fieldName is string => {
-            return typeof fieldName === "string" && fieldName.trim() !== "";
-          }
-        )
-      : [];
-
+function buildEmptyRecentInteractionContext():
+  SupportProcessingPipelineV2Input["recentInteractionContext"] {
   return {
-    previousUserMessageSummary:
-      previousUserMessageSummary ?? "No previous user message summary.",
-    previousBotResponseSummary:
-      previousBotResponseSummary ?? "No previous bot response summary.",
-    ...(normalizedPreviousBotQuestionFieldNames.length > 0
-      ? {
-          previousBotQuestionFieldNames:
-            normalizedPreviousBotQuestionFieldNames
-        }
-      : {})
+    previousUserMessageSummary: EMPTY_PREVIOUS_USER_MESSAGE_SUMMARY,
+    previousBotResponseSummary: EMPTY_PREVIOUS_BOT_RESPONSE_SUMMARY,
+    previousBotQuestionFieldNames: []
   };
 }
 
+function buildRecentInteractionContextFromLiveMemoryContext(
+  liveMemoryContext: LiveMemoryContext
+): SupportProcessingPipelineV2Input["recentInteractionContext"] {
+  return {
+    previousUserMessageSummary: liveMemoryContext.lastUserVerbatim
+      ? truncateSummary(liveMemoryContext.lastUserVerbatim)
+      : EMPTY_PREVIOUS_USER_MESSAGE_SUMMARY,
+    previousBotResponseSummary: liveMemoryContext.lastBotVerbatim
+      ? truncateSummary(liveMemoryContext.lastBotVerbatim)
+      : EMPTY_PREVIOUS_BOT_RESPONSE_SUMMARY,
+    previousBotQuestionFieldNames: []
+  };
+}
+
+function canConvertAttachment(
+  attachment: MessagingAttachment
+): attachment is MessagingAttachment & {
+  filename: string;
+} {
+  const sizeInBytes = attachment.sizeInBytes ?? attachment.sizeBytes;
+
+  return (
+    typeof attachment.filename === "string" &&
+    attachment.filename.trim() !== "" &&
+    typeof sizeInBytes === "number" &&
+    Number.isFinite(sizeInBytes)
+  );
+}
+
+function toLatestUserMessageChannel(
+  channel: MessagingEvent["channel"]
+): SupportProcessingPipelineV2Input["latestUserMessage"]["channel"] {
+  if (channel === "matrix" || channel === "twake_chat") {
+    return "twake_chat";
+  }
+
+  return "other";
+}
+
+function toLatestUserAttachmentsFromMessage(
+  message: MessagingEvent
+): LatestUserAttachment[] {
+  return (message.attachments ?? []).flatMap((attachment) => {
+    if (!canConvertAttachment(attachment)) {
+      return [];
+    }
+
+    const sizeInBytes = attachment.sizeInBytes ?? attachment.sizeBytes;
+
+    if (sizeInBytes === undefined) {
+      return [];
+    }
+
+    return [
+      {
+        id: attachment.id,
+        filename: attachment.filename,
+        name: attachment.filename,
+        sizeInBytes,
+        sizeBytes: sizeInBytes,
+        ...(attachment.accessUrl ? { accessUrl: attachment.accessUrl } : {}),
+        ...(attachment.url ? { url: attachment.url } : {}),
+        ...(attachment.path ? { path: attachment.path } : {}),
+        ...(attachment.mimeType ? { mimeType: attachment.mimeType } : {}),
+        ...(attachment.kind ? { type: attachment.kind } : {}),
+        channel: toLatestUserMessageChannel(message.channel),
+        sentAt: message.createdAt
+      }
+    ];
+  });
+}
+
+function toLatestUserAttachments(
+  messages: MessagingEvent[]
+): LatestUserAttachment[] {
+  return messages.flatMap(toLatestUserAttachmentsFromMessage);
+}
+
 function buildSupportProcessingInputV2(
-  matchingResult: MatchingResult
+  params: BuildSupportProcessingInputV2Params,
+  options: BuildSupportProcessingInputV2Options = {}
 ): SupportProcessingPipelineV2Input {
-  const v1Input = buildSupportProcessingInput(matchingResult);
+  const liveMemoryContext =
+    params.liveMemoryContext ?? options.liveMemoryContext ?? null;
 
   return {
-    ...v1Input,
-    conversationScope: buildConversationScopeKey({
-      channel: matchingResult.channel,
-      roomId: matchingResult.roomId,
-      threadId: matchingResult.threadId,
-      userId: matchingResult.userId
-    }),
-    recentInteractionContext: buildRecentInteractionContext(matchingResult)
+    latestUserMessage: buildLatestUserMessageFromBufferedMessages(
+      params.bufferedMessages.messages
+    ),
+    latestUserAttachments: toLatestUserAttachments(params.bufferedMessages.messages),
+    accountTrustStatus: buildDefaultAccountTrustStatus(),
+    accountProfile: buildDefaultAccountProfile(params.turnIdentity.userId),
+    accountInteractionTraits: buildDefaultAccountInteractionTraits(),
+    supportTopicKnowledge: liveMemoryContext
+      ? convertLiveMemoryContextToSupportTopicKnowledge(liveMemoryContext)
+      : buildEmptySupportTopicKnowledge(),
+    conversationHistory: buildEmptyConversationHistory(),
+    conversationScope: {
+      channel: params.turnIdentity.channel,
+      roomId: params.turnIdentity.roomId,
+      threadId: params.turnIdentity.threadId,
+      userId: params.turnIdentity.userId
+    },
+    recentInteractionContext: liveMemoryContext
+      ? buildRecentInteractionContextFromLiveMemoryContext(liveMemoryContext)
+      : buildEmptyRecentInteractionContext()
   };
 }
 
 export {
-  buildRecentInteractionContext,
+  buildEmptyRecentInteractionContext,
+  buildRecentInteractionContextFromLiveMemoryContext,
   buildSupportProcessingInputV2
+};
+
+export type {
+  BuildSupportProcessingInputV2Params,
+  BuildSupportProcessingInputV2Options
 };

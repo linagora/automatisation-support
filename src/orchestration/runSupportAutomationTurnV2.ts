@@ -1,14 +1,15 @@
-import { matchBufferedMessages } from "../matching/matchBufferedMessages";
-import { applySupportPatches } from "../persistence/applySupportPatches";
-import { JsonMessageRepository } from "../repositories/json/jsonMessageRepository";
-import { JsonTicketRepository } from "../repositories/json/jsonTicketRepository";
-import { JsonUserRepository } from "../repositories/json/jsonUserRepository";
-import { runSupportProcessingPipelineV2 } from "../support-processing-pipeline/v2/runSupportProcessingPipelineV2";
+import { runSupportProcessingPipelineV2 } from "../support-processing-pipeline-v2/runSupportProcessingPipelineV2";
 import {
   normalizeUserLanguageForResponse
-} from "../support-processing-pipeline/v2/response-language/normalizeUserLanguageForResponse";
+} from "../support-processing-pipeline-v2/response-language/normalizeUserLanguageForResponse";
 import { buildSupportProcessingInputV2 } from "./buildSupportProcessingInputV2";
-import { mapUserResponseToDelivery } from "./mapUserResponseToDelivery";
+import {
+  readLiveMemoryContext
+} from "../persistence/live-memory-context/liveMemoryContextStore";
+import { mapUserResponseToDeliveryV2 } from "./mapUserResponseToDelivery";
+import {
+  buildSupportTurnIdentityV2
+} from "./v2/buildSupportTurnIdentityV2";
 import {
   mapSupportProcessingProgressToStage,
   noopSupportProgressReporter
@@ -20,8 +21,9 @@ import type {
 import type {
   SupportProcessingPipelineV2Output,
   SupportProcessingPipelineV2Input,
-  SupportProcessingPipelineV2Steps
-} from "../support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
+  SupportProcessingPipelineV2Steps,
+  SupportProcessingPersistenceEffectsV2
+} from "../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   DeliveryMessage
 } from "./typesOrchestration.types";
@@ -30,26 +32,19 @@ import type {
   SupportProgressReporter
 } from "./supportProgressReporter";
 import type {
-  MatchingResult
-} from "../matching/typesMatching.types";
-import type {
-  PersistenceResult
-} from "../persistence/typesPersistence.types";
+  SupportTurnIdentityV2
+} from "./v2/buildSupportTurnIdentityV2";
 
 export type SupportAutomationTurnV2Result = {
-  matchingResult: MatchingResult;
+  turnIdentity: SupportTurnIdentityV2;
   supportProcessingInput: SupportProcessingPipelineV2Input;
   supportProcessingOutput: SupportProcessingPipelineV2Output;
+  persistenceEffects: SupportProcessingPersistenceEffectsV2;
   deliveryMessages: DeliveryMessage[];
-  persistenceResult: PersistenceResult;
 };
 
 async function runSupportAutomationTurnV2(params: {
   bufferedMessages: BufferedMessages;
-  ticketRepository: JsonTicketRepository;
-  userRepository: JsonUserRepository;
-  messageRepository: JsonMessageRepository;
-  persist?: boolean;
   steps?: SupportProcessingPipelineV2Steps;
   progressReporter?: SupportProgressReporter;
   progressContext?: ProgressContext;
@@ -62,12 +57,14 @@ async function runSupportAutomationTurnV2(params: {
     turnId: params.bufferedMessages.messages[0]?.messageId,
     messageCount: params.bufferedMessages.messages.length
   };
-  const matchingResult = await matchBufferedMessages({
+  const turnIdentity = buildSupportTurnIdentityV2(params.bufferedMessages);
+  const liveMemoryContext =
+    await readLiveMemoryContext(turnIdentity.conversationKey);
+  const supportProcessingInput = buildSupportProcessingInputV2({
     bufferedMessages: params.bufferedMessages,
-    ticketRepository: params.ticketRepository,
-    userRepository: params.userRepository
+    turnIdentity,
+    liveMemoryContext
   });
-  const supportProcessingInput = buildSupportProcessingInputV2(matchingResult);
   const supportProcessingOutput = await runSupportProcessingPipelineV2(
     supportProcessingInput,
     params.steps,
@@ -99,32 +96,18 @@ async function runSupportAutomationTurnV2(params: {
     }
   );
   await progressReporter.stage(progressContext, "sending_response");
-  const deliveryMessages = mapUserResponseToDelivery({
+  const deliveryMessages = mapUserResponseToDeliveryV2({
     userResponse: supportProcessingOutput.userResponse,
-    matchingResult
+    turnIdentity,
+    latestMessageId: params.bufferedMessages.messages.at(-1)?.messageId
   });
-  const persistenceResult = params.persist === false
-    ? {
-        storedIncomingMessageIds: [],
-        storedOutgoingMessageIds: [],
-        patchStatus: "skipped" as const,
-        warnings: ["persistence disabled for dry-run"]
-      }
-    : await applySupportPatches({
-        matchingResult,
-        supportProcessingOutput,
-        deliveryMessages,
-        ticketRepository: params.ticketRepository,
-        userRepository: params.userRepository,
-        messageRepository: params.messageRepository
-      });
 
   return {
-    matchingResult,
+    turnIdentity,
     supportProcessingInput,
     supportProcessingOutput,
-    deliveryMessages,
-    persistenceResult
+    persistenceEffects: supportProcessingOutput.persistenceEffects,
+    deliveryMessages
   };
 }
 

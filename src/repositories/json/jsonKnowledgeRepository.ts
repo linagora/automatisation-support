@@ -4,7 +4,7 @@ import { JsonFileStore } from "./jsonFileStore";
 
 import type {
   TopicEvidence
-} from "../../support-processing-pipeline/v2/typesSupportProcessingPipelineV2.types";
+} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   JsonKnowledgeItem
 } from "./typesJsonRepositories.types";

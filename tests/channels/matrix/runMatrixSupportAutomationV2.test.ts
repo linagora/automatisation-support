@@ -6,9 +6,15 @@ import { tmpdir } from "node:os";
 import {
   runMatrixSupportAutomationV2
 } from "../../../src/channels/matrix/runMatrixSupportAutomationV2";
+import {
+  runSupportAutomationTurnV2 as realRunSupportAutomationTurnV2
+} from "../../../src/orchestration/runSupportAutomationTurnV2";
 import type {
   SupportAutomationTurnV2Result
 } from "../../../src/orchestration/runSupportAutomationTurnV2";
+import {
+  buildSupportTurnIdentityV2
+} from "../../../src/orchestration/v2/buildSupportTurnIdentityV2";
 import { JsonMessageRepository } from "../../../src/repositories/json/jsonMessageRepository";
 import { JsonTicketRepository } from "../../../src/repositories/json/jsonTicketRepository";
 import { JsonUserRepository } from "../../../src/repositories/json/jsonUserRepository";
@@ -18,8 +24,21 @@ import type {
   MessagingTypingEvent
 } from "../../../src/messaging/typesMessaging.types";
 import type {
+  MatrixDeliveryResult
+} from "../../../src/channels/matrix/typesMatrixChannel.types";
+import type {
   SupportProgressReporter
 } from "../../../src/orchestration/supportProgressReporter";
+import type {
+  SupportProcessingPipelineV2Steps,
+  SupportProcessingPersistenceEffectsV2
+} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+import type {
+  RenderedSupportResponse
+} from "../../../src/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+import type {
+  UserResponse
+} from "../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 function buildTempRepositories(): {
   ticketRepository: JsonTicketRepository;
@@ -87,14 +106,22 @@ function buildRunResult(params: {
   content?: string;
 }): SupportAutomationTurnV2Result {
   const content = params.content ?? "Réponse V2.";
+  const bufferedMessages = {
+    channel: "matrix" as const,
+    roomId: params.roomId,
+    userId: params.userId,
+    messages: params.messages,
+    firstMessageAt: params.messages[0]?.createdAt ?? "2026-06-22T10:00:00.000Z",
+    lastMessageAt: params.messages.at(-1)?.createdAt ?? "2026-06-22T10:00:00.000Z",
+    flushedAt: "2026-06-22T10:00:02.000Z"
+  };
+  const persistenceEffects = buildPersistenceEffects({
+    lastUserVerbatim: params.messages.at(-1)?.content ?? "",
+    lastBotVerbatim: content
+  });
 
   return {
-    matchingResult: {
-      channel: "matrix",
-      roomId: params.roomId,
-      userId: params.userId,
-      messages: params.messages
-    },
+    turnIdentity: buildSupportTurnIdentityV2(bufferedMessages),
     supportProcessingInput: {} as never,
     supportProcessingOutput: {
       userResponse: {
@@ -105,8 +132,10 @@ function buildRunResult(params: {
           }
         ]
       },
-      patches: {} as never
+      persistenceEffects,
+      patches: persistenceEffects
     },
+    persistenceEffects,
     deliveryMessages: [
       {
         localId: `delivery_${params.messages.at(-1)?.messageId ?? "none"}`,
@@ -115,13 +144,65 @@ function buildRunResult(params: {
         userId: params.userId,
         content
       }
-    ],
-    persistenceResult: {
-      patchStatus: "applied",
-      storedIncomingMessageIds: [],
-      storedOutgoingMessageIds: [],
-      warnings: []
-    }
+    ]
+  };
+}
+
+function buildPersistenceEffects(
+  overrides: Partial<
+    SupportProcessingPersistenceEffectsV2["liveMemoryUpdate"]
+  > = {}
+): SupportProcessingPersistenceEffectsV2 {
+  return {
+    liveMemoryUpdate: {
+      mode: "merge",
+      topics: [],
+      lastUserVerbatim: "",
+      lastBotVerbatim: "Bonjour.",
+      userState: {
+        status: "normal",
+        flags: []
+      },
+      ...overrides
+    },
+    openTelemetry: {
+      status: "mocked_empty",
+      spans: [],
+      metrics: [],
+      events: [],
+      resourceAttributes: {}
+    },
+    otherSupportPipelineInformation: {}
+  };
+}
+
+function buildPipelineSteps(): SupportProcessingPipelineV2Steps {
+  const renderedSupportResponse: RenderedSupportResponse = {
+    finalResponseText: "Bonjour."
+  };
+  const userResponse: UserResponse = {
+    messages: [
+      {
+        type: "signal_response",
+        content: "Bonjour."
+      }
+    ]
+  };
+  const persistenceEffects = buildPersistenceEffects();
+
+  return {
+    detectSuspiciousPromptPatterns: vi.fn(async () => ({
+      matchedPatternIds: []
+    })),
+    planTurnAnalysis: vi.fn(async () => ({
+      analyzeText: false,
+      analyzeAttachments: false,
+      matchedPatternIds: []
+    })),
+    buildStandardResponseFragments: vi.fn(async () => []),
+    renderSupportResponse: vi.fn(async () => renderedSupportResponse),
+    buildUserResponse: vi.fn(async () => userResponse),
+    buildSupportPatches: vi.fn(async () => persistenceEffects)
   };
 }
 
@@ -150,43 +231,11 @@ describe("runMatrixSupportAutomationV2", function () {
     });
     const sendMatrixDeliveryMessages = vi.fn();
     const runSupportAutomationTurnV2 = vi.fn(async (params) => {
-      const result: SupportAutomationTurnV2Result = {
-        matchingResult: {
-          channel: "matrix",
-          roomId: params.bufferedMessages.roomId,
-          userId: params.bufferedMessages.userId,
-          messages: params.bufferedMessages.messages
-        },
-        supportProcessingInput: {} as never,
-        supportProcessingOutput: {
-          userResponse: {
-            messages: [
-              {
-                type: "topic_response",
-                content: "Réponse V2."
-              }
-            ]
-          },
-          patches: {} as never
-        },
-        deliveryMessages: [
-          {
-            localId: "delivery_1",
-            channel: "matrix",
-            roomId: params.bufferedMessages.roomId,
-            userId: params.bufferedMessages.userId,
-            content: "Réponse V2."
-          }
-        ],
-        persistenceResult: {
-          patchStatus: "applied",
-          storedIncomingMessageIds: [],
-          storedOutgoingMessageIds: [],
-          warnings: []
-        }
-      };
-
-      return result;
+      return buildRunResult({
+        roomId: params.bufferedMessages.roomId,
+        userId: params.bufferedMessages.userId,
+        messages: params.bufferedMessages.messages
+      });
     });
     const handle = await runMatrixSupportAutomationV2({
       config: {
@@ -196,9 +245,6 @@ describe("runMatrixSupportAutomationV2", function () {
       },
       dryRun: true,
       inactivityTimeoutMs: 10_000,
-      ticketRepository: repositories.ticketRepository,
-      userRepository: repositories.userRepository,
-      messageRepository: repositories.messageRepository,
       dependencies: {
         listenMatrixEvents,
         sendMatrixDeliveryMessages,
@@ -220,7 +266,7 @@ describe("runMatrixSupportAutomationV2", function () {
     expect(runSupportAutomationTurnV2).toHaveBeenCalledTimes(1);
     expect(runSupportAutomationTurnV2).toHaveBeenCalledWith(
       expect.objectContaining({
-        persist: false
+        bufferedMessages: expect.any(Object)
       })
     );
     expect(listenMatrixEvents).toHaveBeenCalledWith(
@@ -238,6 +284,123 @@ describe("runMatrixSupportAutomationV2", function () {
       .toEqual(repositoriesBefore.users);
     expect(await repositories.messageRepository.list())
       .toEqual(repositoriesBefore.messages);
+
+    await handle.stop();
+  });
+
+  it("runs the real V2 turn without sending legacy conversational context when live memory is absent", async function () {
+    const repositories = buildTempRepositories();
+
+    await repositories.ticketRepository.upsert({
+      ticketId: "ticket_legacy",
+      channel: "matrix",
+      roomId: "!room",
+      threadId: null,
+      userId: "@user",
+      status: "active",
+      supportTopicKnowledge: {
+        segments_topic: [
+          {
+            id_topic: 7,
+            topic_category: "bug",
+            topic_label: "Legacy Pixel notification issue",
+            topic_details: {
+              device: "Pixel 6",
+              app_version: "2.1.3"
+            },
+            user_goal: "Legacy notification issue",
+            blocking_issue: "no"
+          }
+        ]
+      },
+      conversationHistory: [
+        {
+          id: "legacy_user",
+          message_id: "$legacy_user",
+          created_at: "2026-06-22T09:58:00.000Z",
+          role: "user",
+          summary: "Legacy user used Pixel 6 version 2.1.3 for notifications.",
+          turnUnderstandingDelta: {
+            user_language: "french",
+            segments_lack_comprehension: [],
+            segments_topic: [],
+            segments_signal: [],
+            segments_scope_boundary: [],
+            segments_suspicious: []
+          }
+        },
+        {
+          id: "legacy_bot",
+          message_id: "$legacy_bot",
+          created_at: "2026-06-22T09:59:00.000Z",
+          role: "bot",
+          summary: "Legacy bot asked for app version.",
+          responsePlan: {
+            responseLanguage: "french",
+            messagesPlan: {
+              scopeBoundaryPlanMessages: [],
+              topicPlanMessages: [],
+              signalPlanMessages: [],
+              handoverPlanMessages: []
+            },
+            metadata: {
+              v2ResponsePlan: {
+                questionDecision: {
+                  fieldNames: ["device", "app_version"]
+                }
+              }
+            }
+          }
+        }
+      ] as never,
+      createdAt: "2026-06-22T09:58:00.000Z",
+      updatedAt: "2026-06-22T09:59:00.000Z"
+    });
+
+    let onMessage!: (event: MessagingEvent) => Promise<void> | void;
+    const listenMatrixEvents = vi.fn(async (params) => {
+      onMessage = params.onMessage;
+
+      return {
+        stop: vi.fn()
+      };
+    });
+
+    const handle = await runMatrixSupportAutomationV2({
+      config: {
+        homeserverUrl: "https://matrix.local",
+        accessToken: "token",
+        defaultRoomId: "!room"
+      },
+      dryRun: true,
+      processHistoricalMessages: true,
+      inactivityTimeoutMs: 10_000,
+      steps: buildPipelineSteps(),
+      dependencies: {
+        listenMatrixEvents,
+        runSupportAutomationTurnV2: realRunSupportAutomationTurnV2
+      }
+    });
+
+    await onMessage(buildMessage({
+      content: "Je n'arrive pas a ouvrir mon Drive."
+    }));
+
+    const records = await handle.flushPending();
+    const input = records[0].supportAutomationTurnResult.supportProcessingInput;
+
+    expect(input.supportTopicKnowledge).toEqual({
+      segments_topic: []
+    });
+    expect(input.conversationHistory).toEqual([]);
+    expect(input.recentInteractionContext).toEqual({
+      previousUserMessageSummary: "No relevant previous user message.",
+      previousBotResponseSummary: "No relevant previous bot response.",
+      previousBotQuestionFieldNames: []
+    });
+    expect(JSON.stringify(input)).not.toContain("Pixel 6");
+    expect(JSON.stringify(input)).not.toContain("2.1.3");
+    expect(JSON.stringify(input)).not.toContain("notifications");
 
     await handle.stop();
   });
@@ -267,43 +430,11 @@ describe("runMatrixSupportAutomationV2", function () {
         messageCount: params.bufferedMessages.messages.length
       }, "analyzing_support");
 
-      const result: SupportAutomationTurnV2Result = {
-        matchingResult: {
-          channel: "matrix",
-          roomId: params.bufferedMessages.roomId,
-          userId: params.bufferedMessages.userId,
-          messages: params.bufferedMessages.messages
-        },
-        supportProcessingInput: {} as never,
-        supportProcessingOutput: {
-          userResponse: {
-            messages: [
-              {
-                type: "topic_response",
-                content: "Réponse V2."
-              }
-            ]
-          },
-          patches: {} as never
-        },
-        deliveryMessages: [
-          {
-            localId: "delivery_1",
-            channel: "matrix",
-            roomId: params.bufferedMessages.roomId,
-            userId: params.bufferedMessages.userId,
-            content: "Réponse V2."
-          }
-        ],
-        persistenceResult: {
-          patchStatus: "applied",
-          storedIncomingMessageIds: [],
-          storedOutgoingMessageIds: [],
-          warnings: []
-        }
-      };
-
-      return result;
+      return buildRunResult({
+        roomId: params.bufferedMessages.roomId,
+        userId: params.bufferedMessages.userId,
+        messages: params.bufferedMessages.messages
+      });
     });
     const handle = await runMatrixSupportAutomationV2({
       config: {
@@ -313,9 +444,6 @@ describe("runMatrixSupportAutomationV2", function () {
       },
       dryRun: true,
       inactivityTimeoutMs: 10_000,
-      ticketRepository: repositories.ticketRepository,
-      userRepository: repositories.userRepository,
-      messageRepository: repositories.messageRepository,
       progressReporter,
       dependencies: {
         listenMatrixEvents,
@@ -377,7 +505,8 @@ describe("runMatrixSupportAutomationV2", function () {
   it("keeps same-scope messages pending while the current turn and delivery are active", async function () {
     const repositories = buildTempRepositories();
     let onMessage!: (event: MessagingEvent) => Promise<void> | void;
-    const firstDelivery = createDeferred<[]>();
+    const firstDelivery = createDeferred<MatrixDeliveryResult[]>();
+    const firstLiveMemoryWrite = createDeferred<unknown>();
     const listenMatrixEvents = vi.fn(async (params) => {
       onMessage = params.onMessage;
 
@@ -399,6 +528,13 @@ describe("runMatrixSupportAutomationV2", function () {
 
       return [];
     });
+    const applyLiveMemoryUpdate = vi.fn(async () => {
+      if (applyLiveMemoryUpdate.mock.calls.length === 1) {
+        await firstLiveMemoryWrite.promise;
+      }
+
+      return {} as never;
+    });
     const logger = {
       log: vi.fn(),
       warn: vi.fn(),
@@ -413,14 +549,12 @@ describe("runMatrixSupportAutomationV2", function () {
       dryRun: false,
       processHistoricalMessages: true,
       inactivityTimeoutMs: 10_000,
-      ticketRepository: repositories.ticketRepository,
-      userRepository: repositories.userRepository,
-      messageRepository: repositories.messageRepository,
       logger,
       dependencies: {
         listenMatrixEvents,
         sendMatrixDeliveryMessages,
-        runSupportAutomationTurnV2
+        runSupportAutomationTurnV2,
+        applyLiveMemoryUpdate
       }
     });
 
@@ -464,6 +598,17 @@ describe("runMatrixSupportAutomationV2", function () {
     }));
 
     firstDelivery.resolve([]);
+
+    await vi.waitFor(() => {
+      expect(applyLiveMemoryUpdate).toHaveBeenCalledTimes(1);
+    });
+    expect(runSupportAutomationTurnV2).toHaveBeenCalledTimes(1);
+    expect(logger.log).not.toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "conversation.pending_processing_released_after_current_turn",
+      scopeKey: JSON.stringify(["matrix", "!room", null, "@user"])
+    }));
+
+    firstLiveMemoryWrite.resolve({});
 
     await firstFlush;
     await vi.waitFor(() => {
@@ -521,9 +666,6 @@ describe("runMatrixSupportAutomationV2", function () {
       dryRun: true,
       processHistoricalMessages: true,
       inactivityTimeoutMs: 1000,
-      ticketRepository: repositories.ticketRepository,
-      userRepository: repositories.userRepository,
-      messageRepository: repositories.messageRepository,
       dependencies: {
         listenMatrixEvents,
         runSupportAutomationTurnV2
@@ -598,9 +740,6 @@ describe("runMatrixSupportAutomationV2", function () {
       dryRun: true,
       processHistoricalMessages: true,
       inactivityTimeoutMs: 10_000,
-      ticketRepository: repositories.ticketRepository,
-      userRepository: repositories.userRepository,
-      messageRepository: repositories.messageRepository,
       dependencies: {
         listenMatrixEvents,
         runSupportAutomationTurnV2
@@ -679,9 +818,6 @@ describe("runMatrixSupportAutomationV2", function () {
       dryRun: true,
       processHistoricalMessages: true,
       inactivityTimeoutMs: 10_000,
-      ticketRepository: repositories.ticketRepository,
-      userRepository: repositories.userRepository,
-      messageRepository: repositories.messageRepository,
       logger,
       dependencies: {
         listenMatrixEvents,

@@ -10,6 +10,9 @@ import {
 import {
   buildSupportProcessingInputV2
 } from "../../src/orchestration/buildSupportProcessingInputV2";
+import {
+  buildSupportTurnIdentityV2
+} from "../../src/orchestration/v2/buildSupportTurnIdentityV2";
 import { applySupportPatches } from "../../src/persistence/applySupportPatches";
 import { JsonMessageRepository } from "../../src/repositories/json/jsonMessageRepository";
 import { JsonTicketRepository } from "../../src/repositories/json/jsonTicketRepository";
@@ -216,7 +219,19 @@ describe("topic continuity context", function () {
     };
 
     const input = buildSupportProcessingInput(turnTwoMatchingResult);
-    const inputV2 = buildSupportProcessingInputV2(turnTwoMatchingResult);
+    const bufferedMessages = {
+      channel: "matrix" as const,
+      roomId: "!room:example.org",
+      userId: "@user:example.org",
+      messages: turnTwoMatchingResult.messages,
+      firstMessageAt: "2026-06-05T10:01:00.000Z",
+      lastMessageAt: "2026-06-05T10:01:00.000Z",
+      flushedAt: "2026-06-05T10:01:01.000Z"
+    };
+    const inputV2 = buildSupportProcessingInputV2({
+      bufferedMessages,
+      turnIdentity: buildSupportTurnIdentityV2(bufferedMessages)
+    });
 
     expect(ticket).toBeDefined();
     expect(ticket?.ticketId).toBeTruthy();
@@ -235,11 +250,14 @@ describe("topic continuity context", function () {
       content: "Oui, la plateforme est sur mon application web",
       channel: "twake_chat"
     });
+    expect(inputV2.supportTopicKnowledge).toEqual({
+      segments_topic: []
+    });
+    expect(inputV2.conversationHistory).toEqual([]);
     expect(inputV2.recentInteractionContext).toEqual({
-      previousUserMessageSummary:
-        "Je crois que j'ai trouvé un bug sur Twake Chat",
-      previousBotResponseSummary:
-        "Sur quelle plateforme rencontrez-vous le bug ?"
+      previousUserMessageSummary: "No relevant previous user message.",
+      previousBotResponseSummary: "No relevant previous bot response.",
+      previousBotQuestionFieldNames: []
     });
   });
 });
