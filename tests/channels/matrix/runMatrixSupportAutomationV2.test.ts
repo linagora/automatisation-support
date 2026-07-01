@@ -132,8 +132,7 @@ function buildRunResult(params: {
           }
         ]
       },
-      persistenceEffects,
-      patches: persistenceEffects
+      persistenceEffects
     },
     persistenceEffects,
     deliveryMessages: [
@@ -202,7 +201,9 @@ function buildPipelineSteps(): SupportProcessingPipelineV2Steps {
     buildStandardResponseFragments: vi.fn(async () => []),
     renderSupportResponse: vi.fn(async () => renderedSupportResponse),
     buildUserResponse: vi.fn(async () => userResponse),
-    buildSupportPatches: vi.fn(async () => persistenceEffects)
+    buildSupportProcessingPersistenceEffects: vi.fn(
+      async () => persistenceEffects
+    )
   };
 }
 

@@ -116,7 +116,6 @@ function buildTurnResult(params: {
         messages: []
       },
       persistenceEffects,
-      patches: persistenceEffects,
       mergedTopicSnapshots: params.snapshots ?? []
     },
     persistenceEffects,

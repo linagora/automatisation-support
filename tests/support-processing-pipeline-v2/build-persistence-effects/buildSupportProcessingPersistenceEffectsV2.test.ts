@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  buildSupportPatchesV2
-} from "../../../src/support-processing-pipeline-v2/build-support-patches/buildSupportPatchesV2";
+  buildSupportProcessingPersistenceEffectsV2
+} from "../../../src/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 
 import type {
-  BuildSupportPatchesInput
+  BuildSupportPersistenceEffectsInput
 } from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 function buildInput(
-  overrides: Partial<BuildSupportPatchesInput> = {}
-): BuildSupportPatchesInput {
+  overrides: Partial<BuildSupportPersistenceEffectsInput> = {}
+): BuildSupportPersistenceEffectsInput {
   return {
     promptSecuritySignals: {
       matchedPatternIds: []
@@ -35,9 +35,9 @@ function buildInput(
   };
 }
 
-describe("buildSupportPatchesV2", function () {
-  it("builds V2 persistence effects instead of legacy ticket patches", function () {
-    const effects = buildSupportPatchesV2(buildInput({
+describe("buildSupportProcessingPersistenceEffectsV2", function () {
+  it("builds V2 persistence effects instead of legacy ticket writes", function () {
+    const effects = buildSupportProcessingPersistenceEffectsV2(buildInput({
       latestUserMessageContent: "Je ne reçois plus les notifications.",
       mergedTopicSnapshots: [
         {
@@ -116,7 +116,7 @@ describe("buildSupportPatchesV2", function () {
   });
 
   it("marks user state as watch when prompt security signals matched", function () {
-    const effects = buildSupportPatchesV2(buildInput({
+    const effects = buildSupportProcessingPersistenceEffectsV2(buildInput({
       promptSecuritySignals: {
         matchedPatternIds: ["ignore_previous_instructions"]
       }

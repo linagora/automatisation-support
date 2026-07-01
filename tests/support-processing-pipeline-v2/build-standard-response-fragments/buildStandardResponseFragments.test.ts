@@ -446,7 +446,16 @@ describe("buildStandardResponseFragments", function () {
     "mot de passe",
     "ça marche",
     "ça ne marche pas"
-  ])("detects short French continuation: %s", function (message) {
+  ])("builds renderer instructions for short French continuation: %s", function (message) {
+    const fragments = buildStandardResponseFragments(buildInput({
+      latestUserMessage: {
+        id: "msg_1",
+        content: message,
+        channel: "email",
+        sentAt: "2026-06-18T08:00:00.000Z"
+      }
+    }));
+
     expect(resolveStandardResponseLanguage(buildInput({
       latestUserMessage: {
         id: "msg_1",
@@ -454,7 +463,15 @@ describe("buildStandardResponseFragments", function () {
         channel: "email",
         sentAt: "2026-06-18T08:00:00.000Z"
       }
-    }))).toBe("french");
+    }))).toBe("renderer_instructions");
+    expect(fragments).toEqual([
+      expect.objectContaining({
+        category: "lack_comprehension",
+        standardSubcategory: "unclear_message",
+        sourceVerbatim: message,
+        content: expect.stringContaining("Ask the user to rephrase")
+      })
+    ]);
   });
 
   it("builds support process question rendering instructions", function () {

@@ -47,9 +47,13 @@ function buildQueryTopicEvidence(input: RetrieveSupportKnowledgeInput): TopicEvi
 }
 
 class JsonFileSupportKnowledgeRetriever implements SupportKnowledgeRetriever {
+  constructor(
+    private readonly repository = new JsonKnowledgeRepository()
+  ) {}
+
   async retrieve(input: RetrieveSupportKnowledgeInput): Promise<KnowledgeChunk[]> {
     const queryEvidence = buildQueryTopicEvidence(input);
-    const matches = await new JsonKnowledgeRepository().searchRelevant({
+    const matches = await this.repository.searchRelevant({
       topicEvidence: queryEvidence,
       limit: input.limit ?? 3
     });

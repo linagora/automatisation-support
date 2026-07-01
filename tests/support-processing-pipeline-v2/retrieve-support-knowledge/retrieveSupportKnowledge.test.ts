@@ -1,3 +1,7 @@
+import * as fs from "fs/promises";
+import * as os from "os";
+import * as path from "path";
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -10,12 +14,18 @@ import {
 import {
   JsonFileSupportKnowledgeRetriever
 } from "../../../src/support-processing-pipeline-v2/retrieve-support-knowledge/retrievers/jsonFileSupportKnowledgeRetriever";
+import {
+  JsonKnowledgeRepository
+} from "../../../src/repositories/json/jsonKnowledgeRepository";
 
 import type {
   KnowledgeChunk,
   KnowledgeEnrichmentPlan,
   RetrieveSupportKnowledgeInput
 } from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+import type {
+  JsonKnowledgeItem
+} from "../../../src/repositories/json/typesJsonRepositories.types";
 
 const previousEnv = { ...process.env };
 
@@ -170,6 +180,20 @@ function getFetchBody(fetchMock: ReturnType<typeof vi.fn>): Record<string, unkno
   return JSON.parse(fetchCall[1].body) as Record<string, unknown>;
 }
 
+async function writeKnowledgeFixture(
+  items: JsonKnowledgeItem[]
+): Promise<string> {
+  const tempDir = await fs.mkdtemp(path.join(
+    os.tmpdir(),
+    "retrieve-support-knowledge-test-"
+  ));
+  const filePath = path.join(tempDir, "knowledge.json");
+
+  await fs.writeFile(filePath, `${JSON.stringify(items, null, 2)}\n`, "utf8");
+
+  return filePath;
+}
+
 describe("retrieveSupportKnowledge", function () {
   beforeEach(function () {
     clearRagEnv();
@@ -318,7 +342,43 @@ describe("retrieveSupportKnowledge", function () {
     expect(createDefaultSupportKnowledgeRetriever())
       .toBeInstanceOf(JsonFileSupportKnowledgeRetriever);
 
-    const chunks = await retrieveSupportKnowledge(buildInput());
+    const fixturePath = await writeKnowledgeFixture([
+      {
+        knowledgeId: "android_push_notification_not_received",
+        title: "Android push notification not received after new email",
+        status: "active",
+        source: {
+          type: "manual"
+        },
+        scope: {
+          productOrService: ["Android"],
+          broadCategoryHints: ["bug"],
+          supportNeeds: ["possible_bug"],
+          topicKeywords: [
+            "push notification",
+            "new email",
+            "notification"
+          ],
+          relatedFieldNames: ["platform"]
+        },
+        knownBehavior: [
+          "Android push notification not received after new email"
+        ],
+        expectedBehavior: [
+          "A notification should appear when a new email arrives."
+        ],
+        acceptanceCriteria: [],
+        safeResponseStrategy: [
+          "Ask the user to verify Android notification permissions."
+        ],
+        questionsToAskFirst: ["Which Android version is affected?"],
+        doNotClaim: []
+      }
+    ]);
+    const retriever = new JsonFileSupportKnowledgeRetriever(
+      new JsonKnowledgeRepository(fixturePath)
+    );
+    const chunks = await retrieveSupportKnowledge(buildInput(), retriever);
 
     expect(chunks).toHaveLength(1);
     expect(chunks[0]).toMatchObject({

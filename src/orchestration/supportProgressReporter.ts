@@ -55,7 +55,7 @@ const STEP_TO_PROGRESS_STAGE: Partial<
   buildStandardResponseFragments: "analyzing_surface",
   analyzeSupportText: "analyzing_support",
   proposeTopicUpdates: "updating_topics",
-  buildSupportPatches: "updating_topics",
+  buildSupportProcessingPersistenceEffects: "updating_topics",
   planKnowledgeEnrichment: "searching",
   retrieveSupportKnowledge: "searching",
   synthesizeRetrievedKnowledge: "searching",

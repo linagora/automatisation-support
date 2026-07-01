@@ -1,5 +1,5 @@
 import type {
-  BuildSupportPatchesInput,
+  BuildSupportPersistenceEffectsInput,
   LiveMemoryAttemptedAction,
   LiveMemoryCaseDetail,
   LiveMemoryContextUpdate,
@@ -12,12 +12,13 @@ import type {
   SupportProcessingPersistenceEffectsV2
 } from "../typesSupportProcessingPipelineV2.types";
 
-type BuildSupportPersistenceEffectsInput = BuildSupportPatchesInput & {
-  latestUserMessage?: {
-    content?: unknown;
+type BuildSupportProcessingPersistenceEffectsInput =
+  BuildSupportPersistenceEffectsInput & {
+    latestUserMessage?: {
+      content?: unknown;
+    };
+    latestUserMessageContent?: unknown;
   };
-  latestUserMessageContent?: unknown;
-};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -175,7 +176,9 @@ function extractTextFromUnknown(value: unknown): string {
   return "";
 }
 
-function getLastUserVerbatim(input: BuildSupportPersistenceEffectsInput): string {
+function getLastUserVerbatim(
+  input: BuildSupportProcessingPersistenceEffectsInput
+): string {
   return (
     readString(input.latestUserMessageContent) ??
     readString(input.latestUserMessage?.content) ??
@@ -183,12 +186,14 @@ function getLastUserVerbatim(input: BuildSupportPersistenceEffectsInput): string
   );
 }
 
-function getLastBotVerbatim(input: BuildSupportPersistenceEffectsInput): string {
+function getLastBotVerbatim(
+  input: BuildSupportProcessingPersistenceEffectsInput
+): string {
   return extractTextFromUnknown(input.userResponse);
 }
 
 function buildUserState(
-  input: BuildSupportPersistenceEffectsInput
+  input: BuildSupportProcessingPersistenceEffectsInput
 ): LiveMemoryUserStateUpdate {
   const matchedPatternIds =
     input.promptSecuritySignals.matchedPatternIds ?? [];
@@ -211,7 +216,7 @@ function buildUserState(
 }
 
 function buildLiveMemoryUpdate(
-  input: BuildSupportPersistenceEffectsInput
+  input: BuildSupportProcessingPersistenceEffectsInput
 ): LiveMemoryContextUpdate {
   return {
     mode: "merge",
@@ -237,7 +242,7 @@ function buildOtherSupportPipelineInformation(): OtherSupportPipelineInformation
 }
 
 function buildSupportProcessingPersistenceEffectsV2(
-  input: BuildSupportPersistenceEffectsInput
+  input: BuildSupportProcessingPersistenceEffectsInput
 ): SupportProcessingPersistenceEffectsV2 {
   return {
     liveMemoryUpdate: buildLiveMemoryUpdate(input),
@@ -245,19 +250,6 @@ function buildSupportProcessingPersistenceEffectsV2(
     otherSupportPipelineInformation: buildOtherSupportPipelineInformation()
   };
 }
-
-/**
- * Temporary compatibility name.
- *
- * This no longer builds legacy ticket/message/user patches.
- * It now returns the modern persistence effects expected by V2:
- * live-memory update + mocked OpenTelemetry payload + empty future bucket.
- *
- * Next cleanup step:
- * rename this function to `buildSupportProcessingPersistenceEffectsV2`
- * everywhere in the pipeline.
- */
-const buildSupportPatchesV2 = buildSupportProcessingPersistenceEffectsV2;
 
 export type {
   LiveMemoryAttemptedAction,
@@ -274,7 +266,6 @@ export {
   buildLiveMemoryUpdate,
   buildMockedOpenTelemetryPayload,
   buildOtherSupportPipelineInformation,
-  buildSupportPatchesV2,
   buildSupportProcessingPersistenceEffectsV2,
   topicSnapshotsToLiveMemoryTopics
 };

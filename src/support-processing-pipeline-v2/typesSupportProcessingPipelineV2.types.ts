@@ -71,7 +71,7 @@ export type SupportProcessingStepName =
   | "composeSupportResponsePlan"
   | "renderSupportResponse"
   | "buildUserResponse"
-  | "buildSupportPatches";
+  | "buildSupportProcessingPersistenceEffects";
 
 export type SupportProcessingProgressEvent = {
   step: SupportProcessingStepName;
@@ -109,7 +109,6 @@ export type SupportProcessingPipelineV2Input = {
 export type SupportProcessingPipelineV2Output = {
   userResponse: UserResponse;
   persistenceEffects: SupportProcessingPersistenceEffectsV2;
-  patches: SupportProcessingPersistenceEffectsV2;
   textUnderstandings?: TextUnderstanding[];
   supportResponseCues?: SupportResponseCue[];
   topicUpdateOps?: TopicUpdateOp[];
@@ -767,7 +766,7 @@ export type BuildUserResponseInput = {
   renderedSupportResponse: RenderedSupportResponse;
 };
 
-export type BuildSupportPatchesInput = {
+export type BuildSupportPersistenceEffectsInput = {
   promptSecuritySignals: PromptSecuritySignals;
   turnAnalysisPlan: TurnAnalysisPlan;
   supportTopicKnowledge: SupportTopicKnowledge;
@@ -850,8 +849,8 @@ export type SupportProcessingPipelineV2Steps = {
     RenderedSupportResponse
   >;
   buildUserResponse?: PipelineStep<BuildUserResponseInput, UserResponse>;
-  buildSupportPatches?: PipelineStep<
-    BuildSupportPatchesInput,
+  buildSupportProcessingPersistenceEffects?: PipelineStep<
+    BuildSupportPersistenceEffectsInput,
     SupportProcessingPersistenceEffectsV2
   >;
 };

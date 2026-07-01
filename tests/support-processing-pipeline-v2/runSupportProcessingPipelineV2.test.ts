@@ -9,8 +9,8 @@ import {
   runSupportProcessingPipelineV2Debug
 } from "../../src/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
 import {
-  buildSupportPatchesV2
-} from "../../src/support-processing-pipeline-v2/build-support-patches/buildSupportPatchesV2";
+  buildSupportProcessingPersistenceEffectsV2
+} from "../../src/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 import {
   buildTopicResponsePlanDebug
 } from "../../src/support-processing-pipeline-v2/responsePlanIds";
@@ -427,7 +427,9 @@ function buildSteps(
     composeSupportResponsePlan: vi.fn(async () => composedSupportResponsePlan),
     renderSupportResponse: vi.fn(async () => renderedSupportResponse),
     buildUserResponse: vi.fn(async () => userResponse),
-    buildSupportPatches: vi.fn(async () => persistenceEffects),
+    buildSupportProcessingPersistenceEffects: vi.fn(
+      async () => persistenceEffects
+    ),
     ...overrides
   };
 }
@@ -464,7 +466,6 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(output).toEqual({
       userResponse,
       persistenceEffects,
-      patches: persistenceEffects,
       composedSupportResponsePlan
     });
   });
@@ -1846,6 +1847,41 @@ describe("runSupportProcessingPipelineV2", function () {
         }
       }
     ];
+    const mergedTopicSnapshots = [
+      {
+        snapshotId: proposals[0].proposalId,
+        topicId: null,
+        temporaryTopicId: proposals[0].proposalId,
+        isNewTopic: true,
+        title: "Android notification problem",
+        broadCategoryHint: "bug",
+        summary: notificationUnderstanding.summary,
+        caseDetails: [],
+        attemptedActions: [],
+        topic_details: {},
+        sourceUnderstandingIds: ["text_understanding_1"],
+        sourceVerbatims:
+          notificationUnderstanding.sourceVerbatims as string[],
+        sourceOpIndex: 0,
+        baseTopic: null
+      },
+      {
+        snapshotId: proposals[1].proposalId,
+        topicId: null,
+        temporaryTopicId: proposals[1].proposalId,
+        isNewTopic: true,
+        title: "Duplicate invoice",
+        broadCategoryHint: "billing",
+        summary: billingUnderstanding.summary,
+        caseDetails: [],
+        attemptedActions: [],
+        topic_details: {},
+        sourceUnderstandingIds: ["text_understanding_2"],
+        sourceVerbatims: billingUnderstanding.sourceVerbatims as string[],
+        sourceOpIndex: 1,
+        baseTopic: null
+      }
+    ];
     const steps = buildSteps({
       planTurnAnalysis: vi.fn(async () => ({
         analyzeText: true,
@@ -1860,7 +1896,12 @@ describe("runSupportProcessingPipelineV2", function () {
         ],
         supportResponseCues: []
       })),
-      proposeTopicUpdates: vi.fn(async () => proposals),
+      proposeTopicUpdates: vi.fn(async () => ({
+        topicUpdateOps: [],
+        topicUpdateProposals: proposals,
+        topicPatches: [],
+        mergedTopicSnapshots
+      })),
       planKnowledgeEnrichment: vi.fn(planKnowledgeEnrichment),
       retrieveSupportKnowledge: vi.fn(async () => [
         {
@@ -1895,7 +1936,9 @@ describe("runSupportProcessingPipelineV2", function () {
           }
         ]
       })),
-      buildSupportPatches: vi.fn(buildSupportPatchesV2)
+      buildSupportProcessingPersistenceEffects: vi.fn(
+        buildSupportProcessingPersistenceEffectsV2
+      )
     });
 
     const output = await runSupportProcessingPipelineV2(buildInput(), steps);
@@ -2393,8 +2436,8 @@ describe("runSupportProcessingPipelineV2", function () {
       { step: "renderSupportResponse", status: "completed" },
       { step: "buildUserResponse", status: "started" },
       { step: "buildUserResponse", status: "completed" },
-      { step: "buildSupportPatches", status: "started" },
-      { step: "buildSupportPatches", status: "completed" }
+      { step: "buildSupportProcessingPersistenceEffects", status: "started" },
+      { step: "buildSupportProcessingPersistenceEffects", status: "completed" }
     ]);
   });
 
@@ -2539,7 +2582,6 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(output).toEqual({
       userResponse,
       persistenceEffects,
-      patches: persistenceEffects,
       composedSupportResponsePlan
     });
   });

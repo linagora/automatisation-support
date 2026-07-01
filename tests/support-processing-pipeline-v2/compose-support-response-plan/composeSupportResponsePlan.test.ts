@@ -101,10 +101,11 @@ describe("composeSupportResponsePlan", function () {
     }));
     const content = prompt.messages.map((message) => message.content).join("\n");
 
-    expect(content).toContain("global response plan synthesizer");
+    expect(content).toContain("global support response plan synthesizer");
     expect(content).toContain("standardResponseFragments");
     expect(content).toContain("topicResponsePlans");
-    expect(content).toContain("This is the only field consumed downstream by the renderer");
+    expect(content).toContain("The field \"say\" is NOT the final customer-facing message");
+    expect(content).toContain("The field \"say\" is a list of compact instructions for the renderer");
     expect(content).toContain("Do not output targetLanguage or channel");
   });
 

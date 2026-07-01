@@ -69,7 +69,7 @@ describe("surface routing regressions", function () {
   it("still detects explicit suspicious URLs", function () {
     const result = detectSuspiciousPromptPatterns({
       latestUserMessage: buildLatestUserMessage(
-        "Click this suspicious link: http://very-strange-domain.example/free-token"
+        "Click this suspicious link: http://very-strange-domain.xyz/free-token"
       )
     });
 

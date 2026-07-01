@@ -44,8 +44,8 @@ import {
   renderSupportResponse
 } from "./response-renderer/renderSupportResponse";
 import {
-  buildSupportPatchesV2
-} from "./build-support-patches/buildSupportPatchesV2";
+  buildSupportProcessingPersistenceEffectsV2
+} from "./build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 import {
   buildUserResponseV2
 } from "./build-user-response/buildUserResponseV2";
@@ -59,7 +59,7 @@ import {
 import type {
   AttachmentSurfaceAnalysis,
   AttachmentUnderstanding,
-  BuildSupportPatchesInput,
+  BuildSupportPersistenceEffectsInput,
   ComposedSupportResponsePlan,
   ExtractableFieldDefinition,
   KnowledgeChunk,
@@ -641,9 +641,10 @@ async function runSupportProcessingPipelineV2Internal(
       steps.buildUserResponse || buildUserResponseV2,
       "buildUserResponse"
     ),
-    buildSupportPatches: resolveStep(
-      steps.buildSupportPatches || buildSupportPatchesV2,
-      "buildSupportPatches"
+    buildSupportProcessingPersistenceEffects: resolveStep(
+      steps.buildSupportProcessingPersistenceEffects ||
+        buildSupportProcessingPersistenceEffectsV2,
+      "buildSupportProcessingPersistenceEffects"
     )
   };
 
@@ -1120,8 +1121,8 @@ async function runSupportProcessingPipelineV2Internal(
   );
   const persistenceEffects = await runStep(
     internalRuntime,
-    "buildSupportPatches",
-    pipelineSteps.buildSupportPatches,
+    "buildSupportProcessingPersistenceEffects",
+    pipelineSteps.buildSupportProcessingPersistenceEffects,
     {
       promptSecuritySignals,
       turnAnalysisPlan,
@@ -1175,7 +1176,6 @@ async function runSupportProcessingPipelineV2Internal(
   return {
     userResponse,
     persistenceEffects,
-    patches: persistenceEffects,
     ...(typeof textUnderstandings !== "undefined"
       ? { textUnderstandings }
       : {}),
