@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../../../src/llm/llm-client", function () {
+vi.mock("../../../../../src/infrastructure/llm/llm-client", function () {
   return {
     callLLM: vi.fn(async function (messages: { content: string }[]) {
       const prompt = messages
@@ -23,15 +23,15 @@ vi.mock("../../../../../src/llm/llm-client", function () {
 
 import {
   runAttachmentAnalysisSecurity
-} from "../../../../../src/support-processing-pipeline/message-analysis/security-functions/attachment-analysis/runAttachmentAnalysisSecurity";
+} from "../../../../../src/archive/support-processing-pipeline/message-analysis/security-functions/attachment-analysis/runAttachmentAnalysisSecurity";
 
 import type {
   AccountTrustStatus
-} from "../../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 import type {
   AttachmentAnalysis,
   AttachmentAnalysisSecurityDecision
-} from "../../../../../src/support-processing-pipeline/message-analysis/typesMessageAnalysis.types";
+} from "../../../../../src/archive/support-processing-pipeline/message-analysis/typesMessageAnalysis.types";
 
 const trustedAccount: AccountTrustStatus = {
   status: "trusted",

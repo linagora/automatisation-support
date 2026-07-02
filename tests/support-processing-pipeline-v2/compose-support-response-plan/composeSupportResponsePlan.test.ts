@@ -2,16 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildComposeSupportResponsePlanPrompt
-} from "../../../src/support-processing-pipeline-v2/compose-support-response-plan/buildComposeSupportResponsePlanPrompt";
+} from "../../../src/support-automation/support-processing-pipeline-v2/compose-support-response-plan/buildComposeSupportResponsePlanPrompt";
 import {
   formatComposeSupportResponsePlanOutput
-} from "../../../src/support-processing-pipeline-v2/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
+} from "../../../src/support-automation/support-processing-pipeline-v2/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
 
 import type {
   ComposeSupportResponsePlanInput,
   ResponsePlanV2,
   StandardResponseFragment
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 const greetingFragment: StandardResponseFragment = {
   category: "standard_interaction",
@@ -27,6 +27,7 @@ const handoverFragment: StandardResponseFragment = {
 
 function plan(params: {
   id: string;
+  topicId?: number;
   prompt?: string;
   fields?: string[];
   forbid?: string[];
@@ -36,7 +37,7 @@ function plan(params: {
 
   return {
     responsePlanId: params.id,
-    topicId: params.id,
+    topicId: params.topicId ?? 1,
     acknowledge: [],
     answer: [],
     ask: fields.map((fieldName) => ({
@@ -114,7 +115,7 @@ describe("composeSupportResponsePlan", function () {
       topicResponsePlans: [
         undefined as unknown as ResponsePlanV2,
         {
-          topicId: "empty_say",
+          topicId: 2,
           acknowledge: [],
           answer: [],
           ask: [],

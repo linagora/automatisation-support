@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   decideTextSecurityWithAccountTrust
-} from "../../../../../src/support-processing-pipeline/message-analysis/security-functions/shared/decideTextSecurityWithAccountTrust";
+} from "../../../../../src/archive/support-processing-pipeline/message-analysis/security-functions/shared/decideTextSecurityWithAccountTrust";
 
 import type {
   AccountTrustStatus
-} from "../../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 import type {
   TextSecurityCheckOutput
-} from "../../../../../src/support-processing-pipeline/message-analysis/security-functions/shared/runTextSecurityChecks";
+} from "../../../../../src/archive/support-processing-pipeline/message-analysis/security-functions/shared/runTextSecurityChecks";
 
 const cleanTextSecurityChecks: TextSecurityCheckOutput = {
   checked: ["prompt_injection_attempt"],

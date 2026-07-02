@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   detectSuspiciousPromptPatterns
-} from "../../../src/support-processing-pipeline-v2/detect-suspicious-prompt-patterns/detectSuspiciousPromptPatterns";
+} from "../../../src/support-automation/support-processing-pipeline-v2/detect-suspicious-prompt-patterns/detectSuspiciousPromptPatterns";
 
 import type {
   LatestUserMessage
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 function buildLatestUserMessage(content: string): LatestUserMessage {
   return {

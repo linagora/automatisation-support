@@ -4,10 +4,10 @@ import * as sdk from "matrix-js-sdk";
 
 import {
   loadMatrixChannelConfigFromEnv
-} from "../../src/channels/matrix/loadMatrixChannelConfig";
+} from "../../src/infrastructure/matrix/loadMatrixChannelConfig";
 import {
   validateMatrixChannelEnv
-} from "../../src/channels/matrix/validateMatrixChannelConfig";
+} from "../../src/infrastructure/matrix/validateMatrixChannelConfig";
 
 type MatrixToolCommand = "check" | "listen" | "send-test";
 

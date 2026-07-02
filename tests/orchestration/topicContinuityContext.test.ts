@@ -6,27 +6,27 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   buildSupportProcessingInput
-} from "../../src/orchestration/buildSupportProcessingInput";
+} from "../../src/archive/orchestration/buildSupportProcessingInput";
 import {
   buildSupportProcessingInputV2
-} from "../../src/orchestration/buildSupportProcessingInputV2";
+} from "../../src/support-automation/build-input/buildSupportProcessingInputV2";
 import {
   buildSupportTurnIdentityV2
-} from "../../src/orchestration/v2/buildSupportTurnIdentityV2";
-import { applySupportPatches } from "../../src/persistence/applySupportPatches";
-import { JsonMessageRepository } from "../../src/repositories/json/jsonMessageRepository";
-import { JsonTicketRepository } from "../../src/repositories/json/jsonTicketRepository";
-import { JsonUserRepository } from "../../src/repositories/json/jsonUserRepository";
+} from "../../src/support-automation/build-input/buildSupportTurnIdentityV2";
+import { applySupportPatches } from "../../src/archive/persistence/applySupportPatches";
+import { JsonMessageRepository } from "../../src/archive/repositories/json/jsonMessageRepository";
+import { JsonTicketRepository } from "../../src/archive/repositories/json/jsonTicketRepository";
+import { JsonUserRepository } from "../../src/archive/repositories/json/jsonUserRepository";
 
 import type {
   MatchingResult
-} from "../../src/matching/typesMatching.types";
+} from "../../src/archive/matching/typesMatching.types";
 import type {
   DeliveryMessage
-} from "../../src/orchestration/typesOrchestration.types";
+} from "../../src/archive/orchestration/typesOrchestration.types";
 import type {
   SupportProcessingPipelineOutput
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 async function createTempDir(): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), "topic-continuity-context-test-"));

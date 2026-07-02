@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   mapMatrixEventToMessagingEvent
-} from "../../../src/channels/matrix/mapMatrixEvent";
+} from "../../../src/infrastructure/matrix/mapMatrixEvent";
 
 describe("mapMatrixEventToMessagingEvent", function () {
   it("maps a valid Matrix text message to MessagingEvent", function () {

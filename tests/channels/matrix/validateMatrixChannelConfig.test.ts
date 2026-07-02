@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   validateMatrixChannelEnv
-} from "../../../src/channels/matrix/validateMatrixChannelConfig";
+} from "../../../src/infrastructure/matrix/validateMatrixChannelConfig";
 
 describe("validateMatrixChannelEnv", function () {
   it("accepts a valid Matrix config", function () {

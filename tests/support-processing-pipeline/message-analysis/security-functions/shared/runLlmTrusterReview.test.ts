@@ -2,16 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   callLLM
-} from "../../../../../src/llm/llm-client";
+} from "../../../../../src/infrastructure/llm/llm-client";
 import {
   runLlmTrusterReview
-} from "../../../../../src/support-processing-pipeline/message-analysis/security-functions/shared/runLlmTrusterReview";
+} from "../../../../../src/archive/support-processing-pipeline/message-analysis/security-functions/shared/runLlmTrusterReview";
 
 import type {
   AccountTrustStatus
-} from "../../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
-vi.mock("../../../../../src/llm/llm-client", function () {
+vi.mock("../../../../../src/infrastructure/llm/llm-client", function () {
   return {
     callLLM: vi.fn()
   };

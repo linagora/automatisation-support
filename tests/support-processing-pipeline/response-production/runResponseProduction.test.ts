@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   runResponseProduction
-} from "../../../src/support-processing-pipeline/response-production/runResponseProduction";
+} from "../../../src/archive/support-processing-pipeline/response-production/runResponseProduction";
 
 import type {
   ResponsePlan
-} from "../../../src/support-processing-pipeline/response-plan/typesResponsePlan.types";
+} from "../../../src/archive/support-processing-pipeline/response-plan/typesResponsePlan.types";
 
 function buildResponsePlan(
   messagesPlan: ResponsePlan["messagesPlan"]

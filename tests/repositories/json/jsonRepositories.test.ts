@@ -2,10 +2,10 @@ import * as fs from "fs/promises";
 import * as os from "os";
 import * as path from "path";
 
-import { JsonFileStore } from "../../../src/repositories/json/jsonFileStore";
-import { JsonMessageRepository } from "../../../src/repositories/json/jsonMessageRepository";
-import { JsonTicketRepository } from "../../../src/repositories/json/jsonTicketRepository";
-import { JsonUserRepository } from "../../../src/repositories/json/jsonUserRepository";
+import { JsonFileStore } from "../../../src/archive/repositories/json/jsonFileStore";
+import { JsonMessageRepository } from "../../../src/archive/repositories/json/jsonMessageRepository";
+import { JsonTicketRepository } from "../../../src/archive/repositories/json/jsonTicketRepository";
+import { JsonUserRepository } from "../../../src/archive/repositories/json/jsonUserRepository";
 
 import type {
   AccountInteractionTraits,
@@ -13,12 +13,12 @@ import type {
   AccountTrustStatus,
   ConversationHistory,
   SupportTopicKnowledge
-} from "../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 import type {
   JsonStoredMessage,
   JsonTicket,
   JsonUser
-} from "../../../src/repositories/json/typesJsonRepositories.types";
+} from "../../../src/archive/repositories/json/typesJsonRepositories.types";
 
 const supportTopicKnowledge: SupportTopicKnowledge = {
   segments_topic: []

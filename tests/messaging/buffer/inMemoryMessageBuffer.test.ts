@@ -1,12 +1,12 @@
 import {
   InMemoryMessageBuffer
-} from "../../../src/messaging/buffer/inMemoryMessageBuffer";
+} from "../../../src/support-automation/buffer/inMemoryMessageBuffer";
 
 import type {
   BufferedMessages,
   MessagingEvent,
   MessagingTypingEvent
-} from "../../../src/messaging/typesMessaging.types";
+} from "../../../src/support-automation/buffer/typesMessaging.types";
 
 function buildMessage(
   overrides: Partial<MessagingEvent> = {}

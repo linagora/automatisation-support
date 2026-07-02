@@ -6,25 +6,25 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   buildSupportProcessingInputV2
-} from "../../src/orchestration/buildSupportProcessingInputV2";
+} from "../../src/support-automation/build-input/buildSupportProcessingInputV2";
 import {
   buildSupportTurnIdentityV2
-} from "../../src/orchestration/v2/buildSupportTurnIdentityV2";
-import { JsonTicketRepository } from "../../src/repositories/json/jsonTicketRepository";
-import { JsonUserRepository } from "../../src/repositories/json/jsonUserRepository";
+} from "../../src/support-automation/build-input/buildSupportTurnIdentityV2";
+import { JsonTicketRepository } from "../../src/archive/repositories/json/jsonTicketRepository";
+import { JsonUserRepository } from "../../src/archive/repositories/json/jsonUserRepository";
 
 import type {
   BufferedMessages
-} from "../../src/messaging/typesMessaging.types";
+} from "../../src/support-automation/buffer/typesMessaging.types";
 import type {
   JsonTicket
-} from "../../src/repositories/json/typesJsonRepositories.types";
+} from "../../src/archive/repositories/json/typesJsonRepositories.types";
 import type {
   ConversationHistory
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/support-automation/support-processing-pipeline-v2/typesConversationContext.types";
 import type {
   LiveMemoryContext
-} from "../../src/persistence/live-memory-context/typesLiveMemoryContext.types";
+} from "../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
 
 function buildConversationHistory(params: {
   userSummary: string;
@@ -96,7 +96,8 @@ function buildTicket(params: {
     supportTopicKnowledge: params.supportTopicKnowledge ?? {
       segments_topic: []
     },
-    conversationHistory: buildConversationHistory(params),
+    conversationHistory:
+      buildConversationHistory(params) as JsonTicket["conversationHistory"],
     createdAt: "2026-06-22T10:00:00.000Z",
     updatedAt: "2026-06-22T10:00:01.000Z"
   };
@@ -200,7 +201,7 @@ describe("buildSupportProcessingInputV2", function () {
       userId: "@user:example.org"
     });
     expect(input.supportTopicKnowledge).toEqual({
-      segments_topic: []
+      topics: []
     });
     expect(input.conversationHistory).toEqual([]);
     expect(input.recentInteractionContext).toEqual({
@@ -239,7 +240,7 @@ describe("buildSupportProcessingInputV2", function () {
     const liveMemoryContext: LiveMemoryContext = {
       topics: [
         {
-          topicId: "topic_42",
+          topicId: 42,
           title: "Notifications Android",
           broadCategoryHint: "bug",
           summary: "Les notifications Android ne se déclenchent plus.",
@@ -279,22 +280,32 @@ describe("buildSupportProcessingInputV2", function () {
       liveMemoryContext
     });
 
-    expect(input.supportTopicKnowledge.segments_topic).toEqual([
+    expect(input.supportTopicKnowledge.topics).toEqual([
       {
-        id_topic: 42,
-        topic_category: "bug",
-        topic_label: "Notifications Android",
-        topic_details: {
-          platform: "Android"
-        },
-        tested_actions: [
+        topicId: 42,
+        title: "Notifications Android",
+        broadCategoryHint: "bug",
+        summary: "Les notifications Android ne se déclenchent plus.",
+        caseDetails: [
           {
-            tested_action: "Réinstaller l'application",
-            outcome_tested_action: "failed"
+            key: "platform",
+            value: "Android",
+            evidence: "Android"
+          },
+          {
+            key: "error_message",
+            value: null,
+            evidence: "Pas de message d'erreur"
           }
         ],
-        user_goal: "Les notifications Android ne se déclenchent plus.",
-        blocking_issue: "no"
+        attemptedActions: [
+          {
+            action: "Réinstaller l'application",
+            outcome: "failed",
+            evidence: "déjà réinstallé"
+          }
+        ],
+        supportKnowledgeSummary: null
       }
     ]);
     expect(input.conversationHistory).toEqual([]);

@@ -5,11 +5,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   JsonKnowledgeRepository
-} from "../../../src/repositories/json/jsonKnowledgeRepository";
+} from "../../../src/archive/repositories/json/jsonKnowledgeRepository";
 
 import type {
   TopicEvidence
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 function buildTopicEvidence(params: {
   verbatim: string;

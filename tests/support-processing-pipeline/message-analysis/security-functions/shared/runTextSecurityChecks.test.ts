@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   TEXT_SECURITY_CHECKS,
   runTextSecurityChecks
-} from "../../../../../src/support-processing-pipeline/message-analysis/security-functions/shared/runTextSecurityChecks";
+} from "../../../../../src/archive/support-processing-pipeline/message-analysis/security-functions/shared/runTextSecurityChecks";
 
 function expectFails(text: string, expectedCheck: string): void {
   const output = runTextSecurityChecks({ text });

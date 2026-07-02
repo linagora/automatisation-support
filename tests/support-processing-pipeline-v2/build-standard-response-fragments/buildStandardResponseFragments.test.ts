@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildStandardResponseFragments
-} from "../../../src/support-processing-pipeline-v2/build-standard-response-fragments/buildStandardResponseFragments";
+} from "../../../src/support-automation/support-processing-pipeline-v2/build-standard-response-fragments/buildStandardResponseFragments";
 import {
   resolveStandardResponseLanguage
-} from "../../../src/support-processing-pipeline-v2/build-standard-response-fragments/resolveStandardResponseLanguage";
+} from "../../../src/support-automation/support-processing-pipeline-v2/build-standard-response-fragments/resolveStandardResponseLanguage";
 
 import type {
   AttachmentSurfaceAnalysis,
   BuildStandardResponseFragmentsInput,
   TextSurfaceAnalysis,
   TurnAnalysisPlan
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 function buildTurnAnalysisPlan(params: {
   analyzeText?: boolean;

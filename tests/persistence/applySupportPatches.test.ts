@@ -4,22 +4,22 @@ import * as path from "path";
 
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 
-import { matchBufferedMessages } from "../../src/matching/matchBufferedMessages";
-import { applySupportPatches } from "../../src/persistence/applySupportPatches";
-import { JsonMessageRepository } from "../../src/repositories/json/jsonMessageRepository";
-import { JsonTicketRepository } from "../../src/repositories/json/jsonTicketRepository";
-import { JsonUserRepository } from "../../src/repositories/json/jsonUserRepository";
+import { matchBufferedMessages } from "../../src/archive/matching/matchBufferedMessages";
+import { applySupportPatches } from "../../src/archive/persistence/applySupportPatches";
+import { JsonMessageRepository } from "../../src/archive/repositories/json/jsonMessageRepository";
+import { JsonTicketRepository } from "../../src/archive/repositories/json/jsonTicketRepository";
+import { JsonUserRepository } from "../../src/archive/repositories/json/jsonUserRepository";
 
 import type {
   MatchingResult
-} from "../../src/matching/typesMatching.types";
+} from "../../src/archive/matching/typesMatching.types";
 import type {
   DeliveryMessage
-} from "../../src/orchestration/typesOrchestration.types";
+} from "../../src/archive/orchestration/typesOrchestration.types";
 import type {
   JsonTicket,
   JsonUser
-} from "../../src/repositories/json/typesJsonRepositories.types";
+} from "../../src/archive/repositories/json/typesJsonRepositories.types";
 import type {
   AccountInteractionTraits,
   AccountProfile,
@@ -27,7 +27,7 @@ import type {
   ConversationHistory,
   SupportProcessingPipelineOutput,
   SupportTopicKnowledge
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const supportTopicKnowledge: SupportTopicKnowledge = {
   segments_topic: []

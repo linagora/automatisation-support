@@ -6,7 +6,7 @@ import type {
   ResponsePlan,
   SupportTopicKnowledge,
   TurnUnderstandingDelta
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 export type MessageAnalysisTestCase = {
   id: string;

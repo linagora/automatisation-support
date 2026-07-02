@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   runSolutionRetrieval
-} from "../../../src/support-processing-pipeline/solution-retrieval/runSolutionRetrieval";
+} from "../../../src/archive/support-processing-pipeline/solution-retrieval/runSolutionRetrieval";
 
 import type {
   SolutionRetrievalInput
-} from "../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 function buildInput(): SolutionRetrievalInput {
   return {

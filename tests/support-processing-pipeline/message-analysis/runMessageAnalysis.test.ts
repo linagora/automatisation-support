@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   runMessageAnalysis
-} from "../../../src/support-processing-pipeline/message-analysis/runMessageAnalysis";
+} from "../../../src/archive/support-processing-pipeline/message-analysis/runMessageAnalysis";
 
 import type {
   AccountTrustStatus,
@@ -10,11 +10,11 @@ import type {
   LatestUserAttachment,
   LatestUserMessage,
   SupportTopicKnowledge
-} from "../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 import type {
   AttachmentAnalysis,
   MessageAnalysisSteps
-} from "../../../src/support-processing-pipeline/message-analysis/typesMessageAnalysis.types";
+} from "../../../src/archive/support-processing-pipeline/message-analysis/typesMessageAnalysis.types";
 
 const latestUserMessage: LatestUserMessage = {
   id: "message_1",

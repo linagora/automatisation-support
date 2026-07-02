@@ -86,8 +86,14 @@ PIPELINE:
 
 PERSISTENCE : CORRIGER la mémoire de live memory et l'attribution des topcis qui se duplqiue en cmmneçant parfois par new au lieu de mettre juste un chiffrE.
 
-
-
+STRUCUTRE : 
+-faire gaffe à si on donne bien le nouveau champ supportKnowledgeSummary pour choisir oui ou non de relancer. 
+-revoir la structure globale qui est actuellemnt pas aligné avec la pipeline globale
+- aligner le dataset avec le fonctionnement amtrix et permettre un run complet du matrix de plusieurs cas en simulant ce qu'écoute le listener et une fausse zone de dépot de message pour tester réellement et pas à moitié. En partciluer on veut que le live memory se mette à jour pour de vria qquitte à le supprimer  à la fin des tests. mais ce n'est pas fiable d'avoir quelque chose de torp différents
+- faire gaffe au mode debug qui risque d'être encore aligné sur d'anciens champs et homogéniser les tests
+- bien analyser l'ensmeble de la pipelien et en particulier faire gaffe aux moments des patche live memory. 
+- faire gaffe à la gestion de user qui aprle en mem temps c'est pas forcémenet bien géré.
+- clean tout car probabelemnt trop gros. En aprtciuleir bien clean la pipelien
 
 
 

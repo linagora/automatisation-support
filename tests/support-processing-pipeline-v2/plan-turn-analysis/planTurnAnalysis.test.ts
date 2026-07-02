@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   planTurnAnalysis
-} from "../../../src/support-processing-pipeline-v2/plan-turn-analysis/planTurnAnalysis";
+} from "../../../src/support-automation/support-processing-pipeline-v2/plan-turn-analysis/planTurnAnalysis";
 
 import type {
   AccountTrustStatus,
   LatestUserAttachment,
   LatestUserMessage,
   PlanTurnAnalysisInput
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 function buildLatestUserMessage(content: string): LatestUserMessage {
   return {

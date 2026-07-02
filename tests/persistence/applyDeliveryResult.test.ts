@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   applyDeliveryResult
-} from "../../src/persistence/applyDeliveryResult";
-import { JsonMessageRepository } from "../../src/repositories/json/jsonMessageRepository";
+} from "../../src/archive/persistence/applyDeliveryResult";
+import { JsonMessageRepository } from "../../src/archive/repositories/json/jsonMessageRepository";
 
 describe("applyDeliveryResult", function () {
   let tempDir: string;

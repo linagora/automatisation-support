@@ -6,14 +6,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   downloadMatrixEventAttachments
-} from "../../../src/channels/matrix/downloadMatrixAttachments";
+} from "../../../src/infrastructure/matrix/downloadMatrixAttachments";
 
 import type {
   MatrixClientLike
-} from "../../../src/channels/matrix/typesMatrixChannel.types";
+} from "../../../src/infrastructure/matrix/typesMatrixChannel.types";
 import type {
   MessagingEvent
-} from "../../../src/messaging/typesMessaging.types";
+} from "../../../src/support-automation/buffer/typesMessaging.types";
 
 function buildMessagingEvent(): MessagingEvent {
   return {

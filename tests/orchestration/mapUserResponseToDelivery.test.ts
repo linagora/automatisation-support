@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   mapUserResponseToDelivery
-} from "../../src/orchestration/mapUserResponseToDelivery";
+} from "../../src/support-automation/delivery/mapUserResponseToDelivery";
 
 import type {
   MatchingResult
-} from "../../src/matching/typesMatching.types";
+} from "../../src/archive/matching/typesMatching.types";
 import type {
   UserResponse
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 function buildMatchingResult(): MatchingResult {
   return {

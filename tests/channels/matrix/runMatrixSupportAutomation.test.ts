@@ -6,35 +6,35 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   runMatrixSupportAutomation
-} from "../../../src/channels/matrix/runMatrixSupportAutomation";
+} from "../../../src/archive/orchestration/runMatrixSupportAutomation";
 
 import type {
   MatrixDeliveryResult
-} from "../../../src/channels/matrix/typesMatrixChannel.types";
+} from "../../../src/infrastructure/matrix/typesMatrixChannel.types";
 import type {
   MessagingEvent,
   MessagingTypingEvent
-} from "../../../src/messaging/typesMessaging.types";
+} from "../../../src/support-automation/buffer/typesMessaging.types";
 import type {
   DeliveryMessage,
   SupportAutomationTurnResult
-} from "../../../src/orchestration/typesOrchestration.types";
+} from "../../../src/archive/orchestration/typesOrchestration.types";
 import type {
   JsonMessageRepository
-} from "../../../src/repositories/json/jsonMessageRepository";
+} from "../../../src/archive/repositories/json/jsonMessageRepository";
 import type {
   JsonTicketRepository
-} from "../../../src/repositories/json/jsonTicketRepository";
+} from "../../../src/archive/repositories/json/jsonTicketRepository";
 import type {
   JsonUserRepository
-} from "../../../src/repositories/json/jsonUserRepository";
+} from "../../../src/archive/repositories/json/jsonUserRepository";
 import type {
   SupportProcessingPipelineInput,
   SupportProcessingPipelineOutput
-} from "../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
-import { JsonMessageRepository as RealJsonMessageRepository } from "../../../src/repositories/json/jsonMessageRepository";
-import { JsonTicketRepository as RealJsonTicketRepository } from "../../../src/repositories/json/jsonTicketRepository";
-import { JsonUserRepository as RealJsonUserRepository } from "../../../src/repositories/json/jsonUserRepository";
+} from "../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
+import { JsonMessageRepository as RealJsonMessageRepository } from "../../../src/archive/repositories/json/jsonMessageRepository";
+import { JsonTicketRepository as RealJsonTicketRepository } from "../../../src/archive/repositories/json/jsonTicketRepository";
+import { JsonUserRepository as RealJsonUserRepository } from "../../../src/archive/repositories/json/jsonUserRepository";
 
 function buildMessagingEvent(): MessagingEvent {
   return {

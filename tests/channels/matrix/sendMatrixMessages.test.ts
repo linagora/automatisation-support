@@ -2,16 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   sendMatrixDeliveryMessages
-} from "../../../src/channels/matrix/sendMatrixMessages";
+} from "../../../src/infrastructure/matrix/sendMatrixMessages";
 import {
   createMatrixClient
-} from "../../../src/channels/matrix/matrixClient";
+} from "../../../src/infrastructure/matrix/matrixClient";
 
 import type {
   DeliveryMessage
-} from "../../../src/orchestration/typesOrchestration.types";
+} from "../../../src/archive/orchestration/typesOrchestration.types";
 
-vi.mock("../../../src/channels/matrix/matrixClient", function () {
+vi.mock("../../../src/infrastructure/matrix/matrixClient", function () {
   return {
     createMatrixClient: vi.fn()
   };

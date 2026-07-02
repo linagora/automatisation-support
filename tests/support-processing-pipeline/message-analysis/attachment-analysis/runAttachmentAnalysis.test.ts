@@ -1,13 +1,13 @@
 import {
   runAttachmentAnalysis
-} from "../../../../src/support-processing-pipeline/message-analysis/attachment-analysis/runAttachmentAnalysis";
+} from "../../../../src/archive/support-processing-pipeline/message-analysis/attachment-analysis/runAttachmentAnalysis";
 import type {
   AttachmentAnalysisSteps
-} from "../../../../src/support-processing-pipeline/message-analysis/attachment-analysis/typesAttachmentAnalysis.types";
+} from "../../../../src/archive/support-processing-pipeline/message-analysis/attachment-analysis/typesAttachmentAnalysis.types";
 import type {
   LatestUserAttachment,
   LatestUserMessage
-} from "../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const latestUserMessage: LatestUserMessage = {
   id: "message-1",

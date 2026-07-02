@@ -10,7 +10,7 @@
 import "dotenv/config";
 import {
   runFullWeightMessageAnalysis
-} from "../../src/support-processing-pipeline/message-analysis/fullweight-message-analysis/runFullWeightMessageAnalysis";
+} from "../../src/archive/support-processing-pipeline/message-analysis/fullweight-message-analysis/runFullWeightMessageAnalysis";
 
 import {
   fullWeightAnalysisTestCases,

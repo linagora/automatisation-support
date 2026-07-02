@@ -16,7 +16,7 @@ import * as path from "path";
 
 import {
   runMessageAnalysis
-} from "../../src/support-processing-pipeline/message-analysis/runMessageAnalysis";
+} from "../../src/archive/support-processing-pipeline/message-analysis/runMessageAnalysis";
 
 import {
   messageAnalysisTestCases,
@@ -27,7 +27,7 @@ import {
 import type {
   LatestUserAttachment,
   MessageAnalysisInput
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",

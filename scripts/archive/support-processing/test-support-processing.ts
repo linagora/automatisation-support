@@ -24,22 +24,22 @@ import * as path from "path";
 
 import {
   runSupportProcessingPipeline
-} from "../../src/support-processing-pipeline/runSupportProcessingPipeline";
+} from "../../src/archive/support-processing-pipeline/runSupportProcessingPipeline";
 import {
   runMessageAnalysis
-} from "../../src/support-processing-pipeline/message-analysis/runMessageAnalysis";
+} from "../../src/archive/support-processing-pipeline/message-analysis/runMessageAnalysis";
 import {
   runSearchDecision
-} from "../../src/support-processing-pipeline/search-decision/runSearchDecision";
+} from "../../src/archive/support-processing-pipeline/search-decision/runSearchDecision";
 import {
   runSolutionRetrieval
-} from "../../src/support-processing-pipeline/solution-retrieval/runSolutionRetrieval";
+} from "../../src/archive/support-processing-pipeline/solution-retrieval/runSolutionRetrieval";
 import {
   runResponsePlan
-} from "../../src/support-processing-pipeline/response-plan/runResponsePlan";
+} from "../../src/archive/support-processing-pipeline/response-plan/runResponsePlan";
 import {
   runResponseProduction
-} from "../../src/support-processing-pipeline/response-production/runResponseProduction";
+} from "../../src/archive/support-processing-pipeline/response-production/runResponseProduction";
 
 import {
   supportProcessingTestCases,
@@ -51,7 +51,7 @@ import type {
   LatestUserAttachment,
   SupportProcessingPipelineInput,
   SupportProcessingPipelineSteps
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",

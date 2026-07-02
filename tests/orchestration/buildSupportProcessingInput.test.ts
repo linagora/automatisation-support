@@ -1,21 +1,21 @@
 import {
   buildSupportProcessingInput
-} from "../../src/orchestration/buildSupportProcessingInput";
+} from "../../src/archive/orchestration/buildSupportProcessingInput";
 
 import type {
   MatchingResult
-} from "../../src/matching/typesMatching.types";
+} from "../../src/archive/matching/typesMatching.types";
 import type {
   JsonTicket,
   JsonUser
-} from "../../src/repositories/json/typesJsonRepositories.types";
+} from "../../src/archive/repositories/json/typesJsonRepositories.types";
 import type {
   AccountInteractionTraits,
   AccountProfile,
   AccountTrustStatus,
   ConversationHistory,
   SupportTopicKnowledge
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const supportTopicKnowledge: SupportTopicKnowledge = {
   segments_topic: [

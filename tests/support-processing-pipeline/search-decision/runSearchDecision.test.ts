@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   runSearchDecision
-} from "../../../src/support-processing-pipeline/search-decision/runSearchDecision";
+} from "../../../src/archive/support-processing-pipeline/search-decision/runSearchDecision";
 
 import type {
   ConversationHistory,
   TurnAttachments,
   SearchDecisionInput
-} from "../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const BUG_VISUAL_EVIDENCE_REQUEST = {
   types: ["screenshot", "video"],

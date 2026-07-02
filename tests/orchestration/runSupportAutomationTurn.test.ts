@@ -6,18 +6,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   runSupportAutomationTurn
-} from "../../src/orchestration/runSupportAutomationTurn";
-import { JsonMessageRepository } from "../../src/repositories/json/jsonMessageRepository";
-import { JsonTicketRepository } from "../../src/repositories/json/jsonTicketRepository";
-import { JsonUserRepository } from "../../src/repositories/json/jsonUserRepository";
+} from "../../src/archive/orchestration/runSupportAutomationTurn";
+import { JsonMessageRepository } from "../../src/archive/repositories/json/jsonMessageRepository";
+import { JsonTicketRepository } from "../../src/archive/repositories/json/jsonTicketRepository";
+import { JsonUserRepository } from "../../src/archive/repositories/json/jsonUserRepository";
 
 import type {
   BufferedMessages
-} from "../../src/messaging/typesMessaging.types";
+} from "../../src/support-automation/buffer/typesMessaging.types";
 import type {
   JsonTicket,
   JsonUser
-} from "../../src/repositories/json/typesJsonRepositories.types";
+} from "../../src/archive/repositories/json/typesJsonRepositories.types";
 import type {
   AccountInteractionTraits,
   AccountProfile,
@@ -25,7 +25,7 @@ import type {
   ConversationHistory,
   SupportProcessingPipelineSteps,
   SupportTopicKnowledge
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const supportTopicKnowledge: SupportTopicKnowledge = {
   segments_topic: []

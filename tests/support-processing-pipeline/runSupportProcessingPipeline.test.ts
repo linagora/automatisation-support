@@ -2,12 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   runSupportProcessingPipeline
-} from "../../src/support-processing-pipeline/runSupportProcessingPipeline";
+} from "../../src/archive/support-processing-pipeline/runSupportProcessingPipeline";
 
 import type {
   SupportProcessingPipelineInput,
   SupportProcessingPipelineSteps
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 function buildInput(): SupportProcessingPipelineInput {
   return {

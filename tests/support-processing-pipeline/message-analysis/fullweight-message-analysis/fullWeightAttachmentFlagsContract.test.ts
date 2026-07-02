@@ -2,19 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFullWeightPrompt
-} from "../../../../src/support-processing-pipeline/message-analysis/fullweight-message-analysis/buildFullWeightPrompt";
+} from "../../../../src/archive/support-processing-pipeline/message-analysis/fullweight-message-analysis/buildFullWeightPrompt";
 import {
   fullWeightMessageAnalysisResponseFormat
-} from "../../../../src/support-processing-pipeline/message-analysis/fullweight-message-analysis/fullWeightMessageAnalysis.schema";
+} from "../../../../src/archive/support-processing-pipeline/message-analysis/fullweight-message-analysis/fullWeightMessageAnalysis.schema";
 
 import type {
   AttachmentAnalysis
-} from "../../../../src/support-processing-pipeline/message-analysis/typesMessageAnalysis.types";
+} from "../../../../src/archive/support-processing-pipeline/message-analysis/typesMessageAnalysis.types";
 import type {
   ConversationHistory,
   LatestUserMessage,
   SupportTopicKnowledge
-} from "../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const forbiddenAttachmentFlagFields = [
   "screenshot_available",

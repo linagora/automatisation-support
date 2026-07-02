@@ -4,25 +4,28 @@ import { join } from "node:path";
 
 import {
   runSupportProcessingPipelineV2
-} from "../../src/support-processing-pipeline-v2/runSupportProcessingPipelineV2";
+} from "../../src/support-automation/support-processing-pipeline-v2/runSupportProcessingPipelineV2";
 import {
   runSupportProcessingPipelineV2Debug
-} from "../../src/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
+} from "../../src/support-automation/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
 import {
   buildSupportProcessingPersistenceEffectsV2
-} from "../../src/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
+} from "../../src/support-automation/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 import {
   buildTopicResponsePlanDebug
-} from "../../src/support-processing-pipeline-v2/responsePlanIds";
+} from "../../src/support-automation/support-processing-pipeline-v2/responsePlanIds";
 import {
   planKnowledgeEnrichment
-} from "../../src/support-processing-pipeline-v2/plan-knowledge-enrichment/planKnowledgeEnrichment";
+} from "../../src/support-automation/support-processing-pipeline-v2/plan-knowledge-enrichment/planKnowledgeEnrichment";
 import {
   retrieveSupportKnowledge
-} from "../../src/support-processing-pipeline-v2/retrieve-support-knowledge/retrieveSupportKnowledge";
+} from "../../src/support-automation/support-processing-pipeline-v2/retrieve-support-knowledge/retrieveSupportKnowledge";
 import {
   synthesizeRetrievedKnowledge
-} from "../../src/support-processing-pipeline-v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
+} from "../../src/support-automation/support-processing-pipeline-v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
+import {
+  applyTopicsByExactId
+} from "../../src/support-automation/patch-live-memory/applyLiveMemoryUpdate";
 
 import type {
   AttachmentSurfaceAnalysis,
@@ -46,10 +49,13 @@ import type {
   TopicUpdateProposal,
   ProposeTopicUpdatesOutput,
   UserResponse
-} from "../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   RenderedSupportResponse
-} from "../../src/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+} from "../../src/support-automation/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+import type {
+  LiveMemoryTopic
+} from "../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
 
 function createDeferred<T>(): {
   promise: Promise<T>;
@@ -98,7 +104,7 @@ function buildInput(): SupportProcessingPipelineV2Input {
       lastUpdatedAt: "2026-06-12T08:00:00.000Z"
     },
     supportTopicKnowledge: {
-      segments_topic: []
+      topics: []
     },
     conversationHistory: [],
     recentInteractionContext: {
@@ -242,16 +248,16 @@ const topicUpdateProposals: TopicUpdateProposal[] = [
 ];
 
 const noRagPlan: KnowledgeEnrichmentPlan = {
-  route: "no_retrieval",
+  route: "none",
   retrievalRequests: [],
   reason: "rag_not_enabled_yet"
 };
 
 const ragPlan: KnowledgeEnrichmentPlan = {
-  route: "retrieve_knowledge",
+  route: "rag_only",
   retrievalRequests: [
     {
-      topicId: "1",
+      topicId: 1,
       searchPurpose: "support_answer_and_qualification",
       queryText: "Support issue: login password error.",
       desiredKnowledge: [
@@ -273,7 +279,7 @@ const ragPlan: KnowledgeEnrichmentPlan = {
 
 const knowledgeChunks: KnowledgeChunk[] = [
   {
-    topicId: "1",
+    topicId: 1,
     sourceId: "doc_1",
     content: "Reset password instructions",
     score: 0.9
@@ -281,6 +287,8 @@ const knowledgeChunks: KnowledgeChunk[] = [
 ];
 
 const retrievedKnowledgeSynthesis = {
+  supportKnowledgeSummary:
+    "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
   relevantFacts: ["Reset password is available"],
   applicableInstructions: ["Use the reset-password flow when applicable."],
   possibleFields: ["error_message"],
@@ -292,7 +300,7 @@ const retrievedKnowledgeSynthesis = {
   doNotClaim: ["Do not say that the issue is fixed."],
   topics: [
     {
-      topicId: "1",
+      topicId: 1,
       relevantFacts: ["Reset password is available"],
       applicableInstructions: [
         "Use the reset-password flow when applicable."
@@ -306,7 +314,7 @@ const retrievedKnowledgeSynthesis = {
 
 const responsePlan: ResponsePlanV2 = {
   responsePlanId: "response_plan_test",
-  topicId: "topic_update_proposal_1",
+  topicId: 1,
   acknowledge: [
     "Acknowledge the topic."
   ],
@@ -435,6 +443,436 @@ function buildSteps(
 }
 
 describe("runSupportProcessingPipelineV2", function () {
+  it("replays the billing and notification follow-up with two updates through compose, render and persistence", async function () {
+    const input = buildInput();
+    input.latestUserMessage.content = [
+      "Concernant : Est-ce que ce doublon concerne uniquement le document ou aussi le paiement ?",
+      "oui ça concerne le paiement aussi j'ai été prélevé par cozy et par twake, sans doute un problème de migration",
+      "",
+      "Concernant : j'ai bien mis toutes les autorisations nécessaires de notifications. évidemment l'appli est bien installée. Plateforme android sur mon tel 9.0"
+    ].join("\n");
+    input.latestUserMessage.channel = "email";
+    const existingBillingCaseDetails = [
+      {
+        key: "billing_issue_type",
+        value: "duplicate_billing",
+        evidence: "J'ai reçu 2 factures au lieu d'1 seul"
+      }
+    ];
+    const existingNotificationCaseDetails = [
+      {
+        key: "notification_permission_status",
+        value: "not_receiving",
+        evidence: "J'ai pas de notificaitios"
+      }
+    ];
+    input.supportTopicKnowledge = {
+      topics: [
+        {
+          topicId: 1,
+          title: "Duplicate billing for Twake subscription",
+          broadCategoryHint: "billing",
+          summary:
+            "User received two invoices instead of one for their Twake subscription.",
+          caseDetails: existingBillingCaseDetails,
+          attemptedActions: [],
+          supportKnowledgeSummary: null
+        },
+        {
+          topicId: 2,
+          title: "Missing notifications on device",
+          broadCategoryHint: "bug",
+          summary:
+            "User is not receiving notifications on their mobile device.",
+          caseDetails: existingNotificationCaseDetails,
+          attemptedActions: [],
+          supportKnowledgeSummary: null
+        }
+      ]
+    };
+    const billingSourceVerbatims = [
+      "oui ça concerne le paiement aussi j'ai été prélevé par cozy et par twake, sans doute un problème de migration"
+    ];
+    const notificationSourceVerbatims = [
+      "j'ai bien mis toutes les autorisations nécessaires de notifications. évidemment l'appli est bien installée. Plateforme android sur mon tel 9.0"
+    ];
+    const billingUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      understandingId: "text_understanding_billing",
+      sourceSegmentIds: ["seg_billing"],
+      sourceVerbatims: billingSourceVerbatims,
+      summary: "The duplicate invoice also concerns duplicate payment by Cozy and Twake during migration.",
+      broadCategoryHint: "billing",
+      caseDetails: [
+        {
+          key: "billing_issue_type",
+          value: "duplicate_payment",
+          evidence: "ça concerne le paiement aussi"
+        },
+        {
+          key: "billing_provider",
+          value: "cozy and twake",
+          evidence: "prélevé par cozy et par twake"
+        },
+        {
+          key: "possible_cause",
+          value: "migration",
+          evidence: "problème de migration"
+        }
+      ]
+    };
+    const notificationUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      understandingId: "text_understanding_notifications",
+      sourceSegmentIds: ["seg_notifications"],
+      sourceVerbatims: notificationSourceVerbatims,
+      summary:
+        "Notification permissions are enabled, the app is installed, and the platform is Android 9.0.",
+      broadCategoryHint: "configuration",
+      caseDetails: [
+        {
+          key: "notification_permission_status",
+          value: "enabled",
+          evidence: "autorisations nécessaires de notifications"
+        },
+        {
+          key: "installation_status",
+          value: "installed",
+          evidence: "l'appli est bien installée"
+        },
+        {
+          key: "platform",
+          value: "android",
+          evidence: "Plateforme android"
+        },
+        {
+          key: "operating_system",
+          value: "Android 9.0",
+          evidence: "android sur mon tel 9.0"
+        }
+      ]
+    };
+    const billingSnapshot: MergedTopicSnapshot = {
+      snapshotId: "topic_1",
+      topicId: 1,
+      temporaryTopicId: null,
+      isNewTopic: false,
+      title: "Duplicate billing for Twake subscription",
+      broadCategoryHint: "billing",
+      summary:
+        "User received two invoices and says the duplicate also concerns payment by Cozy and Twake, possibly during migration.",
+      caseDetails: [
+        ...existingBillingCaseDetails,
+        ...billingUnderstanding.caseDetails
+      ],
+      attemptedActions: [],
+      sourceUnderstandingIds: ["text_understanding_billing"],
+      sourceVerbatims: billingSourceVerbatims,
+      sourceOpIndex: 0,
+      baseTopic: input.supportTopicKnowledge.topics[0]
+    };
+    const notificationSnapshot: MergedTopicSnapshot = {
+      snapshotId: "topic_2",
+      topicId: 2,
+      temporaryTopicId: null,
+      isNewTopic: false,
+      title: "Missing notifications on device",
+      broadCategoryHint: "bug",
+      summary: "User is not receiving notifications on their mobile device.",
+      caseDetails: [
+        ...existingNotificationCaseDetails,
+        ...notificationUnderstanding.caseDetails
+      ],
+      attemptedActions: [],
+      sourceUnderstandingIds: ["text_understanding_notifications"],
+      sourceVerbatims: notificationSourceVerbatims,
+      sourceOpIndex: 1,
+      baseTopic: input.supportTopicKnowledge.topics[1]
+    };
+    const topicUpdateOps: TopicUpdateOp[] = [
+      {
+        op: "update",
+        items: [0],
+        topicId: 1,
+        topic: null,
+        merge: {
+          caseDetails: [[0, 0], [0, 1], [0, 2]],
+          attemptedActions: []
+        },
+        replace: null,
+        review: null
+      },
+      {
+        op: "update",
+        items: [1],
+        topicId: 2,
+        topic: null,
+        merge: {
+          caseDetails: [[1, 0], [1, 1], [1, 2], [1, 3]],
+          attemptedActions: []
+        },
+        replace: null,
+        review: null
+      }
+    ];
+    const topicPatches: TopicPatch[] = [
+      {
+        patchId: "topic_patch_1",
+        op: "update",
+        items: [0],
+        topicId: 1,
+        temporaryTopicId: null,
+        topic: null,
+        merge: {
+          caseDetails: billingUnderstanding.caseDetails,
+          attemptedActions: []
+        },
+        replace: {
+          caseDetails: [],
+          attemptedActions: []
+        },
+        review: null,
+        sourceUnderstandingIds: ["text_understanding_billing"],
+        selectedSourceVerbatims: billingSourceVerbatims
+      },
+      {
+        patchId: "topic_patch_2",
+        op: "update",
+        items: [1],
+        topicId: 2,
+        temporaryTopicId: null,
+        topic: null,
+        merge: {
+          caseDetails: notificationUnderstanding.caseDetails,
+          attemptedActions: []
+        },
+        replace: {
+          caseDetails: [],
+          attemptedActions: []
+        },
+        review: null,
+        sourceUnderstandingIds: ["text_understanding_notifications"],
+        selectedSourceVerbatims: notificationSourceVerbatims
+      }
+    ];
+    const twoTopicPlans: ResponsePlanV2[] = [
+      {
+        ...responsePlan,
+        topicId: 1,
+        say: ["Acknowledge the duplicate payment by Cozy and Twake."]
+      },
+      {
+        ...responsePlan,
+        topicId: 2,
+        say: ["Acknowledge Android 9.0 and enabled notifications."]
+      }
+    ];
+    const composed: ComposedSupportResponsePlan = {
+      ...composedSupportResponsePlan,
+      say: [
+        "Answer both the billing follow-up and the notification follow-up."
+      ]
+    };
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => ({
+        userLanguage: "fr",
+        segments: [
+          {
+            segmentId: "seg_billing",
+            verbatim: billingSourceVerbatims[0],
+            category: "support_relevant" as const
+          },
+          {
+            segmentId: "seg_notifications",
+            verbatim: notificationSourceVerbatims[0],
+            category: "support_relevant" as const
+          }
+        ]
+      })),
+      analyzeSupportText: vi.fn(async () => ({
+        textUnderstandings: [
+          billingUnderstanding,
+          notificationUnderstanding
+        ],
+        supportResponseCues: []
+      })),
+      proposeTopicUpdates: vi.fn(async (): Promise<ProposeTopicUpdatesOutput> => ({
+        topicUpdateOps,
+        topicUpdateProposals: [
+          {
+            ...topicUpdateProposals[0],
+            proposalId: "topic_patch_1",
+            action: "update_existing_topic",
+            fromUnderstandingIds: ["text_understanding_billing"],
+            topicId: 1,
+            selectedSourceVerbatims: billingSourceVerbatims,
+            newTopic: null
+          },
+          {
+            ...topicUpdateProposals[0],
+            proposalId: "topic_patch_2",
+            action: "update_existing_topic",
+            fromUnderstandingIds: ["text_understanding_notifications"],
+            topicId: 2,
+            selectedSourceVerbatims: notificationSourceVerbatims,
+            newTopic: null
+          }
+        ],
+        topicPatches,
+        mergedTopicSnapshots: [
+          billingSnapshot,
+          notificationSnapshot
+        ]
+      })),
+      planSupportResponse: vi.fn(async (plannerInput) => {
+        return plannerInput.topicEvidence.topicId === 1
+          ? twoTopicPlans[0]
+          : twoTopicPlans[1];
+      }),
+      composeSupportResponsePlan: vi.fn(async () => composed),
+      renderSupportResponse: vi.fn(async () => ({
+        finalResponseText:
+          "Je prends en compte le double prélèvement et les informations Android 9.0."
+      })),
+      buildSupportProcessingPersistenceEffects: vi.fn(
+        buildSupportProcessingPersistenceEffectsV2
+      )
+    });
+
+    const output = await runSupportProcessingPipelineV2(input, steps);
+
+    expect(output.textUnderstandings?.map((item) => item.understandingId))
+      .toEqual([
+        "text_understanding_billing",
+        "text_understanding_notifications"
+      ]);
+    expect(output.topicUpdateOps).toEqual(topicUpdateOps);
+    expect(output.topicPatches?.map((patch) => patch.topicId)).toEqual([1, 2]);
+    expect(output.mergedTopicSnapshots?.map((snapshot) => snapshot.topicId))
+      .toEqual([1, 2]);
+    expect(output.mergedTopicSnapshots?.[1]).toEqual(expect.objectContaining({
+      topicId: 2,
+      title: "Missing notifications on device",
+      summary: "User is not receiving notifications on their mobile device."
+    }));
+    expect(output.persistenceEffects.liveMemoryUpdate.topics.map((topic) => {
+      return topic.topicId;
+    })).toEqual([1, 2]);
+    expect(output.persistenceEffects.liveMemoryUpdate.topics[1])
+      .toEqual(expect.objectContaining({
+        topicId: 2,
+        title: "Missing notifications on device",
+        summary: "User is not receiving notifications on their mobile device."
+      }));
+    expect(output.persistenceEffects.liveMemoryUpdate.topics[0]?.caseDetails)
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          key: "billing_provider",
+          value: "cozy and twake"
+        }),
+        expect.objectContaining({
+          key: "possible_cause",
+          value: "migration"
+        })
+      ]));
+    expect(output.persistenceEffects.liveMemoryUpdate.topics[1]?.caseDetails)
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          key: "notification_permission_status",
+          value: "enabled"
+        }),
+        expect.objectContaining({
+          key: "operating_system",
+          value: "Android 9.0"
+        })
+      ]));
+    const previousLiveMemoryTopics: LiveMemoryTopic[] =
+      input.supportTopicKnowledge.topics.map((topic) => ({
+        topicId: topic.topicId,
+        title: topic.title,
+        broadCategoryHint: topic.broadCategoryHint,
+        summary: topic.summary,
+        caseDetails: topic.caseDetails,
+        attemptedActions: topic.attemptedActions,
+        ...(topic.supportKnowledgeSummary
+          ? { supportKnowledgeSummary: topic.supportKnowledgeSummary }
+          : {})
+      }));
+    const incomingLiveMemoryTopics: LiveMemoryTopic[] =
+      output.persistenceEffects.liveMemoryUpdate.topics.map((topic) => ({
+        topicId: topic.topicId,
+        title: topic.title,
+        broadCategoryHint: topic.broadCategoryHint,
+        summary: topic.summary,
+        caseDetails: topic.caseDetails.map((detail) => ({
+          key: detail.key,
+          value: detail.value,
+          evidence: detail.evidence ?? ""
+        })),
+        attemptedActions: topic.attemptedActions.map((action) => ({
+          action: action.action,
+          outcome: action.outcome ?? "unknown",
+          evidence: action.evidence ?? ""
+        })),
+        ...(topic.supportKnowledgeSummary
+          ? { supportKnowledgeSummary: topic.supportKnowledgeSummary }
+          : {})
+      }));
+    const liveMemoryFinale = {
+      topics: applyTopicsByExactId({
+        previousTopics: previousLiveMemoryTopics,
+        incomingTopics: incomingLiveMemoryTopics
+      }),
+      lastUserVerbatim: output.persistenceEffects.liveMemoryUpdate.lastUserVerbatim,
+      lastBotVerbatim: output.persistenceEffects.liveMemoryUpdate.lastBotVerbatim,
+      userState: output.persistenceEffects.liveMemoryUpdate.userState
+    };
+    expect(liveMemoryFinale.topics[1]).toEqual(expect.objectContaining({
+      topicId: 2,
+      title: "Missing notifications on device",
+      summary: "User is not receiving notifications on their mobile device."
+    }));
+    const serializedReplayOutput = JSON.stringify({
+      supportTopicKnowledge: input.supportTopicKnowledge,
+      topicUpdateOps: output.topicUpdateOps,
+      topicPatches: output.topicPatches,
+      mergedTopicSnapshots: output.mergedTopicSnapshots,
+      liveMemoryUpdate: output.persistenceEffects.liveMemoryUpdate,
+      liveMemoryFinale
+    });
+    for (const legacyField of [
+      ["id", "topic"].join("_"),
+      ["topic", "label"].join("_"),
+      ["topic", "category"].join("_"),
+      ["user", "goal"].join("_"),
+      ["blocking", "issue"].join("_"),
+      ["topic", "details"].join("_")
+    ]) {
+      expect(serializedReplayOutput).not.toContain(`"${legacyField}"`);
+    }
+    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetLanguage: "fr",
+        topicResponsePlans: expect.arrayContaining([
+          expect.objectContaining({ topicId: 1 }),
+          expect.objectContaining({ topicId: 2 })
+        ])
+      })
+    );
+    expect(steps.renderSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        composedSupportResponsePlan: composed,
+        targetLanguage: "fr",
+        channel: "email"
+      })
+    );
+  });
+
   it("renders standard-only output without a response plan when no analysis is enabled", async function () {
     const input = buildInput();
     const steps = buildSteps({
@@ -663,6 +1101,186 @@ describe("runSupportProcessingPipelineV2", function () {
           selectedGenericKnowledge: []
         })
       })
+    );
+  });
+
+  it("routes catalog_only without launching RAG", async function () {
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface)
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.selectCatalogKnowledgeForTopic).toHaveBeenCalledTimes(1);
+    expect(steps.planKnowledgeEnrichment).not.toHaveBeenCalled();
+    expect(steps.retrieveSupportKnowledge).not.toHaveBeenCalled();
+    expect(steps.synthesizeRetrievedKnowledge).not.toHaveBeenCalled();
+    expect(output.ragUsage).toEqual([
+      expect.objectContaining({ status: "skipped_by_router" })
+    ]);
+    expect(info).toHaveBeenCalledWith(expect.stringContaining(
+      "[Knowledge routing] topicId="
+    ));
+    expect(info).toHaveBeenCalledWith(expect.stringContaining(
+      "status=skipped_by_router"
+    ));
+    info.mockRestore();
+  });
+
+  it("routes none without launching catalog or RAG", async function () {
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface)
+    });
+
+    await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.selectCatalogKnowledgeForTopic).not.toHaveBeenCalled();
+    expect(steps.planKnowledgeEnrichment).not.toHaveBeenCalled();
+    expect(steps.retrieveSupportKnowledge).not.toHaveBeenCalled();
+    expect(steps.synthesizeRetrievedKnowledge).not.toHaveBeenCalled();
+  });
+
+  it("routes rag_only without launching catalog", async function () {
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      planKnowledgeEnrichment: vi.fn(async () => ragPlan)
+    });
+
+    await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.selectCatalogKnowledgeForTopic).not.toHaveBeenCalled();
+    expect(steps.planKnowledgeEnrichment).toHaveBeenCalledTimes(1);
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledTimes(1);
+    expect(steps.synthesizeRetrievedKnowledge).toHaveBeenCalledTimes(1);
+    expect(steps.planSupportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedCatalogKnowledge: expect.objectContaining({
+          selectedFields: []
+        })
+      })
+    );
+  });
+
+  it("routes catalog_and_rag through both catalog and RAG", async function () {
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      planKnowledgeEnrichment: vi.fn(async () => ragPlan)
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.selectCatalogKnowledgeForTopic).toHaveBeenCalledTimes(1);
+    expect(steps.retrieveSupportKnowledge).toHaveBeenCalledTimes(1);
+    expect(output.ragUsage).toEqual([
+      expect.objectContaining({
+        status: "success",
+        requestChars: ragPlan.retrievalRequests[0].queryText.length,
+        estimatedRequestTokens: Math.ceil(
+          ragPlan.retrievalRequests[0].queryText.length / 4
+        ),
+        chunkCount: knowledgeChunks.length,
+        responseChars: knowledgeChunks[0].content.length,
+        estimatedResponseTokens: Math.ceil(
+          knowledgeChunks[0].content.length / 4
+        )
+      })
+    ]);
+    expect(info).toHaveBeenCalledWith(expect.stringContaining("[RAG usage]"));
+    info.mockRestore();
+  });
+
+  it("falls back to catalog_only when knowledge routing fails", async function () {
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface)
+    });
+
+    await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(steps.selectCatalogKnowledgeForTopic).toHaveBeenCalledTimes(1);
+    expect(steps.planKnowledgeEnrichment).not.toHaveBeenCalled();
+    expect(steps.retrieveSupportKnowledge).not.toHaveBeenCalled();
+  });
+
+  it("persists supportKnowledgeSummary from RAG synthesis on the topic snapshot", async function () {
+    const snapshot: MergedTopicSnapshot = {
+      snapshotId: "snapshot_1",
+      topicId: 1,
+      temporaryTopicId: null,
+      isNewTopic: false,
+      title: "Twake Chat reload",
+      broadCategoryHint: "bug",
+      summary: "Twake Chat desktop reloads the conversation.",
+      caseDetails: [
+        {
+          key: "product_or_service",
+          value: "Twake Chat",
+          evidence: "Twake Chat"
+        }
+      ],
+      attemptedActions: [],
+      sourceUnderstandingIds: ["text_understanding_1"],
+      sourceVerbatims: ["Twake Chat desktop reload"],
+      sourceOpIndex: 0,
+      baseTopic: null
+    };
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      proposeTopicUpdates: vi.fn(async () => ({
+        topicUpdateOps: [],
+        topicUpdateProposals: [],
+        topicPatches: [],
+        mergedTopicSnapshots: [snapshot]
+      })),
+      planKnowledgeEnrichment: vi.fn(async () => ragPlan),
+      buildSupportProcessingPersistenceEffects: vi.fn(
+        buildSupportProcessingPersistenceEffectsV2
+      )
+    });
+
+    const output = await runSupportProcessingPipelineV2(buildInput(), steps);
+
+    expect(output.mergedTopicSnapshots?.[0]).toMatchObject({
+      topicId: 1,
+      supportKnowledgeSummary:
+        "Support knowledge lookup returned useful customer-facing knowledge for this topic."
+    });
+    expect(
+      output.persistenceEffects.liveMemoryUpdate.topics[0]
+        .supportKnowledgeSummary
+    ).toBe(
+      "Support knowledge lookup returned useful customer-facing knowledge for this topic."
     );
   });
 
@@ -1133,23 +1751,27 @@ describe("runSupportProcessingPipelineV2", function () {
     mixedInput.latestUserMessage.content =
       "Mon compte est toujours bloqué. Et j’ai aussi reçu ma facture deux fois.";
     mixedInput.supportTopicKnowledge = {
-      segments_topic: [
+      topics: [
         {
-          id_topic: "topic_1",
-          topic_title: "Compte bloqué",
-          topic_category: "access_security",
-          topic_summary: "Le compte de l'utilisateur est bloqué.",
-          topic_details: {}
+          topicId: 1,
+          title: "Compte bloqué",
+          broadCategoryHint: "access_security",
+          summary: "Le compte de l'utilisateur est bloqué.",
+          caseDetails: [],
+          attemptedActions: [],
+          supportKnowledgeSummary: null
         },
         {
-          id_topic: "topic_2",
-          topic_title: "Problème de facturation",
-          topic_category: "billing",
-          topic_summary: "L'utilisateur a un problème de facturation.",
-          topic_details: {}
+          topicId: 2,
+          title: "Problème de facturation",
+          broadCategoryHint: "billing",
+          summary: "L'utilisateur a un problème de facturation.",
+          caseDetails: [],
+          attemptedActions: [],
+          supportKnowledgeSummary: null
         }
       ]
-    } as unknown as SupportProcessingPipelineV2Input["supportTopicKnowledge"];
+    };
 
     const accessUnderstanding: TextUnderstanding = {
       ...textUnderstandings[0],
@@ -1184,7 +1806,7 @@ describe("runSupportProcessingPipelineV2", function () {
       {
         op: "update",
         items: [0],
-        topicId: "topic_1",
+        topicId: 1,
         topic: null,
         merge: {
           caseDetails: [[0, 0]],
@@ -1196,7 +1818,7 @@ describe("runSupportProcessingPipelineV2", function () {
       {
         op: "update",
         items: [1],
-        topicId: "topic_2",
+        topicId: 2,
         topic: null,
         merge: {
           caseDetails: [[1, 0]],
@@ -1211,7 +1833,7 @@ describe("runSupportProcessingPipelineV2", function () {
         patchId: "topic_patch_1",
         op: "update",
         items: [0],
-        topicId: "topic_1",
+        topicId: 1,
         temporaryTopicId: null,
         topic: null,
         merge: {
@@ -1230,7 +1852,7 @@ describe("runSupportProcessingPipelineV2", function () {
         patchId: "topic_patch_2",
         op: "update",
         items: [1],
-        topicId: "topic_2",
+        topicId: 2,
         temporaryTopicId: null,
         topic: null,
         merge: {
@@ -1249,7 +1871,7 @@ describe("runSupportProcessingPipelineV2", function () {
     const mergedTopicSnapshots: MergedTopicSnapshot[] = [
       {
         snapshotId: "topic_patch_1",
-        topicId: "topic_1",
+        topicId: 1,
         temporaryTopicId: null,
         isNewTopic: false,
         title: "Compte bloqué",
@@ -1257,17 +1879,14 @@ describe("runSupportProcessingPipelineV2", function () {
         summary: "Le compte de l'utilisateur est toujours bloqué.",
         caseDetails: accessUnderstanding.caseDetails,
         attemptedActions: [],
-        topic_details: {
-          observed_result: "account_still_blocked"
-        },
         sourceUnderstandingIds: ["text_understanding_1"],
         sourceVerbatims: ["Mon compte est toujours bloqué."],
         sourceOpIndex: 0,
-        baseTopic: mixedInput.supportTopicKnowledge.segments_topic[0]
+        baseTopic: mixedInput.supportTopicKnowledge.topics[0]
       },
       {
         snapshotId: "topic_patch_2",
-        topicId: "topic_2",
+        topicId: 2,
         temporaryTopicId: null,
         isNewTopic: false,
         title: "Problème de facturation",
@@ -1275,13 +1894,10 @@ describe("runSupportProcessingPipelineV2", function () {
         summary: "L'utilisateur indique avoir reçu sa facture deux fois.",
         caseDetails: billingUnderstanding.caseDetails,
         attemptedActions: [],
-        topic_details: {
-          billing_issue_type: "duplicate_billing"
-        },
         sourceUnderstandingIds: ["text_understanding_2"],
         sourceVerbatims: ["J’ai aussi reçu ma facture deux fois."],
         sourceOpIndex: 1,
-        baseTopic: mixedInput.supportTopicKnowledge.segments_topic[1]
+        baseTopic: mixedInput.supportTopicKnowledge.topics[1]
       }
     ];
     const proposedTopicUpdates: ProposeTopicUpdatesOutput = {
@@ -1383,6 +1999,175 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(output.userResponse.messages[0]?.content).toContain(
       "facture deux fois"
     );
+  });
+
+  it("keeps the existing live-memory topicId through snapshots and persistence effects", async function () {
+    const input = buildInput();
+    input.latestUserMessage.content = "ubuntu et j’utilise la dernière version";
+    input.supportTopicKnowledge = {
+      topics: [
+        {
+          topicId: 1,
+          title: "Twake Chat desktop messages",
+          broadCategoryHint: "bug",
+          summary:
+            "Twake Chat desktop does not show incoming messages automatically.",
+          caseDetails: [
+            {
+              key: "product_or_service",
+              value: "twake chat",
+              evidence: "twake chat"
+            },
+            {
+              key: "platform",
+              value: "desktop app",
+              evidence: "desktop app"
+            },
+            {
+              key: "observed_result",
+              value:
+                "must reload/reclick conversation to see incoming messages",
+              evidence: ""
+            }
+          ],
+          attemptedActions: [],
+          supportKnowledgeSummary: null
+        }
+      ]
+    };
+    const followUpUnderstanding: TextUnderstanding = {
+      ...textUnderstandings[0],
+      sourceVerbatims: ["ubuntu et j’utilise la dernière version"],
+      summary: "Ubuntu and latest app version.",
+      broadCategoryHint: "bug",
+      messageKinds: [
+        {
+          kind: "info_update",
+          evidence: "ubuntu et j’utilise la dernière version"
+        }
+      ],
+      caseDetails: [
+        {
+          key: "operating_system",
+          value: "ubuntu",
+          evidence: "ubuntu"
+        },
+        {
+          key: "app_version",
+          value: "latest",
+          evidence: "dernière version"
+        }
+      ]
+    };
+    const proposedTopicUpdates: ProposeTopicUpdatesOutput = {
+      topicUpdateOps: [
+        {
+          op: "update",
+          items: [0],
+          topicId: 1,
+          topic: null,
+          merge: {
+            caseDetails: [[0, 0], [0, 1]],
+            attemptedActions: []
+          },
+          replace: null,
+          review: null
+        }
+      ],
+      topicPatches: [
+        {
+          patchId: "topic_patch_1",
+          op: "update",
+          items: [0],
+          topicId: 1,
+          temporaryTopicId: null,
+          topic: null,
+          merge: {
+            caseDetails: followUpUnderstanding.caseDetails,
+            attemptedActions: []
+          },
+          replace: {
+            caseDetails: [],
+            attemptedActions: []
+          },
+          review: null,
+          sourceUnderstandingIds: ["text_understanding_1"],
+          selectedSourceVerbatims: [
+            "ubuntu et j’utilise la dernière version"
+          ]
+        }
+      ],
+      mergedTopicSnapshots: [
+        {
+          snapshotId: "topic_patch_1",
+          topicId: 1,
+          temporaryTopicId: null,
+          isNewTopic: false,
+          title: "Twake Chat desktop messages",
+          broadCategoryHint: "bug",
+          summary:
+            "Twake Chat desktop does not show incoming messages automatically.",
+          caseDetails: [
+            {
+              key: "product_or_service",
+              value: "twake chat",
+              evidence: "twake chat"
+            },
+            {
+              key: "platform",
+              value: "desktop app",
+              evidence: "desktop app"
+            },
+            ...followUpUnderstanding.caseDetails
+          ],
+          attemptedActions: [],
+          sourceUnderstandingIds: ["text_understanding_1"],
+          sourceVerbatims: [
+            "ubuntu et j’utilise la dernière version"
+          ],
+          sourceOpIndex: 0,
+          baseTopic: input.supportTopicKnowledge.topics[0]
+        }
+      ],
+      topicUpdateProposals: []
+    };
+    const steps = buildSteps({
+      planTurnAnalysis: vi.fn(async () => ({
+        analyzeText: true,
+        analyzeAttachments: false,
+        matchedPatternIds: []
+      })),
+      analyzeTextSurface: vi.fn(async () => supportTextSurface),
+      analyzeSupportText: vi.fn(async () => ({
+        textUnderstandings: [followUpUnderstanding],
+        supportResponseCues: []
+      })),
+      proposeTopicUpdates: vi.fn(async () => proposedTopicUpdates),
+      buildSupportProcessingPersistenceEffects: vi.fn(
+        buildSupportProcessingPersistenceEffectsV2
+      )
+    });
+
+    const output = await runSupportProcessingPipelineV2(input, steps);
+
+    expect(output.topicUpdateOps?.[0]?.topicId).toBe("topic_1");
+    expect(output.mergedTopicSnapshots?.[0]?.topicId).toBe("topic_1");
+    expect(output.persistenceEffects.liveMemoryUpdate.topics).toEqual([
+      expect.objectContaining({
+        topicId: 1,
+        title: "Twake Chat desktop messages",
+        caseDetails: expect.arrayContaining([
+          expect.objectContaining({
+            key: "operating_system",
+            value: "ubuntu"
+          }),
+          expect.objectContaining({
+            key: "app_version",
+            value: "latest"
+          })
+        ])
+      })
+    ]);
   });
 
   it("does not silently rebuild topic verbatims when the proposal has none", async function () {
@@ -1752,6 +2537,8 @@ describe("runSupportProcessingPipelineV2", function () {
 
   it("keeps catalog selection independent from RAG synthesis before planning", async function () {
     const ragSynthesisWithPossibleFields = {
+      supportKnowledgeSummary:
+        "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
       relevantFacts: ["Notification permission status can affect diagnosis."],
       applicableInstructions: [
         "Ask for notification_permission_status only if the catalog selected it."
@@ -1851,14 +2638,13 @@ describe("runSupportProcessingPipelineV2", function () {
       {
         snapshotId: proposals[0].proposalId,
         topicId: null,
-        temporaryTopicId: proposals[0].proposalId,
+        temporaryTopicId: null,
         isNewTopic: true,
         title: "Android notification problem",
         broadCategoryHint: "bug",
         summary: notificationUnderstanding.summary,
         caseDetails: [],
         attemptedActions: [],
-        topic_details: {},
         sourceUnderstandingIds: ["text_understanding_1"],
         sourceVerbatims:
           notificationUnderstanding.sourceVerbatims as string[],
@@ -1868,14 +2654,13 @@ describe("runSupportProcessingPipelineV2", function () {
       {
         snapshotId: proposals[1].proposalId,
         topicId: null,
-        temporaryTopicId: proposals[1].proposalId,
+        temporaryTopicId: null,
         isNewTopic: true,
         title: "Duplicate invoice",
         broadCategoryHint: "billing",
         summary: billingUnderstanding.summary,
         caseDetails: [],
         attemptedActions: [],
-        topic_details: {},
         sourceUnderstandingIds: ["text_understanding_2"],
         sourceVerbatims: billingUnderstanding.sourceVerbatims as string[],
         sourceOpIndex: 1,
@@ -1905,13 +2690,15 @@ describe("runSupportProcessingPipelineV2", function () {
       planKnowledgeEnrichment: vi.fn(planKnowledgeEnrichment),
       retrieveSupportKnowledge: vi.fn(async () => [
         {
-          topicId: "topic_update_proposal_1",
+          topicId: 1,
           sourceId: "android_push_notification_not_received",
           content: "Android notification customer-safe knowledge.",
           score: 0.95
         }
       ]),
       synthesizeRetrievedKnowledge: vi.fn(async () => ({
+        supportKnowledgeSummary:
+          "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
         relevantFacts: [
           "Android notification customer-safe knowledge."
         ],
@@ -1925,7 +2712,7 @@ describe("runSupportProcessingPipelineV2", function () {
         doNotClaim: [],
         topics: [
           {
-            topicId: "topic_update_proposal_1",
+            topicId: 1,
             relevantFacts: [
               "Android notification customer-safe knowledge."
             ],
@@ -1956,13 +2743,13 @@ describe("runSupportProcessingPipelineV2", function () {
       expect.objectContaining({
         proposalId: proposals[0].proposalId,
         plan: expect.objectContaining({
-          route: "retrieve_knowledge"
+          route: "rag_only"
         })
       }),
       expect.objectContaining({
         proposalId: proposals[1].proposalId,
         plan: expect.objectContaining({
-          route: "no_retrieval"
+          route: "none"
         })
       })
     ]);
@@ -2024,7 +2811,7 @@ describe("runSupportProcessingPipelineV2", function () {
     const secondRetrieval = createDeferred<KnowledgeChunk[]>();
     const firstChunks: KnowledgeChunk[] = [
       {
-        topicId: "1",
+        topicId: 1,
         sourceId: "access_doc",
         content: "Access knowledge",
         score: 0.9
@@ -2032,25 +2819,29 @@ describe("runSupportProcessingPipelineV2", function () {
     ];
     const secondChunks: KnowledgeChunk[] = [
       {
-        topicId: "2",
+        topicId: 2,
         sourceId: "billing_doc",
         content: "Billing knowledge",
         score: 0.8
       }
     ];
     const firstSynthesis = {
+      supportKnowledgeSummary:
+        "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
       topics: [
         {
-          topicId: "1",
+          topicId: 1,
           relevantFacts: ["Access fact"],
           sourceReferences: ["access_doc"]
         }
       ]
     };
     const secondSynthesis = {
+      supportKnowledgeSummary:
+        "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
       topics: [
         {
-          topicId: "2",
+          topicId: 2,
           relevantFacts: ["Billing fact"],
           sourceReferences: ["billing_doc"]
         }
@@ -2135,10 +2926,10 @@ describe("runSupportProcessingPipelineV2", function () {
 
   it("forwards multiple retrieval requests for one topic and synthesizes merged chunks", async function () {
     const multiRequestPlan: KnowledgeEnrichmentPlan = {
-      route: "retrieve_knowledge",
+      route: "rag_only",
       retrievalRequests: [
         {
-          topicId: "1",
+          topicId: 1,
           searchPurpose: "support_answer_and_qualification",
           queryText: "Support issue: access error.",
           desiredKnowledge: ["known_behavior"],
@@ -2149,7 +2940,7 @@ describe("runSupportProcessingPipelineV2", function () {
           }
         },
         {
-          topicId: "1",
+          topicId: 1,
           searchPurpose: "support_answer_and_qualification",
           queryText: "Support issue: password reset.",
           desiredKnowledge: ["troubleshooting_steps"],
@@ -2165,7 +2956,7 @@ describe("runSupportProcessingPipelineV2", function () {
     const mergedChunks: KnowledgeChunk[] = [
       ...knowledgeChunks,
       {
-        topicId: "1",
+        topicId: 1,
         sourceId: "doc_2",
         content: "Password reset knowledge",
         score: 0.8
@@ -2351,8 +3142,8 @@ describe("runSupportProcessingPipelineV2", function () {
     const removedAccumulatorName = ["response", "Accumulator"].join("");
     const removedAccumulatorType = ["Response", "Accumulator", "V2"].join("");
     const filesToCheck = [
-      "src/support-processing-pipeline-v2/runSupportProcessingPipelineV2.ts",
-      "src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types.ts",
+      "src/support-automation/support-processing-pipeline-v2/runSupportProcessingPipelineV2.ts",
+      "src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types.ts",
       "tests/support-processing-pipeline-v2/runSupportProcessingPipelineV2.test.ts",
       "docs/support-processing-pipeline/structure.md"
     ];
@@ -2392,13 +3183,13 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(runnerSource).toContain("runSupportProcessingPipelineV2Debug");
     expect(runnerSource).toContain("UNTIL_TO_STOP_AFTER_STEP");
     expect(runnerSource).not.toContain(
-      "from \"../../src/support-processing-pipeline-v2/analyze-support-text/analyzeSupportText\""
+      "from \"../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/analyzeSupportText\""
     );
     expect(runnerSource).not.toContain(
-      "from \"../../src/support-processing-pipeline-v2/propose-topic-updates/proposeTopicUpdates\""
+      "from \"../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/proposeTopicUpdates\""
     );
     expect(runnerSource).not.toContain(
-      "from \"../../src/support-processing-pipeline-v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge\""
+      "from \"../../src/support-automation/support-processing-pipeline-v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge\""
     );
   });
 
@@ -2425,6 +3216,7 @@ describe("runSupportProcessingPipelineV2", function () {
       { step: "analyzeSupportAttachments", status: "skipped" },
       { step: "proposeTopicUpdates", status: "skipped" },
       { step: "applyTopicUpdates", status: "skipped" },
+      { step: "planKnowledgeRouting", status: "skipped" },
       { step: "planKnowledgeEnrichment", status: "skipped" },
       { step: "selectCatalogKnowledgeForTopic", status: "skipped" },
       { step: "retrieveSupportKnowledge", status: "skipped" },

@@ -6,12 +6,12 @@ import type {
   ConversationHistory,
   MessageAnalysisInput,
   TurnUnderstandingDelta
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 import type {
   AttachmentAnalysis,
   LightWeightMessageAnalysis
-} from "../../src/support-processing-pipeline/message-analysis/fullweight-message-analysis/typesFullWeightMessageAnalysis.types";
+} from "../../src/archive/support-processing-pipeline/message-analysis/fullweight-message-analysis/typesFullWeightMessageAnalysis.types";
 
 export type FullWeightAnalysisTestCase = {
   id: string;

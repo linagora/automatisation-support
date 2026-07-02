@@ -2,16 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   assembleTurnUnderstandingDelta
-} from "../../../../src/support-processing-pipeline/message-analysis/turn-understanding-delta/runTurnUnderstandingDelta";
+} from "../../../../src/archive/support-processing-pipeline/message-analysis/turn-understanding-delta/runTurnUnderstandingDelta";
 
 import type {
   ConversationHistory,
   LatestUserAttachment,
   SupportTopicKnowledge
-} from "../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 import type {
   AttachmentAnalysis
-} from "../../../../src/support-processing-pipeline/message-analysis/typesMessageAnalysis.types";
+} from "../../../../src/archive/support-processing-pipeline/message-analysis/typesMessageAnalysis.types";
 
 const supportTopicKnowledge: SupportTopicKnowledge = {
   segments_topic: []

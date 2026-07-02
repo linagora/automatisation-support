@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../src/repositories/json/jsonKnowledgeRepository", () => ({
+vi.mock("../../../src/archive/repositories/json/jsonKnowledgeRepository", () => ({
   JsonKnowledgeRepository: vi.fn(() => {
     throw new Error("planKnowledgeEnrichment_must_not_read_knowledge_json");
   })
@@ -8,13 +8,13 @@ vi.mock("../../../src/repositories/json/jsonKnowledgeRepository", () => ({
 
 import {
   planKnowledgeEnrichment
-} from "../../../src/support-processing-pipeline-v2/plan-knowledge-enrichment/planKnowledgeEnrichment";
+} from "../../../src/support-automation/support-processing-pipeline-v2/plan-knowledge-enrichment/planKnowledgeEnrichment";
 
 import type {
   MergedTopicSnapshot,
   PlanKnowledgeEnrichmentInput,
   TextUnderstanding
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 const baseUnderstanding: TextUnderstanding = {
   understandingId: "understanding_1",
@@ -46,7 +46,7 @@ function buildSnapshot(
 ): MergedTopicSnapshot {
   return {
     snapshotId: "snapshot_1",
-    topicId: "topic_1",
+    topicId: 1,
     temporaryTopicId: null,
     isNewTopic: false,
     title: "Android notifications",
@@ -71,7 +71,6 @@ function buildSnapshot(
         evidence: "permissions are already enabled"
       }
     ],
-    topic_details: {},
     sourceUnderstandingIds: ["understanding_1"],
     sourceVerbatims: [
       "Notification permissions are already enabled but the issue still happens."
@@ -105,7 +104,7 @@ describe("planKnowledgeEnrichment", function () {
   it("activates RAG for bug topics without reading knowledge.json", async function () {
     const plan = await planKnowledgeEnrichment(buildInput());
 
-    expect(plan.route).toBe("retrieve_knowledge");
+    expect(plan.route).toBe("rag_only");
     expect(plan.reason).toBe("rag_enabled_for_bug_topics");
   });
 
@@ -115,7 +114,7 @@ describe("planKnowledgeEnrichment", function () {
       summary: "The user cannot sign in on the iOS app."
     })));
 
-    expect(plan.route).toBe("retrieve_knowledge");
+    expect(plan.route).toBe("rag_only");
     expect(plan.reason).toBe("rag_enabled_for_access_security_topics");
   });
 
@@ -126,7 +125,7 @@ describe("planKnowledgeEnrichment", function () {
     })));
 
     expect(plan).toEqual({
-      route: "no_retrieval",
+      route: "none",
       retrievalRequests: [],
       reason: "rag_disabled_for_billing_topics"
     });
@@ -137,7 +136,7 @@ describe("planKnowledgeEnrichment", function () {
     const request = plan.retrievalRequests[0];
 
     expect(request).toMatchObject({
-      topicId: "topic_1",
+      topicId: 1,
       searchPurpose: "support_answer_and_qualification",
       desiredKnowledge: expect.arrayContaining([
         "customer_facing_information",

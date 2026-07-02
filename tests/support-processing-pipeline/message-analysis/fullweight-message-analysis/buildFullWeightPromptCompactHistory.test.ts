@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFullWeightPrompt
-} from "../../../../src/support-processing-pipeline/message-analysis/fullweight-message-analysis/buildFullWeightPrompt";
+} from "../../../../src/archive/support-processing-pipeline/message-analysis/fullweight-message-analysis/buildFullWeightPrompt";
 
 import type {
   ConversationHistory,
   LatestUserMessage,
   SupportTopicKnowledge,
   TurnUnderstandingDelta
-} from "../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const latestUserMessage: LatestUserMessage = {
   id: "$latest",

@@ -2,16 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyTurnUnderstandingDeltaToTicket
-} from "../../src/persistence/applyTurnUnderstandingDeltaToTicket";
+} from "../../src/archive/persistence/applyTurnUnderstandingDeltaToTicket";
 
 import type {
   JsonTicket
-} from "../../src/repositories/json/typesJsonRepositories.types";
+} from "../../src/archive/repositories/json/typesJsonRepositories.types";
 import type {
   ConversationHistory,
   SupportTopicKnowledge,
   TurnUnderstandingDelta
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const conversationHistory = [] as ConversationHistory;
 

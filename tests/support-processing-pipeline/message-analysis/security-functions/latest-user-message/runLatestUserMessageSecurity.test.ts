@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../../../src/llm/llm-client", function () {
+vi.mock("../../../../../src/infrastructure/llm/llm-client", function () {
   return {
     callLLM: vi.fn(async function (messages: { content: string }[]) {
       const prompt = messages
@@ -23,12 +23,12 @@ vi.mock("../../../../../src/llm/llm-client", function () {
 
 import {
   runLatestUserMessageSecurity
-} from "../../../../../src/support-processing-pipeline/message-analysis/security-functions/latest-user-messsage/runLatestUserMessageSecurity";
+} from "../../../../../src/archive/support-processing-pipeline/message-analysis/security-functions/latest-user-messsage/runLatestUserMessageSecurity";
 
 import type {
   AccountTrustStatus,
   LatestUserMessage
-} from "../../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const trustedAccount: AccountTrustStatus = {
   status: "trusted",

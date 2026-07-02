@@ -5,40 +5,40 @@ import { tmpdir } from "node:os";
 
 import {
   runMatrixSupportAutomationV2
-} from "../../../src/channels/matrix/runMatrixSupportAutomationV2";
+} from "../../../src/support-automation/runMatrixSupportAutomationV2";
 import {
   runSupportAutomationTurnV2 as realRunSupportAutomationTurnV2
-} from "../../../src/orchestration/runSupportAutomationTurnV2";
+} from "../../../src/support-automation/runSupportAutomationPipelineV2";
 import type {
   SupportAutomationTurnV2Result
-} from "../../../src/orchestration/runSupportAutomationTurnV2";
+} from "../../../src/support-automation/runSupportAutomationPipelineV2";
 import {
   buildSupportTurnIdentityV2
-} from "../../../src/orchestration/v2/buildSupportTurnIdentityV2";
-import { JsonMessageRepository } from "../../../src/repositories/json/jsonMessageRepository";
-import { JsonTicketRepository } from "../../../src/repositories/json/jsonTicketRepository";
-import { JsonUserRepository } from "../../../src/repositories/json/jsonUserRepository";
+} from "../../../src/support-automation/build-input/buildSupportTurnIdentityV2";
+import { JsonMessageRepository } from "../../../src/archive/repositories/json/jsonMessageRepository";
+import { JsonTicketRepository } from "../../../src/archive/repositories/json/jsonTicketRepository";
+import { JsonUserRepository } from "../../../src/archive/repositories/json/jsonUserRepository";
 
 import type {
   MessagingEvent,
   MessagingTypingEvent
-} from "../../../src/messaging/typesMessaging.types";
+} from "../../../src/support-automation/buffer/typesMessaging.types";
 import type {
   MatrixDeliveryResult
-} from "../../../src/channels/matrix/typesMatrixChannel.types";
+} from "../../../src/infrastructure/matrix/typesMatrixChannel.types";
 import type {
   SupportProgressReporter
-} from "../../../src/orchestration/supportProgressReporter";
+} from "../../../src/support-automation/progress/supportProgressReporter";
 import type {
   SupportProcessingPipelineV2Steps,
   SupportProcessingPersistenceEffectsV2
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   RenderedSupportResponse
-} from "../../../src/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
 import type {
   UserResponse
-} from "../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportMessaging.types";
 
 function buildTempRepositories(): {
   ticketRepository: JsonTicketRepository;
@@ -391,7 +391,7 @@ describe("runMatrixSupportAutomationV2", function () {
     const input = records[0].supportAutomationTurnResult.supportProcessingInput;
 
     expect(input.supportTopicKnowledge).toEqual({
-      segments_topic: []
+      topics: []
     });
     expect(input.conversationHistory).toEqual([]);
     expect(input.recentInteractionContext).toEqual({

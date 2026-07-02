@@ -7,25 +7,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createDefaultSupportKnowledgeRetriever,
   retrieveSupportKnowledge
-} from "../../../src/support-processing-pipeline-v2/retrieve-support-knowledge/retrieveSupportKnowledge";
+} from "../../../src/support-automation/support-processing-pipeline-v2/retrieve-support-knowledge/retrieveSupportKnowledge";
 import {
   HttpSupportKnowledgeRetriever
-} from "../../../src/support-processing-pipeline-v2/retrieve-support-knowledge/retrievers/httpSupportKnowledgeRetriever";
+} from "../../../src/infrastructure/rag/httpSupportKnowledgeRetriever";
 import {
   JsonFileSupportKnowledgeRetriever
-} from "../../../src/support-processing-pipeline-v2/retrieve-support-knowledge/retrievers/jsonFileSupportKnowledgeRetriever";
+} from "../../../src/infrastructure/rag/jsonFileSupportKnowledgeRetriever";
 import {
   JsonKnowledgeRepository
-} from "../../../src/repositories/json/jsonKnowledgeRepository";
+} from "../../../src/archive/repositories/json/jsonKnowledgeRepository";
 
 import type {
   KnowledgeChunk,
   KnowledgeEnrichmentPlan,
   RetrieveSupportKnowledgeInput
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   JsonKnowledgeItem
-} from "../../../src/repositories/json/typesJsonRepositories.types";
+} from "../../../src/archive/repositories/json/typesJsonRepositories.types";
 
 const previousEnv = { ...process.env };
 
@@ -93,10 +93,10 @@ function buildInput(): RetrieveSupportKnowledgeInput {
     relatedSupportResponseCues: []
   };
   const topicKnowledgeEnrichmentPlan: KnowledgeEnrichmentPlan = {
-    route: "retrieve_knowledge" as const,
+    route: "rag_only" as const,
     retrievalRequests: [
       {
-        topicId: "topic_1",
+        topicId: 1,
         searchPurpose: "support_answer_and_qualification",
         queryText:
           "Support issue: Android push notification is missing after new email.",
@@ -207,7 +207,7 @@ describe("retrieveSupportKnowledge", function () {
   it("calls the injected retriever with the canonical queryText", async function () {
     const chunks: KnowledgeChunk[] = [
       {
-        topicId: "topic_1",
+        topicId: 1,
         sourceId: "rag_doc_1",
         content: "RAG text chunk",
         score: 0.8
@@ -259,7 +259,7 @@ describe("retrieveSupportKnowledge", function () {
     expect(JSON.stringify(body)).not.toContain("partition");
     expect(chunks).toHaveLength(1);
     expect(chunks[0]).toMatchObject({
-      topicId: "topic_1",
+      topicId: 1,
       sourceId: "openrag_0",
       content: "Android notification permission can block push notifications.",
       score: 0.9653811454772949,
@@ -382,7 +382,7 @@ describe("retrieveSupportKnowledge", function () {
 
     expect(chunks).toHaveLength(1);
     expect(chunks[0]).toMatchObject({
-      topicId: "topic_1",
+      topicId: 1,
       sourceId: "android_push_notification_not_received"
     });
     expect(chunks[0]?.content).toContain(

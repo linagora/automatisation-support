@@ -16,7 +16,7 @@ import * as path from "path";
 
 import {
   runSupportProcessingPipeline
-} from "../../src/support-processing-pipeline/runSupportProcessingPipeline";
+} from "../../src/archive/support-processing-pipeline/runSupportProcessingPipeline";
 
 import {
   supportProcessingPipelineTestCases,
@@ -26,7 +26,7 @@ import {
 
 import type {
   LatestUserAttachment
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",

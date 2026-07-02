@@ -17,7 +17,7 @@ import * as path from "path";
 
 import {
   runSupportProcessingPipeline
-} from "../../src/support-processing-pipeline/runSupportProcessingPipeline";
+} from "../../src/archive/support-processing-pipeline/runSupportProcessingPipeline";
 import {
   buildSupportQualityInput,
   supportQualityTestCases
@@ -35,7 +35,7 @@ import type {
   SupportTopicKnowledge,
   TurnAttachments,
   TurnUnderstandingDelta
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 import type {
   SupportQualityTestCase
 } from "./dataset-support-quality-test";

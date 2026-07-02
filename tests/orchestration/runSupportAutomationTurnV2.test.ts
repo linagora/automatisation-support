@@ -6,37 +6,37 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   runSupportAutomationTurnV2
-} from "../../src/orchestration/runSupportAutomationTurnV2";
+} from "../../src/support-automation/runSupportAutomationPipelineV2";
 import {
   buildSupportTurnIdentityV2
-} from "../../src/orchestration/v2/buildSupportTurnIdentityV2";
+} from "../../src/support-automation/build-input/buildSupportTurnIdentityV2";
 import {
   writeLiveMemoryContext
-} from "../../src/persistence/live-memory-context/liveMemoryContextStore";
-import { JsonMessageRepository } from "../../src/repositories/json/jsonMessageRepository";
-import { JsonTicketRepository } from "../../src/repositories/json/jsonTicketRepository";
-import { JsonUserRepository } from "../../src/repositories/json/jsonUserRepository";
+} from "../../src/infrastructure/live-memory/liveMemoryContextStore";
+import { JsonMessageRepository } from "../../src/archive/repositories/json/jsonMessageRepository";
+import { JsonTicketRepository } from "../../src/archive/repositories/json/jsonTicketRepository";
+import { JsonUserRepository } from "../../src/archive/repositories/json/jsonUserRepository";
 
 import type {
   BufferedMessages
-} from "../../src/messaging/typesMessaging.types";
+} from "../../src/support-automation/buffer/typesMessaging.types";
 import type {
   JsonTicket,
   JsonUser
-} from "../../src/repositories/json/typesJsonRepositories.types";
+} from "../../src/archive/repositories/json/typesJsonRepositories.types";
 import type {
   LiveMemoryContext
-} from "../../src/persistence/live-memory-context/typesLiveMemoryContext.types";
+} from "../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
 import type {
   SupportProcessingPipelineV2Steps,
   SupportProcessingPersistenceEffectsV2
-} from "../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   UserResponse
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportMessaging.types";
 import type {
   RenderedSupportResponse
-} from "../../src/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+} from "../../src/support-automation/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
 
 function buildTicket(): JsonTicket {
   return {
@@ -367,7 +367,7 @@ describe("runSupportAutomationTurnV2", function () {
       .toBe("Message B");
     expect(secondTurnResult.supportProcessingInput.supportTopicKnowledge)
       .toEqual({
-        segments_topic: []
+        topics: []
       });
     expect(secondTurnResult.supportProcessingInput.conversationHistory)
       .toEqual([]);
@@ -452,7 +452,7 @@ describe("runSupportAutomationTurnV2", function () {
     });
 
     expect(result.supportProcessingInput.supportTopicKnowledge).toEqual({
-      segments_topic: []
+      topics: []
     });
     expect(result.supportProcessingInput.conversationHistory).toEqual([]);
     expect(result.supportProcessingInput.recentInteractionContext).toEqual({
@@ -492,7 +492,7 @@ describe("runSupportAutomationTurnV2", function () {
     const liveMemoryContext: LiveMemoryContext = {
       topics: [
         {
-          topicId: "topic_12",
+          topicId: 12,
           title: "Connexion impossible",
           broadCategoryHint: "access_security",
           summary: "Le compte refuse la connexion.",
@@ -524,17 +524,22 @@ describe("runSupportAutomationTurnV2", function () {
       steps: buildSteps()
     });
 
-    expect(result.supportProcessingInput.supportTopicKnowledge.segments_topic)
+    expect(result.supportProcessingInput.supportTopicKnowledge.topics)
       .toEqual([
         {
-          id_topic: 12,
-          topic_category: "access_security",
-          topic_label: "Connexion impossible",
-          topic_details: {
-            auth_method: "SSO"
-          },
-          user_goal: "Le compte refuse la connexion.",
-          blocking_issue: "no"
+          topicId: 12,
+          title: "Connexion impossible",
+          broadCategoryHint: "access_security",
+          summary: "Le compte refuse la connexion.",
+          caseDetails: [
+            {
+              key: "auth_method",
+              value: "SSO",
+              evidence: "SSO"
+            }
+          ],
+          attemptedActions: [],
+          supportKnowledgeSummary: null
         }
       ]);
     expect(result.supportProcessingInput.conversationHistory).toEqual([]);

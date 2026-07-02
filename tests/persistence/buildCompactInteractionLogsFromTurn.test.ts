@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildCompactInteractionLogsFromTurn
-} from "../../src/persistence/buildCompactInteractionLogsFromTurn";
+} from "../../src/archive/persistence/buildCompactInteractionLogsFromTurn";
 
 import type {
   ResponsePlan,
   TurnUnderstandingDelta
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 function buildDelta(
   overrides: Partial<TurnUnderstandingDelta> = {}

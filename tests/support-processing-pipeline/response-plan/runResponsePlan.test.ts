@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   runResponsePlan
-} from "../../../src/support-processing-pipeline/response-plan/runResponsePlan";
+} from "../../../src/archive/support-processing-pipeline/response-plan/runResponsePlan";
 
 import type {
   ResponsePlanInput
-} from "../../../src/support-processing-pipeline/response-plan/runResponsePlan";
+} from "../../../src/archive/support-processing-pipeline/response-plan/runResponsePlan";
 
 function createBaseInput(): ResponsePlanInput {
   return {

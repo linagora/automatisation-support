@@ -11,7 +11,7 @@ import * as path from "path";
 
 import {
   runAttachmentAnalysis
-} from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/runAttachmentAnalysis";
+} from "../../src/archive/support-processing-pipeline/message-analysis/attachment-analysis/runAttachmentAnalysis";
 
 const SUPPORTED_IMAGE_EXTENSIONS = [
   ".png",

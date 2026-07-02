@@ -2,31 +2,31 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   callLLM
-} from "../../../src/llm/llm-client";
+} from "../../../src/infrastructure/llm/llm-client";
 import {
   analyzeTextSurface
-} from "../../../src/support-processing-pipeline-v2/analyze-text-surface/analyzeTextSurface";
+} from "../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/analyzeTextSurface";
 import {
   buildAnalyzeTextSurfacePrompt
-} from "../../../src/support-processing-pipeline-v2/analyze-text-surface/buildAnalyzeTextSurfacePrompt";
+} from "../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/buildAnalyzeTextSurfacePrompt";
 import {
   formatTextSurfaceAnalysisOutput
-} from "../../../src/support-processing-pipeline-v2/analyze-text-surface/formatTextSurfaceAnalysisOutput";
+} from "../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/formatTextSurfaceAnalysisOutput";
 import {
   requestTextSurfaceAnalysis
-} from "../../../src/support-processing-pipeline-v2/analyze-text-surface/requestTextSurfaceAnalysis";
+} from "../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/requestTextSurfaceAnalysis";
 import {
   textSurfaceAnalysisResponseFormat
-} from "../../../src/support-processing-pipeline-v2/analyze-text-surface/textSurfaceAnalysis.schema";
+} from "../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/textSurfaceAnalysis.schema";
 
 import type {
   AnalyzeTextSurfaceInput,
   LatestUserMessage,
   RecentInteractionContext,
   TurnAnalysisPlan
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
-vi.mock("../../../src/llm/llm-client", function () {
+vi.mock("../../../src/infrastructure/llm/llm-client", function () {
   return {
     callLLM: vi.fn()
   };

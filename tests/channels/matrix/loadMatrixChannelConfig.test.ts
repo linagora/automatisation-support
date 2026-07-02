@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   loadMatrixProgressConfigFromEnv
-} from "../../../src/channels/matrix/loadMatrixChannelConfig";
+} from "../../../src/infrastructure/matrix/loadMatrixChannelConfig";
 import {
   DEFAULT_MATRIX_PROGRESS_MESSAGES
-} from "../../../src/channels/matrix/matrixProgressMessages";
+} from "../../../src/infrastructure/matrix/matrixProgressMessages";
 
 describe("loadMatrixProgressConfigFromEnv", function () {
   it("loads Matrix progress configuration from env", function () {

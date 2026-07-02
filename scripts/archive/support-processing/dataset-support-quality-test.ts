@@ -7,7 +7,7 @@ import type {
   SupportProcessingPipelineInput,
   SupportTopicKnowledge,
   TurnUnderstandingDelta
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 export type SupportQualityTestCase = {
   id: number;

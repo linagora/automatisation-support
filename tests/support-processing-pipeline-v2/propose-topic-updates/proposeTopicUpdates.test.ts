@@ -1,19 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+const requestProposeTopicUpdatesMock = vi.hoisted(() => vi.fn());
+
+vi.mock(
+  "../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/requestProposeTopicUpdates",
+  () => ({
+    requestProposeTopicUpdates: requestProposeTopicUpdatesMock
+  })
+);
 
 import {
   buildProposeTopicUpdatesPrompt
-} from "../../../src/support-processing-pipeline-v2/propose-topic-updates/buildProposeTopicUpdatesPrompt";
+} from "../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/buildProposeTopicUpdatesPrompt";
 import {
   buildTopicPatchesAndSnapshots
-} from "../../../src/support-processing-pipeline-v2/propose-topic-updates/buildTopicPatchesAndSnapshots";
+} from "../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/buildTopicPatchesAndSnapshots";
 import {
   formatProposeTopicUpdatesOutput
-} from "../../../src/support-processing-pipeline-v2/propose-topic-updates/formatProposeTopicUpdatesOutput";
+} from "../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/formatProposeTopicUpdatesOutput";
+import {
+  proposeTopicUpdates
+} from "../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/proposeTopicUpdates";
+import {
+  buildPlanKnowledgeEnrichmentPrompt
+} from "../../../src/support-automation/support-processing-pipeline-v2/plan-knowledge-enrichment/buildPlanKnowledgeEnrichmentPrompt";
 
 import type {
+  PlanKnowledgeEnrichmentInput,
   TextUnderstanding,
   TopicUpdateOp
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 function understanding(params: {
   id: string;
@@ -44,7 +60,7 @@ function updateOp(overrides: Partial<TopicUpdateOp> = {}): TopicUpdateOp {
   return {
     op: "update",
     items: [0],
-    topicId: "topic_account",
+    topicId: 1,
     topic: null,
     merge: {
       caseDetails: [[0, 0]],
@@ -57,6 +73,7 @@ function updateOp(overrides: Partial<TopicUpdateOp> = {}): TopicUpdateOp {
 }
 
 const accountTopic = {
+  topicId: 1,
   id: "topic_account",
   title: "Compte bloque",
   broadCategoryHint: "access_security",
@@ -66,6 +83,7 @@ const accountTopic = {
 };
 
 const billingTopic = {
+  topicId: 2,
   id: "topic_billing",
   title: "Billing issue",
   broadCategoryHint: "billing",
@@ -300,10 +318,10 @@ describe("buildTopicPatchesAndSnapshots", function () {
       ]
     });
 
-    expect(output.topicPatches[0]?.temporaryTopicId).toBe("new_topic_1");
+    expect(output.topicPatches[0]?.temporaryTopicId).toBeNull();
     expect(output.mergedTopicSnapshots[0]).toMatchObject({
-      snapshotId: "new_topic_1",
-      temporaryTopicId: "new_topic_1",
+      topicId: 1,
+      temporaryTopicId: null,
       isNewTopic: true,
       title: "Android notifications",
       broadCategoryHint: "bug",
@@ -323,6 +341,178 @@ describe("buildTopicPatchesAndSnapshots", function () {
         }
       ]
     });
+  });
+
+  it("keeps the stable existing topicId when an update op references the numeric id", function () {
+    const output = buildTopicPatchesAndSnapshots({
+      existingTopics: [
+        {
+          topicId: 1,
+          title: "Twake Chat desktop messages",
+          broadCategoryHint: "bug",
+          summary: "Twake Chat desktop messages require a reload.",
+          caseDetails: [
+            {
+              key: "product_or_service",
+              value: "twake chat",
+              evidence: ""
+            },
+            {
+              key: "platform",
+              value: "desktop app",
+              evidence: ""
+            },
+            {
+              key: "observed_result",
+              value: "must reload conversation",
+              evidence: ""
+            }
+          ],
+          attemptedActions: [],
+          supportKnowledgeSummary: null
+        }
+      ],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Ubuntu and latest version",
+          caseDetails: [
+            {
+              key: "operating_system",
+              value: "ubuntu",
+              evidence: "ubuntu"
+            },
+            {
+              key: "app_version",
+              value: "latest",
+              evidence: "dernière version"
+            }
+          ]
+        })
+      ],
+      topicUpdateOps: [
+        updateOp({
+          topicId: 1,
+          merge: {
+            caseDetails: [[0, 0], [0, 1]],
+            attemptedActions: []
+          }
+        })
+      ]
+    });
+
+    expect(output.topicPatches[0]?.topicId).toBe(1);
+    expect(output.mergedTopicSnapshots[0]).toEqual(expect.objectContaining({
+      topicId: 1,
+      temporaryTopicId: null,
+      isNewTopic: false,
+      title: "Twake Chat desktop messages",
+      caseDetails: expect.arrayContaining([
+        expect.objectContaining({
+          key: "operating_system",
+          value: "ubuntu"
+        }),
+        expect.objectContaining({
+          key: "app_version",
+          value: "latest"
+        })
+      ])
+    }));
+  });
+
+  it("keeps live-memory supportKnowledgeSummary through topic update snapshots and enrichment prompts", async function () {
+    const supportKnowledgeSummary =
+      "Support knowledge lookup returned no usable customer-facing knowledge for this topic.";
+    const textUnderstanding = understanding({
+      id: "text_understanding_1",
+      summary: "Android version 14",
+      caseDetails: [
+        {
+          key: "os_version",
+          value: "Android 14",
+          evidence: "Android 14"
+        }
+      ]
+    });
+
+    requestProposeTopicUpdatesMock.mockResolvedValueOnce(completed({
+      ops: [
+        updateOp({
+          topicId: 1,
+          merge: {
+            caseDetails: [[0, 0]],
+            attemptedActions: []
+          }
+        })
+      ]
+    }));
+
+    const result = await proposeTopicUpdates({
+      supportTopicKnowledge: {
+        topics: [
+          {
+            topicId: 1,
+            title: "Android notifications",
+            broadCategoryHint: "bug",
+            summary: "Android notifications are not received.",
+            caseDetails: [],
+            attemptedActions: [],
+            supportKnowledgeSummary
+          }
+        ]
+      },
+      textUnderstandings: [textUnderstanding],
+      recentInteractionContext: {
+        previousUserMessageSummary: "none",
+        previousBotResponseSummary: "none",
+        previousBotQuestionFieldNames: []
+      },
+      latestUserMessageContent: "It happens on Android 14."
+    });
+
+    expect(result.topicUpdateOps[0]).toMatchObject({
+      op: "update",
+      topicId: 1
+    });
+    expect(result.mergedTopicSnapshots[0]).toMatchObject({
+      title: "Android notifications",
+      broadCategoryHint: "bug",
+      summary: "Android notifications are not received.",
+      caseDetails: [
+        {
+          key: "os_version",
+          value: "Android 14",
+          evidence: "Android 14"
+        }
+      ],
+      attemptedActions: [],
+      supportKnowledgeSummary
+    });
+
+    const enrichmentInput: PlanKnowledgeEnrichmentInput = {
+      topicEvidence: {
+        proposalId: "topic_patch_1",
+        topicId: 1,
+        topicSnapshot: result.mergedTopicSnapshots[0],
+        topicSourceVerbatims: ["It happens on Android 14."],
+        relatedUnderstandingIds: ["text_understanding_1"],
+        relatedTextUnderstandings: [textUnderstanding],
+        relatedAttachmentUnderstandings: [],
+        relatedSupportResponseCues: []
+      },
+      topicSnapshot: result.mergedTopicSnapshots[0],
+      extractableFieldCatalog: []
+    };
+    const prompt = buildPlanKnowledgeEnrichmentPrompt({
+      input: enrichmentInput
+    });
+    const userPrompt = prompt.messages.find((message) => {
+      return message.role === "user";
+    })?.content ?? "";
+
+    expect(userPrompt).toContain(
+      `"supportKnowledgeSummary":"${supportKnowledgeSummary}"`
+    );
   });
 });
 
@@ -350,13 +540,53 @@ describe("formatProposeTopicUpdatesOutput", function () {
       })
     });
 
-    expect(output).toEqual({
+    expect(output).toEqual(expect.objectContaining({
       status: "valid",
       topicUpdateOps: [
         updateOp()
       ]
-    });
+    }));
     expect(JSON.stringify(output.topicUpdateOps)).not.toContain("still blocked");
+  });
+
+  it("normalizes numeric topic ids from the LLM to the stable existing topicId", function () {
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [
+        {
+          topicId: 1,
+          title: "Twake Chat desktop messages"
+        }
+      ],
+      textUnderstandings: [
+        understanding({
+          id: "text_understanding_1",
+          summary: "Ubuntu and latest version",
+          caseDetails: [
+            {
+              key: "operating_system",
+              value: "ubuntu",
+              evidence: "ubuntu"
+            }
+          ]
+        })
+      ],
+      rawProposeTopicUpdates: completed({
+        ops: [
+          updateOp({
+            topicId: 1
+          })
+        ]
+      })
+    });
+
+    expect(output).toEqual(expect.objectContaining({
+      status: "valid",
+      topicUpdateOps: [
+        updateOp({
+          topicId: 1
+        })
+      ]
+    }));
   });
 
   it("rejects an invalid item reference without creating a review op", function () {
@@ -377,11 +607,98 @@ describe("formatProposeTopicUpdatesOutput", function () {
       })
     });
 
-    expect(output).toEqual({
+    expect(output).toEqual(expect.objectContaining({
       status: "invalid",
-      reason: "invalid_ops",
+      reason: "some_ops_rejected",
       topicUpdateOps: []
+    }));
+  });
+
+  it("debugs raw ops, rejected ops and understanding coverage", function () {
+    const textUnderstandings = [
+      understanding({
+        id: "text_understanding_1",
+        summary: "Compte bloque",
+        caseDetails: [
+          {
+            key: "access_action",
+            value: "login",
+            evidence: "compte bloque"
+          }
+        ]
+      }),
+      understanding({
+        id: "text_understanding_2",
+        summary: "Facture en double",
+        caseDetails: [
+          {
+            key: "billing_issue_type",
+            value: "duplicate_invoice",
+            evidence: "facture deux fois"
+          }
+        ]
+      })
+    ];
+    const rawParsedResponse = {
+      ops: [
+        {
+          op: "update",
+          items: [0],
+          topicId: 1,
+          topic: null,
+          merge: {
+            caseDetails: [[0, 0]],
+            attemptedActions: []
+          },
+          replace: null
+        },
+        {
+          op: "update",
+          items: [1],
+          topicId: "2",
+          topic: null,
+          merge: {
+            caseDetails: [[1, 0]],
+            attemptedActions: []
+          },
+          replace: null
+        }
+      ]
+    };
+
+    const output = formatProposeTopicUpdatesOutput({
+      existingTopics: [accountTopic, billingTopic],
+      textUnderstandings,
+      rawProposeTopicUpdates: completed(rawParsedResponse)
     });
+
+    expect(output.status).toBe("invalid");
+    expect(output.topicUpdateOps).toHaveLength(1);
+    expect(output.debug.rawParsedResponse).toEqual(rawParsedResponse);
+    expect(output.debug.rawOpsCount).toBe(2);
+    expect(output.debug.formattedTopicUpdateOps).toEqual(output.topicUpdateOps);
+    expect(output.debug.rejectedOps).toEqual([
+      expect.objectContaining({
+        rawOpIndex: 1,
+        reason: "invalidTopicId",
+        rawOp: rawParsedResponse.ops[1]
+      })
+    ]);
+    expect(output.debug.understandingCoverage).toEqual([
+      expect.objectContaining({
+        itemIndex: 0,
+        understandingId: "text_understanding_1",
+        persistable: true,
+        coveredByFormattedOpIndexes: [0]
+      }),
+      expect.objectContaining({
+        itemIndex: 1,
+        understandingId: "text_understanding_2",
+        persistable: true,
+        coveredByFormattedOpIndexes: []
+      })
+    ]);
+    expect(output.debug.uncoveredPersistableItemIndexes).toEqual([1]);
   });
 
   it("rejects invalid caseDetails references without creating a review op", function () {
@@ -448,7 +765,7 @@ describe("formatProposeTopicUpdatesOutput", function () {
       rawProposeTopicUpdates: completed({
         ops: [
           updateOp({
-            topicId: "topic_billing",
+            topicId: 2,
             merge: {
               caseDetails: [],
               attemptedActions: []
@@ -461,7 +778,7 @@ describe("formatProposeTopicUpdatesOutput", function () {
     expect(output.status).toBe("valid");
     expect(output.topicUpdateOps[0]).toMatchObject({
       op: "update",
-      topicId: "topic_billing"
+      topicId: 2
     });
   });
 
@@ -582,11 +899,11 @@ describe("formatProposeTopicUpdatesOutput", function () {
       })
     });
 
-    expect(output).toEqual({
+    expect(output).toEqual(expect.objectContaining({
       status: "invalid",
-      reason: "invalid_ops",
+      reason: "some_ops_rejected",
       topicUpdateOps: []
-    });
+    }));
   });
 
   it("rejects review because it is not a business op", function () {
@@ -613,11 +930,11 @@ describe("formatProposeTopicUpdatesOutput", function () {
       })
     });
 
-    expect(output).toEqual({
+    expect(output).toEqual(expect.objectContaining({
       status: "invalid",
-      reason: "invalid_ops",
+      reason: "some_ops_rejected",
       topicUpdateOps: []
-    });
+    }));
   });
 
   it("accepts replace.caseDetails by key", function () {

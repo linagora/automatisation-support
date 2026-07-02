@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSupportProcessingPersistenceEffectsV2
-} from "../../../src/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
+} from "../../../src/support-automation/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 
 import type {
   BuildSupportPersistenceEffectsInput
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 function buildInput(
   overrides: Partial<BuildSupportPersistenceEffectsInput> = {}
@@ -21,7 +21,7 @@ function buildInput(
       matchedPatternIds: []
     },
     supportTopicKnowledge: {
-      segments_topic: []
+      topics: []
     },
     userResponse: {
       messages: [
@@ -42,8 +42,8 @@ describe("buildSupportProcessingPersistenceEffectsV2", function () {
       mergedTopicSnapshots: [
         {
           snapshotId: "snapshot_1",
-          temporaryTopicId: "topic_1",
-          topicId: "topic_4",
+          temporaryTopicId: null,
+          topicId: 4,
           isNewTopic: false,
           title: "Notifications Android",
           broadCategoryHint: "bug",
@@ -62,9 +62,6 @@ describe("buildSupportProcessingPersistenceEffectsV2", function () {
               evidence: "déjà réinstallé"
             }
           ],
-          topic_details: {
-            platform: "Android"
-          },
           sourceUnderstandingIds: [],
           sourceVerbatims: [],
           sourceOpIndex: 0,
@@ -77,7 +74,7 @@ describe("buildSupportProcessingPersistenceEffectsV2", function () {
       mode: "merge",
       topics: [
         {
-          topicId: "topic_4",
+          topicId: 4,
           title: "Notifications Android",
           broadCategoryHint: "bug",
           summary: "Les notifications Android ne sont pas reçues.",

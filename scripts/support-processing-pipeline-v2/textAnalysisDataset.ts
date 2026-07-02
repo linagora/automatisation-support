@@ -4,13 +4,13 @@ import type {
   ExtractableFieldDefinition,
   LatestUserAttachment,
   LatestUserMessage
-} from "../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import {
   buildSupportExtractableFieldCatalog
-} from "../../src/support-processing-pipeline-v2/analyze-support-text/supportExtractableFieldCatalog";
+} from "../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/supportExtractableFieldCatalog";
 import type {
   LiveMemoryContext
-} from "../../src/persistence/live-memory-context/typesLiveMemoryContext.types";
+} from "../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
 
 type DatasetLiveMemoryTopic = LiveMemoryContext["topics"][number];
 

@@ -2,20 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   synthesizeRetrievedKnowledge
-} from "../../../src/support-processing-pipeline-v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
+} from "../../../src/support-automation/support-processing-pipeline-v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
 
 import type {
   KnowledgeEnrichmentPlan,
   SynthesizeRetrievedKnowledgeInput
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   RawSynthesizeRetrievedKnowledge,
   SynthesizeRetrievedKnowledgeRequester
-} from "../../../src/support-processing-pipeline-v2/synthesize-retrieved-knowledge/typesSynthesizeRetrievedKnowledge.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/synthesize-retrieved-knowledge/typesSynthesizeRetrievedKnowledge.types";
 
-function knowledgePlan(topicId: string): KnowledgeEnrichmentPlan {
+function knowledgePlan(topicId: number): KnowledgeEnrichmentPlan {
   return {
-    route: "retrieve_knowledge",
+    route: "rag_only",
     retrievalRequests: [
       {
         topicId,
@@ -34,13 +34,13 @@ function knowledgePlan(topicId: string): KnowledgeEnrichmentPlan {
 }
 
 function synthesisInput(params: {
-  topicId?: string;
+  topicId?: number;
   content: string;
   sourceId?: string;
   metadata?: Record<string, unknown>;
   knowledgeRetrievalFailureReason?: string;
 }): SynthesizeRetrievedKnowledgeInput {
-  const topicId = params.topicId ?? "topic_notifications";
+  const topicId = params.topicId ?? 1;
   const plan = knowledgePlan(topicId);
 
   return {
@@ -106,6 +106,9 @@ describe("synthesizeRetrievedKnowledge", function () {
     expect(synthesis.applicableInstructions).toEqual([]);
     expect(synthesis.sourceReferences).toEqual([]);
     expect(synthesis.retrievedChunkCount).toBe(0);
+    expect(synthesis.supportKnowledgeSummary).toBe(
+      "Support knowledge lookup returned no usable customer-facing knowledge for this topic."
+    );
     expect(synthesis.limitations).toContain(
       "No usable customer-facing knowledge found for this topic."
     );
@@ -136,6 +139,9 @@ describe("synthesizeRetrievedKnowledge", function () {
     expect(synthesis.internalNotes).toEqual([
       "Rejected rag_wrong_product as off-topic."
     ]);
+    expect(synthesis.supportKnowledgeSummary).toBe(
+      "Support knowledge lookup returned content, but it was not useful for this topic because it was off-topic, internal-only, or not customer-facing."
+    );
   });
 
   it("keeps internal-only technical knowledge out of relevantFacts", async function () {
@@ -166,6 +172,9 @@ describe("synthesizeRetrievedKnowledge", function () {
       "Support/dev note: inspect backend debug logs and deployment configuration."
     ]);
     expect(synthesis.retrievedChunkCount).toBe(0);
+    expect(synthesis.supportKnowledgeSummary).toBe(
+      "Support knowledge lookup returned content, but it was not useful for this topic because it was off-topic, internal-only, or not customer-facing."
+    );
   });
 
   it("keeps only customer-facing information from mixed chunks", async function () {
@@ -200,6 +209,9 @@ describe("synthesizeRetrievedKnowledge", function () {
     ]);
     expect(synthesis.sourceReferences).toEqual(["rag_mixed"]);
     expect(synthesis.retrievedChunkCount).toBe(1);
+    expect(synthesis.supportKnowledgeSummary).toBe(
+      "Support knowledge lookup returned useful customer-facing knowledge for this topic."
+    );
     expect(synthesis.internalNotes).toEqual([
       "Support should inspect backend logs."
     ]);
@@ -227,6 +239,9 @@ describe("synthesizeRetrievedKnowledge", function () {
     expect(synthesis.sourceReferences).toEqual([]);
     expect(synthesis.retrievedChunkCount).toBe(0);
     expect(synthesis.limitations).toContain("llm_unavailable");
+    expect(synthesis.supportKnowledgeSummary).toBe(
+      "Support knowledge lookup returned no usable customer-facing knowledge for this topic."
+    );
     expect(debug).toHaveBeenCalledWith(
       "support.v2.synthesize_retrieved_knowledge.failed",
       { reason: "llm_unavailable" }
@@ -264,5 +279,22 @@ describe("synthesizeRetrievedKnowledge", function () {
     expect(synthesis.internalNotes).toEqual([
       "Internal deployment runbook rejected."
     ]);
+    expect(synthesis.supportKnowledgeSummary).toBe(
+      "Support knowledge lookup returned content, but it was not useful for this topic because it was off-topic, internal-only, or not customer-facing."
+    );
+  });
+
+  it("marks retrieval failures with a stable support knowledge summary", async function () {
+    const synthesis = await synthesizeRetrievedKnowledge(
+      synthesisInput({
+        content: "",
+        knowledgeRetrievalFailureReason: "timeout"
+      }),
+      vi.fn<SynthesizeRetrievedKnowledgeRequester>()
+    );
+
+    expect(synthesis.supportKnowledgeSummary).toBe(
+      "Support knowledge lookup failed or timed out. No usable customer-facing knowledge was found."
+    );
   });
 });

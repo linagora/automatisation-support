@@ -2,23 +2,23 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createMatrixSupportProgressReporter
-} from "../../../src/channels/matrix/matrixSupportProgressReporter";
+} from "../../../src/infrastructure/matrix/matrixSupportProgressReporter";
 import {
   DEFAULT_MATRIX_PROGRESS_MESSAGES
-} from "../../../src/channels/matrix/matrixProgressMessages";
+} from "../../../src/infrastructure/matrix/matrixProgressMessages";
 
 import type {
   MatrixSupportProgressReporterConfig
-} from "../../../src/channels/matrix/matrixSupportProgressReporter";
+} from "../../../src/infrastructure/matrix/matrixSupportProgressReporter";
 import type {
   MatrixSupportAutomationLogger
-} from "../../../src/channels/matrix/matrixSupportAutomationLogger";
+} from "../../../src/infrastructure/matrix/matrixSupportAutomationLogger";
 import type {
   MatrixClientLike
-} from "../../../src/channels/matrix/typesMatrixChannel.types";
+} from "../../../src/infrastructure/matrix/typesMatrixChannel.types";
 import type {
   ProgressContext
-} from "../../../src/orchestration/supportProgressReporter";
+} from "../../../src/support-automation/progress/supportProgressReporter";
 
 function buildProgressConfig(
   overrides: Partial<MatrixSupportProgressReporterConfig> = {}

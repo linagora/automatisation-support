@@ -11,11 +11,11 @@ import * as path from "path";
 
 import {
   requestVideoAnalysis
-} from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/requestVideoAnalysis";
+} from "../../src/archive/support-processing-pipeline/message-analysis/attachment-analysis/requestVideoAnalysis";
 
 import type {
   AttachmentAnalysis
-} from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/typesAttachmentAnalysis.types";
+} from "../../src/archive/support-processing-pipeline/message-analysis/attachment-analysis/typesAttachmentAnalysis.types";
 
 const SUPPORTED_VIDEO_EXTENSIONS = [
   ".mp4",

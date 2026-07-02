@@ -2,17 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   listenMatrixEvents
-} from "../../../src/channels/matrix/listenMatrixEvents";
+} from "../../../src/infrastructure/matrix/listenMatrixEvents";
 import {
   createMatrixClient
-} from "../../../src/channels/matrix/matrixClient";
+} from "../../../src/infrastructure/matrix/matrixClient";
 
 import type {
   MatrixTypingEvent,
   MatrixTextEvent
-} from "../../../src/channels/matrix/typesMatrixChannel.types";
+} from "../../../src/infrastructure/matrix/typesMatrixChannel.types";
 
-vi.mock("../../../src/channels/matrix/matrixClient", function () {
+vi.mock("../../../src/infrastructure/matrix/matrixClient", function () {
   return {
     createMatrixClient: vi.fn()
   };

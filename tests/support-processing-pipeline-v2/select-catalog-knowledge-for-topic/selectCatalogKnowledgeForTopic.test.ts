@@ -2,34 +2,34 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   callLLM
-} from "../../../src/llm/llm-client";
+} from "../../../src/infrastructure/llm/llm-client";
 import {
   buildCandidateFieldsForTopicSelector
-} from "../../../src/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/buildCandidateFieldsForTopicSelector";
+} from "../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/buildCandidateFieldsForTopicSelector";
 import {
   buildSelectCatalogKnowledgeForTopicPrompt
-} from "../../../src/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/buildSelectCatalogKnowledgeForTopicPrompt";
+} from "../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/buildSelectCatalogKnowledgeForTopicPrompt";
 import {
   formatSelectCatalogKnowledgeForTopicOutput
-} from "../../../src/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/formatSelectCatalogKnowledgeForTopicOutput";
+} from "../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/formatSelectCatalogKnowledgeForTopicOutput";
 import {
   requestSelectCatalogKnowledgeForTopic
-} from "../../../src/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/requestSelectCatalogKnowledgeForTopic";
+} from "../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/requestSelectCatalogKnowledgeForTopic";
 import {
   selectCatalogKnowledgeForTopicResponseFormat
-} from "../../../src/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic.schema";
+} from "../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic.schema";
 
 import type {
   ExtractableFieldDefinition,
   MergedTopicSnapshot,
   TextUnderstanding,
   TopicEvidence
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   SelectCatalogKnowledgeForTopicInput
-} from "../../../src/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/typesSelectCatalogKnowledgeForTopic.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/typesSelectCatalogKnowledgeForTopic.types";
 
-vi.mock("../../../src/llm/llm-client", function () {
+vi.mock("../../../src/infrastructure/llm/llm-client", function () {
   return {
     callLLM: vi.fn()
   };
@@ -103,14 +103,13 @@ function snapshot(
   return {
     snapshotId: "snapshot_1",
     topicId: null,
-    temporaryTopicId: "new_topic_1",
+    temporaryTopicId: null,
     isNewTopic: true,
     title: "Login problem",
     broadCategoryHint: "access_security",
     summary: "Login problem",
     caseDetails: [],
     attemptedActions: [],
-    topic_details: {},
     sourceUnderstandingIds: ["understanding_1"],
     sourceVerbatims: ["Login error"],
     sourceOpIndex: 0,

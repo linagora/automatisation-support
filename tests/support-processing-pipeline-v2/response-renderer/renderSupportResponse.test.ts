@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildRenderSupportResponsePrompt
-} from "../../../src/support-processing-pipeline-v2/response-renderer/buildRenderSupportResponsePrompt";
+} from "../../../src/support-automation/support-processing-pipeline-v2/response-renderer/buildRenderSupportResponsePrompt";
 import {
   formatRenderSupportResponseOutput
-} from "../../../src/support-processing-pipeline-v2/response-renderer/formatRenderSupportResponseOutput";
+} from "../../../src/support-automation/support-processing-pipeline-v2/response-renderer/formatRenderSupportResponseOutput";
 
 import type {
   ComposedSupportResponsePlan
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   RenderSupportResponseInput
-} from "../../../src/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
 
 function composedPlan(): ComposedSupportResponsePlan {
   return {

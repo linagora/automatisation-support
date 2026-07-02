@@ -10,11 +10,11 @@
 import "dotenv/config";
 import {
   runLlmTrusterReview
-} from "../../src/support-processing-pipeline/message-analysis/security-functions/shared/runLlmTrusterReview";
+} from "../../src/archive/support-processing-pipeline/message-analysis/security-functions/shared/runLlmTrusterReview";
 
 import type {
   LlmTrusterReviewInput
-} from "../../src/support-processing-pipeline/message-analysis/security-functions/shared/runLlmTrusterReview";
+} from "../../src/archive/support-processing-pipeline/message-analysis/security-functions/shared/runLlmTrusterReview";
 
 type LlmTrusterReviewTestCase = {
   id: string;

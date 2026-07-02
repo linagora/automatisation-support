@@ -2,23 +2,23 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPlanSupportResponsePrompt
-} from "../../../src/support-processing-pipeline-v2/plan-support-response/buildPlanSupportResponsePrompt";
+} from "../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/buildPlanSupportResponsePrompt";
 import {
   formatPlanSupportResponseOutput
-} from "../../../src/support-processing-pipeline-v2/plan-support-response/formatPlanSupportResponseOutput";
+} from "../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/formatPlanSupportResponseOutput";
 import {
   planSupportResponseResponseFormat
-} from "../../../src/support-processing-pipeline-v2/plan-support-response/planSupportResponse.schema";
+} from "../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/planSupportResponse.schema";
 import {
   formatComposeSupportResponsePlanOutput
-} from "../../../src/support-processing-pipeline-v2/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
+} from "../../../src/support-automation/support-processing-pipeline-v2/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
 
 import type {
   BuildPlanSupportResponsePromptInput
-} from "../../../src/support-processing-pipeline-v2/plan-support-response/typesPlanSupportResponse.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/typesPlanSupportResponse.types";
 import type {
   TextUnderstanding
-} from "../../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 function understanding(
   overrides: Partial<TextUnderstanding> = {}
@@ -43,10 +43,10 @@ function input(
       "I do not receive notifications on Android when I get a new email.",
     topicEvidence: {
       proposalId: "topic_update_proposal_1",
-      topicId: "topic_1",
+      topicId: 1,
       topicSnapshot: {
         snapshotId: "topic_patch_1",
-        topicId: "topic_1",
+        topicId: 1,
         temporaryTopicId: null,
         isNewTopic: false,
         title: "Android notifications",
@@ -60,9 +60,6 @@ function input(
           }
         ],
         attemptedActions: [],
-        topic_details: {
-          platform: "Android"
-        },
         sourceUnderstandingIds: ["understanding_1"],
         sourceVerbatims: [
           "Android notifications are missing"
@@ -96,10 +93,10 @@ function input(
       rejectedFieldNames: []
     },
     topicKnowledgeEnrichmentPlan: {
-      route: "retrieve_knowledge",
+      route: "rag_only",
       retrievalRequests: [
         {
-          topicId: "topic_1",
+          topicId: 1,
           searchPurpose: "support_answer_and_qualification",
           queryText: "Support issue: android notification.",
           desiredKnowledge: ["known_behavior"],
@@ -176,7 +173,7 @@ describe("planSupportResponse", function () {
 
   it("accepts answer only without decision or forbid", function () {
     const responsePlan = format({
-      topicId: "topic_1",
+      topicId: 1,
       acknowledge: [
         "Acknowledge missing Android notifications."
       ],
@@ -206,7 +203,7 @@ describe("planSupportResponse", function () {
 
   it("accepts ask only from selected fields", function () {
     const responsePlan = format({
-      topicId: "topic_1",
+      topicId: 1,
       acknowledge: [
         "Acknowledge the notification issue."
       ],
@@ -237,7 +234,7 @@ describe("planSupportResponse", function () {
 
   it("accepts answer and ask together", function () {
     const responsePlan = format({
-      topicId: "topic_1",
+      topicId: 1,
       acknowledge: [
         "Acknowledge missing notifications."
       ],
@@ -267,7 +264,7 @@ describe("planSupportResponse", function () {
   it("accepts acknowledge only", function () {
     const responsePlan = format(
       {
-        topicId: "topic_1",
+        topicId: 1,
         acknowledge: [
           "Acknowledge that the user still has the issue."
         ],
@@ -280,7 +277,7 @@ describe("planSupportResponse", function () {
       },
       {
         topicKnowledgeEnrichmentPlan: {
-          route: "no_retrieval",
+          route: "none",
           retrievalRequests: []
         },
         topicRetrievedKnowledgeSynthesis: null,
@@ -301,7 +298,7 @@ describe("planSupportResponse", function () {
   it("accepts human review plan when no reliable answer or useful question remains", function () {
     const responsePlan = format(
       {
-        topicId: "topic_1",
+        topicId: 1,
         acknowledge: [
           "Acknowledge that the user reports missing Android notifications."
         ],
@@ -343,7 +340,7 @@ describe("planSupportResponse", function () {
     const output = formatPlanSupportResponseOutput({
       input: input(),
       rawPlanSupportResponse: completed({
-        topicId: "topic_1",
+        topicId: 1,
         acknowledge: [],
         answer: [],
         ask: [
@@ -401,7 +398,7 @@ describe("planSupportResponse", function () {
         }
       }),
       rawPlanSupportResponse: completed({
-        topicId: "topic_1",
+        topicId: 1,
         acknowledge: [],
         answer: [],
         ask: [
@@ -436,7 +433,7 @@ describe("planSupportResponse", function () {
     const output = formatPlanSupportResponseOutput({
       input: input(),
       rawPlanSupportResponse: completed({
-        topicId: "topic_1",
+        topicId: 1,
         acknowledge: [],
         answer: [
           {
@@ -478,7 +475,7 @@ describe("planSupportResponse", function () {
       rawPlanSupportResponse: {
         status: "completed",
         parsedResponse: {
-          topicId: "topic_1",
+          topicId: 1,
           acknowledge: [],
           answer: [],
           ask: [],
@@ -516,7 +513,7 @@ describe("planSupportResponse", function () {
         standardResponseFragments: [],
         topicResponsePlans: [
           {
-            topicId: "topic_1",
+            topicId: 1,
             acknowledge: ["Acknowledge internally."],
             answer: [
               {

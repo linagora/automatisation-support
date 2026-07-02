@@ -8,7 +8,7 @@ import type {
   ConversationHistory,
   SupportProcessingPipelineInput,
   SupportTopicKnowledge
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 export type SupportQualityFullTestCase = {
   id: number;

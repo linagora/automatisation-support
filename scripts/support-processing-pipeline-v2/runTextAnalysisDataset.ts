@@ -16,17 +16,17 @@ import "dotenv/config";
 import {
   buildDefaultAccountInteractionTraits,
   buildDefaultAccountProfile
-} from "../../src/orchestration/buildSupportProcessingInput";
+} from "../../src/archive/orchestration/buildSupportProcessingInput";
 import {
   buildEmptyRecentInteractionContext,
   buildRecentInteractionContextFromLiveMemoryContext
-} from "../../src/orchestration/buildSupportProcessingInputV2";
+} from "../../src/support-automation/build-input/buildSupportProcessingInputV2";
 import {
-  convertLiveMemoryContextToSupportTopicKnowledge
-} from "../../src/persistence/live-memory-context/convertLiveMemoryContextToSupportTopicKnowledge";
+  convertLiveMemoryContextToSupportTopicContextV2
+} from "../../src/support-automation/build-input/convertLiveMemoryContextToSupportTopicContextV2";
 import {
   runSupportProcessingPipelineV2Debug
-} from "../../src/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
+} from "../../src/support-automation/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
 import {
   textAnalysisDataset,
   type ExpectedTextSurface,
@@ -36,16 +36,16 @@ import {
 import type {
   AccountProfile,
   AccountInteractionTraits
-} from "../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 import type {
   SupportProcessingPipelineV2DebugOutput
-} from "../../src/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
+} from "../../src/support-automation/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
 import type {
   SupportProcessingPipelineV2Input,
   SupportProcessingProgressEvent,
   SupportProcessingStepName,
   TextSurfaceAnalysis
-} from "../../src/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 const DATASET_STOP_STAGES = [
   "security",
@@ -417,7 +417,7 @@ function buildDatasetInput(
     accountProfile,
     accountInteractionTraits,
     supportTopicKnowledge: testCase.liveMemoryContext
-      ? convertLiveMemoryContextToSupportTopicKnowledge(
+      ? convertLiveMemoryContextToSupportTopicContextV2(
           testCase.liveMemoryContext
         )
       : { segments_topic: [] },

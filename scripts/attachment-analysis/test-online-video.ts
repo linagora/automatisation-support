@@ -9,7 +9,7 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
-import { requestVideoAnalysis } from "../../src/support-processing-pipeline/message-analysis/attachment-analysis/requestVideoAnalysis";
+import { requestVideoAnalysis } from "../../src/archive/support-processing-pipeline/message-analysis/attachment-analysis/requestVideoAnalysis";
 
 const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".webm", ".mkv"];
 

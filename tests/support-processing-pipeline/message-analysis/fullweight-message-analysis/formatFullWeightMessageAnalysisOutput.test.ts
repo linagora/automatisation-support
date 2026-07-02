@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatFullWeightMessageAnalysisOutput
-} from "../../../../src/support-processing-pipeline/message-analysis/fullweight-message-analysis/formatFullWeightMessageAnalysisOutput";
+} from "../../../../src/archive/support-processing-pipeline/message-analysis/fullweight-message-analysis/formatFullWeightMessageAnalysisOutput";
 
 describe("formatFullWeightMessageAnalysisOutput", function () {
   it("filters legacy attachment presence fields from normalized topic details", function () {

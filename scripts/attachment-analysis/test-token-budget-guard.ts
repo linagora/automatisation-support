@@ -12,11 +12,11 @@
 
 import {
   callLLM
-} from "../../src/llm/llm-client";
+} from "../../src/infrastructure/llm/llm-client";
 
 import type {
   LLMMessage
-} from "../../src/llm/types.llm-types";
+} from "../../src/infrastructure/llm/types.llm-types";
 
 async function main(): Promise<void> {
   console.log("\n============================================================");

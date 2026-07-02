@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildLlmTrusterReviewPrompt
-} from "../../../../../../src/support-processing-pipeline/message-analysis/security-functions/shared/llm-truster/buildLlmTrusterReviewPrompt";
+} from "../../../../../../src/archive/support-processing-pipeline/message-analysis/security-functions/shared/llm-truster/buildLlmTrusterReviewPrompt";
 
 import type {
   AccountTrustStatus
-} from "../../../../../../src/support-processing-pipeline/typesSupportProcessingPipeline.types";
+} from "../../../../../../src/archive/support-processing-pipeline/typesSupportProcessingPipeline.types";
 
 const suspiciousAccount: AccountTrustStatus = {
   status: "suspicious",
