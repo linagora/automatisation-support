@@ -9,8 +9,8 @@ import {
   loadMatrixProgressConfigFromEnv,
   loadMatrixProcessHistoricalMessagesFromEnv,
   loadMatrixStartupGraceMsFromEnv
-} from "../../src/infrastructure/matrix/loadMatrixChannelConfig";
-import { runMatrixSupportAutomationV2 } from "../../src/support-automation/runMatrixSupportAutomationV2";
+} from "../../../../src/infrastructure/matrix/loadMatrixChannelConfig";
+import { runMatrixSupportAutomationV2 } from "../../../../src/support-automation/runMatrixSupportAutomationV2";
 
 function hasFlag(flagName: string): boolean {
   return process.argv.includes(flagName);

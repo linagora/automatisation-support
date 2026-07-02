@@ -4,13 +4,14 @@ import type {
   ExtractableFieldDefinition,
   LatestUserAttachment,
   LatestUserMessage
-} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import {
   buildSupportExtractableFieldCatalog
-} from "../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/supportExtractableFieldCatalog";
+} from "../../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/supportExtractableFieldCatalog";
 import type {
   LiveMemoryContext
-} from "../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
+} from "../../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
+import type { GlobalPipelineCase } from "./typesTextAnalysisDataset";
 
 type DatasetLiveMemoryTopic = LiveMemoryContext["topics"][number];
 
@@ -62,7 +63,7 @@ const suspiciousAccountTrustStatus: AccountTrustStatus = {
 const defaultExtractableFieldCatalog = buildSupportExtractableFieldCatalog();
 
 function buildTopic(params: {
-  topicId: string;
+  topicId: number;
   title: string | null;
   broadCategoryHint: string | null;
   summary: string | null;
@@ -343,7 +344,7 @@ function buildCase(params: {
   };
 }
 
-export const textAnalysisDataset: TextAnalysisDatasetCase[] = [
+export const rawTextAnalysisCases: TextAnalysisDatasetCase[] = [
   buildCase({
     id: "greeting",
     name: "Greeting only",
@@ -794,4 +795,295 @@ export const textAnalysisDataset: TextAnalysisDatasetCase[] = [
 
 export type {
   AnalyzeSupportTextInput
+};
+
+// ---------------------------------------------------------------------------
+// Canonical Global Pipeline dataset
+// ---------------------------------------------------------------------------
+
+const handAuthoredCases: GlobalPipelineCase[] = [
+{
+    id: "double_charge_clarification",
+    name: "Billing follow-up confirms duplicate payment and invoice reference",
+    tags: ["billing", "rag", "live-memory"],
+    actor: {
+      userId: "@fake-double-charge:example.org",
+      roomId: "!fake-double-charge:example.org"
+    },
+    seedLiveMemory: {
+      topics: [
+        {
+          topicId: 1,
+          title: "Double billing",
+          broadCategoryHint: "billing",
+          summary: "The user reported a suspected duplicate charge.",
+          caseDetails: [
+            {
+              key: "issue",
+              value: "possible duplicate billing",
+              evidence: "previous fake scenario seed"
+            }
+          ],
+          attemptedActions: [],
+          supportKnowledgeSummary:
+            "Support knowledge lookup returned no usable customer-facing knowledge for this topic."
+        }
+      ],
+      lastUserVerbatim: "J'ai peut-être été facturé deux fois.",
+      lastBotVerbatim:
+        "Pouvez-vous confirmer si le double prélèvement concerne aussi le paiement ?",
+      userState: {
+        status: "normal",
+        flags: []
+      }
+    },
+    receivedMessages: [
+      {
+        name: "billing_confirmation",
+        content:
+          "Oui, j'ai bien deux prélèvements pour le même abonnement. La référence facture est FAC-2026-7781."
+      }
+    ],
+    expected: {
+      sentShouldMention: ["FAC-2026-7781"],
+      liveMemoryLastBotShouldEqualSent: true,
+      ragUsage: [
+        {
+          topicId: 1,
+          status: "skipped_by_router"
+        }
+      ]
+    }
+  },
+  {
+    id: "android_notifications_already_tried",
+    name: "Android notification follow-up says permissions are already enabled",
+    tags: ["android", "notifications", "knowledge"],
+    actor: {
+      userId: "@fake-android-notifications:example.org",
+      roomId: "!fake-android-notifications:example.org"
+    },
+    seedLiveMemory: {
+      topics: [
+        {
+          topicId: 1,
+          title: "Android notifications",
+          broadCategoryHint: "notifications",
+          summary: "The user does not receive notifications on Android.",
+          caseDetails: [
+            {
+              key: "platform",
+              value: "Android",
+              evidence: "previous fake scenario seed"
+            }
+          ],
+          attemptedActions: [],
+          supportKnowledgeSummary:
+            "For Android notification issues, verify app notification permissions, battery optimization restrictions, Do Not Disturb, and whether the user is logged into the expected account."
+        }
+      ],
+      lastUserVerbatim: "Je ne reçois pas les notifications sur Android.",
+      lastBotVerbatim:
+        "Pouvez-vous vérifier que les notifications sont autorisées pour l'application ?",
+      userState: {
+        status: "normal",
+        flags: []
+      }
+    },
+    receivedMessages: [
+      {
+        name: "android_permissions_done",
+        content:
+          "J'ai déjà activé les notifications Android pour l'application, et le mode ne pas déranger est désactivé."
+      }
+    ],
+    expected: {
+      sentShouldMention: ["Android"],
+      sentShouldNotMention: ["activez les notifications Android"],
+      liveMemoryLastBotShouldEqualSent: true
+    }
+  },
+  {
+    id: "billing_android_multitopic",
+    name: "Multi-topic follow-up gives billing and Android notification details",
+    tags: ["multi-topic", "billing", "android"],
+    actor: {
+      userId: "@fake-multitopic:example.org",
+      roomId: "!fake-multitopic:example.org"
+    },
+    seedLiveMemory: {
+      topics: [
+        {
+          topicId: 1,
+          title: "Double billing",
+          broadCategoryHint: "billing",
+          summary: "The user reported duplicate billing.",
+          caseDetails: [],
+          attemptedActions: [],
+          supportKnowledgeSummary:
+            "Duplicate billing requests should collect invoice references, charge dates, charged amounts, and whether both charges reached the bank account."
+        },
+        {
+          topicId: 2,
+          title: "Android notifications",
+          broadCategoryHint: "notifications",
+          summary: "The user reported missing Android notifications.",
+          caseDetails: [],
+          attemptedActions: [],
+          supportKnowledgeSummary:
+            "For Android notification issues, verify notification permissions, battery optimization, DND mode, app version, and account/session state."
+        }
+      ],
+      lastUserVerbatim:
+        "J'ai un souci de facture et aussi un souci de notifications Android.",
+      lastBotVerbatim:
+        "Pouvez-vous préciser les détails de facturation et votre configuration Android ?",
+      userState: {
+        status: "normal",
+        flags: []
+      }
+    },
+    receivedMessages: [
+      {
+        name: "billing_and_android_details",
+        content:
+          "Pour la facture, j'ai deux prélèvements de 9,99 euros le 28 juin. Pour Android, j'ai déjà désactivé l'optimisation batterie."
+      }
+    ],
+    expected: {
+      sentShouldMention: ["9,99"],
+      liveMemoryLastBotShouldEqualSent: true
+    }
+  }
+];
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "case";
+}
+
+function normalizeTopicId(value: unknown, fallback: number): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const match = value.match(/(\d+)/);
+
+    if (match) {
+      return Number.parseInt(match[1], 10);
+    }
+  }
+
+  return fallback;
+}
+
+function unique(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean))).sort();
+}
+
+function inferTags(params: {
+  id: string;
+  name: string;
+  content: string;
+  expectedTextSurface?: { userLanguage?: string; allowedUserLanguages?: string[] };
+}): string[] {
+  const haystack = `${params.id} ${params.name} ${params.content}`.toLowerCase();
+  const tags = ["raw-text-analysis"];
+
+  if (haystack.includes("billing") || haystack.includes("factur") || haystack.includes("charge") || haystack.includes("prélèv")) tags.push("billing");
+  if (haystack.includes("android")) tags.push("android");
+  if (haystack.includes("notification")) tags.push("notifications");
+  if (haystack.includes("multi") || haystack.includes("deux") || haystack.includes("plusieurs")) tags.push("multi-topic");
+  if (params.id.includes("language") || params.expectedTextSurface?.userLanguage || params.expectedTextSurface?.allowedUserLanguages?.length) tags.push("language");
+  if (haystack.includes("bilingual") || haystack.includes("chinese") || haystack.includes("italian") || haystack.includes("german") || haystack.includes("english")) tags.push("bilingual");
+  if (haystack.includes("handover") || haystack.includes("humain") || haystack.includes("personne")) tags.push("handover");
+  if (haystack.includes("suspicious") || haystack.includes("ignore les instructions") || haystack.includes("prompt système") || haystack.includes("prompt caché")) tags.push("suspicious");
+  if (haystack.includes("safety")) tags.push("safety");
+  if (haystack.includes("out-of-scope") || haystack.includes("restaurant") || haystack.includes("poème")) tags.push("out-of-scope");
+  if (haystack.includes("small talk") || haystack.includes("greeting") || params.id.includes("greeting") || params.id.includes("thanks")) tags.push("small-talk");
+  if (haystack.includes("twake pass")) tags.push("twake-pass");
+  if (haystack.includes("drive") || haystack.includes("folder") || haystack.includes("dossier")) tags.push("drive");
+  if (haystack.includes("ios") || haystack.includes("ipad") || haystack.includes("iphone")) tags.push("ios");
+  if (haystack.includes("connecteur") || haystack.includes("connector")) tags.push("connectors");
+  if (haystack.includes("password") || haystack.includes("mot de passe") || haystack.includes("mfa") || haystack.includes("security")) tags.push("access-security");
+  if (params.id.startsWith("real-")) tags.push("real-case");
+
+  return unique(tags);
+}
+
+const convertedRawCases: GlobalPipelineCase[] = rawTextAnalysisCases.map((testCase) => {
+  const slug = slugify(testCase.id);
+  const liveMemoryContext = testCase.liveMemoryContext;
+  const topics = (liveMemoryContext?.topics ?? []).map((topic, index) => ({
+    topicId: normalizeTopicId(topic.topicId, index + 1),
+    title: topic.title ?? null,
+    broadCategoryHint: topic.broadCategoryHint ?? null,
+    summary: topic.summary ?? null,
+    caseDetails: (topic.caseDetails ?? []) as Array<Record<string, unknown>>,
+    attemptedActions: (topic.attemptedActions ?? []) as Array<Record<string, unknown>>,
+    ...(topic.supportKnowledgeSummary
+      ? { supportKnowledgeSummary: topic.supportKnowledgeSummary }
+      : {})
+  }));
+
+  return {
+    id: testCase.id,
+    name: testCase.name,
+    tags: inferTags({
+      id: testCase.id,
+      name: testCase.name,
+      content: testCase.latestUserMessage.content,
+      expectedTextSurface: testCase.expectedTextSurface
+    }),
+    actor: {
+      userId: `@fake-${slug}:example.org`,
+      roomId: `!fake-${slug}:example.org`
+    },
+    seedLiveMemory: {
+      topics,
+      lastUserVerbatim: liveMemoryContext?.lastUserVerbatim ?? null,
+      lastBotVerbatim: liveMemoryContext?.lastBotVerbatim ?? null,
+      userState: liveMemoryContext?.userState ?? {
+        status: "normal",
+        flags: []
+      }
+    },
+    receivedMessages: [
+      {
+        name: "user_message",
+        content: testCase.latestUserMessage.content
+      }
+    ],
+    expected: {
+      liveMemoryLastBotShouldEqualSent: true
+    },
+    metadata: {
+      origin: "raw-text-analysis",
+      rawExpectedTextSurface: testCase.expectedTextSurface ?? null,
+      accountTrustStatus: testCase.accountTrustStatus,
+      notes: [
+        "Converted from the existing text analysis dataset. Strengthen this case with specific assertions when it becomes part of a regression group."
+      ]
+    }
+  };
+});
+
+const allCases = [...handAuthoredCases, ...convertedRawCases];
+const seenCaseIds = new Set<string>();
+
+export const textAnalysisDataset: GlobalPipelineCase[] = allCases.filter((testCase) => {
+  if (seenCaseIds.has(testCase.id)) {
+    return false;
+  }
+
+  seenCaseIds.add(testCase.id);
+  return true;
+});
+
+export {
+  handAuthoredCases,
+  convertedRawCases
 };

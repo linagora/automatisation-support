@@ -1,0 +1,30 @@
+{
+  "topics": [
+    {
+      "topicId": 1,
+      "title": "Double billing",
+      "broadCategoryHint": "billing",
+      "summary": "The user reported a suspected duplicate charge and confirmed two charges for the same subscription. Invoice reference FAC-2026-7781 provided.",
+      "caseDetails": [
+        {
+          "key": "billing_issue_type",
+          "value": "duplicate_billing_impact",
+          "evidence": "deux prélèvements pour le même abonnement"
+        },
+        {
+          "key": "reference_id",
+          "value": "FAC-2026-7781",
+          "evidence": "FAC-2026-7781"
+        }
+      ],
+      "attemptedActions": [],
+      "supportKnowledgeSummary": "Support knowledge lookup returned no usable customer-facing knowledge for this topic."
+    }
+  ],
+  "lastUserVerbatim": "Oui, j'ai bien deux prélèvements pour le même abonnement. La référence facture est FAC-2026-7781.",
+  "lastBotVerbatim": "Merci pour votre signalement concernant un double prélèvement possible pour l'abonnement mentionné dans la facture FAC-2026-7781. Pourriez-vous nous indiquer le nom du plan ou de l'abonnement concerné ainsi que le statut actuel de votre facturation ou paiement ? Nous allons examiner cela de plus près.",
+  "userState": {
+    "status": "normal",
+    "flags": []
+  }
+}

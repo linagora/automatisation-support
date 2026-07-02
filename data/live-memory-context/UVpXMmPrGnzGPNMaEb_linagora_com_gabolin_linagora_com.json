@@ -1,7 +1,38 @@
 {
-  "topics": [],
-  "lastUserVerbatim": "je peux pas le truc ça marche plus machin",
-  "lastBotVerbatim": "Votre message n'est pas clair. Pourriez-vous le reformuler et préciser le problème concret que vous rencontrez ?",
+  "topics": [
+    {
+      "topicId": 1,
+      "title": "TMail web slow to load",
+      "broadCategoryHint": "performance",
+      "summary": "TMail web is slow to load, possibly due to cache-control or web configuration.",
+      "caseDetails": [
+        {
+          "key": "product_or_service",
+          "value": "TMail",
+          "evidence": "TMail"
+        },
+        {
+          "key": "platform",
+          "value": "web",
+          "evidence": "web"
+        },
+        {
+          "key": "observed_result",
+          "value": "very slow to load",
+          "evidence": "very slow to load"
+        },
+        {
+          "key": "question_intent",
+          "value": "cache-control or web configuration problem",
+          "evidence": "cache-control or a web configuration problem"
+        }
+      ],
+      "attemptedActions": [],
+      "supportKnowledgeSummary": "Support knowledge lookup returned useful customer-facing knowledge for this topic."
+    }
+  ],
+  "lastUserVerbatim": "TMail web is very slow to load. It feels like the browser is downloading too much data every time. Could this be related to cache-control or a web configuration problem?",
+  "lastBotVerbatim": "We understand that TMail web is very slow to load and you're wondering if it could be related to cache-control or a web configuration issue. TMail-Web may experience slow loading times due to misconfigured caching settings, specifically the `Cache-Control: no-cache` directive, which prevents the use of HTTP 304 Not Modified responses. Could you please tell us which browser and version you are using to access TMail-Web and whether this issue is consistent or intermittent?",
   "userState": {
     "status": "normal",
     "flags": []

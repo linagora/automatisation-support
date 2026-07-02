@@ -1,0 +1,9 @@
+{
+  "runId": "20260702_151432",
+  "scenarioId": "double_charge_clarification",
+  "providerMessageId": "20260702_151432__double_charge_clarification__bot_001",
+  "localId": "delivery:matrix:!fake-double-charge:example.org:@fake-double-charge:example.org:20260702_151432__double_charge_clarification__msg_001:0",
+  "roomId": "!fake-double-charge:example.org",
+  "content": "Merci pour votre signalement concernant un double prélèvement possible pour l'abonnement mentionné dans la facture FAC-2026-7781. Pourriez-vous nous indiquer le nom du plan ou de l'abonnement concerné ainsi que le statut actuel de votre facturation ou paiement ? Nous allons examiner cela de plus près.",
+  "deliveredAt": "2026-07-02T15:15:29.581Z"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "github-issues-openrag-indexer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node main.mjs",
+    "dry-run": "DRY_RUN=true node main.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

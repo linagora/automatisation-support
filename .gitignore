@@ -4,3 +4,4 @@ dist
 .matrix-bot-storage.json
 coverage
 dist/
+tmp/

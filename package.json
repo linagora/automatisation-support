@@ -8,19 +8,18 @@
     "test:run": "vitest run",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-
     "test:local:image": "tsx -r dotenv/config scripts/attachment-analysis/test-local-image.ts",
     "test:online:image": "tsx -r dotenv/config scripts/attachment-analysis/test-online-image.ts",
     "test:local:video": "tsx -r dotenv/config scripts/attachment-analysis/test-local-video.ts",
     "test:online:video": "tsx -r dotenv/config scripts/attachment-analysis/test-online-video.ts",
-
     "matrix:check": "tsx scripts/matrix/matrix-tools.ts check",
     "matrix:listen": "tsx scripts/matrix/matrix-tools.ts listen",
     "matrix:send-test": "tsx scripts/matrix/matrix-tools.ts send-test",
-
-    "support:v2:matrix": "tsx scripts/support-processing-pipeline-v2/runMatrixSupportProcessingV2.ts",
-    "support:v2:fake-matrix": "tsx scripts/support-processing-pipeline-v2/runFakeMatrixScenarioDataset.ts",
-    "support:v2:dataset": "tsx scripts/support-processing-pipeline-v2/runTextAnalysisDataset.ts"
+    "support:v2:dataset": "tsx scripts/support-processing-pipeline-v2/runTextAnalysisDataset.ts",
+    "support:v2:dataset:legacy": "tsx scripts/global-pipeline-v2/runners/legacy/runTextAnalysisDataset.legacy.ts",
+    "global-pipeline:fake": "tsx scripts/global-pipeline/runners/fake-matrix/runGlobalPipelineDataset.ts",
+    "global-pipeline:empty-data": "tsx scripts/global-pipeline/runners/fake-matrix/runGlobalPipelineDataset.ts --empty-data",
+    "global-pipeline:live": "tsx scripts/global-pipeline/runners/live-matrix/runMatrixSupportProcessingV2.ts"
   },
   "repository": {
     "type": "git",

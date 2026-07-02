@@ -6,38 +6,38 @@ import * as path from "path";
 import {
   buildDefaultAccountInteractionTraits,
   buildDefaultAccountProfile
-} from "../../src/archive/orchestration/buildSupportProcessingInput";
+} from "../../../src/archive/orchestration/buildSupportProcessingInput";
 import {
   buildEmptyRecentInteractionContext,
   buildRecentInteractionContextFromLiveMemoryContext
-} from "../../src/support-automation/build-input/buildSupportProcessingInputV2";
+} from "../../../src/support-automation/build-input/buildSupportProcessingInputV2";
 import {
   applyLiveMemoryUpdate
-} from "../../src/support-automation/patch-live-memory/applyLiveMemoryUpdate";
+} from "../../../src/support-automation/patch-live-memory/applyLiveMemoryUpdate";
 import {
   convertLiveMemoryContextToSupportTopicContextV2
-} from "../../src/support-automation/build-input/convertLiveMemoryContextToSupportTopicContextV2";
+} from "../../../src/support-automation/build-input/convertLiveMemoryContextToSupportTopicContextV2";
 import {
   composeSupportResponsePlan
-} from "../../src/support-automation/support-processing-pipeline-v2/compose-support-response-plan/composeSupportResponsePlan";
+} from "../../../src/support-automation/support-processing-pipeline-v2/compose-support-response-plan/composeSupportResponsePlan";
 import {
   renderSupportResponse
-} from "../../src/support-automation/support-processing-pipeline-v2/response-renderer/renderSupportResponse";
+} from "../../../src/support-automation/support-processing-pipeline-v2/response-renderer/renderSupportResponse";
 import {
   runSupportProcessingPipelineV2Debug
-} from "../../src/support-automation/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
+} from "../../../src/support-automation/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
 
 import type {
   LiveMemoryContext
-} from "../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
+} from "../../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
 import type {
   ComposeSupportResponsePlanInput,
   RenderSupportResponseInput,
   SupportProcessingPipelineV2Input,
   TextUnderstanding
-} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
-const REPORT_DIR = "/tmp/support-v2-audit";
+const REPORT_DIR = path.join(process.cwd(), "tmp", "global-pipeline-audits");
 const REPORT_PATH = path.join(REPORT_DIR, "report.json");
 const CONVERSATION_KEY = "multi_topic_followup_audit";
 const USER_ID = "multi-topic-followup-audit-user";
