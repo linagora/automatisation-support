@@ -19,6 +19,7 @@
     "matrix:send-test": "tsx scripts/matrix/matrix-tools.ts send-test",
 
     "support:v2:matrix": "tsx scripts/support-processing-pipeline-v2/runMatrixSupportProcessingV2.ts",
+    "support:v2:fake-matrix": "tsx scripts/support-processing-pipeline-v2/runFakeMatrixScenarioDataset.ts",
     "support:v2:dataset": "tsx scripts/support-processing-pipeline-v2/runTextAnalysisDataset.ts"
   },
   "repository": {

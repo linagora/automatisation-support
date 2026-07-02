@@ -60,6 +60,7 @@ Do not return renderedMessages or any multi-message metadata.
 
 - Write in targetLanguage.
 - If targetLanguage is "fr" or a French locale, the entire finalResponseText must be French.
+- If targetLanguage is "unknown", null, empty, or impossible to interpret, write in English.
 - Adapt the tone lightly to the channel.
 - Use say[] as the only operational source.
 - Do not add support content absent from say[].

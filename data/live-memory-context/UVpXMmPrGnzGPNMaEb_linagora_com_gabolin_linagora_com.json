@@ -1,48 +1,7 @@
 {
-  "topics": [
-    {
-      "topicId": 1,
-      "title": "Double billing issue for Twake account",
-      "broadCategoryHint": "billing",
-      "summary": "Double billing issue for Twake account this month. The user expects to receive only one invoice. Double facturation pour le mode pro à 9,99€/mois ce mois-ci.",
-      "caseDetails": [
-        {
-          "key": "product_or_service",
-          "value": "twake",
-          "evidence": "compte twake"
-        },
-        {
-          "key": "expected_result",
-          "value": "one_invoice",
-          "evidence": "1 seul facture"
-        },
-        {
-          "key": "plan_or_subscription",
-          "value": "mode pro",
-          "evidence": "mode pro"
-        },
-        {
-          "key": "amount",
-          "value": 9.99,
-          "evidence": "9,99€"
-        },
-        {
-          "key": "currency",
-          "value": "€",
-          "evidence": "€"
-        },
-        {
-          "key": "billing_issue_type",
-          "value": "duplicate_billing",
-          "evidence": "prélevé/débité 2 fois 9,99€"
-        }
-      ],
-      "attemptedActions": [],
-      "supportKnowledgeSummary": "Support knowledge lookup returned no usable customer-facing knowledge for this topic."
-    }
-  ],
-  "lastUserVerbatim": "Oui je paye le mode pro à 9,99€/mois j'ai pris l'engagement annuel. Et j'ai été prélevé/débité 2 fois 9,99€ sur mon compte bancaire. Ce qui n'est pas normal, c'est le premeir mois que ça arrive",
-  "lastBotVerbatim": "Je comprends que vous signalez un problème de double facturation pour votre abonnement Twake Pro à 9,99€ par mois ce mois-ci. Vous mentionnez avoir été débité deux fois de 9,99€ sur votre compte bancaire et vous attendez de recevoir une seule facture. Pourriez-vous préciser si ce double facturation concerne uniquement les documents ou également les paiements/débits ? Pourriez-vous également nous fournir les détails de la facturation, de la facture, de l'abonnement, du renouvellement ou de la période de paiement concernée ?",
+  "topics": [],
+  "lastUserVerbatim": "je peux pas le truc ça marche plus machin",
+  "lastBotVerbatim": "Votre message n'est pas clair. Pourriez-vous le reformuler et préciser le problème concret que vous rencontrez ?",
   "userState": {
     "status": "normal",
     "flags": []

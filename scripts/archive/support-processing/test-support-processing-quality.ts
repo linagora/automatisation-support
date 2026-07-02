@@ -151,7 +151,7 @@ function getTopicTitle(topic: {
 function getHistoricalTopicsSummary(
   supportTopicKnowledge: SupportTopicKnowledge
 ): string[] {
-  return supportTopicKnowledge.segments_topic.map((topic) => {
+  return supportTopicKnowledge.topics.map((topic) => {
     return `${topic.topic_category} - ${getTopicTitle(topic)}`;
   });
 }
@@ -159,8 +159,8 @@ function getHistoricalTopicsSummary(
 function findHistoricalTopic(
   supportTopicKnowledge: SupportTopicKnowledge,
   topicId: number
-): SupportTopicKnowledge["segments_topic"][number] | undefined {
-  return supportTopicKnowledge.segments_topic.find((topic) => {
+): SupportTopicKnowledge["topics"][number] | undefined {
+  return supportTopicKnowledge.topics.find((topic) => {
     return topic.id_topic === topicId;
   });
 }
@@ -272,7 +272,7 @@ function normalizedIncludesAny(value: string | undefined, parts: string[]): bool
 }
 
 function topicTextIncludesAny(
-  topic: TurnUnderstandingDelta["segments_topic"][number],
+  topic: TurnUnderstandingDelta["topics"][number],
   parts: string[]
 ): boolean {
   const values = [
@@ -292,7 +292,7 @@ function topicTextIncludesAny(
 }
 
 function isStructuredBug(
-  topic: TurnUnderstandingDelta["segments_topic"][number]
+  topic: TurnUnderstandingDelta["topics"][number]
 ): boolean {
   return (
     topic.topic_category === "bug" &&
@@ -308,7 +308,7 @@ function isStructuredBug(
 }
 
 function isClearRequest(
-  topic: TurnUnderstandingDelta["segments_topic"][number]
+  topic: TurnUnderstandingDelta["topics"][number]
 ): boolean {
   return (
     topic.topic_category === "request" &&
@@ -319,7 +319,7 @@ function isClearRequest(
 }
 
 function isResolvedTopic(
-  topic: TurnUnderstandingDelta["segments_topic"][number]
+  topic: TurnUnderstandingDelta["topics"][number]
 ): boolean {
   return topicTextIncludesAny(topic, [
     "works now",
@@ -338,7 +338,7 @@ function isResolvedTopic(
 }
 
 function isAccessibilityTopic(
-  topic: TurnUnderstandingDelta["segments_topic"][number]
+  topic: TurnUnderstandingDelta["topics"][number]
 ): boolean {
   return topicTextIncludesAny(topic, [
     "voiceover",
@@ -371,7 +371,7 @@ function collectWarnings(params: {
     warnings.push("Response contains undefined.");
   }
 
-  for (const topic of turnUnderstandingDelta.segments_topic) {
+  for (const topic of turnUnderstandingDelta.topics) {
     const topicResponse = getTopicResponseForTopic(responsePlan, topic.id_topic);
     const mainResponse = topicResponse?.main_response;
     const topicDetails = topic.topic_details;
@@ -520,7 +520,7 @@ function printTopicsExtracted(params: {
   output: SupportProcessingPipelineOutput;
 }): void {
   const topics =
-    params.output.patches.analysisPatch.turnUnderstandingDelta.segments_topic;
+    params.output.patches.analysisPatch.turnUnderstandingDelta.topics;
 
   console.log("\nTOPICS EXTRACTED");
 
@@ -781,7 +781,7 @@ function printAggregateSummary(results: QualityRunResult[]): void {
       }
     }
 
-    for (const topic of turnUnderstandingDelta.segments_topic) {
+    for (const topic of turnUnderstandingDelta.topics) {
       topicsCount += 1;
       incrementCounter(topicCategories, topic.topic_category);
     }

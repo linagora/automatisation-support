@@ -106,21 +106,21 @@ function buildTopicOnlyLiveMemoryContext(
 }
 
 const blockedAccountTopic = buildTopic({
-  topicId: "topic_1",
+  topicId: 1,
   title: "Compte bloqué",
   summary: "L'utilisateur indique que son compte est bloqué.",
   broadCategoryHint: "access_security"
 });
 
 const billingTopic = buildTopic({
-  topicId: "topic_2",
+  topicId: 2,
   title: "Problème de facturation",
   summary: "L'utilisateur a un sujet ouvert lié à la facturation.",
   broadCategoryHint: "billing"
 });
 
 const qualificationTopic = buildTopic({
-  topicId: "topic_1",
+  topicId: 1,
   title: "Problème à qualifier",
   summary:
     "Le support cherche à qualifier le domaine du problème signalé par l'utilisateur.",
@@ -128,7 +128,7 @@ const qualificationTopic = buildTopic({
 });
 
 const androidNotificationTopic = buildTopic({
-  topicId: "topic_4",
+  topicId: 4,
   title: "Android notification issue",
   summary: "The user does not receive notifications for new emails.",
   broadCategoryHint: "bug",
@@ -143,7 +143,7 @@ const androidNotificationTopic = buildTopic({
 });
 
 const androidNotificationConfirmedTopic = buildTopic({
-  topicId: "topic_4",
+  topicId: 4,
   title: "Android notification issue",
   summary:
     "The user does not receive notifications for new emails despite enabled notification settings.",
@@ -161,7 +161,7 @@ const androidNotificationConfirmedTopic = buildTopic({
 });
 
 const driveFolderIssueTopic = buildTopic({
-  topicId: "topic_1",
+  topicId: 1,
   title: "Issue with creating or renaming folders in Drive",
   broadCategoryHint: "bug",
   summary:
@@ -187,7 +187,7 @@ const driveFolderIssueTopic = buildTopic({
 });
 
 const iosShareDocumentTopic = buildTopic({
-  topicId: "topic_ios_share_document",
+  topicId: 1,
   title: "Partage de document vers Twake depuis iPad",
   summary:
     "L'utilisateur ne peut plus partager un document corrigé sur iPad vers Twake depuis la feuille de partage.",
@@ -210,7 +210,7 @@ const iosShareDocumentTopic = buildTopic({
 });
 
 const twakePassCrashTopic = buildTopic({
-  topicId: "topic_twake_pass_crash",
+  topicId: 1,
   title: "Twake Pass crash after login",
   summary:
     "The Twake Pass app crashes right after login on a Fairphone 4 with /e/os.",

@@ -97,15 +97,24 @@ function sanitizeSupportResponseCues(value: unknown): unknown[] {
   });
 }
 
+type ComposerTask = {
+  channel: unknown;
+  hasSupportTopics: boolean;
+  recentInteractionContext: unknown;
+  responsePlanningPolicy: unknown;
+  standardResponseFragments: unknown[];
+  topicResponsePlans: unknown[];
+  supportResponseCues: unknown[];
+};
+
 function buildComposerTask(
   input: BuildComposeSupportResponsePlanPromptInput
-): unknown {
+): ComposerTask {
   const topicResponsePlans = sanitizeTopicResponsePlans(
     input.topicResponsePlans
   );
 
   return {
-    targetLanguage: input.targetLanguage,
     channel: input.channel,
     hasSupportTopics: topicResponsePlans.length > 0,
     recentInteractionContext: input.recentInteractionContext ?? null,
@@ -120,26 +129,101 @@ function buildComposerTask(
   };
 }
 
-function buildSystemPrompt(): string {
+function hasSupportTopics(
+  input: BuildComposeSupportResponsePlanPromptInput
+): boolean {
+  return sanitizeTopicResponsePlans(input.topicResponsePlans).length > 0;
+}
+
+function buildStandardOnlySystemPrompt(): string {
   return `
-You are the global support response plan synthesizer.
+You are a support response plan composer for standard-only replies.
+
+You are NOT the final user-facing writer.
+You do NOT write the final customer message.
+The final renderer will write the final natural message.
+
+You receive standardResponseFragments, supportResponseCues, recentInteractionContext, responsePlanningPolicy, and channel.
+There are no support topic plans in this task.
+The final renderer receives language and channel separately, so do not output them.
+
+Return exactly one valid JSON object.
+Return JSON only. No markdown.
+
+# Output shape
+
+{
+  "topicId": null,
+  "messageIntent": "standard_reply | handover_reply | review_reply",
+  "acknowledge": ["internal planning note"],
+  "answer": [
+    {
+      "point": "internal standard reply point",
+      "support": "standard_fragment | support_cue | policy"
+    }
+  ],
+  "ask": [
+    {
+      "goal": "internal question goal",
+      "sourceTopicIds": []
+    }
+  ],
+  "say": ["compact renderer instruction, not final user-facing prose"],
+  "review": "short reason or null"
+}
+
+# Contract
+
+The field "say" is NOT the final customer-facing message.
+It is a compact instruction list for the renderer.
+Do not write polished final prose inside say.
+Do not localize the final answer yourself.
+Keep the plan short and clear.
+
+# Standard-only behavior
+
+- Preserve the intent of every usable standardResponseFragment.
+- Combine and deduplicate equivalent fragments.
+- Use standardResponseFragments as the main source.
+- Use supportResponseCues only for tone, caution, or wording constraints.
+- Use recentInteractionContext and responsePlanningPolicy only as constraints.
+- If a handover_request fragment is present, use messageIntent = "handover_reply".
+- Otherwise use messageIntent = "standard_reply".
+- Use messageIntent = "review_reply" only when the inputs are unsafe, contradictory, or impossible to compose safely.
+
+# Safety limits
+
+Do not invent support facts, troubleshooting steps, diagnosis, account status, escalation, refund, timeline, internal action, or resolution promise.
+Do not claim anything was checked or verified.
+Do not claim that a human agent was notified unless a fragment explicitly says so.
+If clarification is needed, ask a generic clarification question only when the standard fragments require it.
+
+# say[] requirements
+
+say[] must give the renderer enough information to write the final answer using only channel and say[].
+Include the standard intent to preserve, any generic question to ask, and any important do-not-claim limit.
+`.trim();
+}
+
+function buildSupportOrMixedSystemPrompt(): string {
+  return `
+You are the global support response plan synthesizer for support or mixed replies.
 
 You are NOT the final user-facing writer.
 You do NOT write the final customer message.
 The final renderer will write the final natural message.
 
 You receive:
-- targetLanguage
 - channel
-- hasSupportTopics
 - standardResponseFragments
 - topicResponsePlans
 - supportResponseCues
 - recentInteractionContext
 - responsePlanningPolicy
 
-The final renderer will receive targetLanguage and channel separately from the deterministic pipeline.
-Do not output targetLanguage or channel.
+This prompt is used only when at least one topicResponsePlan exists.
+The final renderer will receive language and channel separately from the deterministic pipeline.
+Do not output language or channel.
 
 Return exactly one valid JSON object.
 Return JSON only.
@@ -149,7 +233,7 @@ No markdown.
 
 {
   "topicId": null,
-  "messageIntent": "support_reply | standard_reply | mixed_reply | handover_reply | review_reply",
+  "messageIntent": "support_reply | mixed_reply | handover_reply | review_reply",
   "acknowledge": [
     "internal planning note"
   ],
@@ -179,7 +263,7 @@ The field "say" is a list of compact instructions for the renderer.
 Do not write polished final prose inside say.
 Do not localize the final answer yourself.
 Do not write full customer-facing paragraphs.
-The renderer is responsible for writing the final message in targetLanguage and adapting it to channel.
+The renderer is responsible for writing the final message and adapting it to channel.
 
 Bad say:
 [
@@ -195,20 +279,19 @@ Good say:
 
 1. topicResponsePlans[].say is the authoritative support substance.
 2. topicResponsePlans[].ask contains the specific planned questions.
-3. standardResponseFragments are tone/context only when support topics exist.
+3. standardResponseFragments are tone/context only.
 4. supportResponseCues may adjust tone or caution, not support substance.
 5. recentInteractionContext and responsePlanningPolicy may constrain wording, not create new support facts.
 
-# Standard fragments
+# Standard fragments in support or mixed replies
 
-When hasSupportTopics is true:
-- standardResponseFragments are tone/context only.
-- They may add a short greeting, thanks, empathy, or apology.
-- They must not introduce generic help invitations.
-- They must not introduce generic clarification requests.
-- They must not ask the user to explain the issue again.
-- The user has already provided concrete support issues.
-- Topic response plans remain the support substance.
+Because topicResponsePlans exist, standardResponseFragments are tone/context only.
+They may add a short greeting, thanks, empathy, apology, or handover context.
+They must not introduce generic help invitations.
+They must not introduce generic clarification requests.
+They must not ask the user to explain the issue again.
+The user has already provided concrete support issues.
+Topic response plans remain the support substance.
 
 Do not include generic invitation instructions such as:
 - "Ask how the assistant can help."
@@ -217,10 +300,6 @@ Do not include generic invitation instructions such as:
 - "How can I help you?"
 - "Comment puis-je vous aider ?"
 - "Expliquez-moi votre demande."
-
-When hasSupportTopics is false:
-- standardResponseFragments may drive the response.
-- A generic invitation to explain may be appropriate only when no concrete support issue is present.
 
 # Acknowledgement
 
@@ -272,17 +351,26 @@ say[] must include:
 - what limitations or do-not-claim rules the renderer must respect.
 
 Do not leave important content only in acknowledge, answer, ask, messageIntent, or review.
-The renderer must be able to produce the final answer using only targetLanguage, channel, and say[].
+The renderer must be able to produce the final answer using only channel and say[].
 
 # Message intent
 
 Use:
-- "standard_reply" when there are only standard fragments and no support topic plan.
 - "support_reply" when there are support topic plans and no meaningful standard fragment.
 - "mixed_reply" when there are both standard fragments and support topic plans.
 - "handover_reply" when a handover request overrides the normal support response.
 - "review_reply" when the inputs are too contradictory, unsafe, or incomplete to compose safely.
 `.trim();
+}
+
+function buildSystemPrompt(
+  input: BuildComposeSupportResponsePlanPromptInput
+): string {
+  if (!hasSupportTopics(input)) {
+    return buildStandardOnlySystemPrompt();
+  }
+
+  return buildSupportOrMixedSystemPrompt();
 }
 
 function buildUserPrompt(
@@ -301,7 +389,7 @@ function buildComposeSupportResponsePlanPrompt(
     messages: [
       {
         role: "system",
-        content: buildSystemPrompt()
+        content: buildSystemPrompt(input)
       },
       {
         role: "user",

@@ -279,13 +279,12 @@ function collectFallbackSay(
 
   if (parts.length === 0) {
     return [
-      `Write a brief ${input.input.targetLanguage} support response asking the user to clarify their request. Do not invent support facts. Composer fallback reason: ${reason}.`
+      `Write a brief support response asking the user to clarify their request. Do not invent support facts. Composer fallback reason: ${reason}.`
     ];
   }
 
   return [
     [
-      `Write the final response in ${input.input.targetLanguage}.`,
       "Use the following planned instructions as the only operational source.",
       "Integrate standard interaction instructions naturally.",
       "Address every topic instruction without adding unsupported support content.",

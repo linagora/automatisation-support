@@ -59,7 +59,7 @@ const emptyBotResponsePlan: ResponsePlan = {
   }
 };
 
-const historicalDriveFolderTopic: SupportTopicKnowledge["segments_topic"][number] = {
+const historicalDriveFolderTopic: SupportTopicKnowledge["topics"][number] = {
   id_topic: 1,
   topic_category: "bug",
   tool_or_product: "Twake Drive",
@@ -80,7 +80,7 @@ const historicalDriveFolderTopic: SupportTopicKnowledge["segments_topic"][number
   blocking_issue: "yes"
 };
 
-const historicalLoginTopic: SupportTopicKnowledge["segments_topic"][number] = {
+const historicalLoginTopic: SupportTopicKnowledge["topics"][number] = {
   id_topic: 1,
   topic_category: "access_security",
   tool_or_product: "Twake",

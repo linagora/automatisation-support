@@ -141,7 +141,7 @@ const turn1Delta: TurnUnderstandingDelta = {
 };
 
 const supportTopicKnowledgeAfterTurn1: SupportTopicKnowledge = {
-  segments_topic: turn1Delta.segments_topic.map((topicSegment) => {
+  segments_topic: turn1Delta.topics.map((topicSegment) => {
     return {
       id_topic: topicSegment.id_topic,
       topic_category: topicSegment.topic_category || "other",

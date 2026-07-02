@@ -120,7 +120,7 @@ const accountInteractionTraits: AccountInteractionTraits = {
   lastUpdatedAt: "2026-05-21T08:00:00.000Z"
 };
 
-const historicalDriveTopic: SupportTopicKnowledge["segments_topic"][number] = {
+const historicalDriveTopic: SupportTopicKnowledge["topics"][number] = {
   id_topic: 1,
   topic_category: "bug",
   tool_or_product: "Twake Drive",
@@ -584,8 +584,8 @@ function buildPipelineInputSummary(
     },
     accountTrustStatus: input.accountTrustStatus.status,
     supportTopicKnowledgeSummary: {
-      topicsCount: input.supportTopicKnowledge.segments_topic.length,
-      topics: input.supportTopicKnowledge.segments_topic.map((topic) => {
+      topicsCount: input.supportTopicKnowledge.topics.length,
+      topics: input.supportTopicKnowledge.topics.map((topic) => {
         return {
           id_topic: topic.id_topic,
           topic_category: topic.topic_category,
@@ -666,7 +666,7 @@ function summarizeOutput(
       })
     },
     analysisSummary: {
-      topics: turnUnderstandingDelta.segments_topic.map((topic) => {
+      topics: turnUnderstandingDelta.topics.map((topic) => {
         return {
           id_topic: topic.id_topic,
           matched_historical_topic: topic.matched_historical_topic,
@@ -844,7 +844,7 @@ function findLlmReview(
 }
 
 function hasAttachmentFlagInTopicDetails(output: SupportProcessingPipelineOutput): boolean {
-  const topics = output.patches.analysisPatch.turnUnderstandingDelta.segments_topic;
+  const topics = output.patches.analysisPatch.turnUnderstandingDelta.topics;
 
   return topics.some((topic) => {
     return Object.keys(topic.topic_details ?? {}).some((fieldName) => {
@@ -893,7 +893,7 @@ function runAssertions(params: {
   const output = params.output;
   const turnUnderstandingDelta =
     output.patches.analysisPatch.turnUnderstandingDelta;
-  const topicCount = turnUnderstandingDelta.segments_topic.length;
+  const topicCount = turnUnderstandingDelta.topics.length;
   const messageCount = output.userResponse.messages.length;
   const content = output.userResponse.messages.map((message) => {
     return message.content;
@@ -936,7 +936,7 @@ function runAssertions(params: {
 
   if (expected.expectedTopicCategories) {
     for (const expectedCategory of expected.expectedTopicCategories) {
-      const hasCategory = turnUnderstandingDelta.segments_topic.some((topic) => {
+      const hasCategory = turnUnderstandingDelta.topics.some((topic) => {
         return topic.topic_category === expectedCategory;
       });
 

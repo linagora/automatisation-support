@@ -420,7 +420,7 @@ function buildDatasetInput(
       ? convertLiveMemoryContextToSupportTopicContextV2(
           testCase.liveMemoryContext
         )
-      : { segments_topic: [] },
+      : { topics: [] },
     conversationHistory: [],
     recentInteractionContext: testCase.liveMemoryContext
       ? buildRecentInteractionContextFromLiveMemoryContext(
@@ -452,8 +452,8 @@ function buildInputDisplay(params: {
     accountTrustStatus: params.input.accountTrustStatus,
     recentInteractionContext: params.input.recentInteractionContext,
     supportTopicKnowledge: {
-      topicsCount: params.input.supportTopicKnowledge.segments_topic.length,
-      topics: params.input.supportTopicKnowledge.segments_topic
+      topicsCount: params.input.supportTopicKnowledge.topics.length,
+      topics: params.input.supportTopicKnowledge.topics
     },
     extractableFieldCatalogCount: params.testCase.extractableFieldCatalog.length
   };

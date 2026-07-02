@@ -90,21 +90,21 @@ patchFile("src/support-processing-pipeline-v2/runSupportProcessingPipelineV2.ts"
   return next;
 });
 
-patchFile("tests/orchestration/buildSupportProcessingInputV2.test.ts", (text) => {
+patchFile("tests/support-automation/build-input/buildSupportProcessingInputV2.test.ts", (text) => {
   return text.replace(/topicId: "topic_42"/g, "topicId: 42");
 });
 
-patchFile("tests/orchestration/runSupportAutomationTurnV2.test.ts", (text) => {
+patchFile("tests/support-automation/runSupportAutomationPipelineV2.test.ts", (text) => {
   return text.replace(/topicId: "topic_12"/g, "topicId: 12");
 });
 
-patchFile("tests/persistence/live-memory-context/convertLiveMemoryContextToSupportTopicContextV2.test.ts", (text) => {
+patchFile("tests/support-automation/build-input/convertLiveMemoryContextToSupportTopicContextV2.test.ts", (text) => {
   return text
     .replace(/topicId: "topic_42"/g, "topicId: 42")
     .replace(/topicId: "temporary-login-topic"/g, "topicId: 42");
 });
 
-patchFile("tests/persistence/live-memory-context/liveMemoryContext.test.ts", (text) => {
+patchFile("tests/infrastructure/live-memory/liveMemoryContext.test.ts", (text) => {
   return text
     .replace(/topicId: "topic_1"/g, "topicId: 1")
     .replace(/topicId: "topic_2"/g, "topicId: 2");

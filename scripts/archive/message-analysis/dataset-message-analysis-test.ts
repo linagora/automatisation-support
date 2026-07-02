@@ -214,11 +214,11 @@ const turn2Delta: TurnUnderstandingDelta = {
 
 const supportTopicKnowledgeAfterTurn2: SupportTopicKnowledge = {
   segments_topic: [
-    supportTopicKnowledgeAfterTurn1.segments_topic[0],
+    supportTopicKnowledgeAfterTurn1.topics[0],
     {
-      ...supportTopicKnowledgeAfterTurn1.segments_topic[1],
+      ...supportTopicKnowledgeAfterTurn1.topics[1],
       topic_details: {
-        ...supportTopicKnowledgeAfterTurn1.segments_topic[1].topic_details,
+        ...supportTopicKnowledgeAfterTurn1.topics[1].topic_details,
         affected_scope:
           "password reset emails are not received, even in spam folder",
         additional_context:

@@ -1,7 +1,33 @@
 {
-  "topics": [],
-  "lastUserVerbatim": "bonjour monsieur le bot",
-  "lastBotVerbatim": "Bonjour ! Je suis l'assistant de support. Comment puis-je vous aider aujourd'hui ?",
+  "topics": [
+    {
+      "topicId": 1,
+      "title": "Keine Benachrichtigungen auf Android",
+      "broadCategoryHint": "bug",
+      "summary": "Keine Benachrichtigungen auf Android erhalten",
+      "caseDetails": [
+        {
+          "key": "product_or_service",
+          "value": "Benachrichtigungen",
+          "evidence": "Benachrichtigungen"
+        },
+        {
+          "key": "platform",
+          "value": "Android",
+          "evidence": "Android"
+        },
+        {
+          "key": "observed_result",
+          "value": "keine Benachrichtigungen erhalten",
+          "evidence": "keine Benachrichtigungen"
+        }
+      ],
+      "attemptedActions": [],
+      "supportKnowledgeSummary": "Support knowledge lookup returned useful customer-facing knowledge for this topic."
+    }
+  ],
+  "lastUserVerbatim": "Ich bekomme keine Benachrichtigungen auf Android",
+  "lastBotVerbatim": "Es tut uns leid zu hören, dass Sie keine Benachrichtigungen auf Ihrem Android-Gerät erhalten. Hier sind einige Schritte, die Ihnen helfen sollten: Stellen Sie sicher, dass die Benachrichtigungen in den Einstellungen Ihres Geräts aktiviert sind und dass die App die neueste Version verwendet. Welche Funktion oder Seite ist betroffen und welche Version der App verwenden Sie? Wenn das Problem weiterhin besteht, benötigen wir eine Überprüfung durch unser Support-Team.",
   "userState": {
     "status": "normal",
     "flags": []

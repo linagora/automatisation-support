@@ -176,7 +176,7 @@ function buildInput(params: {
     accountInteractionTraits: buildDefaultAccountInteractionTraits(),
     supportTopicKnowledge: params.liveMemoryContext
       ? convertLiveMemoryContextToSupportTopicContextV2(params.liveMemoryContext)
-      : { segments_topic: [] },
+      : { topics: [] },
     conversationHistory: [],
     recentInteractionContext: params.liveMemoryContext
       ? buildRecentInteractionContextFromLiveMemoryContext(params.liveMemoryContext)

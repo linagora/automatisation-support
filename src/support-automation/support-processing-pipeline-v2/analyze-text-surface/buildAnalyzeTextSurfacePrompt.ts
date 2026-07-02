@@ -48,6 +48,10 @@ Return userLanguage as a BCP-47 code such as "fr", "en", "de", "es", "it", "pt",
 
 If the latest user message has a clear language, use that language, even if prior context used another language.
 
+Language detection is independent from routing category.
+Do not set userLanguage to "unknown" only because a message is unclear, incomplete, misspelled, grammatically imperfect, or routed as "lack_comprehension".
+If the message has a clear language, return that language even when the routing category is "lack_comprehension".
+
 If the latest user message is very short, numeric, ambiguous, or only a confirmation/denial such as "ok", "yes", "no", "oui", "non", "ja", "si", "sì", "sí", or "ya", do not infer a new language from that token alone. Use the previous conversation language only when recent context makes it reliable. Return "unknown" only when neither the latest message nor recent context gives a reliable language.
 
 Automatic wrappers or footers such as "Ci-dessous, voici ma réponse générée automatiquement." must not determine userLanguage. Use the language of the real user request when clear.

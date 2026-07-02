@@ -56,10 +56,6 @@ import {
 import {
   assignTopicResponsePlanIds
 } from "./responsePlanIds";
-import {
-  normalizeUserLanguageForResponse
-} from "./response-language/normalizeUserLanguageForResponse";
-
 import type {
   AttachmentSurfaceAnalysis,
   AttachmentUnderstanding,
@@ -647,6 +643,16 @@ function emptySelectedCatalogKnowledge(
   };
 }
 
+function getRawRendererLanguage(userLanguage: unknown): string {
+  if (typeof userLanguage !== "string") {
+    return "unknown";
+  }
+
+  const trimmedLanguage = userLanguage.trim();
+
+  return trimmedLanguage === "" ? "unknown" : trimmedLanguage;
+}
+
 
 async function runSupportProcessingPipelineV2Internal(
   inputSupportProcessingPipeline: SupportProcessingPipelineV2Input,
@@ -797,13 +803,9 @@ async function runSupportProcessingPipelineV2Internal(
             recentInteractionContext
           },
           (output) => {
-            const normalizedResponseLanguage =
-              normalizeUserLanguageForResponse(output.userLanguage);
-
             return {
               userLanguage: output.userLanguage,
-              rawUserLanguage: output.userLanguage,
-              normalizedResponseLanguage
+              rawUserLanguage: output.userLanguage
             };
           }
         )
@@ -839,7 +841,7 @@ async function runSupportProcessingPipelineV2Internal(
   const runTextDeepAnalysis = shouldRunDeepTextAnalysis(textSurfaceAnalysis);
   const runAttachmentDeepAnalysis =
     shouldRunDeepAttachmentAnalysis(attachmentSurfaceAnalysis);
-  const responseLanguage = normalizeUserLanguageForResponse(
+  const rendererLanguage = getRawRendererLanguage(
     textSurfaceAnalysis?.userLanguage
   );
   let topicResponsePlans: ResponsePlanV2[] | undefined;
@@ -1023,7 +1025,7 @@ async function runSupportProcessingPipelineV2Internal(
                 : {}),
               extractableFieldCatalog,
               recentInteractionContext,
-              targetLanguage: responseLanguage
+              targetLanguage: rendererLanguage
             }
           );
           logKnowledgeEnrichment({
@@ -1068,7 +1070,7 @@ async function runSupportProcessingPipelineV2Internal(
                   : {}),
                 extractableFieldCatalog,
                 recentInteractionContext,
-                targetLanguage: responseLanguage
+                targetLanguage: rendererLanguage
               }
             ).catch((): SelectedCatalogKnowledgeForTopic => {
               // TODO: Remove this fallback once the topic catalog selector is
@@ -1167,7 +1169,7 @@ async function runSupportProcessingPipelineV2Internal(
             {
               topicUserMessageContent,
               topicEvidence,
-              targetLanguage: responseLanguage,
+              targetLanguage: rendererLanguage,
               selectedCatalogKnowledge,
               topicKnowledgeEnrichmentPlan,
               topicRetrievedKnowledgeSynthesis,
@@ -1248,7 +1250,6 @@ async function runSupportProcessingPipelineV2Internal(
       standardResponseFragments,
       topicResponsePlans: topicResponsePlans ?? [],
       supportResponseCues: supportResponseCues ?? [],
-      targetLanguage: responseLanguage,
       channel: latestUserMessage.channel,
       recentInteractionContext,
       responsePlanningPolicy
@@ -1257,7 +1258,7 @@ async function runSupportProcessingPipelineV2Internal(
 
   const renderSupportResponseInput: RenderSupportResponseInput = {
     composedSupportResponsePlan,
-    targetLanguage: responseLanguage,
+    targetLanguage: rendererLanguage,
     channel: latestUserMessage.channel
   };
 
@@ -1328,7 +1329,6 @@ async function runSupportProcessingPipelineV2Internal(
       ...(textSurfaceAnalysis?.userLanguage
         ? { rawUserLanguage: textSurfaceAnalysis.userLanguage }
         : {}),
-      normalizedResponseLanguage: responseLanguage,
       userResponse
     }
   );

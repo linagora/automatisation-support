@@ -823,7 +823,6 @@ export type ComposeSupportResponsePlanInput = {
   standardResponseFragments: StandardResponseFragment[];
   topicResponsePlans: ResponsePlanV2[];
   supportResponseCues?: SupportResponseCue[];
-  targetLanguage: string;
   channel: Channel;
   recentInteractionContext: RecentInteractionContext;
   responsePlanningPolicy?: Partial<ResponsePlanningPolicy>;

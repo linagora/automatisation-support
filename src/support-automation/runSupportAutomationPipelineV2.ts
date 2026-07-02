@@ -1,7 +1,4 @@
 import { runSupportProcessingPipelineV2 } from "./support-processing-pipeline-v2/runSupportProcessingPipelineV2";
-import {
-  normalizeUserLanguageForResponse
-} from "./support-processing-pipeline-v2/response-language/normalizeUserLanguageForResponse";
 import { buildSupportProcessingInputV2 } from "./build-input/buildSupportProcessingInputV2";
 import {
   readLiveMemoryContext
@@ -14,6 +11,9 @@ import {
   mapSupportProcessingProgressToStage,
   noopSupportProgressReporter
 } from "./progress/supportProgressReporter";
+import {
+  normalizeUserLanguageForProgress
+} from "./progress/normalizeProgressLanguage";
 
 import type {
   BufferedMessages
@@ -78,8 +78,7 @@ async function runSupportAutomationTurnV2(params: {
             (event.status === "completed" || event.status === "skipped")
           ) {
             progressContext.userLanguage =
-              event.normalizedResponseLanguage ??
-              normalizeUserLanguageForResponse(event.userLanguage);
+              normalizeUserLanguageForProgress(event.userLanguage);
 
             progressContext.progressLanguageReady = true;
 
