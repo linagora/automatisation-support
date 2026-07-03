@@ -1,0 +1,9 @@
+{
+  "runId": "20260703_152939",
+  "scenarioId": "real-android-photos-tab-missing-sync",
+  "providerMessageId": "20260703_152939__real-android-photos-tab-missing-sync__bot_001",
+  "localId": "delivery:matrix:!fake-real-android-photos-tab-missing-sync:example.org:@fake-real-android-photos-tab-missing-sync:example.org:20260703_152939__real-android-photos-tab-missing-sync__msg_001:0",
+  "roomId": "!fake-real-android-photos-tab-missing-sync:example.org",
+  "content": "Je comprends que l'onglet Photos est manquant dans l'application mobile Twake sur Android 15, que vous avez installé l'application et connecté votre compte, et que le bouton Ajouter ne fonctionne pas comme solution de contournement. Veuillez vous assurer que vous utilisez la dernière version de l'application mobile Twake, vérifier les autorisations de l'application, redémarrer l'application, la réinstaller si nécessaire, et vous assurer que votre système d'exploitation Android est à jour. Pourriez-vous me fournir la version de l'application et le modèle de votre appareil ? Si le problème persiste, veuillez contacter le support pour une assistance supplémentaire.",
+  "deliveredAt": "2026-07-03T15:32:04.548Z"
+}

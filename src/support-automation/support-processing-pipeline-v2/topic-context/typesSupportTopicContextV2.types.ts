@@ -1,3 +1,7 @@
+import type {
+  SupportKnowledgeSummary
+} from "../typesSupportProcessingPipelineV2.types";
+
 export type SupportTopicContextCaseDetailV2 = {
   key: string;
   value: string | number | boolean | null;
@@ -17,7 +21,7 @@ export type SupportTopicContextTopicV2 = {
   summary: string | null;
   caseDetails: SupportTopicContextCaseDetailV2[];
   attemptedActions: SupportTopicContextAttemptedActionV2[];
-  supportKnowledgeSummary: string | null;
+  supportKnowledgeSummary: SupportKnowledgeSummary | null;
 };
 
 export type SupportTopicContextV2 = {

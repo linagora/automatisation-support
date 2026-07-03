@@ -7,6 +7,9 @@ import type {
   TopicPatchIdentity,
   TopicUpdateOp
 } from "../typesSupportProcessingPipelineV2.types";
+import {
+  normalizeSupportKnowledgeSummary
+} from "../supportKnowledgeSummary";
 
 type BuildTopicPatchesAndSnapshotsInput = {
   existingTopics: unknown[];
@@ -85,12 +88,12 @@ function topicSummaryFromUnknown(topic: unknown): string | null {
   return stringValue(topic.summary);
 }
 
-function supportKnowledgeSummaryFromUnknown(topic: unknown): string | null {
+function supportKnowledgeSummaryFromUnknown(topic: unknown): MergedTopicSnapshot["supportKnowledgeSummary"] | null {
   if (!isRecord(topic)) {
     return null;
   }
 
-  return stringValue(topic.supportKnowledgeSummary);
+  return normalizeSupportKnowledgeSummary(topic.supportKnowledgeSummary);
 }
 
 function cleanEvidence(value: unknown): string {

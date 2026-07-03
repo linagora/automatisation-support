@@ -5,6 +5,10 @@ import {
 import {
   parseLiveMemoryTopicId
 } from "../../infrastructure/live-memory/normalizeLiveMemoryTopicId";
+import {
+  mergeSupportKnowledgeSummary,
+  normalizeSupportKnowledgeSummary
+} from "../support-processing-pipeline-v2/supportKnowledgeSummary";
 
 import type {
   SupportTurnIdentityV2
@@ -41,6 +45,10 @@ function nullableString(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== ""
     ? value.trim()
     : null;
+}
+
+function nullableSupportKnowledgeSummary(value: unknown): LiveMemoryTopic["supportKnowledgeSummary"] | null {
+  return normalizeSupportKnowledgeSummary(value);
 }
 
 function sanitizeEvidence(value: unknown): string {
@@ -128,8 +136,8 @@ function toLiveMemoryTopic(topic: LiveMemoryTopicUpdate): LiveMemoryTopic | null
           return normalized ? [normalized] : [];
         })
       : [],
-    ...(nullableString(topicRecord.supportKnowledgeSummary)
-      ? { supportKnowledgeSummary: nullableString(topicRecord.supportKnowledgeSummary) as string }
+    ...(nullableSupportKnowledgeSummary(topicRecord.supportKnowledgeSummary)
+      ? { supportKnowledgeSummary: nullableSupportKnowledgeSummary(topicRecord.supportKnowledgeSummary) as LiveMemoryTopic["supportKnowledgeSummary"] }
       : {})
   };
 }
@@ -191,7 +199,16 @@ function applyTopicsByExactId(params: {
   }
 
   for (const topic of params.incomingTopics) {
-    topicsById.set(topic.topicId, topic);
+    const previous = topicsById.get(topic.topicId);
+    const supportKnowledgeSummary = mergeSupportKnowledgeSummary({
+      existing: previous?.supportKnowledgeSummary,
+      next: topic.supportKnowledgeSummary
+    });
+
+    topicsById.set(topic.topicId, {
+      ...topic,
+      ...(supportKnowledgeSummary ? { supportKnowledgeSummary } : {})
+    });
   }
 
   return [...topicsById.values()].sort((first, second) => {

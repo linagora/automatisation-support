@@ -5,10 +5,14 @@ import type {
 } from "./typesPlanKnowledgeEnrichment.types";
 import type {
   MergedTopicSnapshot,
+  SupportKnowledgeSummary,
   SupportAttemptedAction,
   SupportCaseDetail,
   TextUnderstanding
 } from "../typesSupportProcessingPipelineV2.types";
+import {
+  normalizeSupportKnowledgeSummary
+} from "../supportKnowledgeSummary";
 
 function toCompactJson(value: unknown): string {
   return JSON.stringify(value);
@@ -111,8 +115,10 @@ function getRecordStringValue(
 
 function getSupportKnowledgeSummary(params: {
   snapshot?: MergedTopicSnapshot;
-}): string | null {
-  const directSummary = compactText(params.snapshot?.supportKnowledgeSummary);
+}): SupportKnowledgeSummary | null {
+  const directSummary = normalizeSupportKnowledgeSummary(
+    params.snapshot?.supportKnowledgeSummary
+  );
 
   if (directSummary) {
     return directSummary;
@@ -126,7 +132,7 @@ function getSupportKnowledgeSummary(params: {
     "support_knowledge"
   ]);
 
-  return summaryFromLiveMemory ?? null;
+  return normalizeSupportKnowledgeSummary(summaryFromLiveMemory);
 }
 
 function buildTask(
@@ -234,11 +240,14 @@ Do not use RAG for simple confirmations, thanks, refusals, or "I have no more in
 
 The input topic may contain topic.supportKnowledgeSummary.
 
-This field comes from live memory. It summarizes the previous support knowledge / RAG result for this topic.
+This field comes from live memory. It is an object with:
+- summary: short routing summary of the previous support knowledge / RAG result;
+- customerFacing: knowledge safe to reuse when planning a customer reply;
+- supportFacing: internal support-only notes, limitations, or investigation hints.
 
 You must use topic.supportKnowledgeSummary as an important routing signal.
 
-If topic.supportKnowledgeSummary says that a previous RAG lookup:
+If topic.supportKnowledgeSummary.summary, customerFacing, or supportFacing says that a previous RAG lookup:
 - found no useful customer-facing knowledge;
 - returned no usable support knowledge;
 - had zero useful sources;
@@ -258,7 +267,7 @@ Materially new information includes:
 
 If a previous RAG lookup was not useful because the topic was underqualified, and the latest user message now adds the missing qualification, RAG may become useful again.
 
-If topic.supportKnowledgeSummary says that previous RAG was useful, do not automatically run RAG again.
+If topic.supportKnowledgeSummary.summary, customerFacing, or supportFacing says that previous RAG was useful, do not automatically run RAG again.
 Only run RAG again if the latest message adds a new question, new detail, new symptom, or new context that could require updated or additional support knowledge.
 
 If topic.supportKnowledgeSummary is empty or null, decide normally.

@@ -18,11 +18,8 @@ import type {
 } from "../typesSupportProcessingPipelineV2.types";
 
 const DESIRED_KNOWLEDGE: RetrievalRequest["desiredKnowledge"] = [
-  "customer_facing_information",
-  "customer_answerable_questions",
-  "internal_support_notes",
-  "limitations",
-  "do_not_expose"
+  "customerFacing",
+  "supportFacing"
 ];
 
 function createDefaultSupportKnowledgeRetriever(): SupportKnowledgeRetriever {

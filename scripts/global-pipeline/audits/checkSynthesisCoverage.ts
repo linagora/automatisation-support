@@ -131,8 +131,19 @@ function stringify(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-function compactText(value: string | null | undefined): string | null {
-  const compacted = value?.replace(/\s+/g, " ").trim();
+function compactText(value: unknown): string | null {
+  const text = typeof value === "string"
+    ? value
+    : value && typeof value === "object"
+      ? [
+          "summary" in value ? value.summary : null,
+          "customerFacing" in value ? value.customerFacing : null,
+          "supportFacing" in value ? value.supportFacing : null
+        ].filter((part): part is string => {
+          return typeof part === "string";
+        }).join("\n")
+      : null;
+  const compacted = text?.replace(/\s+/g, " ").trim();
 
   return compacted && compacted.length > 0 ? compacted : null;
 }

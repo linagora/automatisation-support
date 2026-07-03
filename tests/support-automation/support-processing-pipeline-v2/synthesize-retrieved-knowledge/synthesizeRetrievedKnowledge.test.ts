@@ -106,9 +106,12 @@ describe("synthesizeRetrievedKnowledge", function () {
     expect(synthesis.applicableInstructions).toEqual([]);
     expect(synthesis.sourceReferences).toEqual([]);
     expect(synthesis.retrievedChunkCount).toBe(0);
-    expect(synthesis.supportKnowledgeSummary).toBe(
-      "Support knowledge lookup returned no usable customer-facing knowledge for this topic."
-    );
+    expect(synthesis.supportKnowledgeSummary).toEqual({
+      summary:
+        "Support knowledge lookup returned no usable customer-facing knowledge for this topic.",
+      customerFacing: null,
+      supportFacing: null
+    });
     expect(synthesis.limitations).toContain(
       "No usable customer-facing knowledge found for this topic."
     );
@@ -139,9 +142,13 @@ describe("synthesizeRetrievedKnowledge", function () {
     expect(synthesis.internalNotes).toEqual([
       "Rejected rag_wrong_product as off-topic."
     ]);
-    expect(synthesis.supportKnowledgeSummary).toBe(
-      "Support knowledge lookup returned content, but it was not useful for this topic because it was off-topic, internal-only, or not customer-facing."
-    );
+    expect(synthesis.supportKnowledgeSummary).toEqual({
+      summary:
+        "Support knowledge lookup returned support-facing context but no verified customer-facing knowledge.",
+      customerFacing: null,
+      supportFacing:
+        "Rejected rag_wrong_product as off-topic.\nRetrieved chunk is off-topic for this support topic."
+    });
   });
 
   it("keeps internal-only technical knowledge out of relevantFacts", async function () {
@@ -172,9 +179,13 @@ describe("synthesizeRetrievedKnowledge", function () {
       "Support/dev note: inspect backend debug logs and deployment configuration."
     ]);
     expect(synthesis.retrievedChunkCount).toBe(0);
-    expect(synthesis.supportKnowledgeSummary).toBe(
-      "Support knowledge lookup returned content, but it was not useful for this topic because it was off-topic, internal-only, or not customer-facing."
-    );
+    expect(synthesis.supportKnowledgeSummary).toEqual({
+      summary:
+        "Support knowledge lookup returned support-facing context but no verified customer-facing knowledge.",
+      customerFacing: null,
+      supportFacing:
+        "Support/dev note: inspect backend debug logs and deployment configuration.\nKnowledge is internal-only."
+    });
   });
 
   it("keeps only customer-facing information from mixed chunks", async function () {
@@ -209,9 +220,14 @@ describe("synthesizeRetrievedKnowledge", function () {
     ]);
     expect(synthesis.sourceReferences).toEqual(["rag_mixed"]);
     expect(synthesis.retrievedChunkCount).toBe(1);
-    expect(synthesis.supportKnowledgeSummary).toBe(
-      "Support knowledge lookup returned useful customer-facing knowledge for this topic."
-    );
+    expect(synthesis.supportKnowledgeSummary).toEqual({
+      summary:
+        "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+      customerFacing:
+        "Users can verify that app notifications are enabled.\nAsk whether notifications are enabled for the app.\nCustomer-answerable field: notification_permission_status\nWhether notifications are enabled.",
+      supportFacing:
+        "Support should inspect backend logs.\nDo not say the issue is fixed."
+    });
     expect(synthesis.internalNotes).toEqual([
       "Support should inspect backend logs."
     ]);
@@ -239,9 +255,12 @@ describe("synthesizeRetrievedKnowledge", function () {
     expect(synthesis.sourceReferences).toEqual([]);
     expect(synthesis.retrievedChunkCount).toBe(0);
     expect(synthesis.limitations).toContain("llm_unavailable");
-    expect(synthesis.supportKnowledgeSummary).toBe(
-      "Support knowledge lookup returned no usable customer-facing knowledge for this topic."
-    );
+    expect(synthesis.supportKnowledgeSummary).toEqual({
+      summary:
+        "Support knowledge lookup returned no usable customer-facing knowledge for this topic.",
+      customerFacing: null,
+      supportFacing: null
+    });
     expect(debug).toHaveBeenCalledWith(
       "support.v2.synthesize_retrieved_knowledge.failed",
       { reason: "llm_unavailable" }
@@ -279,9 +298,12 @@ describe("synthesizeRetrievedKnowledge", function () {
     expect(synthesis.internalNotes).toEqual([
       "Internal deployment runbook rejected."
     ]);
-    expect(synthesis.supportKnowledgeSummary).toBe(
-      "Support knowledge lookup returned content, but it was not useful for this topic because it was off-topic, internal-only, or not customer-facing."
-    );
+    expect(synthesis.supportKnowledgeSummary).toEqual({
+      summary:
+        "Support knowledge lookup returned support-facing context but no verified customer-facing knowledge.",
+      customerFacing: null,
+      supportFacing: "Internal deployment runbook rejected."
+    });
   });
 
   it("marks retrieval failures with a stable support knowledge summary", async function () {
@@ -293,8 +315,11 @@ describe("synthesizeRetrievedKnowledge", function () {
       vi.fn<SynthesizeRetrievedKnowledgeRequester>()
     );
 
-    expect(synthesis.supportKnowledgeSummary).toBe(
-      "Support knowledge lookup failed or timed out. No usable customer-facing knowledge was found."
-    );
+    expect(synthesis.supportKnowledgeSummary).toEqual({
+      summary:
+        "Support knowledge lookup failed or timed out. No usable customer-facing knowledge was found.",
+      customerFacing: null,
+      supportFacing: "Knowledge retrieval failed or timed out for this topic."
+    });
   });
 });

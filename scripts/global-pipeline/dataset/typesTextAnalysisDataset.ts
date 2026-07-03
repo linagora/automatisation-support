@@ -1,3 +1,7 @@
+import type {
+  SupportKnowledgeSummary
+} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+
 export type GlobalPipelineCase = {
   id: string;
   name: string;
@@ -16,7 +20,7 @@ export type GlobalPipelineCase = {
       summary: string | null;
       caseDetails: Array<Record<string, unknown>>;
       attemptedActions: Array<Record<string, unknown>>;
-      supportKnowledgeSummary?: string | null;
+      supportKnowledgeSummary?: SupportKnowledgeSummary | string | null;
     }>;
     lastUserVerbatim?: string | null;
     lastBotVerbatim?: string | null;

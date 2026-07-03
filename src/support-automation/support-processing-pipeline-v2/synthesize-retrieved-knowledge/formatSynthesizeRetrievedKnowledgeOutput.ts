@@ -5,6 +5,9 @@ import type {
   RetrievedKnowledgeSynthesis,
   SynthesizeRetrievedKnowledgeInput
 } from "./typesSynthesizeRetrievedKnowledge.types";
+import {
+  normalizeSupportKnowledgeSummary
+} from "../supportKnowledgeSummary";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -12,6 +15,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function unique(values: string[]): string[] {
   return [...new Set(values.filter((value) => value.trim() !== ""))];
+}
+
+function compactString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() !== ""
+    ? value.trim()
+    : null;
 }
 
 function stringArray(value: unknown): string[] {
@@ -58,30 +67,64 @@ function technicalLimitations(
 
 function supportKnowledgeSummaryForFallback(
   input: SynthesizeRetrievedKnowledgeInput
-): string {
+): RetrievedKnowledgeSynthesis["supportKnowledgeSummary"] {
   return input.knowledgeRetrievalFailureReason
-    ? "Support knowledge lookup failed or timed out. No usable customer-facing knowledge was found."
-    : "Support knowledge lookup returned no usable customer-facing knowledge for this topic.";
+    ? {
+        summary: "Support knowledge lookup failed or timed out. No usable customer-facing knowledge was found.",
+        customerFacing: null,
+        supportFacing: "Knowledge retrieval failed or timed out for this topic."
+      }
+    : {
+        summary: "Support knowledge lookup returned no usable customer-facing knowledge for this topic.",
+        customerFacing: null,
+        supportFacing: null
+      };
 }
 
 function supportKnowledgeSummaryForSynthesis(params: {
   input: SynthesizeRetrievedKnowledgeInput;
   candidateChunks: CandidateKnowledgeChunk[];
   retrievedChunkCount: number;
-}): string {
+  customerFacing: string | null;
+  supportFacing: string | null;
+}): RetrievedKnowledgeSynthesis["supportKnowledgeSummary"] {
   if (params.input.knowledgeRetrievalFailureReason) {
-    return "Support knowledge lookup failed or timed out. No usable customer-facing knowledge was found.";
+    return {
+      summary: "Support knowledge lookup failed or timed out. No usable customer-facing knowledge was found.",
+      customerFacing: null,
+      supportFacing: "Knowledge retrieval failed or timed out for this topic."
+    };
   }
 
-  if (params.retrievedChunkCount > 0) {
-    return "Support knowledge lookup returned useful customer-facing knowledge for this topic.";
+  if (params.customerFacing) {
+    return {
+      summary: "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+      customerFacing: params.customerFacing,
+      supportFacing: params.supportFacing
+    };
+  }
+
+  if (params.supportFacing) {
+    return {
+      summary: "Support knowledge lookup returned support-facing context but no verified customer-facing knowledge.",
+      customerFacing: null,
+      supportFacing: params.supportFacing
+    };
   }
 
   if (params.candidateChunks.length > 0) {
-    return "Support knowledge lookup returned content, but it was not useful for this topic because it was off-topic, internal-only, or not customer-facing.";
+    return {
+      summary: "Support knowledge lookup returned content, but it was not useful for this topic because it was off-topic, internal-only, or not customer-facing.",
+      customerFacing: null,
+      supportFacing: null
+    };
   }
 
-  return "Support knowledge lookup returned no usable customer-facing knowledge for this topic.";
+  return {
+    summary: "Support knowledge lookup returned no usable customer-facing knowledge for this topic.",
+    customerFacing: null,
+    supportFacing: null
+  };
 }
 
 function safeFallback(
@@ -91,8 +134,13 @@ function safeFallback(
 ): RetrievedKnowledgeSynthesis {
   const topicId = getTopicId(input, candidateChunks);
 
+  const supportKnowledgeSummary = supportKnowledgeSummaryForFallback(input);
+
   return {
-    supportKnowledgeSummary: supportKnowledgeSummaryForFallback(input),
+    supportKnowledgeSummary,
+    summary: supportKnowledgeSummary.summary,
+    customerFacing: supportKnowledgeSummary.customerFacing,
+    supportFacing: supportKnowledgeSummary.supportFacing,
     relevantFacts: [],
     applicableInstructions: [],
     possibleFields: [],
@@ -116,6 +164,24 @@ function safeFallback(
       }
     ]
   };
+}
+
+function fromNewRawFormat(
+  raw: RawRetrievedKnowledgeSynthesis
+): RetrievedKnowledgeSynthesis["supportKnowledgeSummary"] | null {
+  if (
+    raw.summary === undefined &&
+    raw.customerFacing === undefined &&
+    raw.supportFacing === undefined
+  ) {
+    return null;
+  }
+
+  return normalizeSupportKnowledgeSummary({
+    summary: compactString(raw.summary),
+    customerFacing: compactString(raw.customerFacing),
+    supportFacing: compactString(raw.supportFacing)
+  });
 }
 
 function sourceReferencesForUsableKnowledge(params: {
@@ -184,6 +250,7 @@ function formatSynthesizeRetrievedKnowledgeOutput(
 
   const raw = input.rawSynthesizeRetrievedKnowledge
     .parsedResponse as RawRetrievedKnowledgeSynthesis;
+  const newFormatSummary = fromNewRawFormat(raw);
   const rawRelevantFacts = sanitizeFacts(raw.relevantFacts);
   const rawApplicableInstructions = sanitizeFacts(raw.applicableInstructions);
   const sourceReferences = sourceReferencesForUsableKnowledge({
@@ -206,6 +273,17 @@ function formatSynthesizeRetrievedKnowledgeOutput(
   const unresolvedPoints = hasAcceptedSource
     ? stringArray(raw.unresolvedPoints)
     : [];
+  const legacyCustomerFacing = unique([
+    ...relevantFacts,
+    ...applicableInstructions,
+    ...possibleFields.map((field) => `Customer-answerable field: ${field}`),
+    ...unresolvedPoints
+  ]).join("\n") || null;
+  const legacySupportFacing = unique([
+    ...stringArray(raw.internalNotes),
+    ...stringArray(raw.doNotClaim),
+    ...stringArray(raw.limitations)
+  ]).join("\n") || null;
   const limitations = unique([
     ...technicalLimitations(input.input),
     ...stringArray(raw.limitations),
@@ -214,13 +292,20 @@ function formatSynthesizeRetrievedKnowledgeOutput(
       : [])
   ]);
   const topicId = getTopicId(input.input, input.candidateChunks);
-
-  return {
-    supportKnowledgeSummary: supportKnowledgeSummaryForSynthesis({
+  const supportKnowledgeSummary = newFormatSummary ??
+    supportKnowledgeSummaryForSynthesis({
       input: input.input,
       candidateChunks: input.candidateChunks,
-      retrievedChunkCount
-    }),
+      retrievedChunkCount,
+      customerFacing: legacyCustomerFacing,
+      supportFacing: legacySupportFacing
+    });
+
+  return {
+    supportKnowledgeSummary,
+    summary: supportKnowledgeSummary.summary,
+    customerFacing: supportKnowledgeSummary.customerFacing,
+    supportFacing: supportKnowledgeSummary.supportFacing,
     relevantFacts,
     applicableInstructions,
     possibleFields,

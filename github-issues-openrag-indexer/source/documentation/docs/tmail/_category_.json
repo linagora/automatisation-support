@@ -1,0 +1,8 @@
+{
+  "label": "Twake Mail",
+  "position": 9,
+  "link": {
+    "type": "doc",
+    "id": "tmail/index"
+  }
+}

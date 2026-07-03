@@ -4,12 +4,22 @@
       "topicId": 1,
       "title": "Double billing",
       "broadCategoryHint": "billing",
-      "summary": "The user reported a suspected duplicate charge and confirmed two charges for the same subscription. Invoice reference FAC-2026-7781 provided.",
+      "summary": "The user reported a suspected duplicate charge.",
       "caseDetails": [
+        {
+          "key": "issue",
+          "value": "possible duplicate billing",
+          "evidence": "previous fake scenario seed"
+        },
         {
           "key": "billing_issue_type",
           "value": "duplicate_billing_impact",
-          "evidence": "deux prélèvements pour le même abonnement"
+          "evidence": "deux prélèvements"
+        },
+        {
+          "key": "duplicate_billing_impact",
+          "value": "two payments",
+          "evidence": "deux prélèvements"
         },
         {
           "key": "reference_id",
@@ -18,11 +28,15 @@
         }
       ],
       "attemptedActions": [],
-      "supportKnowledgeSummary": "Support knowledge lookup returned no usable customer-facing knowledge for this topic."
+      "supportKnowledgeSummary": {
+        "summary": "Support knowledge lookup returned no usable customer-facing knowledge for this topic.",
+        "customerFacing": null,
+        "supportFacing": null
+      }
     }
   ],
   "lastUserVerbatim": "Oui, j'ai bien deux prélèvements pour le même abonnement. La référence facture est FAC-2026-7781.",
-  "lastBotVerbatim": "Merci pour votre signalement concernant un double prélèvement possible pour l'abonnement mentionné dans la facture FAC-2026-7781. Pourriez-vous nous indiquer le nom du plan ou de l'abonnement concerné ainsi que le statut actuel de votre facturation ou paiement ? Nous allons examiner cela de plus près.",
+  "lastBotVerbatim": "Merci pour votre message. Je vois que vous mentionnez une double facturation avec la référence FAC-2026-7781. Pourriez-vous me préciser le produit ou service concerné ainsi que le plan ou abonnement lié à cette facturation ?",
   "userState": {
     "status": "normal",
     "flags": []

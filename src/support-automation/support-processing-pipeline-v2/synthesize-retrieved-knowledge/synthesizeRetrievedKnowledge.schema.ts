@@ -10,43 +10,20 @@ function objectOf(
   };
 }
 
-function arrayOf(items: Record<string, unknown>): Record<string, unknown> {
-  return {
-    type: "array",
-    items
-  };
-}
-
-const stringSchema = {
-  type: "string"
+const nullableStringSchema = {
+  type: ["string", "null"]
 } as const;
-
-const stringArraySchema = arrayOf(stringSchema);
 
 const retrievedKnowledgeSynthesisSchema = objectOf(
   {
-    relevantFacts: stringArraySchema,
-    applicableInstructions: stringArraySchema,
-    possibleFields: stringArraySchema,
-    unresolvedPoints: stringArraySchema,
-    sourceReferences: stringArraySchema,
-    limitations: stringArraySchema,
-    doNotClaim: stringArraySchema,
-    internalNotes: stringArraySchema,
-    retrievedChunkCount: {
-      type: "number"
-    }
+    summary: nullableStringSchema,
+    customerFacing: nullableStringSchema,
+    supportFacing: nullableStringSchema
   },
   [
-    "relevantFacts",
-    "applicableInstructions",
-    "possibleFields",
-    "unresolvedPoints",
-    "sourceReferences",
-    "limitations",
-    "doNotClaim",
-    "internalNotes",
-    "retrievedChunkCount"
+    "summary",
+    "customerFacing",
+    "supportFacing"
   ]
 );
 

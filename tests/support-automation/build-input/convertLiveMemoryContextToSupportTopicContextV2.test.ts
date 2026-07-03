@@ -17,8 +17,12 @@ describe("convertLiveMemoryContextToSupportTopicContextV2", function () {
           title: "Notifications Android",
           broadCategoryHint: "bug",
           summary: "Les notifications Android ne se déclenchent plus.",
-          supportKnowledgeSummary:
-            "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+          supportKnowledgeSummary: {
+            summary:
+              "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+            customerFacing: null,
+            supportFacing: null
+          },
           caseDetails: [
             {
               key: "platform",
@@ -57,8 +61,12 @@ describe("convertLiveMemoryContextToSupportTopicContextV2", function () {
           title: "Notifications Android",
           broadCategoryHint: "bug",
           summary: "Les notifications Android ne se déclenchent plus.",
-          supportKnowledgeSummary:
-            "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+          supportKnowledgeSummary: {
+            summary:
+              "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+            customerFacing: null,
+            supportFacing: null
+          },
           caseDetails: [
             {
               key: "platform",

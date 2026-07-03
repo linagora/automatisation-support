@@ -4,6 +4,9 @@ import type {
   ResponsePlanningPolicy
 } from "./typesPlanSupportResponse.types";
 import { normalizeUserLanguageForResponse } from "../response-language/normalizeUserLanguageForResponse";
+import {
+  toPlannerKnowledgeInput
+} from "../supportKnowledgeSummary";
 
 const DEFAULT_RESPONSE_PLANNING_POLICY: ResponsePlanningPolicy = {
   supportStrictness: "standard",
@@ -34,6 +37,17 @@ function asString(value: unknown): string | null {
 
 function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
+}
+
+function sanitizeTopicSnapshotForPlanner(value: unknown): unknown {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  return {
+    ...value,
+    supportKnowledgeSummary: toPlannerKnowledgeInput(value.supportKnowledgeSummary)
+  };
 }
 
 function resolvePolicy(
@@ -88,7 +102,7 @@ function buildTopicPlanningTask(
     responsePlanningPolicy: resolvePolicy(input.responsePlanningPolicy),
 
     topicUserMessageContent: getValue(input, "topicUserMessageContent") ?? null,
-    topicSnapshot,
+    topicSnapshot: sanitizeTopicSnapshotForPlanner(topicSnapshot),
 
     relatedTextUnderstandings: asArray(
       getValue(topicEvidence, "relatedTextUnderstandings")
@@ -181,11 +195,12 @@ Use it only if it is explicit, applicable, and safe to show to the customer.
 
 topicRetrievedKnowledgeSynthesis:
 Optional support knowledge from retrieval.
-Use it only for supported answer points, customer-answerable questions, limitations, and do-not-claim rules.
+It contains only summary and customerFacing knowledge. It never contains supportFacing/internal notes.
+Use customerFacing only for supported answer points or customer-answerable questions.
 If it is empty, failed, irrelevant, or only says that no information was found, it does not support an answer.
 Do not copy retrieved wording directly into the response.
 Transform customer-facing knowledge into safe support language.
-Treat internalNotes, sourceReferences, retrieval metadata, developer notes, backend notes, infrastructure notes, and non-exposable content as internal only.
+If internal notes, backend/admin actions, infrastructure details, unverified hypotheses, or non-exposable content appear in input, ignore them and do not mention them.
 
 # Core decision flow
 

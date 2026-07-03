@@ -15,6 +15,13 @@ async function readResponse(response) {
   };
 }
 
+function jsonHeaders(config) {
+  return {
+    ...openRagHeaders(config),
+    "Content-Type": "application/json"
+  };
+}
+
 async function ensurePartition(config) {
   if (!config.createPartition) {
     return;
@@ -113,7 +120,86 @@ async function uploadMarkdownFile(config, { fileId, markdown, metadata }) {
   };
 }
 
+async function listWorkspaces(config) {
+  const url = `${config.baseUrl}/partition/${encodeURIComponent(config.partition)}/workspaces`;
+  const response = await fetch(url, {
+    headers: openRagHeaders(config)
+  });
+  const body = await readResponse(response);
+
+  if (!response.ok) {
+    throw new Error(
+      `OpenRAG workspace listing failed: ${response.status} ${response.statusText}\n${body.text}`
+    );
+  }
+
+  return body.parsed;
+}
+
+async function createWorkspace(config, workspaceId, displayName) {
+  const url = `${config.baseUrl}/partition/${encodeURIComponent(config.partition)}/workspaces`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: jsonHeaders(config),
+    body: JSON.stringify({
+      workspace_id: workspaceId,
+      display_name: displayName
+    })
+  });
+  const body = await readResponse(response);
+
+  if (response.ok) {
+    return {
+      created: true,
+      status: response.status,
+      response: body.parsed
+    };
+  }
+
+  if (response.status === 409 || /already exists|exist(ed|s)|duplicate/iu.test(body.text)) {
+    return {
+      created: false,
+      alreadyExists: true,
+      status: response.status,
+      response: body.parsed
+    };
+  }
+
+  throw new Error(
+    `OpenRAG workspace creation failed for ${workspaceId}: ${response.status} ${response.statusText}\n${body.text}`
+  );
+}
+
+async function addFilesToWorkspace(config, workspaceId, fileIds) {
+  const uniqueFileIds = Array.from(new Set(fileIds)).filter(Boolean);
+  const url =
+    `${config.baseUrl}/partition/${encodeURIComponent(config.partition)}` +
+    `/workspaces/${encodeURIComponent(workspaceId)}/files`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: jsonHeaders(config),
+    body: JSON.stringify({
+      file_ids: uniqueFileIds
+    })
+  });
+  const body = await readResponse(response);
+
+  if (!response.ok) {
+    throw new Error(
+      `OpenRAG workspace file attachment failed for ${workspaceId}: ${response.status} ${response.statusText}\n${body.text}`
+    );
+  }
+
+  return {
+    count: uniqueFileIds.length,
+    response: body.parsed
+  };
+}
+
 export {
+  addFilesToWorkspace,
+  createWorkspace,
   ensurePartition,
+  listWorkspaces,
   uploadMarkdownFile
 };

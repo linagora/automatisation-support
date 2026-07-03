@@ -11,6 +11,9 @@ import type {
   OtherSupportPipelineInformation,
   SupportProcessingPersistenceEffectsV2
 } from "../typesSupportProcessingPipelineV2.types";
+import {
+  normalizeSupportKnowledgeSummary
+} from "../supportKnowledgeSummary";
 
 type BuildSupportProcessingPersistenceEffectsInput =
   BuildSupportPersistenceEffectsInput & {
@@ -26,6 +29,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function readString(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
+}
+
+function readSupportKnowledgeSummary(value: unknown): LiveMemoryTopicUpdate["supportKnowledgeSummary"] | undefined {
+  return normalizeSupportKnowledgeSummary(value) ?? undefined;
 }
 
 function readNullableString(value: unknown): string | null {
@@ -135,9 +142,9 @@ function snapshotToLiveMemoryTopic(
     summary: readNullableString(record.summary),
     caseDetails: normalizeCaseDetails(record.caseDetails),
     attemptedActions: normalizeAttemptedActions(record.attemptedActions),
-    ...(readString(record.supportKnowledgeSummary)
+    ...(readSupportKnowledgeSummary(record.supportKnowledgeSummary)
       ? {
-          supportKnowledgeSummary: readString(record.supportKnowledgeSummary)
+          supportKnowledgeSummary: readSupportKnowledgeSummary(record.supportKnowledgeSummary)
         }
       : {})
   } as unknown as LiveMemoryTopicUpdate;

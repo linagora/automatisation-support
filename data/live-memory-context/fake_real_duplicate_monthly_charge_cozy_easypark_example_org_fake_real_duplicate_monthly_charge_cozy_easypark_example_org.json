@@ -1,0 +1,54 @@
+{
+  "topics": [
+    {
+      "topicId": 1,
+      "title": "Duplicate billing issue",
+      "broadCategoryHint": "billing",
+      "summary": "User reports duplicate billing with two providers (CozyCloud and Easypark SARL Metz) at 2.99 € twice a month. Requests explanation for this billing anomaly. Migration context to Twake mentioned.",
+      "caseDetails": [
+        {
+          "key": "billing_issue_type",
+          "value": "duplicate billing",
+          "evidence": "prélevé deux fois par mois"
+        },
+        {
+          "key": "amount",
+          "value": 2.99,
+          "evidence": "2,99 €"
+        },
+        {
+          "key": "billing_provider",
+          "value": "Easypark SARL Metz",
+          "evidence": "Easypark SARL Metz"
+        },
+        {
+          "key": "frequency",
+          "value": "twice a month",
+          "evidence": "prélevé deux fois par mois"
+        },
+        {
+          "key": "question_intent",
+          "value": "explanation for billing anomaly",
+          "evidence": "Pouvez-vous m'expliquer cette anomalie"
+        },
+        {
+          "key": "migration_or_transition_context",
+          "value": "Twake",
+          "evidence": "passage vers Twake"
+        }
+      ],
+      "attemptedActions": [],
+      "supportKnowledgeSummary": {
+        "summary": "Duplicate billing issue with two providers (CozyCloud and Easypark SARL Metz) at 2.99 € twice a month. User requests explanation for this billing anomaly. Migration context to Twake mentioned.",
+        "customerFacing": "Inform the user that the duplicate billing issue may be related to the migration process to Twake. Explain that during migrations, temporary billing discrepancies can occur due to the transition between providers. Ask the user to verify their billing history with both providers (CozyCloud and Easypark SARL Metz) to confirm the exact dates and amounts of the duplicate charges. Request the user to check if they have any active subscriptions or trials with both providers that might be causing the duplicate billing. Inform the user that the support team is investigating the issue and will provide an update as soon as possible. Assure the user that any overcharges will be addressed and resolved.",
+        "supportFacing": "The duplicate billing issue may be related to the migration process to Twake. Temporary billing discrepancies can occur due to the transition between providers. The user should verify their billing history with both providers (CozyCloud and Easypark SARL Metz) to confirm the exact dates and amounts of the duplicate charges. The user should also check if they have any active subscriptions or trials with both providers that might be causing the duplicate billing. The support team is investigating the issue and will provide an update as soon as possible. Any overcharges will be addressed and resolved."
+      }
+    }
+  ],
+  "lastUserVerbatim": "Je viens de constater que depuis un certain temps je suis prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz. Pouvez-vous m'expliquer cette anomalie ? Il semble que cela se produit depuis le passage vers Twake.",
+  "lastBotVerbatim": "Merci pour votre signalement concernant les doublons de facturation avec CozyCloud et Easypark SARL Metz à 2,99 € deux fois par mois. Nous comprenons que vous avez demandé une explication dans le cadre de la migration vers Twake. Il est possible que ce problème soit lié au processus de migration, et des écarts temporaires de facturation peuvent survenir pendant la transition entre les fournisseurs. Pourriez-vous vérifier votre historique de facturation avec les deux fournisseurs pour confirmer les dates et les montants exacts des doubles facturations ? Veuillez également vérifier si vous avez des abonnements ou des essais actifs avec les deux fournisseurs qui pourraient causer ces doublons. Notre équipe de support enquête sur ce problème et vous fournira une mise à jour dès que possible. Nous vous assurons que toute surcharge sera adressée et résolue.",
+  "userState": {
+    "status": "normal",
+    "flags": []
+  }
+}

@@ -421,8 +421,12 @@ describe("buildTopicPatchesAndSnapshots", function () {
   });
 
   it("keeps live-memory supportKnowledgeSummary through topic update snapshots and enrichment prompts", async function () {
-    const supportKnowledgeSummary =
-      "Support knowledge lookup returned no usable customer-facing knowledge for this topic.";
+    const supportKnowledgeSummary = {
+      summary:
+        "Support knowledge lookup returned no usable customer-facing knowledge for this topic.",
+      customerFacing: null,
+      supportFacing: "Previous lookup had no reusable support-only signal."
+    };
     const textUnderstanding = understanding({
       id: "text_understanding_1",
       summary: "Android version 14",
@@ -511,7 +515,10 @@ describe("buildTopicPatchesAndSnapshots", function () {
     })?.content ?? "";
 
     expect(userPrompt).toContain(
-      `"supportKnowledgeSummary":"${supportKnowledgeSummary}"`
+      `"supportKnowledgeSummary":{"summary":"${supportKnowledgeSummary.summary}"`
+    );
+    expect(userPrompt).toContain(
+      `"supportFacing":"${supportKnowledgeSummary.supportFacing}"`
     );
   });
 });

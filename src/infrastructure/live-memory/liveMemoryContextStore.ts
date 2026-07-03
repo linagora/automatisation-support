@@ -5,6 +5,9 @@ import { randomUUID } from "crypto";
 import {
   parseLiveMemoryTopicId
 } from "./normalizeLiveMemoryTopicId";
+import {
+  normalizeSupportKnowledgeSummary
+} from "../../support-automation/support-processing-pipeline-v2/supportKnowledgeSummary";
 
 import type {
   LiveMemoryContext,
@@ -36,6 +39,10 @@ function nullableString(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== ""
     ? value.trim()
     : null;
+}
+
+function nullableSupportKnowledgeSummary(value: unknown): LiveMemoryTopic["supportKnowledgeSummary"] | null {
+  return normalizeSupportKnowledgeSummary(value);
 }
 
 function normalizeUserState(value: unknown): LiveMemoryUserState {
@@ -84,8 +91,8 @@ function normalizeTopic(value: unknown): LiveMemoryTopic | null {
     attemptedActions: Array.isArray(value.attemptedActions)
       ? value.attemptedActions as LiveMemoryTopic["attemptedActions"]
       : [],
-    ...(nullableString(value.supportKnowledgeSummary)
-      ? { supportKnowledgeSummary: nullableString(value.supportKnowledgeSummary) as string }
+    ...(nullableSupportKnowledgeSummary(value.supportKnowledgeSummary)
+      ? { supportKnowledgeSummary: nullableSupportKnowledgeSummary(value.supportKnowledgeSummary) as LiveMemoryTopic["supportKnowledgeSummary"] }
       : {})
   };
 }

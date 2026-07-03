@@ -1,0 +1,19 @@
+{
+  "runId": "20260703_152939",
+  "scenarioId": "real-duplicate-monthly-charge-cozy-easypark",
+  "messageName": "user_message",
+  "event": {
+    "channel": "matrix",
+    "roomId": "!fake-real-duplicate-monthly-charge-cozy-easypark:example.org",
+    "userId": "@fake-real-duplicate-monthly-charge-cozy-easypark:example.org",
+    "messageId": "20260703_152939__real-duplicate-monthly-charge-cozy-easypark__msg_001",
+    "content": "Je viens de constater que depuis un certain temps je suis prélevé deux fois par mois de 2,99 € une fois au nom de CozyCloud et une autre au nom de Easypark SARL Metz. Pouvez-vous m'expliquer cette anomalie ? Il semble que cela se produit depuis le passage vers Twake.",
+    "createdAt": "2026-07-03T15:29:39.337Z",
+    "rawEvent": {
+      "fakeMatrixScenarioId": "real-duplicate-monthly-charge-cozy-easypark",
+      "messageName": "user_message"
+    }
+  },
+  "delayMs": 0,
+  "typingBeforeMs": 0
+}

@@ -29,6 +29,9 @@ export type RequestSynthesizeRetrievedKnowledgeInput = {
 };
 
 export type RawRetrievedKnowledgeSynthesis = {
+  summary?: unknown;
+  customerFacing?: unknown;
+  supportFacing?: unknown;
   relevantFacts?: unknown;
   applicableInstructions?: unknown;
   possibleFields?: unknown;

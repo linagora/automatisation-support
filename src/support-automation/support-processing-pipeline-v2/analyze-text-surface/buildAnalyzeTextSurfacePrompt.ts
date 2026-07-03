@@ -158,6 +158,12 @@ Support split policy:
 * If splitting is risky, ambiguous, glued, or would create micro-segments, output one larger support_relevant segment.
 * Deep support analysis can split support understandings later.
 
+Long or dense messages:
+- A long message with several product names, feature names, support questions, error/crash/failure words, missing features, sync/access/billing/file/calendar/mail/photo issues, or concrete product behavior must be routed as support_relevant, not lack_comprehension.
+- A message can be support_relevant even if it is poorly punctuated, has many questions, mixes several product areas, or is hard to split.
+- If segmentation is difficult, output one larger support_relevant segment instead of using lack_comprehension.
+- Unknown product-specific names should count as support anchors when they appear near support concepts such as app, account, email, drive, calendar, sync, crash, credentials, billing, files, folders, photos, sharing, or login.
+
 # Standard interaction routing
 
 Use "standard_interaction" only for standalone lightweight content with no concrete supported product/service anchor.
@@ -188,9 +194,23 @@ Boundary patterns:
 
 # Lack of comprehension routing
 
-Use "lack_comprehension" only when content is too unclear, incomplete, garbled, or impossible to route.
-Usually use "unclear_message".
-Do not use it for clear support content or clear unrelated content.
+Use "lack_comprehension" only when routing is truly impossible.
+
+Do not use "lack_comprehension" merely because the message is:
+- long;
+- dense;
+- multi-topic;
+- poorly punctuated;
+- grammatically imperfect;
+- partially glued together;
+- mixed with product names;
+- hard to split into clean segments.
+
+If the message contains any concrete supported product/service anchor, product behavior, error, failure, crash, missing feature, account/access/billing/file/mail/calendar/sync/drive/photo issue, or customer question about product usage, route it as support_relevant.
+
+If splitting is difficult, return one larger support_relevant segment.
+
+Use lack_comprehension only for text that is genuinely garbled, incomplete, or impossible to assign to support_relevant, standard_interaction, out_of_scope, or safety_sensitive.
 
 # Final checks
 

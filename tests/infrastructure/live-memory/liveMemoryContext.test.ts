@@ -497,8 +497,12 @@ describe("live memory context", function () {
               }
             ],
             attemptedActions: [],
-            supportKnowledgeSummary:
-              "Support knowledge lookup returned useful customer-facing knowledge for this topic."
+            supportKnowledgeSummary: {
+              summary:
+                "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+              customerFacing: null,
+              supportFacing: null
+            }
           }
         ]
       })
@@ -506,8 +510,12 @@ describe("live memory context", function () {
 
     expect(context.topics[0]).toEqual(expect.objectContaining({
       topicId: 1,
-      supportKnowledgeSummary:
-        "Support knowledge lookup returned useful customer-facing knowledge for this topic."
+      supportKnowledgeSummary: {
+        summary:
+          "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+        customerFacing: null,
+        supportFacing: null
+      }
     }));
     await expect(
       readLiveMemoryContext(turnIdentity.conversationKey)

@@ -18,6 +18,9 @@ import {
 import {
   topicSnapshotsToLiveMemoryTopics
 } from "../../support-automation/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
+import {
+  normalizeSupportKnowledgeSummary
+} from "../../support-automation/support-processing-pipeline-v2/supportKnowledgeSummary";
 import type {
   LiveMemoryTopicUpdate
 } from "../../support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
@@ -74,9 +77,12 @@ function toLiveMemoryTopic(update: LiveMemoryTopicUpdate): LiveMemoryTopic | nul
     attemptedActions: Array.isArray(record.attemptedActions)
       ? record.attemptedActions as LiveMemoryTopic["attemptedActions"]
       : [],
-    ...(typeof record.supportKnowledgeSummary === "string" &&
-    record.supportKnowledgeSummary.trim() !== ""
-      ? { supportKnowledgeSummary: record.supportKnowledgeSummary.trim() }
+    ...(normalizeSupportKnowledgeSummary(record.supportKnowledgeSummary)
+      ? {
+          supportKnowledgeSummary: normalizeSupportKnowledgeSummary(
+            record.supportKnowledgeSummary
+          ) as LiveMemoryTopic["supportKnowledgeSummary"]
+        }
       : {})
   };
 }

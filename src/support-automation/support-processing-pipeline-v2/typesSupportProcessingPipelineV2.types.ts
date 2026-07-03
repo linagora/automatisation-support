@@ -145,6 +145,17 @@ export type LiveMemoryAttemptedAction = {
   evidence?: string | null;
 };
 
+export type SupportKnowledgeSummary = {
+  summary: string | null;
+  customerFacing: string | null;
+  supportFacing: string | null;
+};
+
+export type PlannerKnowledgeInput = {
+  summary: string | null;
+  customerFacing: string | null;
+};
+
 export type LiveMemoryTopicUpdate = {
   topicId: number;
   title: string | null;
@@ -152,7 +163,7 @@ export type LiveMemoryTopicUpdate = {
   summary: string | null;
   caseDetails: LiveMemoryCaseDetail[];
   attemptedActions: LiveMemoryAttemptedAction[];
-  supportKnowledgeSummary?: string | null;
+  supportKnowledgeSummary?: SupportKnowledgeSummary | null;
 };
 
 export type LiveMemoryUserStateUpdate = {
@@ -397,7 +408,7 @@ export type MergedTopicSnapshot = {
   summary: string | null;
   caseDetails: SupportCaseDetail[];
   attemptedActions: SupportAttemptedAction[];
-  supportKnowledgeSummary?: string;
+  supportKnowledgeSummary?: SupportKnowledgeSummary;
   sourceUnderstandingIds: string[];
   sourceVerbatims: string[];
   sourceOpIndex: number;
@@ -505,6 +516,8 @@ export type SupportUnderstandingV2 = {
 };
 
 export type RetrievalDesiredKnowledge =
+  | "customerFacing"
+  | "supportFacing"
   | "customer_facing_information"
   | "customer_answerable_questions"
   | "internal_support_notes"
@@ -574,7 +587,10 @@ export type SupportKnowledgeRetriever = {
 export type GenericFieldKnowledge = Record<string, never>;
 
 export type RetrievedKnowledgeSynthesis = {
-  supportKnowledgeSummary: string;
+  supportKnowledgeSummary: SupportKnowledgeSummary;
+  summary?: string | null;
+  customerFacing?: string | null;
+  supportFacing?: string | null;
   relevantFacts?: string[];
   applicableInstructions?: string[];
   possibleFields?: FieldName[];

@@ -287,8 +287,20 @@ const knowledgeChunks: KnowledgeChunk[] = [
 ];
 
 const retrievedKnowledgeSynthesis = {
-  supportKnowledgeSummary:
+  supportKnowledgeSummary: {
+    summary:
+      "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+    customerFacing:
+      "Reset password is available\nUse the reset-password flow when applicable.\nCustomer-answerable field: error_message\nExact error message is still missing.",
+    supportFacing:
+      "Support can inspect account state internally.\nDo not say that the issue is fixed.\nDo not claim that login is restored."
+  },
+  summary:
     "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+  customerFacing:
+    "Reset password is available\nUse the reset-password flow when applicable.\nCustomer-answerable field: error_message\nExact error message is still missing.",
+  supportFacing:
+    "Support can inspect account state internally.\nDo not say that the issue is fixed.\nDo not claim that login is restored.",
   relevantFacts: ["Reset password is available"],
   applicableInstructions: ["Use the reset-password flow when applicable."],
   possibleFields: ["error_message"],
@@ -1273,15 +1285,12 @@ describe("runSupportProcessingPipelineV2", function () {
 
     expect(output.mergedTopicSnapshots?.[0]).toMatchObject({
       topicId: 1,
-      supportKnowledgeSummary:
-        "Support knowledge lookup returned useful customer-facing knowledge for this topic."
+      supportKnowledgeSummary: retrievedKnowledgeSynthesis.supportKnowledgeSummary
     });
     expect(
       output.persistenceEffects.liveMemoryUpdate.topics[0]
         .supportKnowledgeSummary
-    ).toBe(
-      "Support knowledge lookup returned useful customer-facing knowledge for this topic."
-    );
+    ).toEqual(retrievedKnowledgeSynthesis.supportKnowledgeSummary);
   });
 
   it("falls back before composition when a topic response plan is unusable", async function () {
@@ -2318,12 +2327,11 @@ describe("runSupportProcessingPipelineV2", function () {
     );
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
-        topicRetrievedKnowledgeSynthesis: expect.objectContaining({
-          relevantFacts: ["Reset password is available"],
-          internalNotes: ["Support can inspect account state internally."],
-          retrievedChunkCount: 1,
-          topics: retrievedKnowledgeSynthesis.topics
-        })
+        topicRetrievedKnowledgeSynthesis: {
+          summary: retrievedKnowledgeSynthesis.supportKnowledgeSummary.summary,
+          customerFacing:
+            retrievedKnowledgeSynthesis.supportKnowledgeSummary.customerFacing
+        }
       })
     );
     expect(output.topicRetrievedSupportKnowledge).toEqual([
@@ -2364,7 +2372,11 @@ describe("runSupportProcessingPipelineV2", function () {
         stageEvents.push("response_plan:start");
 
         expect(plannerInput.topicRetrievedKnowledgeSynthesis).toEqual(
-          retrievedKnowledgeSynthesis
+          {
+            summary: retrievedKnowledgeSynthesis.supportKnowledgeSummary.summary,
+            customerFacing:
+              retrievedKnowledgeSynthesis.supportKnowledgeSummary.customerFacing
+          }
         );
 
         return responsePlan;
@@ -2391,11 +2403,11 @@ describe("runSupportProcessingPipelineV2", function () {
     ]);
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
-        topicRetrievedKnowledgeSynthesis: expect.objectContaining({
-          relevantFacts: ["Reset password is available"],
-          internalNotes: ["Support can inspect account state internally."],
-          retrievedChunkCount: 1
-        })
+        topicRetrievedKnowledgeSynthesis: {
+          summary: retrievedKnowledgeSynthesis.supportKnowledgeSummary.summary,
+          customerFacing:
+            retrievedKnowledgeSynthesis.supportKnowledgeSummary.customerFacing
+        }
       })
     );
   });
@@ -2435,17 +2447,16 @@ describe("runSupportProcessingPipelineV2", function () {
       }
     ]);
     expect(plannerInput.topicRetrievedKnowledgeSynthesis).toEqual(
-      expect.objectContaining({
-        relevantFacts: [],
-        limitations: expect.arrayContaining([
-          "Knowledge retrieval failed or timed out for this topic."
-        ])
-      })
+      {
+        summary:
+          "Support knowledge lookup failed or timed out. No usable customer-facing knowledge was found.",
+        customerFacing: null
+      }
     );
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedCatalogKnowledge: expect.objectContaining({
-          scopeReason: "test_catalog_selection"
+          scopeReason: "skipped_by_knowledge_enrichment:rag_only"
         })
       })
     );
@@ -2530,15 +2541,22 @@ describe("runSupportProcessingPipelineV2", function () {
     })?.[0];
 
     expect(firstTopicPlannerInput?.topicRetrievedKnowledgeSynthesis).toBeNull();
-    expect(secondTopicPlannerInput?.topicRetrievedKnowledgeSynthesis).toEqual(
-      retrievedKnowledgeSynthesis
-    );
+    expect(secondTopicPlannerInput?.topicRetrievedKnowledgeSynthesis).toEqual({
+      summary: retrievedKnowledgeSynthesis.supportKnowledgeSummary.summary,
+      customerFacing:
+        retrievedKnowledgeSynthesis.supportKnowledgeSummary.customerFacing
+    });
   });
 
   it("keeps catalog selection independent from RAG synthesis before planning", async function () {
     const ragSynthesisWithPossibleFields = {
-      supportKnowledgeSummary:
-        "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+      supportKnowledgeSummary: {
+        summary:
+          "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+        customerFacing:
+          "Notification permission status can affect diagnosis.\nAsk for notification_permission_status only if the catalog selected it.\nCustomer-answerable field: notification_permission_status\nnotification_permission_status",
+        supportFacing: null
+      },
       relevantFacts: ["Notification permission status can affect diagnosis."],
       applicableInstructions: [
         "Ask for notification_permission_status only if the catalog selected it."
@@ -2569,7 +2587,10 @@ describe("runSupportProcessingPipelineV2", function () {
         matchedPatternIds: []
       })),
       analyzeTextSurface: vi.fn(async () => supportTextSurface),
-      planKnowledgeEnrichment: vi.fn(async () => ragPlan),
+      planKnowledgeEnrichment: vi.fn(async () => ({
+        ...ragPlan,
+        route: "catalog_and_rag" as const
+      })),
       selectCatalogKnowledgeForTopic: vi.fn(async () => selectedCatalogKnowledge),
       synthesizeRetrievedKnowledge: vi.fn(
         async () => ragSynthesisWithPossibleFields
@@ -2581,7 +2602,12 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedCatalogKnowledge,
-        topicRetrievedKnowledgeSynthesis: ragSynthesisWithPossibleFields
+        topicRetrievedKnowledgeSynthesis: {
+          summary:
+            ragSynthesisWithPossibleFields.supportKnowledgeSummary.summary,
+          customerFacing:
+            ragSynthesisWithPossibleFields.supportKnowledgeSummary.customerFacing
+        }
       })
     );
 
@@ -2637,7 +2663,7 @@ describe("runSupportProcessingPipelineV2", function () {
     const mergedTopicSnapshots = [
       {
         snapshotId: proposals[0].proposalId,
-        topicId: null,
+        topicId: 1,
         temporaryTopicId: null,
         isNewTopic: true,
         title: "Android notification problem",
@@ -2653,7 +2679,7 @@ describe("runSupportProcessingPipelineV2", function () {
       },
       {
         snapshotId: proposals[1].proposalId,
-        topicId: null,
+        topicId: 2,
         temporaryTopicId: null,
         isNewTopic: true,
         title: "Duplicate invoice",
@@ -2687,7 +2713,14 @@ describe("runSupportProcessingPipelineV2", function () {
         topicPatches: [],
         mergedTopicSnapshots
       })),
-      planKnowledgeEnrichment: vi.fn(planKnowledgeEnrichment),
+      planKnowledgeEnrichment: vi.fn(async (input) => {
+        return input.topicEvidence.proposalId === proposals[0].proposalId
+          ? {
+              ...ragPlan,
+              route: "rag_only" as const
+            }
+          : noRagPlan;
+      }),
       retrieveSupportKnowledge: vi.fn(async () => [
         {
           topicId: 1,
@@ -2697,8 +2730,13 @@ describe("runSupportProcessingPipelineV2", function () {
         }
       ]),
       synthesizeRetrievedKnowledge: vi.fn(async () => ({
-        supportKnowledgeSummary:
-          "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+        supportKnowledgeSummary: {
+          summary:
+            "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+          customerFacing:
+            "Android notification customer-safe knowledge.",
+          supportFacing: null
+        },
         relevantFacts: [
           "Android notification customer-safe knowledge."
         ],
@@ -2782,13 +2820,12 @@ describe("runSupportProcessingPipelineV2", function () {
     })?.[0];
 
     expect(notificationPlannerInput?.topicRetrievedKnowledgeSynthesis)
-      .toEqual(expect.objectContaining({
-        relevantFacts: [
+      .toEqual({
+        summary:
+          "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+        customerFacing:
           "Android notification customer-safe knowledge."
-        ],
-        internalNotes: [],
-        retrievedChunkCount: 1
-      }));
+      });
     expect(billingPlannerInput?.topicRetrievedKnowledgeSynthesis).toBeNull();
   });
 
@@ -2826,8 +2863,12 @@ describe("runSupportProcessingPipelineV2", function () {
       }
     ];
     const firstSynthesis = {
-      supportKnowledgeSummary:
-        "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+      supportKnowledgeSummary: {
+        summary:
+          "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+        customerFacing: "Access fact",
+        supportFacing: null
+      },
       topics: [
         {
           topicId: 1,
@@ -2837,8 +2878,12 @@ describe("runSupportProcessingPipelineV2", function () {
       ]
     };
     const secondSynthesis = {
-      supportKnowledgeSummary:
-        "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+      supportKnowledgeSummary: {
+        summary:
+          "Support knowledge lookup returned useful customer-facing knowledge for this topic.",
+        customerFacing: "Billing fact",
+        supportFacing: null
+      },
       topics: [
         {
           topicId: 2,
@@ -2910,7 +2955,11 @@ describe("runSupportProcessingPipelineV2", function () {
           topicEvidence: expect.objectContaining({
             proposalId: proposals[0].proposalId
           }),
-          topicRetrievedKnowledgeSynthesis: firstSynthesis
+          topicRetrievedKnowledgeSynthesis: {
+            summary: firstSynthesis.supportKnowledgeSummary.summary,
+            customerFacing:
+              firstSynthesis.supportKnowledgeSummary.customerFacing
+          }
         })
       ],
       [
@@ -2918,7 +2967,11 @@ describe("runSupportProcessingPipelineV2", function () {
           topicEvidence: expect.objectContaining({
             proposalId: proposals[1].proposalId
           }),
-          topicRetrievedKnowledgeSynthesis: secondSynthesis
+          topicRetrievedKnowledgeSynthesis: {
+            summary: secondSynthesis.supportKnowledgeSummary.summary,
+            customerFacing:
+              secondSynthesis.supportKnowledgeSummary.customerFacing
+          }
         })
       ]
     ]));

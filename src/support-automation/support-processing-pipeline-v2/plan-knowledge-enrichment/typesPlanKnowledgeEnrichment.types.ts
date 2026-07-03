@@ -1,5 +1,6 @@
 import type {
   PlanKnowledgeEnrichmentInput,
+  SupportKnowledgeSummary,
   SupportAttemptedAction,
   SupportCaseDetail,
   TextUnderstanding
@@ -80,7 +81,7 @@ export type KnowledgeEnrichmentTask = {
     title?: string | null;
     summary: string;
     broadCategoryHint?: string | null;
-    supportKnowledgeSummary?: string | null;
+    supportKnowledgeSummary?: SupportKnowledgeSummary | null;
     sourceVerbatims: string[];
     caseDetails: SupportCaseDetail[];
     attemptedActions: SupportAttemptedAction[];

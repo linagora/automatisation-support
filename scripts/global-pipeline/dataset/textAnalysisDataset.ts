@@ -825,8 +825,12 @@ const handAuthoredCases: GlobalPipelineCase[] = [
             }
           ],
           attemptedActions: [],
-          supportKnowledgeSummary:
-            "Support knowledge lookup returned no usable customer-facing knowledge for this topic."
+          supportKnowledgeSummary: {
+            summary:
+              "Support knowledge lookup returned no usable customer-facing knowledge for this topic.",
+            customerFacing: null,
+            supportFacing: null
+          }
         }
       ],
       lastUserVerbatim: "J'ai peut-être été facturé deux fois.",
@@ -878,8 +882,13 @@ const handAuthoredCases: GlobalPipelineCase[] = [
             }
           ],
           attemptedActions: [],
-          supportKnowledgeSummary:
-            "For Android notification issues, verify app notification permissions, battery optimization restrictions, Do Not Disturb, and whether the user is logged into the expected account."
+          supportKnowledgeSummary: {
+            summary:
+              "Previous RAG found reusable Android notification troubleshooting knowledge.",
+            customerFacing:
+              "For Android notification issues, verify app notification permissions, battery optimization restrictions, Do Not Disturb, and whether the user is logged into the expected account.",
+            supportFacing: null
+          }
         }
       ],
       lastUserVerbatim: "Je ne reçois pas les notifications sur Android.",
@@ -920,8 +929,13 @@ const handAuthoredCases: GlobalPipelineCase[] = [
           summary: "The user reported duplicate billing.",
           caseDetails: [],
           attemptedActions: [],
-          supportKnowledgeSummary:
-            "Duplicate billing requests should collect invoice references, charge dates, charged amounts, and whether both charges reached the bank account."
+          supportKnowledgeSummary: {
+            summary:
+              "Previous RAG found reusable duplicate billing qualification knowledge.",
+            customerFacing:
+              "Duplicate billing requests should collect invoice references, charge dates, charged amounts, and whether both charges reached the bank account.",
+            supportFacing: null
+          }
         },
         {
           topicId: 2,
@@ -930,8 +944,13 @@ const handAuthoredCases: GlobalPipelineCase[] = [
           summary: "The user reported missing Android notifications.",
           caseDetails: [],
           attemptedActions: [],
-          supportKnowledgeSummary:
-            "For Android notification issues, verify notification permissions, battery optimization, DND mode, app version, and account/session state."
+          supportKnowledgeSummary: {
+            summary:
+              "Previous RAG found reusable Android notification qualification knowledge.",
+            customerFacing:
+              "For Android notification issues, verify notification permissions, battery optimization, DND mode, app version, and account/session state.",
+            supportFacing: null
+          }
         }
       ],
       lastUserVerbatim:

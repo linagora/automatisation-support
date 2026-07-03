@@ -48,6 +48,10 @@ import {
   renderSupportResponse
 } from "./response-renderer/renderSupportResponse";
 import {
+  mergeSupportKnowledgeSummary,
+  toPlannerKnowledgeInput
+} from "./supportKnowledgeSummary";
+import {
   buildSupportProcessingPersistenceEffectsV2
 } from "./build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 import {
@@ -110,6 +114,33 @@ type SupportProcessingPipelineV2InternalRuntime =
   SupportProcessingPipelineV2Runtime & {
     debugState?: SupportProcessingPipelineV2InternalDebugState;
   };
+
+function appendNamedDebugOutput(params: {
+  debugState?: SupportProcessingPipelineV2InternalDebugState;
+  name: string;
+  output: unknown;
+}): void {
+  if (!params.debugState) {
+    return;
+  }
+
+  const currentValue = params.debugState.partial[params.name];
+
+  if (currentValue === undefined) {
+    params.debugState.partial[params.name] = params.output;
+    return;
+  }
+
+  if (Array.isArray(currentValue)) {
+    currentValue.push(params.output);
+    return;
+  }
+
+  params.debugState.partial[params.name] = [
+    currentValue,
+    params.output
+  ];
+}
 
 const SUPPORT_PROCESSING_PIPELINE_V2_DEBUG_STOP =
   "SupportProcessingPipelineV2DebugStop";
@@ -1162,6 +1193,18 @@ async function runSupportProcessingPipelineV2Internal(
             ]);
             logRagUsage(topicRagUsage);
           }
+          const plannerKnowledgeInput = toPlannerKnowledgeInput(
+            topicRetrievedKnowledgeSynthesis?.supportKnowledgeSummary ?? null
+          );
+          appendNamedDebugOutput({
+            debugState: internalRuntime.debugState,
+            name: "plannerKnowledgeInput",
+            output: {
+              proposalId: topicBranchSource.branchId,
+              topicId: topicBranchSource.topicId,
+              topicRetrievedKnowledgeSynthesis: plannerKnowledgeInput
+            }
+          });
           const topicResponsePlan = await runStep(
             internalRuntime,
             "planSupportResponse",
@@ -1172,7 +1215,7 @@ async function runSupportProcessingPipelineV2Internal(
               targetLanguage: rendererLanguage,
               selectedCatalogKnowledge,
               topicKnowledgeEnrichmentPlan,
-              topicRetrievedKnowledgeSynthesis,
+              topicRetrievedKnowledgeSynthesis: plannerKnowledgeInput,
               responsePlanningPolicy,
               channel: latestUserMessage.channel
             }
@@ -1224,9 +1267,10 @@ async function runSupportProcessingPipelineV2Internal(
           return candidate.branchId === snapshot.snapshotId ||
             candidate.topicId === snapshot.topicId;
         });
-        const supportKnowledgeSummary =
-          result?.topicRetrievedKnowledgeSynthesis?.supportKnowledgeSummary ??
-          snapshot.supportKnowledgeSummary;
+        const supportKnowledgeSummary = mergeSupportKnowledgeSummary({
+          existing: snapshot.supportKnowledgeSummary,
+          next: result?.topicRetrievedKnowledgeSynthesis?.supportKnowledgeSummary
+        });
 
         return supportKnowledgeSummary
           ? { ...snapshot, supportKnowledgeSummary }

@@ -61,34 +61,24 @@ Return JSON only.
 # Output
 
 {
-  "relevantFacts": [],
-  "applicableInstructions": [],
-  "possibleFields": [],
-  "unresolvedPoints": [],
-  "sourceReferences": [],
-  "limitations": [],
-  "doNotClaim": [],
-  "internalNotes": [],
-  "retrievedChunkCount": 0
+  "summary": "string or null",
+  "customerFacing": "string or null",
+  "supportFacing": "string or null"
 }
 
 # Rules
 
-- relevantFacts: only reliable, topic-relevant information safe to show to the customer.
-- applicableInstructions: only safe support-client guidance or safe planner guidance.
-- possibleFields: only field names that a customer can reasonably answer.
-- unresolvedPoints: only unresolved customer-facing questions or ambiguity.
-- sourceReferences: sourceId values only for chunks accepted into relevantFacts or applicableInstructions.
-- limitations: internal knowledge limits, not text to expose verbatim.
-- doNotClaim: claims the planner must not make.
-- internalNotes: useful support/dev/backend/infrastructure notes that must not reach the customer.
-- retrievedChunkCount: number of accepted chunks represented by sourceReferences.
+- summary: short summary of what retrieval clarified, useful to decide whether future RAG is still needed.
+- customerFacing: only reliable, topic-relevant knowledge safe to show to the customer or safe customer-answerable questions.
+- supportFacing: internal support notes, investigation hints, backend/admin-only actions, possible explanations, non-customer-facing details, or anything not safe to show directly.
 
 Reject a chunk if it is off-topic, about another product/platform/feature/problem, too internal, too technical, implementation-only, not customer-facing, ambiguous, unreliable, or not useful for a customer-safe support response.
 
 Do not copy raw retrieved text unless it is safe, relevant, customer-facing, and concise.
-Do not put internal, developer, backend, infrastructure, logs, configuration, code-level, admin-only, or non-customer-facing content in relevantFacts or applicableInstructions.
-If no usable customer-facing knowledge remains, return empty relevantFacts, applicableInstructions, sourceReferences, retrievedChunkCount 0, and add a limitation.
+Do not put internal, developer, backend, infrastructure, logs, configuration, code-level, admin-only, unverified hypotheses, possible root causes, or non-customer-facing content in customerFacing.
+Put unverified hypotheses, backend/admin actions, source caveats, and investigation-only notes in supportFacing.
+If no reliable customer-facing knowledge remains, set customerFacing to null or an empty string.
+If retrieval finds only hypotheses or internal notes, put them in supportFacing and keep customerFacing null.
 `.trim();
 }
 

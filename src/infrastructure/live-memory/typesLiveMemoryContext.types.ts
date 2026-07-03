@@ -1,4 +1,5 @@
 import type {
+  SupportKnowledgeSummary,
   SupportAttemptedAction,
   SupportCaseDetail
 } from "../../support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
@@ -16,7 +17,7 @@ export type LiveMemoryTopic = {
   summary: string | null;
   caseDetails: SupportCaseDetail[];
   attemptedActions: SupportAttemptedAction[];
-  supportKnowledgeSummary?: string;
+  supportKnowledgeSummary?: SupportKnowledgeSummary;
 };
 
 export type LiveMemoryContext = {
