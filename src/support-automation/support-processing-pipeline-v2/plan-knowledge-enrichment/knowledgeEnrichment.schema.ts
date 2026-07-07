@@ -1,3 +1,7 @@
+import {
+  BROAD_INTENT_MODES
+} from "../../support-catalog";
+
 function objectOf(
   properties: Record<string, unknown>,
   required: string[]
@@ -17,18 +21,43 @@ const knowledgeEnrichmentResponseFormat = {
     strict: true,
     schema: objectOf(
       {
-        route: {
-          enum: ["none", "catalog_only", "rag_only", "catalog_and_rag"],
-          description:
-            "Whether this topic should use no enrichment, catalog selection only, RAG only, or both catalog selection and RAG."
-        },
-        reason: {
-          type: "string",
-          description:
-            "Short internal reason. Use snake_case or a concise internal phrase."
-        }
+        broadIntent: objectOf(
+          {
+            mode: {
+              enum: BROAD_INTENT_MODES,
+              description:
+                "Operational intent for this support topic. This is not the topic broadCategoryHint."
+            },
+            reason: {
+              type: "string",
+              description:
+                "Short internal reason explaining why this broad intent was selected."
+            }
+          },
+          ["mode", "reason"]
+        ),
+        rag: objectOf(
+          {
+            shouldRetrieve: {
+              type: "boolean",
+              description:
+                "Whether RAG/support-knowledge retrieval is likely useful now."
+            },
+            mode: {
+              enum: ["answer", "answer_and_soft_probe", null],
+              description:
+                "Use answer_and_soft_probe when answering a clear FAQ that may hide an issue. Use null when shouldRetrieve is false."
+            },
+            reason: {
+              type: "string",
+              description:
+                "Short internal reason for the RAG decision."
+            }
+          },
+          ["shouldRetrieve", "mode", "reason"]
+        )
       },
-      ["route", "reason"]
+      ["broadIntent", "rag"]
     )
   }
 } as const;

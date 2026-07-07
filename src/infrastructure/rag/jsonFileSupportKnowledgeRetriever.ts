@@ -10,20 +10,27 @@ import type {
   TopicEvidence
 } from "../../support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
+function compactText(value: string | null | undefined): string | undefined {
+  const compacted = value?.replace(/\s+/g, " ").trim();
+
+  return compacted && compacted.length > 0 ? compacted : undefined;
+}
+
 function buildQueryTopicEvidence(input: RetrieveSupportKnowledgeInput): TopicEvidence {
+  const request = input.knowledgeEnrichmentPlan.retrievalRequests[0];
   const queryText = input.knowledgeEnrichmentPlan.retrievalRequests
-    .map((request) => request.queryText)
+    .map((candidate) => candidate.queryText)
     .filter((value) => value.trim() !== "")
     .join(" ");
-  const topicId =
-    input.knowledgeEnrichmentPlan.retrievalRequests[0]?.topicId ??
-    input.topicEvidence.topicId;
+
+  const topicId = request?.topicId ?? input.topicEvidence.topicId;
   const summary =
-    input.knowledgeEnrichmentPlan.retrievalRequests[0]?.context.topicSummary ??
-    queryText;
-  const broadCategoryHint =
-    input.knowledgeEnrichmentPlan.retrievalRequests[0]?.filters
-      ?.broadCategoryHint;
+    compactText(request?.context.topicSummary) ??
+    compactText(queryText) ??
+    "Support topic needing knowledge lookup.";
+
+  const broadCategoryHint = request?.filters?.broadCategoryHint;
+
   const queryUnderstanding: TextUnderstanding = {
     understandingId: "rag_query",
     sourceSegmentIds: [],

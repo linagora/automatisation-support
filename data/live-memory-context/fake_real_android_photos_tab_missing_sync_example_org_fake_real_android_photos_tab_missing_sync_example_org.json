@@ -4,12 +4,17 @@
       "topicId": 1,
       "title": "Missing Photos tab in Twake mobile app",
       "broadCategoryHint": "bug",
-      "summary": "Missing Photos tab in Twake mobile app on Android 15. The user has installed the app and connected their account, but the Photos tab is not present on the homepage. The Add button does not help as a workaround.",
+      "summary": "The user reports that the Photos tab is missing in the Twake mobile app on Android 15. They have installed the app and connected their account, but the Photos tab is not present. The Add button does not help as a workaround.",
       "caseDetails": [
         {
           "key": "product_or_service",
           "value": "Twake",
           "evidence": "Twake"
+        },
+        {
+          "key": "feature_or_page",
+          "value": "Photos",
+          "evidence": "l'onglet Photos"
         },
         {
           "key": "platform",
@@ -22,24 +27,19 @@
           "evidence": "Android 15"
         },
         {
-          "key": "feature_or_page",
-          "value": "Photos",
-          "evidence": "l'onglet Photos"
+          "key": "trigger_action",
+          "value": "open app",
+          "evidence": "Sur la page d'accueil de l'appli"
         },
         {
           "key": "observed_result",
-          "value": "Photos tab missing",
+          "value": "missing tab",
           "evidence": "l'onglet Photos n'est pas présent"
         },
         {
           "key": "expected_result",
-          "value": "Photos tab present",
+          "value": "tab present",
           "evidence": "l'onglet Photos n'est pas présent"
-        },
-        {
-          "key": "trigger_action",
-          "value": "app launch",
-          "evidence": "Sur la page d'accueil de l'appli"
         },
         {
           "key": "available_workaround",
@@ -49,25 +49,25 @@
       ],
       "attemptedActions": [
         {
-          "action": "app install",
+          "action": "install app",
           "outcome": "success",
           "evidence": "nous avons installé l'application Twake"
         },
         {
-          "action": "account connection",
+          "action": "connect account",
           "outcome": "success",
           "evidence": "connecté le compte"
         }
       ],
       "supportKnowledgeSummary": {
-        "summary": "Retrieved general troubleshooting steps for missing Photos tab in Twake mobile app on Android 15, including customer-facing actions and internal investigation notes.",
-        "customerFacing": "- **Check App Version**: Ensure the user is running the latest version of the Twake mobile app. Outdated versions might lack certain features or have display issues.\n- **App Permissions**: Verify that the app has all necessary permissions, especially storage permissions, as the Photos tab might require access to the device's media.\n- **Restart the App**: Sometimes, simply restarting the app can resolve display issues.\n- **Reinstall the App**: If the issue persists, suggest reinstalling the app to ensure a clean installation.\n- **Check for Updates**: Ensure the Android OS is up to date, as some features might require the latest OS updates.\n- **Contact Support**: If none of the above steps resolve the issue, advise the user to contact support for further assistance.",
-        "supportFacing": "- **App Logs**: Check the app logs for any errors or warnings related to the Photos tab. This might indicate a backend issue or a problem with the app's ability to fetch or display the tab.\n- **Backend Issues**: Investigate if there are any known backend issues affecting the Photos tab. This could be related to user permissions, data fetching, or display logic.\n- **Feature Availability**: Confirm if the Photos tab is available for the user's specific plan or account type. Some features might be restricted based on the user's subscription.\n- **Device-Specific Issues**: Check if there are any known issues with the Photos tab on Android 15. This might involve testing the app on a similar device or checking for any device-specific bugs.\n- **UI Configuration**: Verify if there are any UI configuration settings that might be hiding the Photos tab for certain users or devices.\n- **Support Ticket**: If the issue cannot be resolved through the above steps, escalate the issue to the development team for further investigation. Provide them with the user's device details, app version, and any relevant logs."
+        "summary": "The retrieval did not find any specific information about the missing Photos tab in the Twake mobile app on Android 15. The retrieved content was about general technical aspects of Twake, not the specific mobile app UI issue. No useful customer-facing or support-facing knowledge was found. Future retrieval may still be useful if more specific data is available.",
+        "customerFacing": null,
+        "supportFacing": "The retrieved documents discuss various technical aspects of Twake, such as internal tools, settings propagation, and error traces, but none directly address the issue of missing tabs in the mobile app. Further investigation may be required to determine the cause and solution for this specific problem."
       }
     }
   ],
   "lastUserVerbatim": "J'ai aidé mon amie à créer un compte twake, tout fonctionne correctement sur son Mac. Sur le téléphone - Android 15 à jour - nous avons installé l'application Twake par le playstore et connecté le compte. Sur la page d'accueil de l'appli, l'onglet Photos n'est pas présent et nous ne pouvons donc pas demander la synchronisation des photos (le bouton Add ne m'aide pas, je ne sais quelle URL renseigner). Avez-vous une idée de ce que j'ai manqué ?",
-  "lastBotVerbatim": "Je comprends que l'onglet Photos est manquant dans l'application mobile Twake sur Android 15, que vous avez installé l'application et connecté votre compte, et que le bouton Ajouter ne fonctionne pas comme solution de contournement. Veuillez vous assurer que vous utilisez la dernière version de l'application mobile Twake, vérifier les autorisations de l'application, redémarrer l'application, la réinstaller si nécessaire, et vous assurer que votre système d'exploitation Android est à jour. Pourriez-vous me fournir la version de l'application et le modèle de votre appareil ? Si le problème persiste, veuillez contacter le support pour une assistance supplémentaire.",
+  "lastBotVerbatim": "Merci pour votre retour. Je vois que vous ne trouvez pas l'onglet Photos dans l'application mobile Twake sur Android 15, même après l'avoir installée et connecté votre compte. L'option Ajouter ne fonctionne pas non plus. Pour mieux vous aider, pourriez-vous me préciser la version de l'application et le modèle de votre appareil ?",
   "userState": {
     "status": "normal",
     "flags": []

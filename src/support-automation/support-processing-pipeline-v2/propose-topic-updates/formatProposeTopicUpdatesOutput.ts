@@ -1,4 +1,7 @@
 import { TOPIC_UPDATE_OPS } from "./proposeTopicUpdates.schema";
+import {
+  BROAD_CATEGORY_HINTS
+} from "../../support-catalog";
 
 import type {
   FormatProposeTopicUpdatesOutputInput,
@@ -30,6 +33,8 @@ function stringOrNull(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
 }
 
+const ALLOWED_BROAD_CATEGORY_HINTS = new Set<string>(BROAD_CATEGORY_HINTS);
+
 function normalizeBroadCategoryHint(value: unknown): string | null {
   const normalized = stringOrNull(value);
 
@@ -41,25 +46,7 @@ function normalizeBroadCategoryHint(value: unknown): string | null {
     return "bug";
   }
 
-  const allowed = new Set([
-    "bug",
-    "access_security",
-    "billing",
-    "configuration",
-    "integration_sync",
-    "performance",
-    "availability",
-    "data_migration",
-    "accessibility",
-    "question_faq",
-    "feature_request",
-    "support_action",
-    "product_feedback",
-    "support_experience_issue",
-    "other"
-  ]);
-
-  return allowed.has(normalized) ? normalized : "other";
+  return ALLOWED_BROAD_CATEGORY_HINTS.has(normalized) ? normalized : "other";
 }
 
 function parseTopicId(value: unknown): number | null | undefined {

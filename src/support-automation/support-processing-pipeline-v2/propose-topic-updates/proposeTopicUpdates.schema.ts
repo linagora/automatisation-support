@@ -1,6 +1,6 @@
 import {
   BROAD_CATEGORY_HINTS
-} from "../analyze-support-text/supportTextAnalysis.taxonomy";
+} from "../../support-catalog";
 
 const TOPIC_UPDATE_OPS = [
   "update",

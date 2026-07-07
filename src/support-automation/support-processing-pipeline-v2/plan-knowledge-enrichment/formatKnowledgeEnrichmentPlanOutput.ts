@@ -1,16 +1,20 @@
 import type {
+  BroadIntentMode,
   FormatKnowledgeEnrichmentPlanOutputInput,
   KnowledgeEnrichmentDecision,
-  KnowledgeEnrichmentRoute,
   KnowledgeEnrichmentValidationResult,
+  RagRetrievalMode,
   RawKnowledgeEnrichmentResponse
 } from "./typesPlanKnowledgeEnrichment.types";
+import {
+  BROAD_INTENT_MODES
+} from "../../support-catalog";
 
-const ALLOWED_ROUTES = new Set<KnowledgeEnrichmentRoute>([
-  "none",
-  "catalog_only",
-  "rag_only",
-  "catalog_and_rag"
+const ALLOWED_BROAD_INTENTS = new Set<BroadIntentMode>(BROAD_INTENT_MODES);
+
+const ALLOWED_RAG_MODES = new Set<Exclude<RagRetrievalMode, null>>([
+  "answer",
+  "answer_and_soft_probe"
 ]);
 
 function invalid(reason: string): KnowledgeEnrichmentValidationResult {
@@ -34,10 +38,62 @@ function compactText(value: unknown): string | undefined {
   return compacted.length > 0 ? compacted : undefined;
 }
 
-function fallbackCatalogOnly(reason: string): KnowledgeEnrichmentDecision {
+function fallbackNoRag(reason: string): KnowledgeEnrichmentDecision {
   return {
-    route: "catalog_only",
-    reason
+    broadIntent: {
+      mode: "unclear",
+      reason
+    },
+    rag: {
+      shouldRetrieve: false,
+      mode: null,
+      reason
+    }
+  };
+}
+
+function validateBroadIntent(value: unknown):
+  | KnowledgeEnrichmentDecision["broadIntent"]
+  | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const mode = compactText(value.mode);
+
+  if (!mode || !ALLOWED_BROAD_INTENTS.has(mode as BroadIntentMode)) {
+    return null;
+  }
+
+  return {
+    mode: mode as BroadIntentMode,
+    reason: compactText(value.reason) ?? "broad_intent_llm_decision"
+  };
+}
+
+function validateRag(value: unknown): KnowledgeEnrichmentDecision["rag"] | null {
+  if (!isRecord(value) || typeof value.shouldRetrieve !== "boolean") {
+    return null;
+  }
+
+  if (!value.shouldRetrieve) {
+    return {
+      shouldRetrieve: false,
+      mode: null,
+      reason: compactText(value.reason) ?? "rag_not_needed"
+    };
+  }
+
+  const mode = compactText(value.mode);
+
+  if (!mode || !ALLOWED_RAG_MODES.has(mode as Exclude<RagRetrievalMode, null>)) {
+    return null;
+  }
+
+  return {
+    shouldRetrieve: true,
+    mode: mode as Exclude<RagRetrievalMode, null>,
+    reason: compactText(value.reason) ?? "rag_may_be_useful"
   };
 }
 
@@ -49,17 +105,27 @@ function validateRawResponse(
   }
 
   const raw = value as RawKnowledgeEnrichmentResponse;
-  const route = compactText(raw.route);
+  const broadIntent = validateBroadIntent(raw.broadIntent);
 
-  if (!route || !ALLOWED_ROUTES.has(route as KnowledgeEnrichmentRoute)) {
-    return invalid("invalid_route");
+  if (!broadIntent) {
+    return invalid("invalid_broad_intent");
+  }
+
+  const rag = validateRag(raw.rag);
+
+  if (!rag) {
+    return invalid("invalid_rag_decision");
+  }
+
+  if (broadIntent.mode === "unclear" && rag.shouldRetrieve) {
+    return invalid("unclear_intent_cannot_run_rag");
   }
 
   return {
     status: "valid",
     decision: {
-      route: route as KnowledgeEnrichmentRoute,
-      reason: compactText(raw.reason) ?? "knowledge_enrichment_llm_decision"
+      broadIntent,
+      rag
     }
   };
 }
@@ -70,9 +136,9 @@ function formatKnowledgeEnrichmentPlanOutput(
   if (input.rawKnowledgeEnrichmentPlan.status !== "completed") {
     return {
       status: "valid",
-      decision: fallbackCatalogOnly(
+      decision: fallbackNoRag(
         input.rawKnowledgeEnrichmentPlan.error?.message ??
-          "knowledge_enrichment_llm_failed_fallback_catalog_only"
+          "knowledge_enrichment_llm_failed_fallback_no_rag"
       )
     };
   }
@@ -87,7 +153,7 @@ function formatKnowledgeEnrichmentPlanOutput(
 
   return {
     status: "valid",
-    decision: fallbackCatalogOnly(
+    decision: fallbackNoRag(
       `knowledge_enrichment_invalid_llm_output:${validation.reason}`
     )
   };

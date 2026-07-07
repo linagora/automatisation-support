@@ -22,6 +22,12 @@ const DESIRED_KNOWLEDGE: RetrievalRequest["desiredKnowledge"] = [
   "supportFacing"
 ];
 
+type SupportKnowledgeSummary = {
+  summary?: string | null;
+  customerFacing?: string | null;
+  supportFacing?: string | null;
+};
+
 function createDefaultSupportKnowledgeRetriever(): SupportKnowledgeRetriever {
   const baseUrl = process.env.SUPPORT_RAG_API_URL;
   const apiKey = process.env.SUPPORT_RAG_API_KEY;
@@ -108,6 +114,12 @@ function getBroadCategoryHint(input: RetrieveSupportKnowledgeInput): string | nu
   return snapshot?.broadCategoryHint ?? relatedHint ?? null;
 }
 
+function getTopicTitle(input: RetrieveSupportKnowledgeInput): string | undefined {
+  const snapshot = getTopicSnapshot(input);
+
+  return compactText(snapshot?.title);
+}
+
 function getTopicSummary(input: RetrieveSupportKnowledgeInput): string {
   const snapshot = getTopicSnapshot(input);
   const summary = compactText(snapshot?.summary) ??
@@ -119,23 +131,6 @@ function getTopicSummary(input: RetrieveSupportKnowledgeInput): string {
       .find((value): value is string => Boolean(value));
 
   return summary ?? "Support topic needing knowledge lookup.";
-}
-
-function getLatestUserUpdate(
-  understandings: TextUnderstanding[],
-  snapshot?: MergedTopicSnapshot
-): string | undefined {
-  const latestUnderstanding = understandings[understandings.length - 1];
-  const sourceVerbatims = Array.isArray(latestUnderstanding?.sourceVerbatims)
-    ? latestUnderstanding.sourceVerbatims.filter((value): value is string => {
-        return typeof value === "string";
-      })
-    : [];
-  const latestVerbatim = sourceVerbatims[sourceVerbatims.length - 1];
-
-  return compactText(latestVerbatim) ??
-    compactText(latestUnderstanding?.summary) ??
-    compactText(snapshot?.sourceVerbatims[snapshot.sourceVerbatims.length - 1]);
 }
 
 function normalizeCaseDetails(
@@ -167,6 +162,33 @@ function findDetailValue(
   return typeof detail?.value === "string"
     ? compactText(detail.value)
     : undefined;
+}
+
+function getSupportKnowledgeSummary(
+  snapshot: MergedTopicSnapshot | undefined
+): SupportKnowledgeSummary | null {
+  const value = (snapshot as {
+    supportKnowledgeSummary?: unknown;
+  } | undefined)?.supportKnowledgeSummary;
+
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const candidate = value as SupportKnowledgeSummary;
+  const summary = compactText(candidate.summary ?? null) ?? null;
+  const customerFacing = compactText(candidate.customerFacing ?? null) ?? null;
+  const supportFacing = compactText(candidate.supportFacing ?? null) ?? null;
+
+  if (!summary && !customerFacing && !supportFacing) {
+    return null;
+  }
+
+  return {
+    summary,
+    customerFacing,
+    supportFacing
+  };
 }
 
 function buildFilters(params: {
@@ -215,70 +237,115 @@ function buildFilters(params: {
   return Object.keys(filters).length > 0 ? filters : undefined;
 }
 
+function formatCaseDetails(details: SupportCaseDetail[]): string[] {
+  return details
+    .map((detail) => {
+      const key = compactText(detail.key);
+      const value = typeof detail.value === "string"
+        ? compactText(detail.value)
+        : undefined;
+
+      return key && value ? `- ${key}: ${value}` : undefined;
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
+function formatAttemptedActions(actions: SupportAttemptedAction[]): string[] {
+  return actions
+    .map((action) => {
+      const actionText = compactText(action.action);
+      const outcomeText = compactText(action.outcome);
+
+      if (!actionText && !outcomeText) {
+        return undefined;
+      }
+
+      if (!outcomeText) {
+        return `- ${actionText}`;
+      }
+
+      if (!actionText) {
+        return `- Outcome: ${outcomeText}`;
+      }
+
+      return `- ${actionText}: ${outcomeText}`;
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
+function formatSupportKnowledgeSummary(
+  summary: SupportKnowledgeSummary | null
+): string[] {
+  if (!summary) {
+    return [];
+  }
+
+  const lines = ["Existing support knowledge summary:"];
+
+  if (summary.summary) {
+    lines.push(`- summary: ${summary.summary}`);
+  }
+  if (summary.customerFacing) {
+    lines.push(`- customerFacing: ${summary.customerFacing}`);
+  }
+  if (summary.supportFacing) {
+    lines.push(`- supportFacing: ${summary.supportFacing}`);
+  }
+
+  return lines;
+}
+
 function buildQueryText(params: {
+  title?: string;
+  broadCategoryHint: string | null;
   summary: string;
-  title?: string | null;
-  latestUserUpdate?: string;
   details: SupportCaseDetail[];
   attemptedActions: SupportAttemptedAction[];
+  supportKnowledgeSummary: SupportKnowledgeSummary | null;
 }): string {
-  const parts = [
-    "Find support knowledge for this concrete issue.",
-    `Support issue: ${params.summary}`
+  const lines = [
+    "We need retrieved support knowledge for this topic.",
+    "",
+    "Topic:"
   ];
-  const title = compactText(params.title);
-  const productOrService = findDetailValue(params.details, [/product/i, /service/i, /app/i]);
-  const feature = findDetailValue(params.details, [/feature/i, /page/i, /screen/i, /function/i]);
-  const platform = findDetailValue(params.details, [/platform/i, /device/i]);
-  const operatingSystem = findDetailValue(params.details, [/operating.*system/i, /\bos\b/i, /android/i, /ios/i]);
-  const observedResult = findDetailValue(params.details, [/observed/i]);
-  const expectedResult = findDetailValue(params.details, [/expected/i]);
-  const error = findDetailValue(params.details, [/error/i, /message/i]);
-  const version = findDetailValue(params.details, [/version/i]);
-  const frequency = findDetailValue(params.details, [/frequency/i]);
 
-  if (title && title !== params.summary) {
-    parts.push(`Topic title: ${title}.`);
-  }
-  if (productOrService) {
-    parts.push(`Product/service: ${productOrService}.`);
-  }
-  if (feature) {
-    parts.push(`Feature/process: ${feature}.`);
-  }
-  if (platform || operatingSystem) {
-    parts.push(`Platform/environment: ${[platform, operatingSystem].filter(Boolean).join(" / ")}.`);
-  }
-  if (observedResult) {
-    parts.push(`Observed result: ${observedResult}.`);
-  }
-  if (expectedResult) {
-    parts.push(`Expected result: ${expectedResult}.`);
-  }
-  if (error) {
-    parts.push(`Reported error: ${error}.`);
-  }
-  if (version) {
-    parts.push(`Version: ${version}.`);
-  }
-  if (frequency) {
-    parts.push(`Frequency: ${frequency}.`);
-  }
-  if (params.attemptedActions.length > 0) {
-    const actions = params.attemptedActions.map((action) => {
-      return `${action.action} (${action.outcome})`;
-    }).join("; ");
-    parts.push(`Already tried: ${actions}.`);
-  }
-  if (params.latestUserUpdate) {
-    parts.push(`Latest user update: ${params.latestUserUpdate}.`);
+  if (params.title && params.title !== params.summary) {
+    lines.push(`Title: ${params.title}`);
   }
 
-  parts.push(
-    "Return only directly relevant customer-facing support knowledge, safe customer-side checks or questions, limitations, and do-not-claim notes. Do not return loosely related issues."
+  if (params.broadCategoryHint) {
+    lines.push(`Broad category: ${params.broadCategoryHint}`);
+  }
+
+  lines.push(`Summary: ${params.summary}`);
+
+  const detailLines = formatCaseDetails(params.details);
+  if (detailLines.length > 0) {
+    lines.push("", "Case details:", ...detailLines);
+  }
+
+  const actionLines = formatAttemptedActions(params.attemptedActions);
+  if (actionLines.length > 0) {
+    lines.push("", "Attempted actions:", ...actionLines);
+  }
+
+  const supportKnowledgeLines = formatSupportKnowledgeSummary(
+    params.supportKnowledgeSummary
+  );
+  if (supportKnowledgeLines.length > 0) {
+    lines.push("", ...supportKnowledgeLines);
+  }
+
+  lines.push(
+    "",
+    "Search goal:",
+    "Find directly relevant existing support knowledge for this exact topic.",
+    "Prefer specific product/feature/platform knowledge over generic support advice.",
+    "Do not look for a final answer if the documents do not contain one.",
+    "It is acceptable to return no customer-facing knowledge."
   );
 
-  return limitText(parts.join(" "), 900);
+  return limitText(lines.join("\n"), 1_500);
 }
 
 function buildDefaultRetrievalRequest(
@@ -289,8 +356,8 @@ function buildDefaultRetrievalRequest(
   const details = normalizeCaseDetails(snapshot, understandings);
   const attemptedActions = normalizeAttemptedActions(snapshot, understandings);
   const topicSummary = getTopicSummary(input);
-  const latestUserUpdate = getLatestUserUpdate(understandings, snapshot);
   const broadCategoryHint = getBroadCategoryHint(input);
+  const supportKnowledgeSummary = getSupportKnowledgeSummary(snapshot);
 
   return {
     topicId:
@@ -300,11 +367,12 @@ function buildDefaultRetrievalRequest(
       null,
     searchPurpose: "support_answer_and_qualification",
     queryText: buildQueryText({
+      title: getTopicTitle(input),
+      broadCategoryHint,
       summary: topicSummary,
-      title: snapshot?.title,
-      latestUserUpdate,
       details,
-      attemptedActions
+      attemptedActions,
+      supportKnowledgeSummary
     }),
     desiredKnowledge: DESIRED_KNOWLEDGE,
     filters: buildFilters({
@@ -313,7 +381,6 @@ function buildDefaultRetrievalRequest(
     }),
     context: {
       topicSummary,
-      ...(latestUserUpdate ? { latestUserUpdate } : {}),
       knownDetails: details.map((detail) => ({
         key: detail.key,
         value: detail.value

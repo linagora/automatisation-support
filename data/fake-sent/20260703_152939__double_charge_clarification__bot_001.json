@@ -1,9 +1,0 @@
-{
-  "runId": "20260703_152939",
-  "scenarioId": "double_charge_clarification",
-  "providerMessageId": "20260703_152939__double_charge_clarification__bot_001",
-  "localId": "delivery:matrix:!fake-double-charge:example.org:@fake-double-charge:example.org:20260703_152939__double_charge_clarification__msg_001:0",
-  "roomId": "!fake-double-charge:example.org",
-  "content": "Merci pour votre message. Je vois que vous mentionnez une double facturation avec la référence FAC-2026-7781. Pourriez-vous me préciser le produit ou service concerné ainsi que le plan ou abonnement lié à cette facturation ?",
-  "deliveredAt": "2026-07-03T15:30:05.025Z"
-}

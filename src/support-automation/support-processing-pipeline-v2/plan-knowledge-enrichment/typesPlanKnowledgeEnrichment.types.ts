@@ -9,12 +9,30 @@ import type {
 import type {
   LLMMessage
 } from "../../../infrastructure/llm/llm-client";
+import type {
+  StrictBroadIntentMode
+} from "../../support-catalog";
 
 export type KnowledgeEnrichmentRoute =
   | "none"
   | "catalog_only"
   | "rag_only"
   | "catalog_and_rag";
+
+export type BroadIntentMode = StrictBroadIntentMode;
+
+export type RagRetrievalMode = "answer" | "answer_and_soft_probe" | null;
+
+export type BroadIntentDecision = {
+  mode: BroadIntentMode;
+  reason: string;
+};
+
+export type RagRetrievalDecision = {
+  shouldRetrieve: boolean;
+  mode: RagRetrievalMode;
+  reason: string;
+};
 
 export type PlanKnowledgeEnrichmentPrompt = {
   messages: LLMMessage[];
@@ -38,13 +56,13 @@ export type RawKnowledgeEnrichmentPlan = {
 };
 
 export type RawKnowledgeEnrichmentResponse = {
-  route?: unknown;
-  reason?: unknown;
+  broadIntent?: unknown;
+  rag?: unknown;
 };
 
 export type KnowledgeEnrichmentDecision = {
-  route: KnowledgeEnrichmentRoute;
-  reason: string;
+  broadIntent: BroadIntentDecision;
+  rag: RagRetrievalDecision;
 };
 
 export type FormatKnowledgeEnrichmentPlanOutputInput = {

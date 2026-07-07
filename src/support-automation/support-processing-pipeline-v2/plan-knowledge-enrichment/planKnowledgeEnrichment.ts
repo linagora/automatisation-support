@@ -17,44 +17,63 @@ import type {
   PlanKnowledgeEnrichmentInput
 } from "../typesSupportProcessingPipelineV2.types";
 
+function deriveRoute(decision: KnowledgeEnrichmentDecision): KnowledgeEnrichmentRoute {
+  return decision.rag.shouldRetrieve ? "catalog_and_rag" : "catalog_only";
+}
+
 function toKnowledgeEnrichmentPlan(
   decision: KnowledgeEnrichmentDecision
 ): KnowledgeEnrichmentPlan {
   return {
-    route: decision.route,
-    retrievalRequests: [],
-    reason: decision.reason
+    broadIntent: decision.broadIntent,
+    rag: decision.rag,
+    route: deriveRoute(decision),
+    retrievalRequests: []
   } as unknown as KnowledgeEnrichmentPlan;
 }
 
 function getKnowledgeEnrichmentRoute(
   plan: KnowledgeEnrichmentPlan
 ): KnowledgeEnrichmentRoute {
-  const route = (plan as { route?: unknown }).route;
+  const rag = (plan as { rag?: { shouldRetrieve?: unknown } }).rag;
 
-  if (
-    route === "none" ||
-    route === "catalog_only" ||
-    route === "rag_only" ||
-    route === "catalog_and_rag"
-  ) {
-    return route;
+  if (rag?.shouldRetrieve === true) {
+    return "catalog_and_rag";
   }
 
-  return "none";
+  if (rag?.shouldRetrieve === false) {
+    return "catalog_only";
+  }
+
+  const legacyRoute = (plan as { route?: unknown }).route;
+
+  if (
+    legacyRoute === "none" ||
+    legacyRoute === "catalog_only" ||
+    legacyRoute === "rag_only" ||
+    legacyRoute === "catalog_and_rag"
+  ) {
+    return legacyRoute;
+  }
+
+  return "catalog_only";
 }
 
 function shouldRunCatalogFromKnowledgeEnrichment(
-  plan: KnowledgeEnrichmentPlan
+  _plan: KnowledgeEnrichmentPlan
 ): boolean {
-  const route = getKnowledgeEnrichmentRoute(plan);
-
-  return route === "catalog_only" || route === "catalog_and_rag";
+  return true;
 }
 
 function shouldRunRagFromKnowledgeEnrichment(
   plan: KnowledgeEnrichmentPlan
 ): boolean {
+  const rag = (plan as { rag?: { shouldRetrieve?: unknown } }).rag;
+
+  if (typeof rag?.shouldRetrieve === "boolean") {
+    return rag.shouldRetrieve;
+  }
+
   const route = getKnowledgeEnrichmentRoute(plan);
 
   return route === "rag_only" || route === "catalog_and_rag";
@@ -78,8 +97,15 @@ async function planKnowledgeEnrichment(
   }
 
   return toKnowledgeEnrichmentPlan({
-    route: "catalog_only",
-    reason: `knowledge_enrichment_format_failed:${formattedOutput.reason}`
+    broadIntent: {
+      mode: "unclear",
+      reason: `knowledge_enrichment_format_failed:${formattedOutput.reason}`
+    },
+    rag: {
+      shouldRetrieve: false,
+      mode: null,
+      reason: `knowledge_enrichment_format_failed:${formattedOutput.reason}`
+    }
   });
 }
 

@@ -3,11 +3,15 @@ import type {
   BuildAnalyzeSupportTextPromptInput
 } from "./typesAnalyzeSupportText.types";
 import {
-  ATTEMPTED_ACTION_OUTCOME_VALUES,
-  CASE_DETAIL_FIELD_CATALOG,
   MESSAGE_KIND_VALUES,
-  SUPPORT_METADATA_FIELD_CATALOG
-} from "../support-text-analysis.catalog";
+  ATTEMPTED_ACTION_OUTCOME_VALUES,
+  getAnalysisPromptFields,
+  renderFieldDefinitionsForPrompt,
+  renderMessageKindDefinitionsForPrompt
+} from "../../support-catalog";
+import type {
+  PromptFieldDefinition
+} from "../../support-catalog";
 
 function toPromptJson(value: unknown): string {
   return JSON.stringify(value);
@@ -15,16 +19,15 @@ function toPromptJson(value: unknown): string {
 
 function buildCompactFieldCatalog(
   catalog: BuildAnalyzeSupportTextPromptInput["extractableFieldCatalog"]
-): string[] {
+): PromptFieldDefinition[] {
   const inputFieldNames = new Set(catalog.map((field) => field.fieldName));
+  const { caseDetailFields } = getAnalysisPromptFields();
 
-  return CASE_DETAIL_FIELD_CATALOG
-    .filter((field) => inputFieldNames.has(field.fieldName))
-    .map((field) => field.fieldName);
+  return caseDetailFields.filter((field) => inputFieldNames.has(field.key));
 }
 
-function buildSupportMetadataFieldNames(): string[] {
-  return SUPPORT_METADATA_FIELD_CATALOG.map((field) => field.fieldName);
+function buildSupportMetadataFields(): PromptFieldDefinition[] {
+  return getAnalysisPromptFields().supportMetadataFields;
 }
 
 function buildAnalyzeSupportTextPrompt(
@@ -33,7 +36,7 @@ function buildAnalyzeSupportTextPrompt(
   const extractableFieldNames = buildCompactFieldCatalog(
     input.extractableFieldCatalog
   );
-  const supportMetadataFieldNames = buildSupportMetadataFieldNames();
+  const supportMetadataFields = buildSupportMetadataFields();
 
   const messageKindUnion = MESSAGE_KIND_VALUES.join("|");
   const attemptedActionOutcomeUnion = ATTEMPTED_ACTION_OUTCOME_VALUES.join("|");
@@ -101,14 +104,7 @@ messageKinds describes what the current text does in the conversation.
 Allowed values: ${messageKindUnion}
 
 Use all applicable kinds, but be precise:
-- "issue_report": failure, blocked state, unwanted behavior, missing behavior, abnormal result.
-- "question": only when the user actually asks for information, explanation, possibility, policy, compatibility, pricing, availability, or support clarification. A plain problem report is not a question.
-- "action_request": asks support to do, check, change, fix, explain, refund, unlock, reset, intervene, or escalate.
-- "info_update": provides useful information, status, value, context, answer, identifier, version, date, device, environment, result, or clarification.
-- "confirmation": confirms something.
-- "denial": denies something.
-- "feedback": gives product/support opinion, preference, complaint, praise, disappointment, or qualitative assessment.
-- "support_context": metadata about the support exchange itself, such as screenshot/proof/attachment/log unavailable, user availability, or support-process constraint.
+${renderMessageKindDefinitionsForPrompt()}
 
 Do not put message intent in caseDetails.
 
@@ -123,13 +119,8 @@ If useful information has no matching catalog field, create a short snake_case k
 
 Normal product actions that fail belong in caseDetails as trigger_action and/or observed_result, not attemptedActions.
 
-Important distinctions:
-- Android/iOS are operating_system.
-- platform is the execution channel: web, site, browser, mobile app, desktop app, application. It may be explicit or reasonably inferred, but evidence must support the inference.
-- trigger_action is the normal product action/event revealing the issue.
-- observed_result is what actually happens.
-- expected_result may be explicit or obvious from a negative observed_result. Do not create it when speculative.
-- error_message is exact displayed error/code when available.
+Follow the field definitions and extraction guidance from the central catalog.
+Do not create expected_result when speculative.
 - For contextual yes/no answers, caseDetails may contain the interpreted value, but evidence must be the exact current answer text.
 
 # supportMetadata
@@ -160,10 +151,16 @@ Do not duplicate an attemptedAction as a caseDetail unless it also describes a s
 # Catalogs
 
 extractableFieldNames:
-${toPromptJson(extractableFieldNames)}
+${toPromptJson(extractableFieldNames.map((field) => field.key))}
+
+extractableFieldDefinitions:
+${renderFieldDefinitionsForPrompt(extractableFieldNames)}
 
 supportMetadataFieldNames:
-${toPromptJson(supportMetadataFieldNames)}
+${toPromptJson(supportMetadataFields.map((field) => field.key))}
+
+supportMetadataFieldDefinitions:
+${renderFieldDefinitionsForPrompt(supportMetadataFields)}
 
 # Output shape
 

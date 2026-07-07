@@ -21,7 +21,7 @@ async function requestKnowledgeEnrichmentPlan(
       stage: "knowledge_enrichment_plan",
       preset: "quickDecision",
       temperature: 0,
-      maxTokens: 250,
+      maxTokens: 350,
       responseFormat: knowledgeEnrichmentResponseFormat
     });
 

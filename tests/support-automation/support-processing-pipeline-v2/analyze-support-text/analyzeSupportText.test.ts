@@ -226,7 +226,9 @@ describe("analyzeSupportText", function () {
     expect(serializedPrompt).toContain("supportMetadata");
     expect(serializedPrompt).toContain("visual_evidence_available");
     expect(serializedPrompt).toContain("support_context");
-    expect(serializedPrompt).toContain("trigger_action is the normal product action");
+    expect(serializedPrompt).toContain(
+      "Extract the normal product action or event that reveals the issue"
+    );
     expect(serializedPrompt).toContain(
       "caseDetails may contain the interpreted value, but evidence must be the exact current answer text"
     );

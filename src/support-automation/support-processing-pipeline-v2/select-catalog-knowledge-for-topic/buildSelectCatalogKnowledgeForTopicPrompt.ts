@@ -5,6 +5,9 @@ import type {
 import {
   buildCandidateFieldsForTopicSelector
 } from "./buildCandidateFieldsForTopicSelector";
+import {
+  getAnalysisPromptFields
+} from "../../support-catalog";
 
 function toPrettyJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
@@ -13,9 +16,18 @@ function toPrettyJson(value: unknown): string {
 function compactCatalog(
   catalog: SelectCatalogKnowledgeForTopicInput["extractableFieldCatalog"]
 ): unknown[] {
+  const promptFieldsByKey = new Map(
+    getAnalysisPromptFields().caseDetailFields.map((field) => {
+      return [field.key, field];
+    })
+  );
+
   return catalog.map((field) => ({
     fieldName: field.fieldName,
-    description: field.description,
+    label: promptFieldsByKey.get(field.fieldName)?.label,
+    description: promptFieldsByKey.get(field.fieldName)?.description ??
+      field.description,
+    askGuidance: promptFieldsByKey.get(field.fieldName)?.askGuidance,
     askableByUser: field.askableByUser ?? true
   }));
 }

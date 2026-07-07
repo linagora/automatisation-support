@@ -3,8 +3,10 @@ import type {
   ProposeTopicUpdatesPrompt
 } from "./typesProposeTopicUpdates.types";
 import {
-  BROAD_CATEGORY_HINTS
-} from "../analyze-support-text/supportTextAnalysis.taxonomy";
+  BROAD_CATEGORY_HINTS,
+  renderBroadCategoryDefinitionsForPrompt,
+  renderMessageKindDefinitionsForPrompt
+} from "../../support-catalog";
 
 const TOPIC_UPDATE_OPS = [
   "update",
@@ -109,10 +111,13 @@ It can help matching or summarization, but must not create a standalone topic.
 
 Use messageKinds as hints, not as automatic topic boundaries.
 
-- issue_report, question, action_request, and feedback can create or update a topic.
-- info_update, confirmation, and denial usually update an existing topic, especially when they answer a recent bot question.
-- support_context should be grouped with the related operation.
-- support_context-only items may be omitted when not useful to persist.
+Message kind definitions:
+${renderMessageKindDefinitionsForPrompt()}
+
+issue_report, question, action_request, and feedback can create or update a topic.
+info_update, confirmation, and denial usually update an existing topic, especially when they answer a recent bot question.
+support_context should be grouped with the related operation.
+support_context-only items may be omitted when not useful to persist.
 
 A plain issue report is not automatically a question.
 A messageKind "question" matters only when the user actually asks for information, explanation, possibility, policy, compatibility, pricing, availability, or support clarification.
@@ -194,6 +199,9 @@ For op "create", topic must contain the new topic identity:
 
 Allowed broadCategoryHint values:
 ${BROAD_CATEGORY_HINTS.join(" | ")}
+
+Broad category definitions:
+${renderBroadCategoryDefinitionsForPrompt()}
 
 Do not invent narrow category values such as "notifications".
 For notification delivery failures, use "bug" when the behavior is broken, or "configuration" only when the topic is about settings/setup.

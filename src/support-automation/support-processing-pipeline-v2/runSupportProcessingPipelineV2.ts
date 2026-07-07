@@ -1073,85 +1073,114 @@ async function runSupportProcessingPipelineV2Internal(
           const shouldRunRag = shouldRunRagFromKnowledgeEnrichment(
             topicKnowledgeEnrichmentPlan
           );
-          let selectedCatalogKnowledge: SelectedCatalogKnowledgeForTopic;
+          const catalogSelectionPromise = (async (): Promise<SelectedCatalogKnowledgeForTopic> => {
+            if (shouldRunCatalog) {
+              const selectorFields = topicBranchSource.topicSnapshot
+                ? buildCandidateFieldsForTopicSelector({
+                    topicSnapshot: topicBranchSource.topicSnapshot,
+                    extractableFieldCatalog
+                  })
+                : undefined;
 
-          if (shouldRunCatalog) {
-            const selectorFields = topicBranchSource.topicSnapshot
-              ? buildCandidateFieldsForTopicSelector({
-                  topicSnapshot: topicBranchSource.topicSnapshot,
-                  extractableFieldCatalog
-                })
-              : undefined;
+              return runStep(
+                internalRuntime,
+                "selectCatalogKnowledgeForTopic",
+                pipelineSteps.selectCatalogKnowledgeForTopic,
+                {
+                  topicUserMessageContent,
+                  topicEvidence,
+                  ...(topicBranchSource.topicSnapshot
+                    ? { topicSnapshot: topicBranchSource.topicSnapshot }
+                    : {}),
+                  ...(selectorFields
+                    ? {
+                        knownFields: selectorFields.knownFields,
+                        candidateFields: selectorFields.candidateFields
+                      }
+                    : {}),
+                  extractableFieldCatalog,
+                  recentInteractionContext,
+                  targetLanguage: rendererLanguage
+                }
+              ).catch((): SelectedCatalogKnowledgeForTopic => {
+                // TODO: Remove this fallback once the topic catalog selector is
+                // fully proven and every injected test runtime provides the step.
+                return buildTemporarySelectedCatalogKnowledge({
+                  relatedTextUnderstandings:
+                    topicEvidence.relatedTextUnderstandings,
+                  relatedAttachmentUnderstandings:
+                    topicEvidence.relatedAttachmentUnderstandings
+                }) as SelectedCatalogKnowledgeForTopic;
+              });
+            }
 
-            selectedCatalogKnowledge = await runStep(
-              internalRuntime,
-              "selectCatalogKnowledgeForTopic",
-              pipelineSteps.selectCatalogKnowledgeForTopic,
-              {
-                topicUserMessageContent,
-                topicEvidence,
-                ...(topicBranchSource.topicSnapshot
-                  ? { topicSnapshot: topicBranchSource.topicSnapshot }
-                  : {}),
-                ...(selectorFields
-                  ? {
-                      knownFields: selectorFields.knownFields,
-                      candidateFields: selectorFields.candidateFields
-                    }
-                  : {}),
-                extractableFieldCatalog,
-                recentInteractionContext,
-                targetLanguage: rendererLanguage
-              }
-            ).catch((): SelectedCatalogKnowledgeForTopic => {
-              // TODO: Remove this fallback once the topic catalog selector is
-              // fully proven and every injected test runtime provides the step.
-              return buildTemporarySelectedCatalogKnowledge({
-                relatedTextUnderstandings:
-                  topicEvidence.relatedTextUnderstandings,
-                relatedAttachmentUnderstandings:
-                  topicEvidence.relatedAttachmentUnderstandings
-              }) as SelectedCatalogKnowledgeForTopic;
-            });
-          } else {
             await skipStep(internalRuntime, "selectCatalogKnowledgeForTopic");
-            selectedCatalogKnowledge = emptySelectedCatalogKnowledge(
+
+            return emptySelectedCatalogKnowledge(
               `skipped_by_knowledge_enrichment:${enrichmentRoute}`
             );
-          }
+          })();
 
-          let topicRetrievedSupportKnowledge: KnowledgeChunk[] = [];
-          let topicRetrievedKnowledgeSynthesis:
-            | RetrievedKnowledgeSynthesis
-            | null = null;
-          let topicRagUsage = buildSkippedRagUsage(topicBranchSource.topicId);
+          const ragRetrievalAndSynthesisPromise = (async (): Promise<{
+            topicKnowledgeEnrichmentPlan: KnowledgeEnrichmentPlan;
+            topicRetrievedSupportKnowledge: KnowledgeChunk[];
+            topicRetrievedKnowledgeSynthesis: RetrievedKnowledgeSynthesis | null;
+            topicRagUsage: RagUsage;
+          }> => {
+            let effectiveTopicKnowledgeEnrichmentPlan =
+              topicKnowledgeEnrichmentPlan;
+            let topicRetrievedSupportKnowledge: KnowledgeChunk[] = [];
+            let topicRetrievedKnowledgeSynthesis:
+              | RetrievedKnowledgeSynthesis
+              | null = null;
+            let topicRagUsage = buildSkippedRagUsage(topicBranchSource.topicId);
+            const ragOnlySelectedCatalogKnowledge = emptySelectedCatalogKnowledge(
+              "intentionally_not_available_to_rag_or_synthesis"
+            );
 
-          if (shouldRunRag) {
+            if (!shouldRunRag) {
+              await skipSteps(internalRuntime, [
+                "retrieveSupportKnowledge",
+                "synthesizeRetrievedKnowledge"
+              ]);
+              logRagUsage(topicRagUsage);
+
+              return {
+                topicKnowledgeEnrichmentPlan: effectiveTopicKnowledgeEnrichmentPlan,
+                topicRetrievedSupportKnowledge,
+                topicRetrievedKnowledgeSynthesis,
+                topicRagUsage
+              };
+            }
+
             let knowledgeRetrievalFailureReason: string | undefined;
             const ragStartedAt = Date.now();
 
             try {
-              topicKnowledgeEnrichmentPlan = buildEffectiveKnowledgeRetrievalPlan({
-                knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
-                topicEvidence,
-                ...(topicBranchSource.topicSnapshot
-                  ? { topicSnapshot: topicBranchSource.topicSnapshot }
-                  : {}),
-                selectedCatalogKnowledge,
-                topicKnowledgeEnrichmentPlan
-              });
-              topicRetrievedSupportKnowledge = await runStep(
-                internalRuntime,
-                "retrieveSupportKnowledge",
-                pipelineSteps.retrieveSupportKnowledge,
-                {
+              effectiveTopicKnowledgeEnrichmentPlan =
+                buildEffectiveKnowledgeRetrievalPlan({
                   knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
                   topicEvidence,
                   ...(topicBranchSource.topicSnapshot
                     ? { topicSnapshot: topicBranchSource.topicSnapshot }
                     : {}),
-                  selectedCatalogKnowledge,
+                  selectedCatalogKnowledge: ragOnlySelectedCatalogKnowledge,
                   topicKnowledgeEnrichmentPlan
+                });
+
+              topicRetrievedSupportKnowledge = await runStep(
+                internalRuntime,
+                "retrieveSupportKnowledge",
+                pipelineSteps.retrieveSupportKnowledge,
+                {
+                  knowledgeEnrichmentPlan: effectiveTopicKnowledgeEnrichmentPlan,
+                  topicEvidence,
+                  ...(topicBranchSource.topicSnapshot
+                    ? { topicSnapshot: topicBranchSource.topicSnapshot }
+                    : {}),
+                  selectedCatalogKnowledge: ragOnlySelectedCatalogKnowledge,
+                  topicKnowledgeEnrichmentPlan:
+                    effectiveTopicKnowledgeEnrichmentPlan
                 }
               );
             } catch (error) {
@@ -1160,39 +1189,60 @@ async function runSupportProcessingPipelineV2Internal(
               topicRetrievedSupportKnowledge = [];
               debugLogRagRetrievalError(error);
             }
+
             topicRagUsage = buildRagUsage({
               topicId: topicBranchSource.topicId,
-              plan: topicKnowledgeEnrichmentPlan,
+              plan: effectiveTopicKnowledgeEnrichmentPlan,
               chunks: topicRetrievedSupportKnowledge,
               startedAt: ragStartedAt,
               failureReason: knowledgeRetrievalFailureReason
             });
             logRagUsage(topicRagUsage);
+
             topicRetrievedKnowledgeSynthesis = await runStep(
               internalRuntime,
               "synthesizeRetrievedKnowledge",
               pipelineSteps.synthesizeRetrievedKnowledge,
               {
-                knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
+                knowledgeEnrichmentPlan: effectiveTopicKnowledgeEnrichmentPlan,
                 knowledgeChunks: topicRetrievedSupportKnowledge,
                 topicEvidence,
                 ...(topicBranchSource.topicSnapshot
                   ? { topicSnapshot: topicBranchSource.topicSnapshot }
                   : {}),
-                selectedCatalogKnowledge,
-                topicKnowledgeEnrichmentPlan,
+                selectedCatalogKnowledge: ragOnlySelectedCatalogKnowledge,
+                topicKnowledgeEnrichmentPlan:
+                  effectiveTopicKnowledgeEnrichmentPlan,
                 ...(knowledgeRetrievalFailureReason
                   ? { knowledgeRetrievalFailureReason }
                   : {})
               }
             );
-          } else {
-            await skipSteps(internalRuntime, [
-              "retrieveSupportKnowledge",
-              "synthesizeRetrievedKnowledge"
-            ]);
-            logRagUsage(topicRagUsage);
-          }
+
+            return {
+              topicKnowledgeEnrichmentPlan: effectiveTopicKnowledgeEnrichmentPlan,
+              topicRetrievedSupportKnowledge,
+              topicRetrievedKnowledgeSynthesis,
+              topicRagUsage
+            };
+          })();
+
+          const [
+            selectedCatalogKnowledge,
+            ragRetrievalAndSynthesisResult
+          ] = await Promise.all([
+            catalogSelectionPromise,
+            ragRetrievalAndSynthesisPromise
+          ]);
+
+          topicKnowledgeEnrichmentPlan =
+            ragRetrievalAndSynthesisResult.topicKnowledgeEnrichmentPlan;
+          const topicRetrievedSupportKnowledge =
+            ragRetrievalAndSynthesisResult.topicRetrievedSupportKnowledge;
+          const topicRetrievedKnowledgeSynthesis =
+            ragRetrievalAndSynthesisResult.topicRetrievedKnowledgeSynthesis;
+          const topicRagUsage = ragRetrievalAndSynthesisResult.topicRagUsage;
+
           const plannerKnowledgeInput = toPlannerKnowledgeInput(
             topicRetrievedKnowledgeSynthesis?.supportKnowledgeSummary ?? null
           );

@@ -1,9 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const requestKnowledgeEnrichmentPlanMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../../src/archive/repositories/json/jsonKnowledgeRepository", () => ({
   JsonKnowledgeRepository: vi.fn(() => {
     throw new Error("planKnowledgeEnrichment_must_not_read_knowledge_json");
   })
+}));
+
+vi.mock("../../../../src/support-automation/support-processing-pipeline-v2/plan-knowledge-enrichment/requestKnowledgeEnrichmentPlan", () => ({
+  requestKnowledgeEnrichmentPlan: requestKnowledgeEnrichmentPlanMock
 }));
 
 import {
@@ -15,6 +21,37 @@ import type {
   PlanKnowledgeEnrichmentInput,
   TextUnderstanding
 } from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+
+type RuntimeKnowledgeEnrichmentPlan = {
+  rag: {
+    shouldRetrieve: boolean;
+    mode: "answer" | "answer_and_soft_probe" | null;
+    reason: string;
+  };
+};
+
+function mockKnowledgeDecision(params: {
+  broadIntentMode?: string;
+  broadIntentReason?: string;
+  shouldRetrieve: boolean;
+  ragMode: "answer" | "answer_and_soft_probe" | null;
+  ragReason?: string;
+}): void {
+  requestKnowledgeEnrichmentPlanMock.mockResolvedValue({
+    status: "completed",
+    parsedResponse: {
+      broadIntent: {
+        mode: params.broadIntentMode ?? "issue",
+        reason: params.broadIntentReason ?? "test_broad_intent"
+      },
+      rag: {
+        shouldRetrieve: params.shouldRetrieve,
+        mode: params.ragMode,
+        reason: params.ragReason ?? "test_rag_decision"
+      }
+    }
+  });
+}
 
 const baseUnderstanding: TextUnderstanding = {
   understandingId: "understanding_1",
@@ -101,81 +138,94 @@ function buildInput(
 }
 
 describe("planKnowledgeEnrichment", function () {
-  it("activates RAG for bug topics without reading knowledge.json", async function () {
-    const plan = await planKnowledgeEnrichment(buildInput());
+  beforeEach(function () {
+    requestKnowledgeEnrichmentPlanMock.mockReset();
+  });
 
-    expect(plan.route).toBe("rag_only");
-    expect(plan.reason).toBe("rag_enabled_for_bug_topics");
+  it("activates RAG for bug topics without reading knowledge.json", async function () {
+    mockKnowledgeDecision({
+      shouldRetrieve: true,
+      ragMode: "answer",
+      ragReason: "rag_enabled_for_bug_topics"
+    });
+
+    const plan = await planKnowledgeEnrichment(buildInput());
+    const runtimePlan = plan as typeof plan & RuntimeKnowledgeEnrichmentPlan;
+
+    expect(plan.route).toBe("catalog_and_rag");
+    expect(runtimePlan.rag).toEqual({
+      shouldRetrieve: true,
+      mode: "answer",
+      reason: "rag_enabled_for_bug_topics"
+    });
+    expect(plan.retrievalRequests).toEqual([]);
   });
 
   it("activates RAG for access_security topics", async function () {
+    mockKnowledgeDecision({
+      shouldRetrieve: true,
+      ragMode: "answer",
+      ragReason: "rag_enabled_for_access_security_topics"
+    });
+
     const plan = await planKnowledgeEnrichment(buildInput(buildSnapshot({
       broadCategoryHint: "access_security",
       summary: "The user cannot sign in on the iOS app."
     })));
+    const runtimePlan = plan as typeof plan & RuntimeKnowledgeEnrichmentPlan;
 
-    expect(plan.route).toBe("rag_only");
-    expect(plan.reason).toBe("rag_enabled_for_access_security_topics");
+    expect(plan.route).toBe("catalog_and_rag");
+    expect(runtimePlan.rag.reason).toBe(
+      "rag_enabled_for_access_security_topics"
+    );
   });
 
   it("disables RAG for billing topics", async function () {
+    mockKnowledgeDecision({
+      broadIntentMode: "issue",
+      shouldRetrieve: false,
+      ragMode: null,
+      ragReason: "rag_disabled_for_billing_topics"
+    });
+
     const plan = await planKnowledgeEnrichment(buildInput(buildSnapshot({
       broadCategoryHint: "billing",
       summary: "The user received the invoice twice."
     })));
+    const runtimePlan = plan as typeof plan & RuntimeKnowledgeEnrichmentPlan;
 
-    expect(plan).toEqual({
-      route: "none",
-      retrievalRequests: [],
+    expect(plan).toMatchObject({
+      route: "catalog_only",
+      retrievalRequests: []
+    });
+    expect(runtimePlan.rag).toEqual({
+      shouldRetrieve: false,
+      mode: null,
       reason: "rag_disabled_for_billing_topics"
     });
   });
 
-  it("builds a canonical query from the topic snapshot", async function () {
-    const plan = await planKnowledgeEnrichment(buildInput());
-    const request = plan.retrievalRequests[0];
-
-    expect(request).toMatchObject({
-      topicId: 1,
-      searchPurpose: "support_answer_and_qualification",
-      desiredKnowledge: expect.arrayContaining([
-        "customer_facing_information",
-        "customer_answerable_questions",
-        "internal_support_notes",
-        "limitations",
-        "do_not_expose"
-      ]),
-      filters: {
-        broadCategoryHint: "bug",
-        featureOrPage: "push notifications",
-        platform: "Android"
-      },
-      context: {
-        topicSummary:
-          "Android push notifications are not received for new emails.",
-        latestUserUpdate:
-          "I do not receive Android notifications when a new email arrives.",
-        knownDetails: expect.arrayContaining([
-          { key: "platform", value: "Android" }
-        ]),
-        attemptedActions: [
-          {
-            action: "Enabled notification permissions",
-            outcome: "failed"
-          }
-        ]
-      }
+  it("passes a topic-scoped prompt to the knowledge enrichment LLM request", async function () {
+    mockKnowledgeDecision({
+      shouldRetrieve: true,
+      ragMode: "answer"
     });
-    expect(request.queryText).toContain(
-      "Support issue: Android push notifications are not received"
+
+    const plan = await planKnowledgeEnrichment(buildInput());
+
+    expect(plan.route).toBe("catalog_and_rag");
+    expect(requestKnowledgeEnrichmentPlanMock).toHaveBeenCalledTimes(1);
+
+    const request = requestKnowledgeEnrichmentPlanMock.mock.calls[0]?.[0];
+    const serializedPrompt = JSON.stringify(request.prompt);
+
+    expect(serializedPrompt).toContain(
+      "Android push notifications are not received for new emails."
     );
-    expect(request.queryText).toContain("Environment: Android");
-    expect(request.queryText).toContain(
-      "Already tried: Enabled notification permissions (failed)."
+    expect(serializedPrompt).toContain(
+      "I do not receive Android notifications when a new email arrives."
     );
-    expect(request.queryText).toContain(
-      "customer-facing information, customer-answerable questions"
-    );
-    expect(request.queryText).not.toContain("{");
+    expect(serializedPrompt).toContain("platform");
+    expect(serializedPrompt).toContain("Enabled notification permissions");
   });
 });
