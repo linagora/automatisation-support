@@ -1,0 +1,8 @@
+{
+  "label": "Twake Workplace Docker",
+  "position": 5,
+  "link": {
+    "type": "doc",
+    "id": "twake-workplace-docker/index"
+  }
+}

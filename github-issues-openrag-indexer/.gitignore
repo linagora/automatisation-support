@@ -1,0 +1,4 @@
+.env
+generated/
+*.log
+.DS_Store

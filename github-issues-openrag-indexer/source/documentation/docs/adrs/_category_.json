@@ -1,0 +1,8 @@
+{
+  "label": "ADRs",
+  "position": 10,
+  "link": {
+    "type": "doc",
+    "id": "adrs/index"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "runId": "20260707_094550",
+  "scenarioId": "real-duplicate-monthly-charge-cozy-easypark",
+  "providerMessageId": "20260707_094550__real-duplicate-monthly-charge-cozy-easypark__bot_001",
+  "localId": "delivery:matrix:!fake-real-duplicate-monthly-charge-cozy-easypark:example.org:@fake-real-duplicate-monthly-charge-cozy-easypark:example.org:20260707_094550__real-duplicate-monthly-charge-cozy-easypark__msg_001:0",
+  "roomId": "!fake-real-duplicate-monthly-charge-cozy-easypark:example.org",
+  "content": "Merci pour votre signalement concernant une double facturation mensuelle de 2,99 € par deux fournisseurs (CozyCloud et Easypark SARL Metz) depuis votre migration vers Twake. Pourriez-vous préciser s'il s'agit uniquement de documents en double ou également de paiements/débits en double ? Pourriez-vous également nous fournir des détails sur votre plan ou abonnement ? Si nous ne pouvons pas obtenir de réponse fiable après cela, nous devrons examiner ou enquêter sur le problème avec notre équipe de support.",
+  "deliveredAt": "2026-07-07T09:46:47.162Z"
+}
