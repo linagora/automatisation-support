@@ -23,6 +23,7 @@ describe("convertLiveMemoryContextToSupportTopicContextV2", function () {
             customerFacing: null,
             supportFacing: null
           },
+          unansweredRequestedFieldNames: ["error_message"],
           caseDetails: [
             {
               key: "platform",
@@ -67,6 +68,7 @@ describe("convertLiveMemoryContextToSupportTopicContextV2", function () {
             customerFacing: null,
             supportFacing: null
           },
+          unansweredRequestedFieldNames: ["error_message"],
           caseDetails: [
             {
               key: "platform",

@@ -7,6 +7,12 @@ import {
 import {
   requestTextSurfaceAnalysis
 } from "./requestTextSurfaceAnalysis";
+import {
+  LACK_COMPREHENSION_FALLBACK_CATEGORY,
+  SAFETY_SENSITIVE_FALLBACK_CATEGORY,
+  UNCLEAR_MESSAGE_SUBCATEGORY,
+  getStrongSecuritySurfaceSubcategory
+} from "../../support-catalog";
 
 import type {
   AnalyzeTextSurfaceInput,
@@ -15,33 +21,13 @@ import type {
   TurnAnalysisPlan
 } from "./typesAnalyzeTextSurface.types";
 
-const STRONG_SECURITY_PATTERN_TO_SUBCATEGORY = new Map<
-  string,
-  TextSurfaceStandardSubcategory
->([
-  [
-    "prompt_injection_attempt",
-    "prompt_injection_attempt"
-  ],
-  [
-    "internal_information_request",
-    "internal_information_request"
-  ],
-  [
-    "sensitive_data_request",
-    "sensitive_data_request"
-  ],
-  [
-    "credential_or_secret_leak",
-    "credential_or_secret_leak"
-  ]
-]);
+// Legacy implementation. The global pipeline now uses analyze-text-surface-optimized.
 
 function getStrongSecuritySubcategory(
   matchedPatternIds: string[]
 ): TextSurfaceStandardSubcategory | undefined {
   for (const patternId of matchedPatternIds) {
-    const subcategory = STRONG_SECURITY_PATTERN_TO_SUBCATEGORY.get(patternId);
+    const subcategory = getStrongSecuritySurfaceSubcategory(patternId);
 
     if (subcategory) {
       return subcategory;
@@ -61,7 +47,7 @@ function buildSafetySensitiveFallback(params: {
       {
         segmentId: "text_segment_1",
         verbatim: params.latestUserMessageContent,
-        category: "safety_sensitive",
+        category: SAFETY_SENSITIVE_FALLBACK_CATEGORY,
         standardSubcategory: params.standardSubcategory
       }
     ]
@@ -77,8 +63,8 @@ function buildLackComprehensionFallback(params: {
       {
         segmentId: "text_segment_1",
         verbatim: params.latestUserMessageContent,
-        category: "lack_comprehension",
-        standardSubcategory: "unclear_message"
+        category: LACK_COMPREHENSION_FALLBACK_CATEGORY,
+        standardSubcategory: UNCLEAR_MESSAGE_SUBCATEGORY
       }
     ]
   };

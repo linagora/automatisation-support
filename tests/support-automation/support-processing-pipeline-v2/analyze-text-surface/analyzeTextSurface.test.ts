@@ -140,7 +140,7 @@ describe("analyzeTextSurface", function () {
     );
   });
 
-  it("requests text surface analysis with the quickDecision preset", async function () {
+  it("requests text surface analysis with the standard preset", async function () {
     callLLMMock.mockResolvedValue({
       success: true,
       content: JSON.stringify({
@@ -160,7 +160,7 @@ describe("analyzeTextSurface", function () {
     expect(callLLMMock).toHaveBeenCalledWith(
       expect.any(Array),
       expect.objectContaining({
-        preset: "quickDecision",
+        preset: "standard",
         temperature: 0,
         maxTokens: 500,
         responseFormat: expect.objectContaining({

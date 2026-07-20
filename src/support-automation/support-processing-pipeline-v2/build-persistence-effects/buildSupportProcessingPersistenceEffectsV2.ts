@@ -35,6 +35,32 @@ function readSupportKnowledgeSummary(value: unknown): LiveMemoryTopicUpdate["sup
   return normalizeSupportKnowledgeSummary(value) ?? undefined;
 }
 
+function readStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const strings: string[] = [];
+
+  for (const item of value) {
+    if (typeof item !== "string" || item.trim() === "") {
+      continue;
+    }
+
+    const trimmed = item.trim();
+
+    if (seen.has(trimmed)) {
+      continue;
+    }
+
+    seen.add(trimmed);
+    strings.push(trimmed);
+  }
+
+  return strings;
+}
+
 function readNullableString(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== "" ? value : null;
 }
@@ -145,6 +171,12 @@ function snapshotToLiveMemoryTopic(
     ...(readSupportKnowledgeSummary(record.supportKnowledgeSummary)
       ? {
           supportKnowledgeSummary: readSupportKnowledgeSummary(record.supportKnowledgeSummary)
+        }
+      : {}),
+    ...(readStringArray(record.unansweredRequestedFieldNames).length > 0
+      ? {
+          unansweredRequestedFieldNames:
+            readStringArray(record.unansweredRequestedFieldNames)
         }
       : {})
   } as unknown as LiveMemoryTopicUpdate;

@@ -19,7 +19,7 @@ async function requestTextSurfaceAnalysis(
   try {
     const result = await callLLM(input.prompt.messages, {
       stage: "text_surface_analysis",
-      preset: "quickDecision",
+      preset: "standard",
       temperature: 0,
       maxTokens: 500,
       responseFormat: textSurfaceAnalysisResponseFormat

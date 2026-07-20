@@ -45,6 +45,32 @@ function nullableSupportKnowledgeSummary(value: unknown): LiveMemoryTopic["suppo
   return normalizeSupportKnowledgeSummary(value);
 }
 
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const strings: string[] = [];
+
+  for (const item of value) {
+    if (typeof item !== "string" || item.trim() === "") {
+      continue;
+    }
+
+    const trimmed = item.trim();
+
+    if (seen.has(trimmed)) {
+      continue;
+    }
+
+    seen.add(trimmed);
+    strings.push(trimmed);
+  }
+
+  return strings;
+}
+
 function normalizeUserState(value: unknown): LiveMemoryUserState {
   if (!isRecord(value)) {
     return DEFAULT_USER_STATE;
@@ -93,6 +119,12 @@ function normalizeTopic(value: unknown): LiveMemoryTopic | null {
       : [],
     ...(nullableSupportKnowledgeSummary(value.supportKnowledgeSummary)
       ? { supportKnowledgeSummary: nullableSupportKnowledgeSummary(value.supportKnowledgeSummary) as LiveMemoryTopic["supportKnowledgeSummary"] }
+      : {}),
+    ...(normalizeStringArray(value.unansweredRequestedFieldNames).length > 0
+      ? {
+          unansweredRequestedFieldNames:
+            normalizeStringArray(value.unansweredRequestedFieldNames) as LiveMemoryTopic["unansweredRequestedFieldNames"]
+        }
       : {})
   };
 }

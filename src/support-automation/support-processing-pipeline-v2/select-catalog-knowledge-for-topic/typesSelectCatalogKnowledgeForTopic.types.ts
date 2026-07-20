@@ -33,6 +33,10 @@ export type FormatSelectCatalogKnowledgeForTopicOutputInput = {
 
 export type RawSelectedCatalogKnowledgeForTopic = {
   selectedFieldNames?: unknown;
+  directQuestionGuidance?: unknown;
+  diagnosticFlow?: unknown;
+  sufficientlyQualified?: unknown;
+  reason?: unknown;
 };
 
 export type {

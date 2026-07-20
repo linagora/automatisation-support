@@ -29,6 +29,13 @@ const MODEL_DEFINITIONS: Record<string, LLMModelDefinition> = {
     defaultMaxEstimatedTotalTokens: 30000
   },
 
+  standard: {
+    envPrefix: "LLM_STANDARD",
+    defaultModel: "mistralai/mistral-small-3.2-24b-instruct",
+    defaultProvider: "mistral",
+    defaultMaxEstimatedTotalTokens: 5000
+  },
+
   quickDecision: {
     envPrefix: "LLM_QUICK",
     defaultModel: "mistralai/mistral-small-3.2-24b-instruct",

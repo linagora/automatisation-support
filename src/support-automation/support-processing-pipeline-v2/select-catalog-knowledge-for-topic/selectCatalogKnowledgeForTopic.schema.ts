@@ -17,12 +17,80 @@ const stringArraySchema = {
   }
 } as const;
 
+const directQuestionGuidanceSchema = {
+  anyOf: [
+    {
+      type: "null"
+    },
+    objectOf(
+      {
+        fieldNames: stringArraySchema,
+        guidance: {
+          type: "string"
+        },
+        reason: {
+          type: "string"
+        }
+      },
+      [
+        "fieldNames",
+        "guidance",
+        "reason"
+      ]
+    )
+  ]
+} as const;
+
+const diagnosticFlowSchema = {
+  anyOf: [
+    {
+      type: "null"
+    },
+    objectOf(
+      {
+        name: {
+          type: "string"
+        },
+        targetFieldNames: stringArraySchema,
+        attemptedActionsRelevant: {
+          type: "boolean"
+        },
+        guidance: {
+          type: "string"
+        },
+        reason: {
+          type: "string"
+        }
+      },
+      [
+        "name",
+        "targetFieldNames",
+        "attemptedActionsRelevant",
+        "guidance",
+        "reason"
+      ]
+    )
+  ]
+} as const;
+
 const selectedCatalogKnowledgeForTopicSchema = objectOf(
   {
-    selectedFieldNames: stringArraySchema
+    selectedFieldNames: stringArraySchema,
+    directQuestionGuidance: directQuestionGuidanceSchema,
+    diagnosticFlow: diagnosticFlowSchema,
+    sufficientlyQualified: {
+      type: "boolean"
+    },
+    reason: {
+      type: "string"
+    }
   },
   [
-    "selectedFieldNames"
+    "selectedFieldNames",
+    "directQuestionGuidance",
+    "diagnosticFlow",
+    "sufficientlyQualified",
+    "reason"
   ]
 );
 

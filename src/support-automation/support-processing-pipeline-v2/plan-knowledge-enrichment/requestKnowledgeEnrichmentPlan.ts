@@ -19,7 +19,7 @@ async function requestKnowledgeEnrichmentPlan(
   try {
     const result = await callLLM(input.prompt.messages, {
       stage: "knowledge_enrichment_plan",
-      preset: "quickDecision",
+      preset: "standard",
       temperature: 0,
       maxTokens: 350,
       responseFormat: knowledgeEnrichmentResponseFormat

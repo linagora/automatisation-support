@@ -51,6 +51,32 @@ function nullableSupportKnowledgeSummary(value: unknown): LiveMemoryTopic["suppo
   return normalizeSupportKnowledgeSummary(value);
 }
 
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const strings: string[] = [];
+
+  for (const item of value) {
+    if (typeof item !== "string" || item.trim() === "") {
+      continue;
+    }
+
+    const trimmed = item.trim();
+
+    if (seen.has(trimmed)) {
+      continue;
+    }
+
+    seen.add(trimmed);
+    strings.push(trimmed);
+  }
+
+  return strings;
+}
+
 function sanitizeEvidence(value: unknown): string {
   if (typeof value !== "string" || value.trim() === "" || value === "existing_topic") {
     return "";
@@ -138,6 +164,12 @@ function toLiveMemoryTopic(topic: LiveMemoryTopicUpdate): LiveMemoryTopic | null
       : [],
     ...(nullableSupportKnowledgeSummary(topicRecord.supportKnowledgeSummary)
       ? { supportKnowledgeSummary: nullableSupportKnowledgeSummary(topicRecord.supportKnowledgeSummary) as LiveMemoryTopic["supportKnowledgeSummary"] }
+      : {}),
+    ...(normalizeStringArray(topicRecord.unansweredRequestedFieldNames).length > 0
+      ? {
+          unansweredRequestedFieldNames:
+            normalizeStringArray(topicRecord.unansweredRequestedFieldNames) as LiveMemoryTopic["unansweredRequestedFieldNames"]
+        }
       : {})
   };
 }

@@ -1,10 +1,16 @@
 import type {
   ExtractableFieldDefinition,
+  KnowledgeEnrichmentPlan,
   MergedTopicSnapshot
 } from "../typesSupportProcessingPipelineV2.types";
 import {
+  CASE_DETAIL_FIELDS,
   CATEGORY_CANDIDATE_FIELD_NAMES,
+  getCandidateDiagnosticFlowsForCatalogSelection,
   getCandidateFieldsForCatalogSelection
+} from "../../support-catalog";
+import type {
+  CatalogDiagnosticFlow
 } from "../../support-catalog";
 
 type KnownTopicField = {
@@ -16,6 +22,7 @@ type KnownTopicField = {
 type TopicSelectorCandidateFields = {
   knownFields: KnownTopicField[];
   candidateFields: ExtractableFieldDefinition[];
+  candidateDiagnosticFlows: CatalogDiagnosticFlow[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -68,10 +75,15 @@ function buildKnownFields(topicSnapshot: MergedTopicSnapshot): KnownTopicField[]
 
 function buildCandidateFieldsForTopicSelector(params: {
   topicSnapshot: MergedTopicSnapshot;
+  knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
   extractableFieldCatalog: ExtractableFieldDefinition[];
 }): TopicSelectorCandidateFields {
   const catalogByName = new Map(params.extractableFieldCatalog.map((field) => {
     return [field.fieldName, field];
+  }));
+  const centralFieldByName = new Map<string, typeof CASE_DETAIL_FIELDS[number]>(
+    CASE_DETAIL_FIELDS.map((field) => {
+    return [field.key, field];
   }));
   const knownFields = buildKnownFields(params.topicSnapshot).filter((field) => {
     return catalogByName.has(field.fieldName);
@@ -80,21 +92,37 @@ function buildCandidateFieldsForTopicSelector(params: {
     return field.fieldName;
   }));
   const candidateFieldNames = getCandidateFieldsForCatalogSelection({
+    broadIntent: params.knowledgeEnrichmentPlan?.broadIntent?.mode,
+    broadCategoryHint: params.topicSnapshot.broadCategoryHint
+  });
+  const candidateDiagnosticFlows = getCandidateDiagnosticFlowsForCatalogSelection({
+    broadIntent: params.knowledgeEnrichmentPlan?.broadIntent?.mode,
     broadCategoryHint: params.topicSnapshot.broadCategoryHint
   });
   const candidateFields = candidateFieldNames.flatMap((fieldName) => {
     const field = catalogByName.get(fieldName);
+    const centralField = centralFieldByName.get(fieldName);
 
     if (!field || knownFieldNames.has(fieldName) || field.askableByUser === false) {
       return [];
     }
 
-    return [field];
+    return [{
+      ...field,
+      ...(centralField?.label ? { label: centralField.label } : {}),
+      ...(centralField?.extractionGuidance
+        ? { extractionGuidance: centralField.extractionGuidance }
+        : {}),
+      ...(centralField?.askGuidance
+        ? { askGuidance: centralField.askGuidance }
+        : {})
+    }];
   });
 
   return {
     knownFields,
-    candidateFields
+    candidateFields,
+    candidateDiagnosticFlows
   };
 }
 

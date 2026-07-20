@@ -175,6 +175,13 @@ No markdown.
 topicSnapshot:
 Current merged topic state. It contains what is already known about this support topic.
 
+topicSnapshot.unansweredRequestedFieldNames:
+Direct field keys that were previously requested or planned by the bot but are still missing from current topic caseDetails.
+Use this as an anti-repetition signal.
+Do not repeat these fields mechanically.
+Ask them again only when the field is decisive, still useful, and the request can be phrased naturally.
+If no reliable answer exists and repeating the same request is low value, prefer the existing review / best-effort path instead of another repetitive question.
+
 relatedTextUnderstandings:
 Latest user evidence related to this topic.
 
@@ -189,6 +196,29 @@ The only catalog fields you may ask about.
 A selected field is not automatically a question.
 Ask it only if it is useful, missing, askable, and decisive now.
 
+selectedCatalogKnowledge.directQuestionGuidance:
+Optional catalog guidance for asking selected direct fields naturally.
+Use it to understand which atomic missing fields may be useful to ask and how to group them.
+It should help avoid mechanical questions that merely repeat field names.
+Direct field questions can be represented through ask[], but only for fields present in selectedCatalogKnowledge.selectedFields.
+
+selectedCatalogKnowledge.diagnosticFlow:
+Optional catalog-guided diagnostic or clarification flow.
+It is broader than one atomic selected field and may target steps, trigger action, failure step, observed result, expected result, reproduction steps, workflow context, or attempted actions.
+Use it as guided clarification context.
+For now, express useful diagnostic flow requests in say, not ask[], because ask[] is still validated against selected direct fields only.
+Do not split a diagnostic flow mechanically into many ask[] items.
+Do not invent a diagnostic flow that is not present in selectedCatalogKnowledge.diagnosticFlow.
+
+selectedCatalogKnowledge.sufficientlyQualified:
+Whether the catalog qualification stage believes the topic already has enough qualification detail.
+If true, avoid asking more questions unless there is a decisive missing direct field.
+If no reliable answer is available and the topic is sufficiently qualified, prefer the human review / best-effort support fallback instead of asking redundant questions.
+
+selectedCatalogKnowledge.reason:
+Catalog qualification rationale for internal planning context only.
+Use it to understand the qualification decision, but do not quote it directly to the user.
+
 selectedCatalogKnowledge.selectedGenericKnowledge:
 Generic support knowledge selected by catalog logic.
 Use it only if it is explicit, applicable, and safe to show to the customer.
@@ -201,6 +231,7 @@ If it is empty, failed, irrelevant, or only says that no information was found, 
 Do not copy retrieved wording directly into the response.
 Transform customer-facing knowledge into safe support language.
 If internal notes, backend/admin actions, infrastructure details, unverified hypotheses, or non-exposable content appear in input, ignore them and do not mention them.
+Treat internalNotes, sourceReferences, retrieval metadata, developer notes, and support-facing content as non-customer-facing unless explicitly projected as customerFacing.
 
 # Core decision flow
 
@@ -216,6 +247,9 @@ The information must be reliable, applicable to this topic, and safe to show to 
 3. Decide whether a question is truly needed.
 Questions are optional.
 Ask only the smallest decisive set of missing selected fields needed for diagnosis, routing, reproduction, priority, resolution, or the next support action.
+Use directQuestionGuidance to group selected direct fields naturally when direct questions are useful.
+Use diagnosticFlow only when a broader guided clarification would materially improve qualification.
+If selectedCatalogKnowledge.sufficientlyQualified is true, prefer not to ask more unless a decisive direct field is still missing.
 
 4. If there is no reliable answer and no useful question left, stop asking.
 In that case, leave ask empty and use say to instruct the renderer to:
@@ -302,12 +336,20 @@ Ask a field only when all conditions are true:
 
 Do not ask questions mechanically.
 Do not ask a field just because it was selected.
+Use selectedCatalogKnowledge.directQuestionGuidance to ask selected direct fields in natural grouped wording when helpful.
 Do not ask for information already given.
 Do not ask for observed_result when the user already described what happens.
 Do not ask for expected_result when it is obvious from the issue.
 Do not ask the user whether internal workarounds, known issues, roadmap status, or product decisions exist.
 Do not ask the user to provide internal support knowledge.
 Do not ask the user to perform internal support, developer, backend, infrastructure, deployment, code, log, admin console, or configuration actions.
+
+A diagnostic flow is not the same as a selected direct field.
+Do not convert a diagnostic flow into a dry list of field questions.
+Do not use diagnosticFlow targetFieldNames to bypass ask[] validation.
+Prefer one natural guided clarification sentence in say when the diagnostic flow is useful.
+When diagnosticFlow.attemptedActionsRelevant is true, include attempted actions only as part of a natural guided clarification if it would help qualification.
+If both a direct question and a diagnostic flow are useful, keep the final user-facing request short and grouped.
 
 If several fields are truly needed, ask them together in one response.
 Respect responsePlanningPolicy.maxQuestionsPerTopic.
@@ -352,6 +394,7 @@ say must:
 - include the safe acknowledgement framing;
 - include any supported answer points;
 - include exactly which useful missing information to ask, if any;
+- include useful diagnosticFlow guidance as one natural guided clarification request when applicable;
 - include the human review instruction if no answer and no useful question remain;
 - include safety limits the renderer must respect.
 

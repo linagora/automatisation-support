@@ -5,8 +5,8 @@ import {
   planTurnAnalysis
 } from "./plan-turn-analysis/planTurnAnalysis";
 import {
-  analyzeTextSurface
-} from "./analyze-text-surface/analyzeTextSurface";
+  runAnalyzeTextSurface
+} from "./analyze-text-surface-optimized/runAnalyzeTextSurface";
 import {
   buildStandardResponseFragments
 } from "./build-standard-response-fragments/buildStandardResponseFragments";
@@ -52,6 +52,9 @@ import {
   toPlannerKnowledgeInput
 } from "./supportKnowledgeSummary";
 import {
+  buildUnansweredRequestedFieldNamesForTopic
+} from "./unansweredRequestedFields";
+import {
   buildSupportProcessingPersistenceEffectsV2
 } from "./build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 import {
@@ -60,6 +63,9 @@ import {
 import {
   assignTopicResponsePlanIds
 } from "./responsePlanIds";
+import {
+  buildTemporarySelectedCatalogKnowledge
+} from "../support-catalog";
 import type {
   AttachmentSurfaceAnalysis,
   AttachmentUnderstanding,
@@ -221,6 +227,26 @@ function shouldRunDeepTextAnalysis(
   }) === true;
 }
 
+async function analyzeTextSurface(
+  input: Parameters<typeof runAnalyzeTextSurface>[0]
+): Promise<TextSurfaceAnalysis> {
+  const output = await runAnalyzeTextSurface(input);
+
+  if (output.status === "analyzed") {
+    return {
+      userLanguage: output.userLanguage,
+      segments: output.segments
+    };
+  }
+
+  return {
+    status: "fallback",
+    fallbackReason: output.fallbackReason,
+    userLanguage: output.userLanguage,
+    segments: []
+  } as TextSurfaceAnalysis;
+}
+
 function shouldRunDeepAttachmentAnalysis(
   attachmentSurfaceAnalysis: AttachmentSurfaceAnalysis | undefined
 ): attachmentSurfaceAnalysis is AttachmentSurfaceAnalysis {
@@ -369,99 +395,6 @@ function buildTopicEvidence(params: {
 
 function buildTopicUserMessageContent(topicEvidence: TopicEvidence): string {
   return topicEvidence.topicSourceVerbatims.join(" ").trim();
-}
-
-function buildTemporarySelectedCatalogKnowledge(params: {
-  relatedTextUnderstandings: TextUnderstanding[];
-  relatedAttachmentUnderstandings: AttachmentUnderstanding[];
-}): unknown {
-  const selectedFieldNames = new Set<string>();
-
-  for (const understanding of params.relatedTextUnderstandings) {
-    const caseDetailKeys = new Set(
-      (understanding.caseDetails ?? []).map((detail) => detail.key)
-    );
-
-    for (const key of caseDetailKeys) {
-      selectedFieldNames.add(key);
-    }
-
-    if (understanding.broadCategoryHint === "billing") {
-      selectedFieldNames.add("duplicate_billing_impact");
-      selectedFieldNames.add("billing_issue_type");
-      selectedFieldNames.add("billing_date_or_period");
-      selectedFieldNames.add("amount");
-      selectedFieldNames.add("currency");
-    }
-
-    if (understanding.broadCategoryHint === "bug") {
-      selectedFieldNames.add("feature_or_page");
-      selectedFieldNames.add("trigger_action");
-      selectedFieldNames.add("error_message");
-      selectedFieldNames.add("observed_result");
-      selectedFieldNames.add("platform");
-      selectedFieldNames.add("browser");
-    }
-
-    if (understanding.broadCategoryHint === "access_security") {
-      selectedFieldNames.add("access_action");
-      selectedFieldNames.add("auth_method");
-      selectedFieldNames.add("account_status");
-      selectedFieldNames.add("error_message");
-    }
-
-    if (
-      caseDetailKeys.has("billing_issue_type") ||
-      caseDetailKeys.has("billing_date_or_period") ||
-      caseDetailKeys.has("amount") ||
-      caseDetailKeys.has("currency")
-    ) {
-      selectedFieldNames.add("duplicate_billing_impact");
-      selectedFieldNames.add("billing_issue_type");
-      selectedFieldNames.add("billing_date_or_period");
-      selectedFieldNames.add("amount");
-      selectedFieldNames.add("currency");
-    }
-
-    if (
-      caseDetailKeys.has("feature_or_page") ||
-      caseDetailKeys.has("trigger_action") ||
-      caseDetailKeys.has("error_message") ||
-      caseDetailKeys.has("observed_result")
-    ) {
-      selectedFieldNames.add("feature_or_page");
-      selectedFieldNames.add("trigger_action");
-      selectedFieldNames.add("error_message");
-      selectedFieldNames.add("observed_result");
-      selectedFieldNames.add("platform");
-      selectedFieldNames.add("browser");
-    }
-
-    if (
-      caseDetailKeys.has("access_action") ||
-      caseDetailKeys.has("auth_method") ||
-      caseDetailKeys.has("account_status")
-    ) {
-      selectedFieldNames.add("access_action");
-      selectedFieldNames.add("auth_method");
-      selectedFieldNames.add("account_status");
-      selectedFieldNames.add("error_message");
-    }
-  }
-
-  if (params.relatedAttachmentUnderstandings.length > 0) {
-    selectedFieldNames.add("visual_evidence");
-  }
-
-  return {
-    selectedFields: DEFAULT_SUPPORT_EXTRACTABLE_FIELD_CATALOG.filter(
-      (fieldDefinition) => {
-        return selectedFieldNames.has(fieldDefinition.fieldName);
-      }
-    ),
-    selectedGenericKnowledge: [],
-    scopeReason: "temporary_topic_catalog_selection"
-  };
 }
 
 async function reportProgress(
@@ -667,6 +600,7 @@ function emptySelectedCatalogKnowledge(
   reason: string
 ): SelectedCatalogKnowledgeForTopic {
   return {
+    selectedFieldNames: [],
     selectedFields: [],
     selectedGenericKnowledge: [],
     scopeReason: reason,
@@ -1078,6 +1012,7 @@ async function runSupportProcessingPipelineV2Internal(
               const selectorFields = topicBranchSource.topicSnapshot
                 ? buildCandidateFieldsForTopicSelector({
                     topicSnapshot: topicBranchSource.topicSnapshot,
+                    knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
                     extractableFieldCatalog
                   })
                 : undefined;
@@ -1090,12 +1025,17 @@ async function runSupportProcessingPipelineV2Internal(
                   topicUserMessageContent,
                   topicEvidence,
                   ...(topicBranchSource.topicSnapshot
-                    ? { topicSnapshot: topicBranchSource.topicSnapshot }
+                    ? {
+                        topicSnapshot: topicBranchSource.topicSnapshot
+                      }
                     : {}),
+                  knowledgeEnrichmentPlan: topicKnowledgeEnrichmentPlan,
                   ...(selectorFields
                     ? {
                         knownFields: selectorFields.knownFields,
-                        candidateFields: selectorFields.candidateFields
+                        candidateFields: selectorFields.candidateFields,
+                        candidateDiagnosticFlows:
+                          selectorFields.candidateDiagnosticFlows
                       }
                     : {}),
                   extractableFieldCatalog,
@@ -1321,10 +1261,36 @@ async function runSupportProcessingPipelineV2Internal(
           existing: snapshot.supportKnowledgeSummary,
           next: result?.topicRetrievedKnowledgeSynthesis?.supportKnowledgeSummary
         });
-
-        return supportKnowledgeSummary
+        const responsePlan = result
+          ? isUsableResponsePlan(result.topicResponsePlan)
+            ? result.topicResponsePlan
+            : buildFallbackTopicResponsePlan({
+                branchId: result.branchId,
+                topicId: result.topicId
+              })
+          : null;
+        const unansweredRequestedFieldNames = result && responsePlan
+          ? buildUnansweredRequestedFieldNamesForTopic({
+              snapshot,
+              topicResponsePlan: responsePlan,
+              previousUnansweredRequestedFieldNames:
+                snapshot.unansweredRequestedFieldNames
+            })
+          : snapshot.unansweredRequestedFieldNames ?? [];
+        const nextSnapshot = supportKnowledgeSummary
           ? { ...snapshot, supportKnowledgeSummary }
           : snapshot;
+
+        return unansweredRequestedFieldNames.length > 0
+          ? { ...nextSnapshot, unansweredRequestedFieldNames }
+          : (() => {
+              const {
+                unansweredRequestedFieldNames: _unansweredRequestedFieldNames,
+                ...snapshotWithoutUnansweredFields
+              } = nextSnapshot;
+
+              return snapshotWithoutUnansweredFields;
+            })();
       });
       // Legacy singular fields expose the first topic branch temporarily.
       knowledgeEnrichmentPlan =

@@ -112,6 +112,24 @@ const CASE_DETAIL_FIELD_DEFINITIONS = {
     extractionGuidance: "Extract the normal product action or event that reveals the issue, not troubleshooting attempts.",
     askGuidance: "Ask what action the user is trying to perform when the issue appears."
   },
+  failure_step: {
+    label: "Failure step",
+    description: "Precise step in the workflow where the issue appears or blocks the user.",
+    extractionGuidance: "Extract when the user identifies where in the flow the problem appears, such as after clicking, during login, at upload, or on a specific step.",
+    askGuidance: "Ask at which exact step the problem appears or blocks the workflow."
+  },
+  reproduction_steps: {
+    label: "Reproduction steps",
+    description: "Sequence of steps the user follows to reproduce or encounter the issue.",
+    extractionGuidance: "Extract when the user describes a sequence of actions that leads to the issue.",
+    askGuidance: "Ask the user to describe the exact steps they follow before the issue appears."
+  },
+  workflow_context: {
+    label: "Workflow context",
+    description: "Business or product workflow context in which the user is trying to complete an action.",
+    extractionGuidance: "Extract when the user explains the larger workflow, goal, or context around the requested action or issue.",
+    askGuidance: "Ask in which workflow, feature, or usage context the user is trying to achieve the result."
+  },
   error_message: {
     label: "Error message",
     description: "Exact error text, error code, warning, or blocking message displayed to the user.",

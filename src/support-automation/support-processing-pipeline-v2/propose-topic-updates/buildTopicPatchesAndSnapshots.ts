@@ -96,6 +96,39 @@ function supportKnowledgeSummaryFromUnknown(topic: unknown): MergedTopicSnapshot
   return normalizeSupportKnowledgeSummary(topic.supportKnowledgeSummary);
 }
 
+function unansweredRequestedFieldNamesFromUnknown(
+  topic: unknown
+): MergedTopicSnapshot["unansweredRequestedFieldNames"] | null {
+  if (!isRecord(topic)) {
+    return null;
+  }
+
+  if (!Array.isArray(topic.unansweredRequestedFieldNames)) {
+    return null;
+  }
+
+  const seen = new Set<string>();
+  const fieldNames = topic.unansweredRequestedFieldNames.flatMap((value) => {
+    if (typeof value !== "string" || value.trim() === "") {
+      return [];
+    }
+
+    const fieldName = value.trim();
+
+    if (seen.has(fieldName)) {
+      return [];
+    }
+
+    seen.add(fieldName);
+
+    return [fieldName];
+  });
+
+  return fieldNames.length > 0
+    ? fieldNames as MergedTopicSnapshot["unansweredRequestedFieldNames"]
+    : null;
+}
+
 function cleanEvidence(value: unknown): string {
   if (typeof value !== "string") {
     return "";
@@ -485,7 +518,13 @@ function buildSnapshot(params: {
       ? {}
       : {
           supportKnowledgeSummary:
-            supportKnowledgeSummaryFromUnknown(params.existingTopic)
+            supportKnowledgeSummaryFromUnknown(params.existingTopic),
+          ...(unansweredRequestedFieldNamesFromUnknown(params.existingTopic)
+            ? {
+                unansweredRequestedFieldNames:
+                  unansweredRequestedFieldNamesFromUnknown(params.existingTopic)
+              }
+            : {})
         }),
     sourceUnderstandingIds: params.patch.sourceUnderstandingIds,
     sourceVerbatims: params.patch.selectedSourceVerbatims,

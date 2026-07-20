@@ -869,7 +869,6 @@ describe("runSupportProcessingPipelineV2", function () {
     }
     expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
       expect.objectContaining({
-        targetLanguage: "fr",
         topicResponsePlans: expect.arrayContaining([
           expect.objectContaining({ topicId: 1 }),
           expect.objectContaining({ topicId: 2 })
@@ -905,7 +904,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         composedSupportResponsePlan,
-        targetLanguage: "en",
+        targetLanguage: "unknown",
         channel: input.latestUserMessage.channel
       })
     );
@@ -950,7 +949,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         composedSupportResponsePlan,
-        targetLanguage: "fr",
+        targetLanguage: "French",
         channel: input.latestUserMessage.channel
       })
     );
@@ -978,7 +977,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         composedSupportResponsePlan,
-        targetLanguage: "fr",
+        targetLanguage: "French",
         channel: buildInput().latestUserMessage.channel
       })
     );
@@ -1080,7 +1079,7 @@ describe("runSupportProcessingPipelineV2", function () {
         relatedSupportResponseCues: supportResponseCues
       }),
       recentInteractionContext: buildInput().recentInteractionContext,
-      targetLanguage: "fr",
+      targetLanguage: "French",
       extractableFieldCatalog: expect.arrayContaining([
         expect.objectContaining({
           fieldName: "account_status",
@@ -1094,7 +1093,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         topicUserMessageContent: "Login issue",
-        targetLanguage: "fr",
+        targetLanguage: "French",
         topicEvidence: expect.objectContaining({
           proposalId: topicUpdateProposals[0].proposalId,
           topicSourceVerbatims: ["Login issue"],
@@ -1116,7 +1115,7 @@ describe("runSupportProcessingPipelineV2", function () {
     );
   });
 
-  it("routes catalog_only without launching RAG", async function () {
+  it("runs catalog selection and skips RAG when enrichment route has no RAG", async function () {
     const info = vi.spyOn(console, "info").mockImplementation(() => {});
     const steps = buildSteps({
       planTurnAnalysis: vi.fn(async () => ({
@@ -1130,14 +1129,14 @@ describe("runSupportProcessingPipelineV2", function () {
     const output = await runSupportProcessingPipelineV2(buildInput(), steps);
 
     expect(steps.selectCatalogKnowledgeForTopic).toHaveBeenCalledTimes(1);
-    expect(steps.planKnowledgeEnrichment).not.toHaveBeenCalled();
+    expect(steps.planKnowledgeEnrichment).toHaveBeenCalledTimes(1);
     expect(steps.retrieveSupportKnowledge).not.toHaveBeenCalled();
     expect(steps.synthesizeRetrievedKnowledge).not.toHaveBeenCalled();
     expect(output.ragUsage).toEqual([
       expect.objectContaining({ status: "skipped_by_router" })
     ]);
     expect(info).toHaveBeenCalledWith(expect.stringContaining(
-      "[Knowledge routing] topicId="
+      "[Knowledge enrichment] topicId="
     ));
     expect(info).toHaveBeenCalledWith(expect.stringContaining(
       "status=skipped_by_router"
@@ -1145,7 +1144,7 @@ describe("runSupportProcessingPipelineV2", function () {
     info.mockRestore();
   });
 
-  it("routes none without launching catalog or RAG", async function () {
+  it("runs catalog selection for route none without launching RAG", async function () {
     const steps = buildSteps({
       planTurnAnalysis: vi.fn(async () => ({
         analyzeText: true,
@@ -1157,13 +1156,13 @@ describe("runSupportProcessingPipelineV2", function () {
 
     await runSupportProcessingPipelineV2(buildInput(), steps);
 
-    expect(steps.selectCatalogKnowledgeForTopic).not.toHaveBeenCalled();
-    expect(steps.planKnowledgeEnrichment).not.toHaveBeenCalled();
+    expect(steps.selectCatalogKnowledgeForTopic).toHaveBeenCalledTimes(1);
+    expect(steps.planKnowledgeEnrichment).toHaveBeenCalledTimes(1);
     expect(steps.retrieveSupportKnowledge).not.toHaveBeenCalled();
     expect(steps.synthesizeRetrievedKnowledge).not.toHaveBeenCalled();
   });
 
-  it("routes rag_only without launching catalog", async function () {
+  it("runs catalog selection and RAG for rag_only", async function () {
     const steps = buildSteps({
       planTurnAnalysis: vi.fn(async () => ({
         analyzeText: true,
@@ -1176,14 +1175,14 @@ describe("runSupportProcessingPipelineV2", function () {
 
     await runSupportProcessingPipelineV2(buildInput(), steps);
 
-    expect(steps.selectCatalogKnowledgeForTopic).not.toHaveBeenCalled();
+    expect(steps.selectCatalogKnowledgeForTopic).toHaveBeenCalledTimes(1);
     expect(steps.planKnowledgeEnrichment).toHaveBeenCalledTimes(1);
     expect(steps.retrieveSupportKnowledge).toHaveBeenCalledTimes(1);
     expect(steps.synthesizeRetrievedKnowledge).toHaveBeenCalledTimes(1);
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedCatalogKnowledge: expect.objectContaining({
-          selectedFields: []
+          scopeReason: "test_catalog_selection"
         })
       })
     );
@@ -1223,7 +1222,7 @@ describe("runSupportProcessingPipelineV2", function () {
     info.mockRestore();
   });
 
-  it("falls back to catalog_only when knowledge routing fails", async function () {
+  it("runs catalog selection and skips RAG for the default enrichment plan", async function () {
     const steps = buildSteps({
       planTurnAnalysis: vi.fn(async () => ({
         analyzeText: true,
@@ -1236,7 +1235,7 @@ describe("runSupportProcessingPipelineV2", function () {
     await runSupportProcessingPipelineV2(buildInput(), steps);
 
     expect(steps.selectCatalogKnowledgeForTopic).toHaveBeenCalledTimes(1);
-    expect(steps.planKnowledgeEnrichment).not.toHaveBeenCalled();
+    expect(steps.planKnowledgeEnrichment).toHaveBeenCalledTimes(1);
     expect(steps.retrieveSupportKnowledge).not.toHaveBeenCalled();
   });
 
@@ -1310,7 +1309,7 @@ describe("runSupportProcessingPipelineV2", function () {
 
     expect(output.topicResponsePlans).toHaveLength(1);
     expect(output.topicResponsePlans?.[0]).toMatchObject({
-      topicId: topicUpdateProposals[0].proposalId,
+      topicId: null,
       acknowledge: [],
       answer: [],
       ask: [],
@@ -1353,21 +1352,16 @@ describe("runSupportProcessingPipelineV2", function () {
 
     await runSupportProcessingPipelineV2(input, steps);
 
-    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
-      expect.objectContaining({
-        targetLanguage: "en"
-      })
-    );
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         composedSupportResponsePlan,
-        targetLanguage: "en",
+        targetLanguage: "English",
         channel: input.latestUserMessage.channel
       })
     );
   });
 
-  it("normalizes legacy Other surface languages before planner and renderer inputs", async function () {
+  it("passes legacy Other surface languages through planner and renderer inputs", async function () {
     const input = buildInput();
     input.latestUserMessage.content = "Guten mein freunde";
     const steps = buildSteps({
@@ -1386,18 +1380,13 @@ describe("runSupportProcessingPipelineV2", function () {
 
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
-        targetLanguage: "en"
-      })
-    );
-    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
-      expect.objectContaining({
-        targetLanguage: "en"
+        targetLanguage: "Other"
       })
     );
     expect(steps.renderSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         composedSupportResponsePlan,
-        targetLanguage: "en",
+        targetLanguage: "Other",
         channel: input.latestUserMessage.channel
       })
     );
@@ -1426,11 +1415,6 @@ describe("runSupportProcessingPipelineV2", function () {
     await runSupportProcessingPipelineV2(input, steps);
 
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
-      expect.objectContaining({
-        targetLanguage: "de"
-      })
-    );
-    expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
       expect.objectContaining({
         targetLanguage: "de"
       })
@@ -1984,12 +1968,12 @@ describe("runSupportProcessingPipelineV2", function () {
 
     expect(output.topicUpdateOps).toEqual(topicUpdateOps);
     expect(output.topicUpdateOps?.map((op) => [op.op, op.topicId])).toEqual([
-      ["update", "topic_1"],
-      ["update", "topic_2"]
+      ["update", 1],
+      ["update", 2]
     ]);
     expect(output.mergedTopicSnapshots?.map((snapshot) => {
       return snapshot.topicId;
-    })).toEqual(["topic_1", "topic_2"]);
+    })).toEqual([1, 2]);
     expect(output.topicResponsePlans).toHaveLength(2);
     expect(steps.composeSupportResponsePlan).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -2159,8 +2143,8 @@ describe("runSupportProcessingPipelineV2", function () {
 
     const output = await runSupportProcessingPipelineV2(input, steps);
 
-    expect(output.topicUpdateOps?.[0]?.topicId).toBe("topic_1");
-    expect(output.mergedTopicSnapshots?.[0]?.topicId).toBe("topic_1");
+    expect(output.topicUpdateOps?.[0]?.topicId).toBe(1);
+    expect(output.mergedTopicSnapshots?.[0]?.topicId).toBe(1);
     expect(output.persistenceEffects.liveMemoryUpdate.topics).toEqual([
       expect.objectContaining({
         topicId: 1,
@@ -2311,7 +2295,7 @@ describe("runSupportProcessingPipelineV2", function () {
           relatedTextUnderstandings: textUnderstandings
         }),
         selectedCatalogKnowledge: expect.objectContaining({
-          scopeReason: "test_catalog_selection"
+          scopeReason: "intentionally_not_available_to_rag_or_synthesis"
         })
       })
     );
@@ -2456,7 +2440,7 @@ describe("runSupportProcessingPipelineV2", function () {
     expect(steps.planSupportResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedCatalogKnowledge: expect.objectContaining({
-          scopeReason: "skipped_by_knowledge_enrichment:rag_only"
+          scopeReason: "test_catalog_selection"
         })
       })
     );
@@ -3214,14 +3198,14 @@ describe("runSupportProcessingPipelineV2", function () {
     const datasetSource = readFileSync(
       join(
         root,
-        "scripts/support-processing-pipeline-v2/textAnalysisDataset.ts"
+        "scripts/global-pipeline/dataset/textAnalysisDataset.ts"
       ),
       "utf8"
     );
     const runnerSource = readFileSync(
       join(
         root,
-        "scripts/support-processing-pipeline-v2/runTextAnalysisDataset.ts"
+        "scripts/archive/global-pipeline-v2-reorganized/global-pipeline-v2/runners/legacy/runTextAnalysisDataset.legacy.ts"
       ),
       "utf8"
     );
@@ -3269,7 +3253,6 @@ describe("runSupportProcessingPipelineV2", function () {
       { step: "analyzeSupportAttachments", status: "skipped" },
       { step: "proposeTopicUpdates", status: "skipped" },
       { step: "applyTopicUpdates", status: "skipped" },
-      { step: "planKnowledgeRouting", status: "skipped" },
       { step: "planKnowledgeEnrichment", status: "skipped" },
       { step: "selectCatalogKnowledgeForTopic", status: "skipped" },
       { step: "retrieveSupportKnowledge", status: "skipped" },
@@ -3311,8 +3294,7 @@ describe("runSupportProcessingPipelineV2", function () {
       step: "analyzeTextSurface",
       status: "completed",
       userLanguage: supportTextSurface.userLanguage,
-      rawUserLanguage: supportTextSurface.userLanguage,
-      normalizedResponseLanguage: "fr"
+      rawUserLanguage: supportTextSurface.userLanguage
     });
     expect(steps.renderSupportResponse).not.toHaveBeenCalled();
   });
@@ -3407,8 +3389,7 @@ describe("runSupportProcessingPipelineV2", function () {
         step: "analyzeTextSurface",
         status: "completed",
         userLanguage: "English",
-        rawUserLanguage: "English",
-        normalizedResponseLanguage: "en"
+        rawUserLanguage: "English"
       }
     ]);
   });

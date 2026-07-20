@@ -1,15 +1,19 @@
 import {
   CASE_DETAIL_FIELD_DEFINITIONS,
+  CASE_DETAIL_FIELDS,
   SUPPORT_METADATA_FIELD_DEFINITIONS,
   getCaseDetailFieldsByName,
   getSupportMetadataFieldsByName
 } from "./supportFields.catalog";
 
 import type {
+  BroadCategoryHint,
+  BroadIntentMode,
   StrictBroadCategoryHint,
   StrictBroadIntentMode,
   StrictSupportCaseDetailFieldName,
-  StrictSupportMetadataFieldName
+  StrictSupportMetadataFieldName,
+  SupportCaseDetailFieldName
 } from "./supportCatalog.types";
 
 // -----------------------------------------------------------------------------
@@ -404,6 +408,388 @@ const BROAD_INTENT_CANDIDATE_FIELD_NAMES = {
   ]
 } as const satisfies Record<StrictBroadIntentMode, readonly StrictSupportCaseDetailFieldName[]>;
 
+function getCandidateFieldsForCatalogSelection(params: {
+  broadIntent?: BroadIntentMode | null;
+  broadCategoryHint?: BroadCategoryHint | null;
+}): string[] {
+  const byIntent = params.broadIntent &&
+    params.broadIntent in BROAD_INTENT_CANDIDATE_FIELD_NAMES
+    ? BROAD_INTENT_CANDIDATE_FIELD_NAMES[
+        params.broadIntent as StrictBroadIntentMode
+      ]
+    : [];
+  const byCategory = params.broadCategoryHint &&
+    params.broadCategoryHint in CATEGORY_CANDIDATE_FIELD_NAMES
+    ? CATEGORY_CANDIDATE_FIELD_NAMES[
+        params.broadCategoryHint as StrictBroadCategoryHint
+      ]
+    : CATEGORY_CANDIDATE_FIELD_NAMES.other;
+
+  return Array.from(new Set([
+    ...byIntent,
+    ...byCategory
+  ]));
+}
+
+type CatalogDiagnosticFlowName =
+  | "issue_diagnostic"
+  | "access_diagnostic"
+  | "billing_diagnostic"
+  | "request_clarification";
+
+type CatalogDiagnosticFlowDefinition = {
+  label: string;
+  targetFieldNames: SupportCaseDetailFieldName[];
+  attemptedActionsRelevant?: boolean;
+  guidance: string;
+};
+
+type CatalogDiagnosticFlow = CatalogDiagnosticFlowDefinition & {
+  name: CatalogDiagnosticFlowName;
+};
+
+const CATALOG_DIAGNOSTIC_FLOW_DEFINITIONS = {
+  issue_diagnostic: {
+    label: "Issue diagnostic",
+    targetFieldNames: [
+      "trigger_action",
+      "failure_step",
+      "observed_result",
+      "expected_result",
+      "reproduction_steps",
+      "pre_problem_state"
+    ],
+    attemptedActionsRelevant: true,
+    guidance:
+      "Ask the user to describe the exact steps they follow, where the problem appears, what happens, what they expected, and whether they already tried anything."
+  },
+  access_diagnostic: {
+    label: "Access diagnostic",
+    targetFieldNames: [
+      "access_action",
+      "auth_method",
+      "failure_step",
+      "error_message",
+      "account_status"
+    ],
+    attemptedActionsRelevant: true,
+    guidance:
+      "Ask where the access/login/account flow blocks, which authentication method is used, and whether an error or account status is shown."
+  },
+  billing_diagnostic: {
+    label: "Billing diagnostic",
+    targetFieldNames: [
+      "billing_issue_type",
+      "billing_date_or_period",
+      "amount",
+      "currency",
+      "reference_id",
+      "billing_or_payment_status"
+    ],
+    attemptedActionsRelevant: false,
+    guidance:
+      "Ask which billing/payment operation is concerned, the date or period, the amount/currency, and any invoice/payment/reference identifier."
+  },
+  request_clarification: {
+    label: "Request clarification",
+    targetFieldNames: [
+      "expected_result",
+      "user_impact",
+      "workflow_context",
+      "feature_or_page"
+    ],
+    attemptedActionsRelevant: false,
+    guidance:
+      "Ask what the user wants to achieve, in which workflow or feature, and what impact or improvement is expected."
+  }
+} as const satisfies Record<
+  CatalogDiagnosticFlowName,
+  CatalogDiagnosticFlowDefinition
+>;
+
+const CATALOG_DIAGNOSTIC_FLOW_NAMES_BY_INTENT_AND_CATEGORY = {
+  issue: {
+    default: [
+      "issue_diagnostic"
+    ],
+    access_security: [
+      "access_diagnostic"
+    ],
+    billing: [
+      "billing_diagnostic"
+    ]
+  },
+  request: {
+    default: [
+      "request_clarification"
+    ]
+  },
+  faq: {
+    default: []
+  },
+  unclear: {
+    default: []
+  }
+} as const satisfies Record<
+  StrictBroadIntentMode,
+  Partial<Record<StrictBroadCategoryHint | "default", readonly CatalogDiagnosticFlowName[]>>
+>;
+
+function materializeDiagnosticFlow(
+  name: CatalogDiagnosticFlowName
+): CatalogDiagnosticFlow {
+  return {
+    name,
+    ...CATALOG_DIAGNOSTIC_FLOW_DEFINITIONS[name]
+  };
+}
+
+function getCandidateDiagnosticFlowsForCatalogSelection(params: {
+  broadIntent?: BroadIntentMode | null;
+  broadCategoryHint?: BroadCategoryHint | null;
+}): CatalogDiagnosticFlow[] {
+  if (
+    !params.broadIntent ||
+    !(params.broadIntent in CATALOG_DIAGNOSTIC_FLOW_NAMES_BY_INTENT_AND_CATEGORY)
+  ) {
+    return [];
+  }
+
+  const flowNamesByCategory =
+    CATALOG_DIAGNOSTIC_FLOW_NAMES_BY_INTENT_AND_CATEGORY[
+      params.broadIntent as StrictBroadIntentMode
+    ];
+  const categoryFlowNames = params.broadCategoryHint &&
+    params.broadCategoryHint in flowNamesByCategory
+    ? flowNamesByCategory[
+        params.broadCategoryHint as keyof typeof flowNamesByCategory
+      ]
+    : undefined;
+  const flowNames = categoryFlowNames ?? flowNamesByCategory.default ?? [];
+
+  return Array.from(new Set(flowNames)).map(materializeDiagnosticFlow);
+}
+
+type SupportCaseDetailLike = {
+  key: string;
+  value: string | number | boolean | null;
+};
+
+type TemporarySelectedCatalogKnowledgeProjection = {
+  selectedFieldNames: string[];
+  selectedFields: {
+    fieldName: string;
+    description: string;
+    askableByUser?: boolean;
+  }[];
+  selectedGenericKnowledge: unknown[];
+  scopeReason: string;
+};
+
+type SupportKnowledgeRetrievalFiltersProjection = {
+  productOrService?: string;
+  featureOrPage?: string;
+  platform?: string;
+  operatingSystem?: string;
+};
+
+const TEMPORARY_SELECTED_CATALOG_BROAD_CATEGORY_FIELD_NAMES = {
+  billing: [
+    "duplicate_billing_impact",
+    "billing_issue_type",
+    "billing_date_or_period",
+    "amount",
+    "currency"
+  ],
+  bug: [
+    "feature_or_page",
+    "trigger_action",
+    "error_message",
+    "observed_result",
+    "platform",
+    "browser"
+  ],
+  access_security: [
+    "access_action",
+    "auth_method",
+    "account_status",
+    "error_message"
+  ]
+} as const satisfies Partial<Record<
+  StrictBroadCategoryHint,
+  readonly StrictSupportCaseDetailFieldName[]
+>>;
+
+const TEMPORARY_SELECTED_CATALOG_TRIGGER_FIELD_NAMES = [
+  {
+    whenAnyFieldName: [
+      "billing_issue_type",
+      "billing_date_or_period",
+      "amount",
+      "currency"
+    ],
+    addFieldNames: TEMPORARY_SELECTED_CATALOG_BROAD_CATEGORY_FIELD_NAMES.billing
+  },
+  {
+    whenAnyFieldName: [
+      "feature_or_page",
+      "trigger_action",
+      "error_message",
+      "observed_result"
+    ],
+    addFieldNames: TEMPORARY_SELECTED_CATALOG_BROAD_CATEGORY_FIELD_NAMES.bug
+  },
+  {
+    whenAnyFieldName: [
+      "access_action",
+      "auth_method",
+      "account_status"
+    ],
+    addFieldNames:
+      TEMPORARY_SELECTED_CATALOG_BROAD_CATEGORY_FIELD_NAMES.access_security
+  }
+] as const;
+
+const SUPPORT_KNOWLEDGE_RETRIEVAL_FILTER_FIELD_NAMES = {
+  productOrService: [
+    "product_or_service"
+  ],
+  featureOrPage: [
+    "feature_or_page"
+  ],
+  platform: [
+    "platform",
+    "device"
+  ],
+  operatingSystem: [
+    "operating_system"
+  ]
+} as const satisfies Record<
+  keyof SupportKnowledgeRetrievalFiltersProjection,
+  readonly StrictSupportCaseDetailFieldName[]
+>;
+
+function toExtractableFieldDefinitionProjection(
+  field: typeof CASE_DETAIL_FIELDS[number]
+): TemporarySelectedCatalogKnowledgeProjection["selectedFields"][number] {
+  return {
+    fieldName: field.key,
+    description: field.description,
+    askableByUser: field.askable ?? true
+  };
+}
+
+function addFieldNames(
+  selectedFieldNames: Set<string>,
+  fieldNames: readonly string[]
+): void {
+  for (const fieldName of fieldNames) {
+    selectedFieldNames.add(fieldName);
+  }
+}
+
+function buildTemporarySelectedCatalogKnowledge(params: {
+  relatedTextUnderstandings: {
+    broadCategoryHint?: string | null;
+    caseDetails?: SupportCaseDetailLike[];
+  }[];
+  relatedAttachmentUnderstandings: unknown[];
+}): TemporarySelectedCatalogKnowledgeProjection {
+  const selectedFieldNames = new Set<string>();
+
+  for (const understanding of params.relatedTextUnderstandings) {
+    const caseDetailKeys = new Set(
+      (understanding.caseDetails ?? []).map((detail) => detail.key)
+    );
+
+    for (const key of caseDetailKeys) {
+      selectedFieldNames.add(key);
+    }
+
+    const categoryFieldNames = understanding.broadCategoryHint &&
+      understanding.broadCategoryHint in
+        TEMPORARY_SELECTED_CATALOG_BROAD_CATEGORY_FIELD_NAMES
+      ? TEMPORARY_SELECTED_CATALOG_BROAD_CATEGORY_FIELD_NAMES[
+          understanding.broadCategoryHint as keyof typeof TEMPORARY_SELECTED_CATALOG_BROAD_CATEGORY_FIELD_NAMES
+        ]
+      : undefined;
+
+    if (categoryFieldNames) {
+      addFieldNames(selectedFieldNames, categoryFieldNames);
+    }
+
+    for (const rule of TEMPORARY_SELECTED_CATALOG_TRIGGER_FIELD_NAMES) {
+      const shouldAddFields = rule.whenAnyFieldName.some((fieldName) => {
+        return caseDetailKeys.has(fieldName);
+      });
+
+      if (shouldAddFields) {
+        addFieldNames(selectedFieldNames, rule.addFieldNames);
+      }
+    }
+  }
+
+  if (params.relatedAttachmentUnderstandings.length > 0) {
+    selectedFieldNames.add("visual_evidence");
+  }
+
+  const selectedFields = CASE_DETAIL_FIELDS.filter((fieldDefinition) => {
+      return selectedFieldNames.has(fieldDefinition.key);
+    }).map(toExtractableFieldDefinitionProjection);
+
+  return {
+    selectedFieldNames: selectedFields.map((field) => field.fieldName),
+    selectedFields,
+    selectedGenericKnowledge: [],
+    scopeReason: "temporary_topic_catalog_selection"
+  };
+}
+
+function compactSupportKnowledgeFilterValue(
+  value: SupportCaseDetailLike["value"]
+): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const compacted = value.replace(/\s+/g, " ").trim();
+
+  return compacted.length > 0 ? compacted : undefined;
+}
+
+function findFirstDetailValueForFieldNames(
+  details: SupportCaseDetailLike[],
+  fieldNames: readonly string[]
+): string | undefined {
+  const allowedFieldNames = new Set(fieldNames);
+  const detail = details.find((candidate) => {
+    return allowedFieldNames.has(candidate.key);
+  });
+
+  return compactSupportKnowledgeFilterValue(detail?.value ?? null);
+}
+
+function buildSupportKnowledgeRetrievalFiltersFromCaseDetails(
+  details: SupportCaseDetailLike[]
+): SupportKnowledgeRetrievalFiltersProjection {
+  const filters: SupportKnowledgeRetrievalFiltersProjection = {};
+
+  for (const [filterKey, fieldNames] of Object.entries(
+    SUPPORT_KNOWLEDGE_RETRIEVAL_FILTER_FIELD_NAMES
+  ) as [
+    keyof SupportKnowledgeRetrievalFiltersProjection,
+    readonly string[]
+  ][]) {
+    const value = findFirstDetailValueForFieldNames(details, fieldNames);
+
+    if (value) {
+      filters[filterKey] = value;
+    }
+  }
+
+  return filters;
+}
+
 export {
   ALL_CASE_DETAIL_FIELD_NAMES,
   ANALYZE_SUPPORT_TEXT_CASE_DETAIL_FIELD_NAMES,
@@ -411,7 +797,10 @@ export {
   ANALYZE_SUPPORT_TEXT_SUPPORT_METADATA_FIELD_NAMES,
   ANALYZE_SUPPORT_TEXT_SUPPORT_METADATA_FIELDS,
   BROAD_INTENT_CANDIDATE_FIELD_NAMES,
+  CATALOG_DIAGNOSTIC_FLOW_DEFINITIONS,
+  CATALOG_DIAGNOSTIC_FLOW_NAMES_BY_INTENT_AND_CATEGORY,
   CATEGORY_CANDIDATE_FIELD_NAMES,
+  SUPPORT_KNOWLEDGE_RETRIEVAL_FILTER_FIELD_NAMES,
   SUPPORT_ACCESSIBILITY_FIELD_NAMES,
   SUPPORT_ACCESSIBILITY_FIELDS,
   SUPPORT_ACCESS_AND_AUTH_FIELD_NAMES,
@@ -436,5 +825,19 @@ export {
   SUPPORT_TECHNICAL_ENVIRONMENT_FIELD_NAMES,
   SUPPORT_TECHNICAL_ENVIRONMENT_FIELDS,
   SUPPORT_TEMPORALITY_AND_IMPACT_FIELD_NAMES,
-  SUPPORT_TEMPORALITY_AND_IMPACT_FIELDS
+  SUPPORT_TEMPORALITY_AND_IMPACT_FIELDS,
+  TEMPORARY_SELECTED_CATALOG_BROAD_CATEGORY_FIELD_NAMES,
+  TEMPORARY_SELECTED_CATALOG_TRIGGER_FIELD_NAMES,
+  buildSupportKnowledgeRetrievalFiltersFromCaseDetails,
+  getCandidateDiagnosticFlowsForCatalogSelection,
+  getCandidateFieldsForCatalogSelection,
+  buildTemporarySelectedCatalogKnowledge
+};
+
+export type {
+  CatalogDiagnosticFlow,
+  CatalogDiagnosticFlowDefinition,
+  CatalogDiagnosticFlowName,
+  SupportKnowledgeRetrievalFiltersProjection,
+  TemporarySelectedCatalogKnowledgeProjection
 };

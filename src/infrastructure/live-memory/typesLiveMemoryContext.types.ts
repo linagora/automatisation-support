@@ -3,6 +3,9 @@ import type {
   SupportAttemptedAction,
   SupportCaseDetail
 } from "../../support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+import type {
+  SupportCaseDetailFieldName
+} from "../../support-automation/support-catalog";
 
 export type LiveMemoryUserState = {
   status: "normal" | "watch" | "blocked";
@@ -18,6 +21,7 @@ export type LiveMemoryTopic = {
   caseDetails: SupportCaseDetail[];
   attemptedActions: SupportAttemptedAction[];
   supportKnowledgeSummary?: SupportKnowledgeSummary;
+  unansweredRequestedFieldNames?: SupportCaseDetailFieldName[];
 };
 
 export type LiveMemoryContext = {

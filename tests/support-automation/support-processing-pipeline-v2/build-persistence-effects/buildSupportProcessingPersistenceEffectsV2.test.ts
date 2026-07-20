@@ -124,4 +124,40 @@ describe("buildSupportProcessingPersistenceEffectsV2", function () {
       flags: ["matched_prompt_pattern:ignore_previous_instructions"]
     });
   });
+
+  it("copies unansweredRequestedFieldNames from topic snapshots into live memory updates", function () {
+    const effects = buildSupportProcessingPersistenceEffectsV2(buildInput({
+      mergedTopicSnapshots: [
+        {
+          snapshotId: "topic_4",
+          temporaryTopicId: null,
+          topicId: 4,
+          isNewTopic: false,
+          title: "Notifications Android",
+          broadCategoryHint: "bug",
+          summary: "Les notifications Android ne sont pas reçues.",
+          caseDetails: [
+            {
+              key: "platform",
+              value: "Android",
+              evidence: "Android"
+            }
+          ],
+          attemptedActions: [],
+          unansweredRequestedFieldNames: ["error_message", "amount"],
+          sourceUnderstandingIds: [],
+          sourceVerbatims: [],
+          sourceOpIndex: 0,
+          baseTopic: null
+        }
+      ]
+    }));
+
+    expect(
+      effects.liveMemoryUpdate.topics[0]?.unansweredRequestedFieldNames
+    ).toEqual(["error_message", "amount"]);
+    expect(effects.liveMemoryUpdate.topics[0]).not.toHaveProperty(
+      "qualificationSummary"
+    );
+  });
 });

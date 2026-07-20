@@ -4,29 +4,24 @@
       "topicId": 1,
       "title": "Double billing",
       "broadCategoryHint": "billing",
-      "summary": "The user reported a suspected duplicate charge and confirmed two payments for the same subscription. Invoice reference FAC-2026-7781 provided.",
+      "summary": "The user reported a suspected duplicate charge.",
       "caseDetails": [
         {
-          "key": "billing_issue_type",
-          "value": "duplicate_billing_impact",
-          "evidence": "deux prélèvements"
-        },
-        {
-          "key": "reference_id",
-          "value": "FAC-2026-7781",
-          "evidence": "FAC-2026-7781"
+          "key": "issue",
+          "value": "possible duplicate billing",
+          "evidence": "previous fake scenario seed"
         }
       ],
       "attemptedActions": [],
       "supportKnowledgeSummary": {
-        "summary": "Retrieval clarified possible technical causes for duplicate billing, including unhandled Stripe invoice events, SCA renewal gaps, and a misconfigured Stripe API wrapper. No customer-facing knowledge was found. Previous support knowledge remains empty.",
+        "summary": "Support knowledge lookup returned no usable customer-facing knowledge for this topic.",
         "customerFacing": null,
-        "supportFacing": "Possible causes for duplicate billing include unhandled Stripe invoice events (payment_succeeded, payment_failed), SCA renewal gaps without user notification, and a misconfigured Stripe API wrapper. The system only supports card payments. Investigate Stripe webhook handling and API configuration."
+        "supportFacing": null
       }
     }
   ],
-  "lastUserVerbatim": "Oui, j'ai bien deux prélèvements pour le même abonnement. La référence facture est FAC-2026-7781.",
-  "lastBotVerbatim": "Merci pour votre signalement concernant un double prélèvement pour votre abonnement. Je vois que vous avez mentionné la facture FAC-2026-7781. Pourriez-vous me préciser le plan ou l'abonnement concerné ainsi que le statut de facturation ou de paiement actuel lié à ce double prélèvement ?",
+  "lastUserVerbatim": "J'ai peut-être été facturé deux fois.",
+  "lastBotVerbatim": "Pouvez-vous confirmer si le double prélèvement concerne aussi le paiement ?",
   "userState": {
     "status": "normal",
     "flags": []

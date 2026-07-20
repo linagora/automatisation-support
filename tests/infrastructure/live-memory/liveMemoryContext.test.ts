@@ -522,6 +522,66 @@ describe("live memory context", function () {
     ).resolves.toEqual(context);
   });
 
+  it("persists and replaces unansweredRequestedFieldNames on live-memory topics", async function () {
+    const turnIdentity = {
+      channel: "matrix" as const,
+      conversationKey: buildLiveMemoryConversationKey({
+        channel: "matrix",
+        roomId: "!room:example.org",
+        threadId: null,
+        userId: "@user:example.org"
+      }),
+      roomId: "!room:example.org",
+      threadId: null,
+      userId: "@user:example.org"
+    };
+
+    await applyLiveMemoryUpdate({
+      turnIdentity,
+      liveMemoryUpdate: buildLiveMemoryUpdate({
+        topics: [
+          {
+            topicId: 1,
+            title: "Login problem",
+            broadCategoryHint: "access_security",
+            summary: "The user cannot log in.",
+            caseDetails: [],
+            attemptedActions: [],
+            unansweredRequestedFieldNames: ["error_message"]
+          }
+        ]
+      })
+    });
+
+    const context = await applyLiveMemoryUpdate({
+      turnIdentity,
+      liveMemoryUpdate: buildLiveMemoryUpdate({
+        topics: [
+          {
+            topicId: 1,
+            title: "Login problem",
+            broadCategoryHint: "access_security",
+            summary: "The user cannot log in.",
+            caseDetails: [
+              {
+                key: "error_message",
+                value: "Invalid password",
+                evidence: "Invalid password"
+              }
+            ],
+            attemptedActions: []
+          }
+        ]
+      })
+    });
+
+    expect(context.topics[0]?.unansweredRequestedFieldNames).toBeUndefined();
+    expect(context.topics[0]).not.toHaveProperty("qualificationSummary");
+    await expect(
+      readLiveMemoryContext(turnIdentity.conversationKey)
+    ).resolves.toEqual(context);
+  });
+
   it("keeps a Twake Chat desktop bug as one stable topic across short follow-up turns", async function () {
     const turnIdentity = {
       channel: "matrix" as const,

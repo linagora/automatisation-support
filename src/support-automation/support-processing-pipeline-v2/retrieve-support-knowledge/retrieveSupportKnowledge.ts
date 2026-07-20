@@ -4,6 +4,9 @@ import {
 import {
   HttpSupportKnowledgeRetriever
 } from "../../../infrastructure/rag/httpSupportKnowledgeRetriever";
+import {
+  buildSupportKnowledgeRetrievalFiltersFromCaseDetails
+} from "../../support-catalog";
 
 import type {
   KnowledgeChunk,
@@ -151,19 +154,6 @@ function normalizeAttemptedActions(
     : understandings.flatMap((understanding) => understanding.attemptedActions);
 }
 
-function findDetailValue(
-  details: SupportCaseDetail[],
-  patterns: RegExp[]
-): string | undefined {
-  const detail = details.find((candidate) => {
-    return patterns.some((pattern) => pattern.test(candidate.key));
-  });
-
-  return typeof detail?.value === "string"
-    ? compactText(detail.value)
-    : undefined;
-}
-
 function getSupportKnowledgeSummary(
   snapshot: MergedTopicSnapshot | undefined
 ): SupportKnowledgeSummary | null {
@@ -196,42 +186,24 @@ function buildFilters(params: {
   details: SupportCaseDetail[];
 }): RetrievalRequest["filters"] {
   const filters: RetrievalRequest["filters"] = {};
-  const productOrService = findDetailValue(params.details, [
-    /product/i,
-    /service/i,
-    /app/i
-  ]);
-  const featureOrPage = findDetailValue(params.details, [
-    /feature/i,
-    /page/i,
-    /screen/i,
-    /function/i
-  ]);
-  const platform = findDetailValue(params.details, [
-    /platform/i,
-    /device/i
-  ]);
-  const operatingSystem = findDetailValue(params.details, [
-    /operating.*system/i,
-    /\bos\b/i,
-    /android/i,
-    /ios/i
-  ]);
+  const catalogFilters = buildSupportKnowledgeRetrievalFiltersFromCaseDetails(
+    params.details
+  );
 
   if (params.broadCategoryHint) {
     filters.broadCategoryHint = params.broadCategoryHint;
   }
-  if (productOrService) {
-    filters.productOrService = productOrService;
+  if (catalogFilters.productOrService) {
+    filters.productOrService = catalogFilters.productOrService;
   }
-  if (featureOrPage) {
-    filters.featureOrPage = featureOrPage;
+  if (catalogFilters.featureOrPage) {
+    filters.featureOrPage = catalogFilters.featureOrPage;
   }
-  if (platform) {
-    filters.platform = platform;
+  if (catalogFilters.platform) {
+    filters.platform = catalogFilters.platform;
   }
-  if (operatingSystem) {
-    filters.operatingSystem = operatingSystem;
+  if (catalogFilters.operatingSystem) {
+    filters.operatingSystem = catalogFilters.operatingSystem;
   }
 
   return Object.keys(filters).length > 0 ? filters : undefined;

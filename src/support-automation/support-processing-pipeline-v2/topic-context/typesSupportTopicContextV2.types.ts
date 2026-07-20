@@ -1,6 +1,9 @@
 import type {
   SupportKnowledgeSummary
 } from "../typesSupportProcessingPipelineV2.types";
+import type {
+  SupportCaseDetailFieldName
+} from "../../support-catalog";
 
 export type SupportTopicContextCaseDetailV2 = {
   key: string;
@@ -22,6 +25,7 @@ export type SupportTopicContextTopicV2 = {
   caseDetails: SupportTopicContextCaseDetailV2[];
   attemptedActions: SupportTopicContextAttemptedActionV2[];
   supportKnowledgeSummary: SupportKnowledgeSummary | null;
+  unansweredRequestedFieldNames?: SupportCaseDetailFieldName[];
 };
 
 export type SupportTopicContextV2 = {

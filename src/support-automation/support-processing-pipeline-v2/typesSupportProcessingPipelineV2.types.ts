@@ -22,6 +22,13 @@ import type {
   TextSurfaceStandardSubcategory
 } from "./analyze-text-surface/textSurfaceAnalysis.taxonomy";
 import type {
+  BroadIntentMode,
+  CatalogDiagnosticFlow,
+  CatalogDiagnosticFlowName,
+  MessageKindValue,
+  SupportCaseDetailFieldName
+} from "../support-catalog";
+import type {
   BroadCategoryHint,
   CandidateFactSupport,
   ContextDependency,
@@ -164,6 +171,7 @@ export type LiveMemoryTopicUpdate = {
   caseDetails: LiveMemoryCaseDetail[];
   attemptedActions: LiveMemoryAttemptedAction[];
   supportKnowledgeSummary?: SupportKnowledgeSummary | null;
+  unansweredRequestedFieldNames?: SupportCaseDetailFieldName[];
 };
 
 export type LiveMemoryUserStateUpdate = {
@@ -225,7 +233,7 @@ export type AttachmentSurfaceAnalysis = {
 
 export type StandardResponseFragment = {
   category: SurfaceCategory;
-  standardSubcategory?: StandardSubcategory;
+  standardSubcategory?: string;
   sourceSegmentId?: string;
   sourceVerbatim?: string;
   content: string;
@@ -233,7 +241,10 @@ export type StandardResponseFragment = {
 
 export type ExtractableFieldDefinition = {
   fieldName: string;
+  label?: string;
   description: string;
+  extractionGuidance?: string;
+  askGuidance?: string;
   askableByUser?: boolean;
 };
 
@@ -244,15 +255,7 @@ export type TestedAction = {
 };
 
 export type SupportMessageKind = {
-  kind:
-    | "issue_report"
-    | "question"
-    | "action_request"
-    | "info_update"
-    | "confirmation"
-    | "denial"
-    | "feedback"
-    | "support_context";
+  kind: MessageKindValue;
   evidence: string;
 };
 
@@ -409,6 +412,7 @@ export type MergedTopicSnapshot = {
   caseDetails: SupportCaseDetail[];
   attemptedActions: SupportAttemptedAction[];
   supportKnowledgeSummary?: SupportKnowledgeSummary;
+  unansweredRequestedFieldNames?: SupportCaseDetailFieldName[];
   sourceUnderstandingIds: string[];
   sourceVerbatims: string[];
   sourceOpIndex: number;
@@ -558,6 +562,10 @@ export type RetrievalRequest = {
 export type KnowledgeEnrichmentPlan = {
   route: "none" | "catalog_only" | "rag_only" | "catalog_and_rag";
   reason: string;
+  broadIntent?: {
+    mode: BroadIntentMode;
+    reason?: string;
+  };
   retrievalRequests: RetrievalRequest[];
 };
 
@@ -714,20 +722,41 @@ export type SelectCatalogKnowledgeForTopicInput = {
   topicUserMessageContent: string;
   topicEvidence: TopicEvidence;
   topicSnapshot?: MergedTopicSnapshot;
+  knowledgeEnrichmentPlan?: KnowledgeEnrichmentPlan;
   knownFields?: {
     fieldName: string;
     value: unknown;
     evidence?: string;
   }[];
   candidateFields?: ExtractableFieldDefinition[];
+  candidateDiagnosticFlows?: CatalogDiagnosticFlow[];
   extractableFieldCatalog: ExtractableFieldDefinition[];
   recentInteractionContext?: unknown;
   targetLanguage?: string;
 };
 
+export type DirectQuestionGuidance = {
+  fieldNames: string[];
+  guidance: string;
+  reason: string;
+};
+
+export type SelectedDiagnosticFlow = {
+  name: CatalogDiagnosticFlowName;
+  targetFieldNames: string[];
+  attemptedActionsRelevant: boolean;
+  guidance: string;
+  reason: string;
+};
+
 export type SelectedCatalogKnowledgeForTopic = {
+  selectedFieldNames?: string[];
   selectedFields: ExtractableFieldDefinition[];
   selectedGenericKnowledge: unknown[];
+  directQuestionGuidance?: DirectQuestionGuidance | null;
+  diagnosticFlow?: SelectedDiagnosticFlow | null;
+  sufficientlyQualified?: boolean;
+  reason?: string;
   scopeReason: string;
   rejectedFieldNames: string[];
   warnings?: string[];

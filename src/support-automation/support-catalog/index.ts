@@ -31,7 +31,10 @@ export {
   ANALYZE_SUPPORT_TEXT_SUPPORT_METADATA_FIELD_NAMES,
   ANALYZE_SUPPORT_TEXT_SUPPORT_METADATA_FIELDS,
   BROAD_INTENT_CANDIDATE_FIELD_NAMES,
+  CATALOG_DIAGNOSTIC_FLOW_DEFINITIONS,
+  CATALOG_DIAGNOSTIC_FLOW_NAMES_BY_INTENT_AND_CATEGORY,
   CATEGORY_CANDIDATE_FIELD_NAMES,
+  SUPPORT_KNOWLEDGE_RETRIEVAL_FILTER_FIELD_NAMES,
   SUPPORT_ACCESSIBILITY_FIELD_NAMES,
   SUPPORT_ACCESSIBILITY_FIELDS,
   SUPPORT_ACCESS_AND_AUTH_FIELD_NAMES,
@@ -56,11 +59,16 @@ export {
   SUPPORT_TECHNICAL_ENVIRONMENT_FIELD_NAMES,
   SUPPORT_TECHNICAL_ENVIRONMENT_FIELDS,
   SUPPORT_TEMPORALITY_AND_IMPACT_FIELD_NAMES,
-  SUPPORT_TEMPORALITY_AND_IMPACT_FIELDS
+  SUPPORT_TEMPORALITY_AND_IMPACT_FIELDS,
+  TEMPORARY_SELECTED_CATALOG_BROAD_CATEGORY_FIELD_NAMES,
+  TEMPORARY_SELECTED_CATALOG_TRIGGER_FIELD_NAMES,
+  buildSupportKnowledgeRetrievalFiltersFromCaseDetails,
+  buildTemporarySelectedCatalogKnowledge,
+  getCandidateDiagnosticFlowsForCatalogSelection,
+  getCandidateFieldsForCatalogSelection
 } from "./supportFieldSelection.catalog";
 export {
   getAnalysisPromptFields,
-  getCandidateFieldsForCatalogSelection,
   getPlanKnowledgeEnrichmentPromptTaxonomy,
   getTopicUpdatePromptTaxonomy,
   renderBroadCategoryDefinitionsForPrompt,
@@ -69,6 +77,30 @@ export {
   renderFieldDefinitionsForPrompt,
   renderMessageKindDefinitionsForPrompt
 } from "./supportPromptProjections";
+export {
+  LACK_COMPREHENSION_FALLBACK_CATEGORY,
+  SAFETY_SENSITIVE_FALLBACK_CATEGORY,
+  STRONG_SECURITY_PATTERN_TO_SURFACE_SUBCATEGORY,
+  SURFACE_STANDARD_RESPONSE_INSTRUCTIONS,
+  TEXT_SURFACE_CATALOG,
+  TEXT_SURFACE_CATEGORIES,
+  TEXT_SURFACE_LACK_COMPREHENSION_SUBCATEGORIES,
+  TEXT_SURFACE_OUT_OF_SCOPE_SUBCATEGORIES,
+  TEXT_SURFACE_SAFETY_SENSITIVE_SUBCATEGORIES,
+  TEXT_SURFACE_STANDARD_INTERACTION_SUBCATEGORIES,
+  TEXT_SURFACE_SUBCATEGORIES_BY_CATEGORY,
+  UNCLEAR_MESSAGE_SUBCATEGORY,
+  UNSAFE_OR_SUSPICIOUS_CONTENT_SUBCATEGORY,
+  getStrongSecuritySurfaceSubcategory,
+  getSurfaceStandardResponseInstruction,
+  isStandardSurfaceCategory,
+  isSupportRelevantSurfaceCategory,
+  isValidSurfaceCategory,
+  isValidSurfaceSubcategoryForCategory,
+  renderSurfaceCategoryDefinitionsForPrompt,
+  renderSurfaceSubcategoryDefinitionsForPrompt,
+  renderSurfaceSubcategoryValuesForPrompt
+} from "./supportSurface.catalog";
 
 export type {
   SupportCatalogField,
@@ -93,3 +125,23 @@ export type {
 export type {
   PromptFieldDefinition
 } from "./supportPromptProjections";
+export type {
+  CatalogDiagnosticFlow,
+  CatalogDiagnosticFlowDefinition,
+  CatalogDiagnosticFlowName,
+  SupportKnowledgeRetrievalFiltersProjection,
+  TemporarySelectedCatalogKnowledgeProjection
+} from "./supportFieldSelection.catalog";
+export type {
+  StandardSurfaceCategory,
+  SurfaceCategoryCatalogEntry,
+  SurfaceStandardResponseInstructionCatalog,
+  SurfaceSubcategoryCatalogEntry,
+  TextSurfaceCategory,
+  TextSurfaceLackComprehensionSubcategory,
+  TextSurfaceOutOfScopeSubcategory,
+  TextSurfaceSafetySensitiveSubcategory,
+  TextSurfaceStandardInteractionSubcategory,
+  TextSurfaceStandardSubcategory,
+  TextSurfaceSubcategoryFor
+} from "./supportSurface.catalog";

@@ -12,15 +12,9 @@ import {
 } from "./supportTaxonomy.catalog";
 import {
   ANALYZE_SUPPORT_TEXT_CASE_DETAIL_FIELD_NAMES,
-  ANALYZE_SUPPORT_TEXT_SUPPORT_METADATA_FIELD_NAMES,
-  BROAD_INTENT_CANDIDATE_FIELD_NAMES,
-  CATEGORY_CANDIDATE_FIELD_NAMES
+  ANALYZE_SUPPORT_TEXT_SUPPORT_METADATA_FIELD_NAMES
 } from "./supportFieldSelection.catalog";
 
-import type {
-  StrictBroadCategoryHint,
-  StrictBroadIntentMode
-} from "./supportCatalog.types";
 import type {
   SupportCatalogField
 } from "./supportFields.catalog";
@@ -88,29 +82,6 @@ function getPlanKnowledgeEnrichmentPromptTaxonomy(): {
   };
 }
 
-function getCandidateFieldsForCatalogSelection(params: {
-  broadCategoryHint?: string | null;
-  broadIntent?: string | null;
-}): string[] {
-  const byCategory = params.broadCategoryHint &&
-    params.broadCategoryHint in CATEGORY_CANDIDATE_FIELD_NAMES
-    ? CATEGORY_CANDIDATE_FIELD_NAMES[
-        params.broadCategoryHint as StrictBroadCategoryHint
-      ]
-    : CATEGORY_CANDIDATE_FIELD_NAMES.other;
-  const byIntent = params.broadIntent &&
-    params.broadIntent in BROAD_INTENT_CANDIDATE_FIELD_NAMES
-    ? BROAD_INTENT_CANDIDATE_FIELD_NAMES[
-        params.broadIntent as StrictBroadIntentMode
-      ]
-    : [];
-
-  return Array.from(new Set([
-    ...byCategory,
-    ...byIntent
-  ]));
-}
-
 function renderFieldDefinitionsForPrompt(
   fields: readonly PromptFieldDefinition[]
 ): string {
@@ -165,7 +136,6 @@ function renderMessageKindDefinitionsForPrompt(): string {
 
 export {
   getAnalysisPromptFields,
-  getCandidateFieldsForCatalogSelection,
   getPlanKnowledgeEnrichmentPromptTaxonomy,
   getTopicUpdatePromptTaxonomy,
   renderBroadCategoryDefinitionsForPrompt,

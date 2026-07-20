@@ -1,6 +1,11 @@
 import type {
-  ExtractableFieldDefinition
+  DirectQuestionGuidance,
+  ExtractableFieldDefinition,
+  SelectedDiagnosticFlow
 } from "../typesSupportProcessingPipelineV2.types";
+import type {
+  CatalogDiagnosticFlow
+} from "../../support-catalog";
 import type {
   FormatSelectCatalogKnowledgeForTopicOutputInput,
   RawSelectedCatalogKnowledgeForTopic,
@@ -56,8 +61,13 @@ function buildFallback(
   reason: string
 ): SelectedCatalogKnowledgeForTopic {
   return {
+    selectedFieldNames: [],
     selectedFields: [],
     selectedGenericKnowledge: [],
+    directQuestionGuidance: null,
+    diagnosticFlow: null,
+    sufficientlyQualified: false,
+    reason,
     scopeReason: `catalog_selection_fallback:${reason}`,
     rejectedFieldNames: [],
     warnings: [reason]
@@ -69,13 +79,15 @@ function resolveSelectorFields(
 ): {
   knownFieldNames: Set<string>;
   candidateFields: ExtractableFieldDefinition[];
+  candidateDiagnosticFlows: CatalogDiagnosticFlow[];
 } {
   if (input.knownFields && input.candidateFields) {
     return {
       knownFieldNames: new Set(input.knownFields.map((field) => {
         return field.fieldName;
       })),
-      candidateFields: input.candidateFields
+      candidateFields: input.candidateFields,
+      candidateDiagnosticFlows: input.candidateDiagnosticFlows ?? []
     };
   }
 
@@ -86,12 +98,14 @@ function resolveSelectorFields(
       knownFieldNames: new Set(input.knownFields?.map((field) => {
         return field.fieldName;
       }) ?? []),
-      candidateFields: input.candidateFields ?? input.extractableFieldCatalog
+      candidateFields: input.candidateFields ?? input.extractableFieldCatalog,
+      candidateDiagnosticFlows: input.candidateDiagnosticFlows ?? []
     };
   }
 
   const selectorFields = buildCandidateFieldsForTopicSelector({
     topicSnapshot,
+    knowledgeEnrichmentPlan: input.knowledgeEnrichmentPlan,
     extractableFieldCatalog: input.extractableFieldCatalog
   });
 
@@ -101,7 +115,94 @@ function resolveSelectorFields(
         return field.fieldName;
       })
     ),
-    candidateFields: input.candidateFields ?? selectorFields.candidateFields
+    candidateFields: input.candidateFields ?? selectorFields.candidateFields,
+    candidateDiagnosticFlows: input.candidateDiagnosticFlows ??
+      selectorFields.candidateDiagnosticFlows
+  };
+}
+
+function parseDirectQuestionGuidance(params: {
+  rawValue: unknown;
+  validSelectedFieldNames: string[];
+}): DirectQuestionGuidance | null {
+  if (params.rawValue === null || params.rawValue === undefined) {
+    return null;
+  }
+
+  if (!isRecord(params.rawValue)) {
+    return null;
+  }
+
+  const fieldNames = stringArray(params.rawValue.fieldNames);
+  const guidance = params.rawValue.guidance;
+  const reason = params.rawValue.reason;
+
+  if (
+    !fieldNames ||
+    typeof guidance !== "string" ||
+    typeof reason !== "string"
+  ) {
+    return null;
+  }
+
+  const validFieldNames = new Set(params.validSelectedFieldNames);
+  const filteredFieldNames = fieldNames.filter((fieldName) => {
+    return validFieldNames.has(fieldName);
+  });
+
+  if (filteredFieldNames.length === 0) {
+    return null;
+  }
+
+  return {
+    fieldNames: filteredFieldNames,
+    guidance,
+    reason
+  };
+}
+
+function parseDiagnosticFlow(params: {
+  rawValue: unknown;
+  candidateDiagnosticFlows: CatalogDiagnosticFlow[];
+}): SelectedDiagnosticFlow | null {
+  if (params.rawValue === null || params.rawValue === undefined) {
+    return null;
+  }
+
+  if (!isRecord(params.rawValue) || typeof params.rawValue.name !== "string") {
+    return null;
+  }
+
+  const rawFlow = params.rawValue;
+  const candidateFlow = params.candidateDiagnosticFlows.find((flow) => {
+    return flow.name === rawFlow.name;
+  });
+
+  if (!candidateFlow) {
+    return null;
+  }
+
+  const targetFieldNames = stringArray(rawFlow.targetFieldNames);
+  const guidance = rawFlow.guidance;
+  const reason = rawFlow.reason;
+
+  if (
+    !targetFieldNames ||
+    typeof guidance !== "string" ||
+    typeof reason !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    name: candidateFlow.name,
+    targetFieldNames: targetFieldNames.filter((fieldName) => {
+      return candidateFlow.targetFieldNames.includes(fieldName);
+    }),
+    attemptedActionsRelevant:
+      rawFlow.attemptedActionsRelevant === true,
+    guidance,
+    reason
   };
 }
 
@@ -150,10 +251,26 @@ function formatSelectCatalogKnowledgeForTopicOutput(
     fieldNames: Array.from(new Set(validSelectedFieldNames)),
     catalog: selectorFields.candidateFields
   });
+  const finalSelectedFieldNames = selectedFields.map((field) => {
+    return field.fieldName;
+  });
+  const diagnosticFlow = parseDiagnosticFlow({
+    rawValue: raw.diagnosticFlow,
+    candidateDiagnosticFlows: selectorFields.candidateDiagnosticFlows
+  });
+  const directQuestionGuidance = parseDirectQuestionGuidance({
+    rawValue: raw.directQuestionGuidance,
+    validSelectedFieldNames: finalSelectedFieldNames
+  });
 
   return {
+    selectedFieldNames: finalSelectedFieldNames,
     selectedFields,
     selectedGenericKnowledge: [],
+    directQuestionGuidance,
+    diagnosticFlow,
+    sufficientlyQualified: raw.sufficientlyQualified === true,
+    reason: typeof raw.reason === "string" ? raw.reason : undefined,
     scopeReason: "selected_candidate_fields",
     rejectedFieldNames: [],
     warnings: []

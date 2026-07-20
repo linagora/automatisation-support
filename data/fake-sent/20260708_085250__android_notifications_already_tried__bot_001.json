@@ -1,0 +1,9 @@
+{
+  "runId": "20260708_085250",
+  "scenarioId": "android_notifications_already_tried",
+  "providerMessageId": "20260708_085250__android_notifications_already_tried__bot_001",
+  "localId": "delivery:matrix:!fake-android-notifications:example.org:@fake-android-notifications:example.org:20260708_085250__android_notifications_already_tried__msg_001:0",
+  "roomId": "!fake-android-notifications:example.org",
+  "content": "Je vois que les notifications sont activées et que le mode Ne pas déranger est désactivé, mais que vous ne les recevez toujours pas. Pourriez-vous vérifier les restrictions d'optimisation de la batterie et votre statut de connexion au compte ? Ce problème nécessite une revue ou une investigation par notre équipe de support.",
+  "deliveredAt": "2026-07-08T08:53:28.678Z"
+}

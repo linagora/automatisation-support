@@ -18,9 +18,13 @@ import {
 import {
   selectCatalogKnowledgeForTopicResponseFormat
 } from "../../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic.schema";
+import {
+  getCandidateDiagnosticFlowsForCatalogSelection
+} from "../../../../src/support-automation/support-catalog";
 
 import type {
   ExtractableFieldDefinition,
+  KnowledgeEnrichmentPlan,
   MergedTopicSnapshot,
   TextUnderstanding,
   TopicEvidence
@@ -161,18 +165,34 @@ function input(
   };
 }
 
+function enrichmentPlan(
+  mode: NonNullable<KnowledgeEnrichmentPlan["broadIntent"]>["mode"]
+): KnowledgeEnrichmentPlan {
+  return {
+    route: "catalog_only",
+    reason: "test",
+    broadIntent: {
+      mode,
+      reason: "test"
+    },
+    retrievalRequests: []
+  };
+}
+
 function withSelectorFields(
   baseInput: SelectCatalogKnowledgeForTopicInput
 ): SelectCatalogKnowledgeForTopicInput {
   const selectorFields = buildCandidateFieldsForTopicSelector({
     topicSnapshot: baseInput.topicSnapshot ?? baseInput.topicEvidence.topicSnapshot!,
+    knowledgeEnrichmentPlan: baseInput.knowledgeEnrichmentPlan,
     extractableFieldCatalog: baseInput.extractableFieldCatalog
   });
 
   return {
     ...baseInput,
     knownFields: selectorFields.knownFields,
-    candidateFields: selectorFields.candidateFields
+    candidateFields: selectorFields.candidateFields,
+    candidateDiagnosticFlows: selectorFields.candidateDiagnosticFlows
   };
 }
 
@@ -256,6 +276,49 @@ describe("selectCatalogKnowledgeForTopic", function () {
       ]));
   });
 
+  it("returns issue diagnostic flow candidates for issue topics", function () {
+    expect(getCandidateDiagnosticFlowsForCatalogSelection({
+      broadIntent: "issue",
+      broadCategoryHint: "bug"
+    }).map((flow) => flow.name)).toEqual([
+      "issue_diagnostic"
+    ]);
+  });
+
+  it("returns access diagnostic flow candidates for access issue topics", function () {
+    expect(getCandidateDiagnosticFlowsForCatalogSelection({
+      broadIntent: "issue",
+      broadCategoryHint: "access_security"
+    }).map((flow) => flow.name)).toEqual([
+      "access_diagnostic"
+    ]);
+  });
+
+  it("returns billing diagnostic flow candidates for billing issue topics", function () {
+    expect(getCandidateDiagnosticFlowsForCatalogSelection({
+      broadIntent: "issue",
+      broadCategoryHint: "billing"
+    }).map((flow) => flow.name)).toEqual([
+      "billing_diagnostic"
+    ]);
+  });
+
+  it("returns request clarification for request topics", function () {
+    expect(getCandidateDiagnosticFlowsForCatalogSelection({
+      broadIntent: "request",
+      broadCategoryHint: "feature_request"
+    }).map((flow) => flow.name)).toEqual([
+      "request_clarification"
+    ]);
+  });
+
+  it("returns no diagnostic flow candidate for faq topics by default", function () {
+    expect(getCandidateDiagnosticFlowsForCatalogSelection({
+      broadIntent: "faq",
+      broadCategoryHint: "question_faq"
+    })).toEqual([]);
+  });
+
   it("drops known fields selected by the raw LLM output", function () {
     const baseInput = withSelectorFields(input({
       topicSnapshot: snapshot({
@@ -319,6 +382,101 @@ describe("selectCatalogKnowledgeForTopic", function () {
     expect(output.selectedFields.map((item) => item.fieldName)).toEqual([
       "duplicate_billing_impact"
     ]);
+  });
+
+  it("accepts selectedFieldNames plus diagnosticFlow from the raw LLM output", function () {
+    const baseInput = withSelectorFields(input({
+      knowledgeEnrichmentPlan: enrichmentPlan("issue"),
+      topicSnapshot: snapshot({
+        broadCategoryHint: "access_security"
+      })
+    }));
+    const output = formatSelectCatalogKnowledgeForTopicOutput({
+      input: baseInput,
+      rawSelectCatalogKnowledgeForTopic: completed({
+        selectedFieldNames: [
+          "access_action"
+        ],
+        directQuestionGuidance: {
+          fieldNames: [
+            "access_action"
+          ],
+          guidance: "Ask which access action is blocked.",
+          reason: "The action is missing."
+        },
+        diagnosticFlow: {
+          name: "access_diagnostic",
+          targetFieldNames: [
+            "access_action",
+            "auth_method",
+            "failure_step",
+            "error_message",
+            "account_status"
+          ],
+          attemptedActionsRelevant: true,
+          guidance:
+            "Ask where the access/login/account flow blocks, which authentication method is used, and whether an error or account status is shown.",
+          reason: "The access issue needs guided qualification."
+        },
+        sufficientlyQualified: false,
+        reason: "Missing access flow details."
+      })
+    });
+
+    expect(output.selectedFieldNames).toEqual([
+      "access_action"
+    ]);
+    expect(output.selectedFields.map((item) => item.fieldName)).toEqual([
+      "access_action"
+    ]);
+    expect(output.directQuestionGuidance).toEqual({
+      fieldNames: [
+        "access_action"
+      ],
+      guidance: "Ask which access action is blocked.",
+      reason: "The action is missing."
+    });
+    expect(output.diagnosticFlow).toEqual({
+      name: "access_diagnostic",
+      targetFieldNames: [
+        "access_action",
+        "auth_method",
+        "failure_step",
+        "error_message",
+        "account_status"
+      ],
+      attemptedActionsRelevant: true,
+      guidance:
+        "Ask where the access/login/account flow blocks, which authentication method is used, and whether an error or account status is shown.",
+      reason: "The access issue needs guided qualification."
+    });
+    expect(output.sufficientlyQualified).toBe(false);
+    expect(output.reason).toBe("Missing access flow details.");
+  });
+
+  it("preserves backward compatibility when diagnosticFlow is absent", function () {
+    const baseInput = withSelectorFields(input({
+      topicSnapshot: snapshot({
+        broadCategoryHint: "billing"
+      })
+    }));
+    const output = formatSelectCatalogKnowledgeForTopicOutput({
+      input: baseInput,
+      rawSelectCatalogKnowledgeForTopic: completed({
+        selectedFieldNames: [
+          "billing_issue_type"
+        ]
+      })
+    });
+
+    expect(output.selectedFieldNames).toEqual([
+      "billing_issue_type"
+    ]);
+    expect(output.selectedFields.map((item) => item.fieldName)).toEqual([
+      "billing_issue_type"
+    ]);
+    expect(output.directQuestionGuidance).toBeNull();
+    expect(output.diagnosticFlow).toBeNull();
   });
 
   it("drops askable false fields", function () {
@@ -451,8 +609,77 @@ describe("selectCatalogKnowledgeForTopic", function () {
     expect(candidateFieldCount).toBeLessThan(catalog.length);
     expect(prompt).toContain('"knownFields"');
     expect(prompt).toContain('"candidateFields"');
+    expect(prompt).toContain('"candidateDiagnosticFlows"');
     expect(prompt).toContain('"duplicate_billing_impact"');
     expect(prompt).not.toContain('"account_status"');
     expect(prompt).not.toContain('"extractableFieldCatalog"');
+  });
+
+  it("renders unansweredRequestedFieldNames in the selector prompt when available", function () {
+    const baseInput = withSelectorFields(input({
+      topicSnapshot: snapshot({
+        broadCategoryHint: "access_security",
+        unansweredRequestedFieldNames: ["error_message"]
+      })
+    }));
+    const prompt = buildSelectCatalogKnowledgeForTopicPrompt(
+      baseInput
+    ).messages.map((message) => message.content).join("\n");
+
+    expect(prompt).toContain('"unansweredRequestedFields"');
+    expect(prompt).toContain('"fieldName": "error_message"');
+    expect(prompt).toContain('"label": "Error message"');
+    expect(prompt).not.toContain('"qualificationSummary"');
+  });
+
+  it("explains unanswered requested field anti-repeat rules in the selector prompt", function () {
+    const prompt = buildSelectCatalogKnowledgeForTopicPrompt(
+      withSelectorFields(input())
+    ).messages.map((message) => message.content).join("\n");
+
+    expect(prompt).toContain(
+      "topicSnapshot.unansweredRequestedFieldNames is internal memory for this same topic"
+    );
+    expect(prompt).toContain(
+      "direct field keys that were already requested or planned in previous bot turns but are still missing from current caseDetails"
+    );
+    expect(prompt).toContain(
+      "avoid asking it again immediately unless it is decisive for support and still useful"
+    );
+    expect(prompt).toContain(
+      "Do not reselect a direct field only because it is still theoretically useful"
+    );
+  });
+
+  it("renders an empty unansweredRequestedFields list when no previous anti-repeat memory exists", function () {
+    const prompt = buildSelectCatalogKnowledgeForTopicPrompt(
+      withSelectorFields(input())
+    ).messages.map((message) => message.content).join("\n");
+
+    expect(prompt).toContain('"unansweredRequestedFields": []');
+    expect(prompt).not.toContain('"qualificationSummary"');
+  });
+
+  it("keeps legacy selector output compatible when enriched fields are absent", function () {
+    const baseInput = withSelectorFields(input({
+      topicSnapshot: snapshot({
+        broadCategoryHint: "access_security"
+      })
+    }));
+    const output = formatSelectCatalogKnowledgeForTopicOutput({
+      input: baseInput,
+      rawSelectCatalogKnowledgeForTopic: completed({
+        selectedFieldNames: ["error_message"]
+      })
+    });
+
+    expect(output.selectedFieldNames).toEqual(["error_message"]);
+    expect(output.selectedFields.map((item) => item.fieldName)).toEqual([
+      "error_message"
+    ]);
+    expect(output.directQuestionGuidance).toBeNull();
+    expect(output.diagnosticFlow).toBeNull();
+    expect(output.sufficientlyQualified).toBe(false);
+    expect(output.reason).toBeUndefined();
   });
 });

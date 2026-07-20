@@ -16,7 +16,14 @@ function convertLiveMemoryContextToSupportTopicContextV2(
       summary: topic.summary,
       caseDetails: topic.caseDetails,
       attemptedActions: topic.attemptedActions,
-      supportKnowledgeSummary: topic.supportKnowledgeSummary ?? null
+      supportKnowledgeSummary: topic.supportKnowledgeSummary ?? null,
+      ...(topic.unansweredRequestedFieldNames &&
+      topic.unansweredRequestedFieldNames.length > 0
+        ? {
+            unansweredRequestedFieldNames:
+              topic.unansweredRequestedFieldNames
+          }
+        : {})
     }))
   };
 }
