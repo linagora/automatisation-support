@@ -15,15 +15,7 @@ import {runAnalyzeSupportAttachments, type AnalyzeSupportAttachmentsInput, type 
 
 import {runProposeTopicUpdates, type ProposeTopicUpdatesInput, type ProposeTopicUpdatesOutput, type TopicUpdatePlan} from "./propose-topic-updates-optimized/runProposeTopicUpdates";
 
-import {runAssessSupportNeed, type AssessSupportNeedInput, type AssessSupportNeedOutput} from "./assess-support-need-optimized/runAssessSupportNeed";
-import {assessTopicReadiness, type AssessTopicReadinessInput, type TopicReadinessAssessment} from "./topic-branch/assess-topic-readiness-optimized/assessTopicReadiness";
-import {deriveSupportRouting, type DeriveSupportRoutingInput, type DerivedSupportRouting} from "./derive-support-routing-optimized/deriveSupportRouting";
-
-import {runQualificationOrienter, type QualificationOrienterInput, type QualificationOrienterOutput} from "./qualification-orienter-optimized/runQualificationOrienter";
-import {runSearchSimilarity, type SearchSimilarityInput, type SearchSimilarityOutput} from "./search-similarity-optimized/runSearchSimilarity";
-import {runSynthesizeRag, type SynthesizeRagInput, type SynthesizeRagOutput} from "./synthesize-rag-optimized/runSynthesizeRag";
-
-import {runTopicPlanner, type TopicPlannerInput, type TopicPlannerOutput} from "./topic-planner-optimized/runTopicPlanner";
+import {runTopicBranch, type LiveMemoryTopicOptimized, type SupportUnderstanding, type TopicBranchOutput, type TopicPlannerOutput} from "./topic-branch-optimized-v2/runTopicBranch";
 import {runComposerPlanner, type ComposerPlannerInput, type ComposerPlannerOutput} from "./composer-planner-optimized/runComposerPlanner";
 import {runRenderer, type RendererInput, type RendererOutput} from "./renderer-optimized/runRenderer";
 import {buildSupportPatches, type BuildSupportPatchesInput, type BuildSupportPatchesOutput} from "./build-support-patches-optimized/buildSupportPatches";
@@ -93,23 +85,6 @@ type RunSupportProcessingPipelineV3OptimizedIntermOutputs = {
   patchesOutput?: BuildSupportPatchesOutput;
 };
 
-type TopicBranchOutput = {
-  assessSupportNeedOutput: AssessSupportNeedOutput;
-  assessTopicReadinessOutput: TopicReadinessAssessment | null;
-  deriveSupportRoutingOutput: DerivedSupportRouting | null;
-
-  qualificationOrienterOutput: QualificationOrienterOutput | null;
-  searchSimilarityOutput: SearchSimilarityOutput | null;
-  synthesizeRagOutput: SynthesizeRagOutput | null;
-
-  topicPlannerOutput: TopicPlannerOutput | null;
-};
-
-type TopicBranchResult =
-  | {status: "processed"; topicPlannerOutput: TopicPlannerOutput; topicBranchOutput: TopicBranchOutput}
-  | {status: "fallback"; fallbackReason: RunSupportProcessingPipelineV3OptimizedFallbackReason; topicPlannerOutput: null; topicBranchOutput: TopicBranchOutput};
-
-
 // =====================================================
 // RUNNER PRINCIPAL
 // =====================================================
@@ -118,6 +93,7 @@ async function runSupportProcessingPipelineV3Optimized(
   input: RunSupportProcessingPipelineV3OptimizedInput
 ): Promise<RunSupportProcessingPipelineV3OptimizedOutput> {
   const intermOutputs: RunSupportProcessingPipelineV3OptimizedIntermOutputs = {};
+  const currentUserMessage = input.latestUserMessage;
   const recentInteractionContext = buildRecentInteractionContext(input.liveMemory);
 
   try {
@@ -338,25 +314,35 @@ async function runSupportProcessingPipelineV3Optimized(
     // 8. Branches topic en parallèle
     // -----------------------------------------------------
 
-    const topicBranchResults =
+    const topicBranchOutputs =
       await Promise.all(
         intermOutputs.proposeTopicUpdatesOutput.topicUpdatePlans.map((topicUpdatePlan) => {
-          return runTopicBranch({input, topicUpdatePlan, supportUnderstandings, recentInteractionContext});
+          return runTopicBranch({
+            topicUpdatePlan,
+            currentTopic: selectCurrentTopic(input.liveMemory, topicUpdatePlan),
+            sourceUnderstandings: selectSourceUnderstandings(
+              supportUnderstandings,
+              topicUpdatePlan.sourceUnderstandingIds
+            ),
+            currentUserMessage: {
+              content: currentUserMessage.content
+            },
+            previousConversationTurn: resolvePreviousConversationTurn(input.liveMemory)
+          });
         })
       );
 
-    intermOutputs.topicBranchOutputs =
-      topicBranchResults.map((topicBranchResult) => topicBranchResult.topicBranchOutput);
+    intermOutputs.topicBranchOutputs = topicBranchOutputs;
 
     const failedTopicBranch =
-      topicBranchResults.find((topicBranchResult) => topicBranchResult.status === "fallback");
+      topicBranchOutputs.find((topicBranchOutput) => topicBranchOutput.status === "fallback");
 
-    if (failedTopicBranch) return buildPipelineFallback({input, intermOutputs, fallbackReason: failedTopicBranch.fallbackReason});
+    if (failedTopicBranch) return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: failedTopicBranch.fallbackReason}});
 
     const topicPlannerOutputs =
-      topicBranchResults.map((topicBranchResult) => {
-        if (topicBranchResult.topicPlannerOutput === null) throw new Error("Missing topicPlannerOutput");
-        return topicBranchResult.topicPlannerOutput;
+      topicBranchOutputs.map((topicBranchOutput) => {
+        if (topicBranchOutput.topicPlannerOutput === null) throw new Error("Missing topicPlannerOutput");
+        return topicBranchOutput.topicPlannerOutput;
       });
 
     // -----------------------------------------------------
@@ -415,180 +401,48 @@ async function runSupportProcessingPipelineV3Optimized(
 
 
 // =====================================================
-// BRANCHE PAR TOPIC
+// TOPIC BRANCH INPUT HELPERS
 // =====================================================
 
-async function runTopicBranch(params: {
-  input: RunSupportProcessingPipelineV3OptimizedInput;
-  topicUpdatePlan: TopicUpdatePlan;
-  supportUnderstandings: AnalyzeSupportTextUnderstanding[];
-  recentInteractionContext: unknown;
-}): Promise<TopicBranchResult> {
-  const previousLiveTopic =
-    findPreviousLiveTopic(params.input.liveMemory, params.topicUpdatePlan.targetTopicId);
+function selectCurrentTopic(
+  liveMemory: SupportLiveMemoryInput,
+  topicUpdatePlan: TopicUpdatePlan
+): LiveMemoryTopicOptimized | null {
+  if (topicUpdatePlan.targetTopicId === null) return null;
 
-  const sourceUnderstandings =
-    selectUnderstandings(params.supportUnderstandings, params.topicUpdatePlan.sourceUnderstandingIds);
+  const topic = liveMemory.topics.find((candidate) => {
+    return isRecord(candidate) && candidate.topicId === topicUpdatePlan.targetTopicId;
+  });
 
-  const topicIdentity =
-    resolveTopicIdentity(params.topicUpdatePlan, previousLiveTopic);
+  return isRecord(topic)
+    ? topic as LiveMemoryTopicOptimized
+    : null;
+}
 
-  // -----------------------------------------------------
-  // 1. Assess support need
-  // -----------------------------------------------------
+function selectSourceUnderstandings(
+  supportUnderstandings: AnalyzeSupportTextUnderstanding[],
+  sourceUnderstandingIds: string[]
+): SupportUnderstanding[] {
+  const sourceIdSet = new Set(sourceUnderstandingIds);
+  return supportUnderstandings.filter((understanding) => {
+    return sourceIdSet.has(understanding.understandingId);
+  });
+}
 
-  const assessSupportNeedOutput =
-    await runAssessSupportNeed({
-      topic: {
-        topicId: topicIdentity.topicId,
-        title: topicIdentity.title,
-        supportDomain: topicIdentity.supportDomain,
-        summary: topicIdentity.summary,
-        previousSupportNeedAssessment: readPreviousSupportNeedAssessment(previousLiveTopic),
-        previousSupportKnowledgeSummary: readPreviousSupportKnowledgeSummary(previousLiveTopic),
-        sourceUnderstandings
-      },
-      recentInteractionContext: params.recentInteractionContext
-    });
-
-  const topicBranchOutput: TopicBranchOutput = {
-    assessSupportNeedOutput,
-    assessTopicReadinessOutput: null,
-    deriveSupportRoutingOutput: null,
-    qualificationOrienterOutput: null,
-    searchSimilarityOutput: null,
-    synthesizeRagOutput: null,
-    topicPlannerOutput: null
-  };
-
-  if (assessSupportNeedOutput.status === "fallback") {
-    return {status: "fallback", fallbackReason: {source: "brick", brickOutput: assessSupportNeedOutput}, topicPlannerOutput: null, topicBranchOutput};
-  }
-
-  if (assessSupportNeedOutput.status !== "analyzed" || assessSupportNeedOutput.supportNeedAssessment === null) {
-    throw new Error("Unexpected assessSupportNeedOutput status");
-  }
-
-  // -----------------------------------------------------
-  // 2. Readiness + routing déterministes
-  // -----------------------------------------------------
-
-  topicBranchOutput.assessTopicReadinessOutput =
-    assessTopicReadiness({
-      supportNeedAssessment: assessSupportNeedOutput.supportNeedAssessment,
-      supportDomain: topicIdentity.supportDomain,
-      sourceUnderstandings,
-      previousSupportKnowledgeSummary: readPreviousSupportKnowledgeSummary(previousLiveTopic)
-    });
-
-  topicBranchOutput.deriveSupportRoutingOutput =
-    deriveSupportRouting({
-      supportNeedAssessment: assessSupportNeedOutput.supportNeedAssessment,
-      topicReadinessAssessment: topicBranchOutput.assessTopicReadinessOutput,
-      supportDomain: topicIdentity.supportDomain
-    });
-
-  // -----------------------------------------------------
-  // 3. Qualification + similarity/RAG
-  // -----------------------------------------------------
-
-  if (topicBranchOutput.deriveSupportRoutingOutput.similarTopicSearchRouting.shouldSearch) {
-    const qualificationOrienterPromise =
-      runQualificationOrienter({
-        topicUpdatePlan: params.topicUpdatePlan,
-        topicIdentity,
-        sourceUnderstandings,
-        supportNeedAssessment: assessSupportNeedOutput.supportNeedAssessment,
-        topicReadinessAssessment: topicBranchOutput.assessTopicReadinessOutput,
-        routing: topicBranchOutput.deriveSupportRoutingOutput
-      });
-
-    const similarityAndSynthesisPromise =
-      runSearchSimilarity({
-        topicUpdatePlan: params.topicUpdatePlan,
-        topicIdentity,
-        sourceUnderstandings,
-        liveMemory: params.input.liveMemory,
-        routing: topicBranchOutput.deriveSupportRoutingOutput
-      }).then(async (searchSimilarityOutput) => {
-        if (searchSimilarityOutput.status === "fallback") return {status: "fallback" as const, fallbackReason: {source: "brick" as const, brickOutput: searchSimilarityOutput}, searchSimilarityOutput, synthesizeRagOutput: null};
-
-        const synthesizeRagOutput =
-          await runSynthesizeRag({
-            topicUpdatePlan: params.topicUpdatePlan,
-            topicIdentity,
-            sourceUnderstandings,
-            searchSimilarityOutput
-          });
-
-        if (synthesizeRagOutput.status === "fallback") return {status: "fallback" as const, fallbackReason: {source: "brick" as const, brickOutput: synthesizeRagOutput}, searchSimilarityOutput, synthesizeRagOutput};
-
-        return {status: "processed" as const, searchSimilarityOutput, synthesizeRagOutput};
-      });
-
-    const [
-      qualificationOrienterOutput,
-      similarityAndSynthesisOutput
-    ] = await Promise.all([
-      qualificationOrienterPromise,
-      similarityAndSynthesisPromise
-    ]);
-
-    topicBranchOutput.qualificationOrienterOutput = qualificationOrienterOutput;
-    topicBranchOutput.searchSimilarityOutput = similarityAndSynthesisOutput.searchSimilarityOutput;
-    topicBranchOutput.synthesizeRagOutput = similarityAndSynthesisOutput.synthesizeRagOutput;
-
-    if (qualificationOrienterOutput.status === "fallback") {
-      return {status: "fallback", fallbackReason: {source: "brick", brickOutput: qualificationOrienterOutput}, topicPlannerOutput: null, topicBranchOutput};
-    }
-
-    if (similarityAndSynthesisOutput.status === "fallback") {
-      return {status: "fallback", fallbackReason: similarityAndSynthesisOutput.fallbackReason, topicPlannerOutput: null, topicBranchOutput};
-    }
-  }
-
-  else {
-    topicBranchOutput.qualificationOrienterOutput =
-      await runQualificationOrienter({
-        topicUpdatePlan: params.topicUpdatePlan,
-        topicIdentity,
-        sourceUnderstandings,
-        supportNeedAssessment: assessSupportNeedOutput.supportNeedAssessment,
-        topicReadinessAssessment: topicBranchOutput.assessTopicReadinessOutput,
-        routing: topicBranchOutput.deriveSupportRoutingOutput
-      });
-
-    if (topicBranchOutput.qualificationOrienterOutput.status === "fallback") {
-      return {status: "fallback", fallbackReason: {source: "brick", brickOutput: topicBranchOutput.qualificationOrienterOutput}, topicPlannerOutput: null, topicBranchOutput};
-    }
-  }
-
-  // -----------------------------------------------------
-  // 4. Planner topic
-  // -----------------------------------------------------
-
-  topicBranchOutput.topicPlannerOutput =
-    await runTopicPlanner({
-      topicUpdatePlan: params.topicUpdatePlan,
-      topicIdentity,
-      sourceUnderstandings,
-      supportNeedOutput: assessSupportNeedOutput,
-      readinessOutput: topicBranchOutput.assessTopicReadinessOutput,
-      routingOutput: topicBranchOutput.deriveSupportRoutingOutput,
-      qualificationOrienterOutput: topicBranchOutput.qualificationOrienterOutput,
-      searchSimilarityOutput: topicBranchOutput.searchSimilarityOutput,
-      synthesizeRagOutput: topicBranchOutput.synthesizeRagOutput
-    });
-
-  if (topicBranchOutput.topicPlannerOutput.status === "fallback") {
-    return {status: "fallback", fallbackReason: {source: "brick", brickOutput: topicBranchOutput.topicPlannerOutput}, topicPlannerOutput: null, topicBranchOutput};
-  }
-
+function resolvePreviousConversationTurn(
+  liveMemory: SupportLiveMemoryInput
+): {
+  previousUserVerbatim: string | null;
+  previousBotVerbatim: string | null;
+} {
   return {
-    status: "processed",
-    topicPlannerOutput: topicBranchOutput.topicPlannerOutput,
-    topicBranchOutput
+    previousUserVerbatim: liveMemory.lastUserVerbatim ?? null,
+    previousBotVerbatim: liveMemory.lastBotVerbatim ?? null
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 

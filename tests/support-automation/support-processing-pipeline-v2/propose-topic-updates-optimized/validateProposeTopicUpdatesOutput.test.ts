@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {validateProposeTopicUpdatesOutput} from "../../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates-optimized/validateProposeTopicUpdatesOutput";
+import {validateProposeTopicUpdatesOutput} from "../../../../src/support-automation/support-processing-pipeline-optimized/propose-topic-updates-optimized/validateProposeTopicUpdatesOutput";
 
 import type {AnalyzeSupportTextUnderstanding} from "../../../../src/support-automation/support-processing-pipeline-optimized/analyze-support-text-optimized/runAnalyzeSupportText";
 
@@ -8,7 +8,6 @@ const understandings: AnalyzeSupportTextUnderstanding[] = [
   {
     understandingId: "text_understanding_1",
     sourceSegmentIds: ["text_segment_1"],
-    messageAct: "issue_report",
     extractedFields: [],
     attemptedActions: [],
     other: [],
@@ -67,5 +66,62 @@ describe("optimized topic-update proposal validation", function () {
         understandings
       })).toBeNull();
     }
+  });
+
+  it("can create and update topics from summary and extracted fields without intent classification", function () {
+    const sourceUnderstandings: AnalyzeSupportTextUnderstanding[] = [
+      {
+        understandingId: "text_understanding_1",
+        sourceSegmentIds: ["text_segment_1"],
+        extractedFields: [
+          {key: "feature_or_page", value: "login", evidence: "login"}
+        ],
+        attemptedActions: [],
+        other: [],
+        summary: "The user reports a login issue.",
+        supportDomain: "access_security"
+      },
+      {
+        understandingId: "text_understanding_2",
+        sourceSegmentIds: ["text_segment_2"],
+        extractedFields: [
+          {key: "error_message", value: "SAML invalid audience", evidence: "SAML invalid audience"}
+        ],
+        attemptedActions: [],
+        other: [],
+        summary: "The login issue shows a SAML invalid audience error.",
+        supportDomain: "access_security"
+      }
+    ];
+
+    const output = {
+      topicUpdatePlans: [
+        {
+          operation: "update",
+          sourceUnderstandingIds: ["text_understanding_1"],
+          targetTopicId: 1,
+          topicIdentity: {
+            title: null,
+            supportDomain: null,
+            summary: "The user reports a login issue."
+          }
+        },
+        {
+          operation: "create",
+          sourceUnderstandingIds: ["text_understanding_2"],
+          targetTopicId: null,
+          topicIdentity: {
+            title: "SAML login error",
+            supportDomain: "access_security",
+            summary: "The login issue shows a SAML invalid audience error."
+          }
+        }
+      ]
+    };
+
+    expect(validateProposeTopicUpdatesOutput(output, {
+      existingTopics: [{topicId: 1, title: "Login issue"}],
+      understandings: sourceUnderstandings
+    })).toEqual(output.topicUpdatePlans);
   });
 });

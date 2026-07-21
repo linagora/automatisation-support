@@ -7,7 +7,7 @@ import {validateAnalyzeTextSurfaceOutput} from "./validateAnalyzeTextSurfaceOutp
 import type {
   RecentInteractionContext,
   TurnAnalysisPlan
-} from "../typesSupportProcessingPipelineV2.types";
+} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {TextSurfaceFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
 import type {
   AnalyzeTextSurfaceSegment

@@ -75,10 +75,10 @@ describe("optimized support routing derivation", function () {
     expect(routing.similarTopicSearchRouting.shouldSearch).toBe(true);
   });
 
-  it.each(["feature_request", "product_feedback"] as const)("skips search by default for %s", function (supportNeed) {
+  it("skips search by default for feature requests", function () {
     const routing = deriveSupportRouting(buildInput({
       supportNeedAssessment: {
-        supportNeed,
+        supportNeed: "feature_request",
         unclearReason: null,
         reason: "The topic is not a resolution search case."
       }

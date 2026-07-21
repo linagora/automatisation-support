@@ -46,6 +46,8 @@ const subcategorySelectionByCategory = {
     impolite: keyWithExtraction,
     complaint_without_actionable_detail: keyWithExtraction,
     communication_feedback: keyWithExtraction,
+    support_process_feedback: keyWithExtraction,
+    bot_feedback: keyWithExtraction,
     pricing_feedback: keyWithExtraction,
     feature_loss_feedback: keyWithExtraction
   },

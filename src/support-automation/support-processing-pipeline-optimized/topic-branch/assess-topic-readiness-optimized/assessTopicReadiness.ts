@@ -51,7 +51,7 @@ const EMPTY_KNOWLEDGE_PATTERNS = [
 function assessTopicReadiness(input: AssessTopicReadinessInput): TopicReadinessAssessment {
   const materialItems = input.sourceUnderstandings.flatMap((understanding) => [
     ...understanding.extractedFields,
-    ...understanding.other.filter((item) => item.key !== "support_context")
+    ...understanding.other
   ]);
   const hasMaterialFields = materialItems.length > 0;
   const hasAttemptedActions = input.sourceUnderstandings.some(

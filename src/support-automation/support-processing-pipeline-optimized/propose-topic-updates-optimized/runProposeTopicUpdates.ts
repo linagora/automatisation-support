@@ -5,7 +5,7 @@ import {buildProposeTopicUpdatesPrompt} from "./buildProposeTopicUpdatesPrompt";
 import {validateProposeTopicUpdatesOutput} from "./validateProposeTopicUpdatesOutput";
 
 import type {AnalyzeSupportTextUnderstanding} from "../../support-processing-pipeline-optimized/analyze-support-text-optimized/runAnalyzeSupportText";
-import type {RecentInteractionContext} from "../typesSupportProcessingPipelineV2.types";
+import type {RecentInteractionContext} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {TopicUpdateFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
 import type {
   ExistingSupportTopic,
@@ -111,5 +111,6 @@ export type {
   ProposeTopicUpdatesAnalyzedOutput,
   ProposeTopicUpdatesFallbackOutput,
   ProposeTopicUpdatesInput,
-  ProposeTopicUpdatesOutput
+  ProposeTopicUpdatesOutput,
+  TopicUpdatePlan
 };

@@ -7,7 +7,7 @@ import {promptCatalogSelection} from "./catalogSelection";
 import type {LLMMessage} from "../../../infrastructure/llm/llm-client";
 import type {AnalyzeSupportTextUnderstanding} from "../../support-processing-pipeline-optimized/analyze-support-text-optimized/runAnalyzeSupportText";
 import type {ExistingSupportTopic} from "./validateProposeTopicUpdatesOutput";
-import type {RecentInteractionContext} from "../typesSupportProcessingPipelineV2.types";
+import type {RecentInteractionContext} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 type BuildProposeTopicUpdatesPromptInput = {
   existingTopics: ExistingSupportTopic[];
@@ -69,12 +69,14 @@ Create multiple plans only for independent support subjects.
 # Update vs create
 
 Use "update" when the understanding continues, clarifies, corrects, confirms, denies, answers, or adds detail to an existing topic.
-Use "create" only when it is a distinct new issue, request, question, feedback, or objective not covered by existing topics.
+Use "create" only when it is a distinct new issue, request, question, feature request, or objective not covered by existing topics.
+
+Infer update or create from the understanding summary, extractedFields, attemptedActions, other, supportDomain, the existing topics, and the latest user message context. The deep support contract has no intent-act field.
 
 # sourceUnderstandingIds
 
 sourceUnderstandingIds are the only link between the plan and support understandings.
-Every persistable understanding should appear in exactly one topicUpdatePlan unless it is pure support_context and not useful as standalone support memory.
+Every persistable understanding should appear in exactly one topicUpdatePlan.
 
 # targetTopicId
 
@@ -95,7 +97,7 @@ For update, return null unless a better title is now justified.
 
 # topicIdentity.supportDomain
 
-supportDomain = the support domain/topic area, not the support need or message act.
+supportDomain = the support domain/topic area, not the support need.
 Use only one of the available support domains.
 For update, return null unless the previous support domain should be improved.
 

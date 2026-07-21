@@ -47,84 +47,9 @@ const supportDomainCatalog = {
   }
 } as const satisfies Record<string, DeepCatalogEntry>;
 
-const supportNeedCatalog = {
-  issue_resolution: {
-    extractionGuidance: "Use when the topic needs investigation or resolution of a problem, malfunction, blocked state, error, failed workflow, unexpected behavior, or abnormal result."
-  },
-  knowledge_answer: {
-    extractionGuidance: "Use when the topic primarily needs an answer, explanation, how-to guidance, policy, availability, compatibility, pricing, product behavior explanation, or support knowledge."
-  },
-  support_action: {
-    extractionGuidance: "Use when the topic primarily needs support to do, check, change, process, intervene, reset, unlock, refund, escalate, verify, or handle something."
-  },
-  feature_request: {
-    extractionGuidance: "Use when the topic primarily asks for a missing capability, desired product improvement, new feature, product gap, or enhancement request."
-  },
-  product_feedback: {
-    extractionGuidance: "Use when the topic primarily expresses product opinion, complaint, praise, disappointment, preference, or qualitative feedback without a concrete support action or issue to resolve."
-  },
-  unclear: {
-    extractionGuidance: "Use when the support need cannot be chosen confidently between issue_resolution, knowledge_answer, support_action, feature_request, or product_feedback."
-  }
-} as const satisfies Record<string, DeepCatalogEntry>;
-
-const supportNeedUnclearReasonCatalog = {
-  knowledge_answer_or_issue_resolution: {
-    extractionGuidance: "Use when the topic may be either a request for instructions/knowledge or a report of being blocked by a malfunction."
-  },
-  knowledge_answer_or_support_action: {
-    extractionGuidance: "Use when the topic may be either a knowledge question or a request for support to perform an action."
-  },
-  issue_resolution_or_support_action: {
-    extractionGuidance: "Use when the topic may be either a problem to investigate or a request for support to take action."
-  },
-  feature_request_or_issue_resolution: {
-    extractionGuidance: "Use when the topic may be either a desired missing feature or a broken/missing behavior that should already work."
-  },
-  feature_request_or_knowledge_answer: {
-    extractionGuidance: "Use when the topic may be either a feature request or a question about whether/how the product already supports the capability."
-  },
-  feedback_or_issue_resolution: {
-    extractionGuidance: "Use when the topic may be either subjective feedback/complaint or a concrete problem requiring investigation."
-  },
-  too_ambiguous: {
-    extractionGuidance: "Use when the topic is too ambiguous to identify a more specific support need ambiguity."
-  }
-} as const satisfies Record<string, DeepCatalogEntry>;
-
-const messageActCatalog = {
-  issue_report: {
-    extractionGuidance: "The user reports a failure, blocked state, unwanted behavior, missing behavior, abnormal result, or support problem."
-  },
-  question: {
-    extractionGuidance: "The user asks for information, explanation, possibility, policy, compatibility, pricing, availability, how-to guidance, or support clarification."
-  },
-  action_request: {
-    extractionGuidance: "The user asks support to do, check, change, fix, explain, refund, unlock, reset, intervene, or escalate."
-  },
-  info_update: {
-    extractionGuidance: "The user provides useful information, status, value, context, answer, identifier, version, date, device, environment, result, or clarification."
-  },
-  confirmation: {
-    extractionGuidance: "The user confirms something, answers yes, or validates a previous interpretation."
-  },
-  denial: {
-    extractionGuidance: "The user denies something, answers no, rejects a previous interpretation, or says a suggested condition is not true."
-  },
-  feedback: {
-    extractionGuidance: "The user gives product or support opinion, preference, complaint, praise, disappointment, or qualitative assessment."
-  },
-  support_context: {
-    extractionGuidance: "The user provides metadata about the support exchange itself, such as screenshot/proof/attachment/log availability, user availability, or support-process constraints."
-  }
-} as const satisfies Record<string, DeepCatalogEntry>;
-
 const supportOtherKeyCatalog = {
   fact: {
     extractionGuidance: "Useful support fact that does not fit any selected extractable field."
-  },
-  support_context: {
-    extractionGuidance: "Context about the support exchange itself, not the product or account state."
   },
   limitation: {
     extractionGuidance: "Missing access, missing logs, inability to test, missing proof, or similar support limitation."
@@ -156,7 +81,6 @@ const primaryUserExpectationCatalog = {
   wants_acknowledgement: {},
   provides_information: {},
   reports_result: {},
-  expresses_feedback: {},
   unclear: {}
 } as const;
 
@@ -457,28 +381,19 @@ const supportMetadataFieldCatalog = {
 type StrictSupportCaseDetailFieldName = keyof typeof caseDetailFieldCatalog;
 type StrictSupportMetadataFieldName = keyof typeof supportMetadataFieldCatalog;
 type StrictSupportDomain = keyof typeof supportDomainCatalog;
-type StrictSupportNeed = keyof typeof supportNeedCatalog;
-type StrictSupportNeedUnclearReason = keyof typeof supportNeedUnclearReasonCatalog;
-type StrictMessageActValue = keyof typeof messageActCatalog;
 
 type SupportCaseDetailFieldName = StrictSupportCaseDetailFieldName | (string & {});
 type SupportMetadataFieldName = StrictSupportMetadataFieldName | (string & {});
 type SupportDomain = StrictSupportDomain | (string & {});
-type SupportNeed = StrictSupportNeed | (string & {});
-type SupportNeedUnclearReason = StrictSupportNeedUnclearReason | (string & {});
-type MessageActValue = StrictMessageActValue | (string & {});
 
 export {
   attemptedActionOutcomeCatalog,
   candidateFactSupportCatalog,
   caseDetailFieldCatalog,
   contextDependencyCatalog,
-  messageActCatalog,
   primaryUserExpectationCatalog,
   supportDomainCatalog,
   supportMetadataFieldCatalog,
-  supportNeedCatalog,
-  supportNeedUnclearReasonCatalog,
   testedActionOutcomeCatalog,
   textUncertaintyReasonCatalog,
   supportOtherKeyCatalog
@@ -486,17 +401,11 @@ export {
 
 export type {
   DeepCatalogEntry,
-  MessageActValue,
-  StrictMessageActValue,
   StrictSupportDomain,
-  StrictSupportNeed,
-  StrictSupportNeedUnclearReason,
   StrictSupportCaseDetailFieldName,
   StrictSupportMetadataFieldName,
   SupportCaseDetailFieldName,
   SupportDomain,
   SupportFieldCatalogEntry,
-  SupportMetadataFieldName,
-  SupportNeed,
-  SupportNeedUnclearReason
+  SupportMetadataFieldName
 };

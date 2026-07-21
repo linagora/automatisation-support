@@ -1,7 +1,6 @@
 import {
   attemptedActionOutcomeCatalog,
   caseDetailFieldCatalog,
-  messageActCatalog,
   supportDomainCatalog,
   supportOtherKeyCatalog
 } from "../../support-catalog-optimized/supportDeep.catalog";
@@ -17,20 +16,7 @@ type Catalog = Record<string, {extractionGuidance?: unknown}>;
 type PromptItem = {key: string; extractionGuidance?: string};
 
 // Local selection follows the output order:
-// messageAct -> extractedFields -> attemptedActions -> other -> supportDomain.
-
-// Classifies what the current support unit does in the conversation.
-// This is not topic identity and must not decide new/existing topic.
-const messageActSelection = {
-  issue_report: keyWithExtraction,
-  question: keyWithExtraction,
-  action_request: keyWithExtraction,
-  info_update: keyWithExtraction,
-  confirmation: keyWithExtraction,
-  denial: keyWithExtraction,
-  feedback: keyWithExtraction,
-  support_context: keyWithExtraction
-} as const;
+// extractedFields -> attemptedActions -> other -> supportDomain.
 
 // Structured support dossier fields.
 // Support-exchange metadata is intentionally not here; it goes to `other`.
@@ -106,7 +92,6 @@ const attemptedActionOutcomeSelection = {
 // Useful support information that does not fit extractedFields or attemptedActions.
 const otherKeySelection = {
   fact: keyWithExtraction,
-  support_context: keyWithExtraction,
   limitation: keyWithExtraction,
   attachment_reference: keyWithExtraction,
   uncertainty: keyWithExtraction,
@@ -135,10 +120,9 @@ const supportDomainSelection = {
 //
 // Example shape:
 // {
-//   messageActs: ["issue_report", "question", "info_update", ...],
 //   extractableFields: ["browser", "error_message", "observed_result", ...],
 //   attemptedActionOutcomes: ["success", "failed", "partial", "unknown"],
-//   otherKeys: ["fact", "support_context", "limitation", ...],
+//   otherKeys: ["fact", "limitation", ...],
 //   supportDomains: ["product_behavior", "access_security", "billing", ..., "other"]
 // }
 const formatCatalogSelection = resolveFormatCatalogSelection();
@@ -148,11 +132,6 @@ const formatCatalogSelection = resolveFormatCatalogSelection();
 //
 // Example shape:
 // {
-//   messageActs: [
-//     {key: "issue_report", extractionGuidance: "..."},
-//     {key: "question", extractionGuidance: "..."},
-//     ...
-//   ],
 //   extractableFields: [
 //     {key: "browser", extractionGuidance: "..."},
 //     {key: "error_message", extractionGuidance: "..."},
@@ -165,7 +144,6 @@ const formatCatalogSelection = resolveFormatCatalogSelection();
 //   ],
 //   otherKeys: [
 //     {key: "fact", extractionGuidance: "..."},
-//     {key: "support_context", extractionGuidance: "..."},
 //     ...
 //   ],
 //   supportDomains: [
@@ -178,7 +156,6 @@ const promptCatalogSelection = resolvePromptCatalogSelection();
 
 function resolveFormatCatalogSelection() {
   return {
-    messageActs: buildFormatKeys(messageActCatalog, "message act", messageActSelection),
     extractableFields: buildFormatKeys(caseDetailFieldCatalog, "extractable field", extractableFieldSelection),
     attemptedActionOutcomes: buildFormatKeys(attemptedActionOutcomeCatalog, "attempted action outcome", attemptedActionOutcomeSelection),
     otherKeys: buildFormatKeys(supportOtherKeyCatalog, "other key", otherKeySelection),
@@ -188,7 +165,6 @@ function resolveFormatCatalogSelection() {
 
 function resolvePromptCatalogSelection() {
   return {
-    messageActs: buildPromptItems(messageActCatalog, "message act", messageActSelection),
     extractableFields: buildPromptItems(caseDetailFieldCatalog, "extractable field", extractableFieldSelection),
     attemptedActionOutcomes: buildPromptItems(attemptedActionOutcomeCatalog, "attempted action outcome", attemptedActionOutcomeSelection),
     otherKeys: buildPromptItems(supportOtherKeyCatalog, "other key", otherKeySelection),

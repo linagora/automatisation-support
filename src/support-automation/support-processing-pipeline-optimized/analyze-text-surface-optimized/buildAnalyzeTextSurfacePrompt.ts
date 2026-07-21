@@ -8,7 +8,7 @@ import type {LLMMessage} from "../../../infrastructure/llm/llm-client";
 import type {
   RecentInteractionContext,
   TurnAnalysisPlan
-} from "../typesSupportProcessingPipelineV2.types";
+} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 type BuildAnalyzeTextSurfacePromptInput = {
   latestUserMessageContent: string;
@@ -106,6 +106,9 @@ Examples:
 - handover request alone -> standard_interaction / handover_request.
 - handover request + concrete issue -> split only if clearly separate; otherwise prefer support_relevant.
 - support issue + embedded emotion, urgency, or impolite wording -> one support_relevant segment.
+- simple feedback such as thanks, praise, disappointment, support delay, unclear help, or bot complaints without a concrete product/service issue -> standard_interaction with the closest feedback subcategory.
+- support process or bot feedback plus a concrete product/service issue -> split when possible; keep the concrete issue as support_relevant and route the process/bot feedback as standard_interaction.
+- feature requests for product capabilities -> support_relevant.
 
 # Language detection
 

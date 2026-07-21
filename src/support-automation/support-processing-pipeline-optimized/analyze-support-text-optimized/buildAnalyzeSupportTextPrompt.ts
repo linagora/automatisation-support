@@ -33,6 +33,7 @@ Produce local support understandings for later topic matching and topic update.
 
 Do not answer the user.
 Do not create, match, merge, update, or classify topics.
+Do not classify the user's intent here. Do not decide whether this is a new topic or an update to an existing topic. Topic linking is handled later by proposeTopicUpdates. Global support need is assessed later by assessSupportNeed.
 Do not diagnose root cause, propose solutions, retrieve knowledge, analyze attachments, choose next questions, or write a response.
 
 Return only JSON matching the requested schema.
@@ -50,9 +51,6 @@ ${toPromptJson(input.recentInteractionContext)}
 </recent_interaction_context>
 
 # Catalogs
-
-Message acts:
-${renderPromptItems(promptCatalogSelection.messageActs)}
 
 Extractable fields:
 ${renderPromptItems(promptCatalogSelection.extractableFields)}
@@ -76,8 +74,8 @@ Split when the text contains distinct issues, questions, requests, features, obj
 Group segments only when they clearly complete the same support need.
 A single segment may create several understandings when it contains several independent support needs.
 
-Support-exchange context such as screenshot, proof, attachment, logs, availability, or testing limitation should be attached to the related understanding through sourceSegmentIds and other.
-If it cannot be safely attached to a product/support issue, keep it as its own support_context understanding rather than dropping it.
+Support-exchange context such as screenshot, proof, attachment, logs, availability, or testing limitation should be attached to the related understanding through sourceSegmentIds and other when it is useful to the local support extraction.
+If the segment is only support-process or bot feedback with no concrete business support subject, keep the useful fact as "other" only if it was already routed as support_relevant.
 
 # Context use
 
@@ -102,8 +100,6 @@ If a value is ambiguous, omit it or put the ambiguity in other with key "uncerta
 
 # Fields
 
-messageAct: choose exactly one catalogued act. It describes what the current support unit does in the conversation, not whether it is a new or existing topic.
-
 extractedFields: use only catalogued field keys. Put concrete dossier information here: product/service, feature/page, account, billing, access, environment, device, browser, version, error, behavior, trigger, observed result, expected result, impact, reference, date, quantity, or user-provided value. Do not create free keys.
 
 attemptedActions: create only when the user explicitly tried to solve, verify, diagnose, recover, or work around the issue, and an outcome is expressed or strongly implied. Normal product actions that fail usually belong in extractedFields as trigger_action or observed_result, not attemptedActions.
@@ -119,7 +115,7 @@ supportDomain: choose the support domain/topic area after understanding the unit
 Before returning JSON, verify:
 1. Every provided segment is referenced by at least one understanding.
 2. Every evidence value is an exact substring of a referenced segment.
-3. messageAct, extractedFields.key, attemptedActions.outcome, other.key, and supportDomain use only allowed values.
+3. extractedFields.key, attemptedActions.outcome, other.key, and supportDomain use only allowed values.
 4. Empty arrays are used when there are no extractedFields, attemptedActions, or other entries.
 5. The output contains no topic update, response plan, diagnosis, solution, or user-facing answer.
 

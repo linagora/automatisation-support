@@ -221,7 +221,7 @@ function isPersistableUnderstanding(understanding: AnalyzeSupportTextUnderstandi
   return understanding.extractedFields.length > 0 ||
     understanding.attemptedActions.length > 0 ||
     understanding.other.length > 0 ||
-    understanding.messageAct !== "support_context";
+    understanding.summary.trim().length > 0;
 }
 
 function isTopicOperation(value: unknown): value is TopicUpdatePlan["operation"] {

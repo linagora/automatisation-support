@@ -6,7 +6,7 @@ import {validateAnalyzeSupportTextOutput} from "./validateAnalyzeSupportTextOutp
 
 import type {RecentInteractionContext} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {SupportTextFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
-import type {AnalyzeTextSurfaceSegment} from "../../support-processing-pipeline-v2/analyze-text-surface-optimized/runAnalyzeTextSurface";
+import type {AnalyzeTextSurfaceSegment} from "../analyze-text-surface-optimized/runAnalyzeTextSurface";
 import type {
   SupportTextSegment,
   ValidatedSupportTextUnderstanding

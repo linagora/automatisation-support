@@ -1,11 +1,12 @@
 import {describe, expect, it, vi} from "vitest";
 
-import {buildAssessSupportNeedPrompt} from "../../../../src/support-automation/support-processing-pipeline-optimized/assess-support-need-optimized/buildAssessSupportNeedPrompt";
-import {runAssessSupportNeed} from "../../../../src/support-automation/support-processing-pipeline-optimized/assess-support-need-optimized/runAssessSupportNeed";
-import {validateAssessSupportNeedOutput} from "../../../../src/support-automation/support-processing-pipeline-optimized/assess-support-need-optimized/validateAssessSupportNeedOutput";
-import {outputContractForPrompt} from "../../../../src/support-automation/support-processing-pipeline-optimized/assess-support-need-optimized/responseFormat";
+import {supportNeedCatalog} from "../../../../src/support-automation/support-catalog-optimized/supportTopicBranch.catalog";
+import {buildAssessSupportNeedPrompt} from "../../../../src/support-automation/support-processing-pipeline-optimized/topic-branch/assess-support-need-optimized/buildAssessSupportNeedPrompt";
+import {runAssessSupportNeed} from "../../../../src/support-automation/support-processing-pipeline-optimized/topic-branch/assess-support-need-optimized/runAssessSupportNeed";
+import {validateAssessSupportNeedOutput} from "../../../../src/support-automation/support-processing-pipeline-optimized/topic-branch/assess-support-need-optimized/validateAssessSupportNeedOutput";
+import {outputContractForPrompt} from "../../../../src/support-automation/support-processing-pipeline-optimized/topic-branch/assess-support-need-optimized/responseFormat";
 
-import type {AssessSupportNeedInput} from "../../../../src/support-automation/support-processing-pipeline-optimized/assess-support-need-optimized/runAssessSupportNeed";
+import type {AssessSupportNeedInput} from "../../../../src/support-automation/support-processing-pipeline-optimized/topic-branch/assess-support-need-optimized/runAssessSupportNeed";
 
 const callLLMMock = vi.hoisted(() => vi.fn());
 
@@ -37,11 +38,6 @@ describe("optimized support-need assessment validation", function () {
         reason: "The topic requests a missing product capability."
       },
       {
-        supportNeed: "product_feedback",
-        unclearReason: null,
-        reason: "The topic expresses subjective product feedback."
-      },
-      {
         supportNeed: "unclear",
         unclearReason: "knowledge_answer_or_issue_resolution",
         reason: "The topic may be either a how-to question or a malfunction."
@@ -61,6 +57,7 @@ describe("optimized support-need assessment validation", function () {
     };
 
     const cases = [
+      {supportNeedAssessment: {...validAssessment, supportNeed: "product" + "_feedback"}},
       {supportNeedAssessment: {...validAssessment, supportNeed: "unknown_need"}},
       {supportNeedAssessment: {supportNeed: "unclear", unclearReason: "unknown_reason", reason: "Ambiguous."}},
       {supportNeedAssessment: {...validAssessment, reason: ""}},
@@ -73,6 +70,18 @@ describe("optimized support-need assessment validation", function () {
     for (const value of cases) {
       expect(validateAssessSupportNeedOutput(value)).toBeNull();
     }
+  });
+});
+
+describe("optimized support-need catalog", function () {
+  it("contains only the accepted deep support needs", function () {
+    expect(Object.keys(supportNeedCatalog)).toEqual([
+      "issue_resolution",
+      "knowledge_answer",
+      "support_action",
+      "feature_request",
+      "unclear"
+    ]);
   });
 });
 
@@ -95,10 +104,8 @@ describe("optimized support-need assessment prompt contract", function () {
     expect(outputContractForPrompt).toContain('"reason": "<short_grounded_reason>"');
     expect(outputContractForPrompt).toContain("Accepted supportNeed values:");
     expect(outputContractForPrompt).toContain('- "issue_resolution"');
-    expect(outputContractForPrompt).toContain("Accepted unclearReason values, only when supportNeed is \"unclear\":");
+    expect(outputContractForPrompt).toContain("Accepted unclearReason values:");
     expect(outputContractForPrompt).toContain('- "knowledge_answer_or_issue_resolution"');
-    expect(outputContractForPrompt).toContain("unclearReason must be null");
-    expect(outputContractForPrompt).toContain("must not mention retrieval, catalogue routing, response planning, or memory updates");
     expect(outputContractForPrompt).not.toContain("one of");
     expect(outputContractForPrompt).not.toContain("null unless");
     expect(outputContractForPrompt).not.toContain("login problem");
@@ -128,16 +135,16 @@ describe("optimized support-need assessment prompt contract", function () {
     expect(systemPrompt).toContain("If supportNeed is \"unclear\", unclearReason must be non-null");
     expect(systemPrompt).toContain("reason must be short, grounded in the topic and latest source understandings");
     expect(systemPrompt).toContain("must not mention retrieval, catalogue routing, response planning, or memory updates");
-    expect(userPrompt).toContain('\n  "topicId": null,');
     expect(userPrompt).toContain('\n  "previousSupportNeedAssessment": null,');
     expect(userPrompt).toContain("topic.previousSupportNeedAssessment is the previous global support need assessment");
+    expect(systemPrompt).not.toContain("product" + "_feedback");
+    expect(systemPrompt).not.toContain("message" + "Act");
   });
 });
 
 function buildInput(): AssessSupportNeedInput {
   return {
     topic: {
-      topicId: null,
       title: "Login issue",
       supportDomain: "access_security",
       summary: "The user reports a login issue.",
@@ -147,7 +154,6 @@ function buildInput(): AssessSupportNeedInput {
         {
           understandingId: "text_understanding_1",
           sourceSegmentIds: ["text_segment_1"],
-          messageAct: "issue_report",
           extractedFields: [],
           attemptedActions: [],
           other: [],

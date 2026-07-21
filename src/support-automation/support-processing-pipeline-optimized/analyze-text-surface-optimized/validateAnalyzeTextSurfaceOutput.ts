@@ -1,9 +1,6 @@
 import {formatCatalogSelection} from "./catalogSelection";
 
 import type {
-  TextSurfaceStandardSubcategory
-} from "../typesSupportProcessingPipelineV2.types";
-import type {
   TextSurfaceCategory as SurfaceCategory
 } from "../../support-catalog-optimized/supportSurface.catalog";
 
@@ -15,7 +12,7 @@ type AnalyzeTextSurfaceSegment = {
   segmentId: string;
   verbatim: string;
   category: SurfaceCategory;
-  standardSubcategory?: TextSurfaceStandardSubcategory;
+  standardSubcategory?: string;
 };
 
 type ValidatedAnalyzeTextSurfaceOutput = {
@@ -72,7 +69,7 @@ function validateSurfaceSegment(rawSegment: unknown, index: number): AnalyzeText
 function validateStandardSubcategory(params: {
   category: SurfaceCategory;
   standardSubcategory: unknown;
-}): TextSurfaceStandardSubcategory | undefined | null {
+}): string | undefined | null {
   if (params.category === formatCatalogSelection.categories.support_relevant) {
     return params.standardSubcategory === null ? undefined : null;
   }
@@ -84,7 +81,7 @@ function validateStandardSubcategory(params: {
   ] as readonly string[] | undefined;
 
   return allowed?.includes(params.standardSubcategory)
-    ? params.standardSubcategory as TextSurfaceStandardSubcategory
+    ? params.standardSubcategory
     : null;
 }
 

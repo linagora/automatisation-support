@@ -24,7 +24,6 @@ const responseFormat = {
             additionalProperties: false,
             required: [
               "sourceSegmentIds",
-              "messageAct",
               "extractedFields",
               "attemptedActions",
               "other",
@@ -38,9 +37,6 @@ const responseFormat = {
                 items: {
                   type: "string"
                 }
-              },
-              messageAct: {
-                enum: formatCatalogSelection.messageActs
               },
               extractedFields: {
                 type: "array",
@@ -129,7 +125,6 @@ function buildOutputJsonShapeForPrompt(): string {
   "understandings": [
     {
       "sourceSegmentIds": ["text_segment_1"],
-      "messageAct": "<catalogued message act>",
       "extractedFields": [
         {
           "key": "<field key>",
@@ -146,7 +141,7 @@ function buildOutputJsonShapeForPrompt(): string {
       ],
       "other": [
         {
-          "key": "<fact | support_context | limitation | attachment_reference | uncertainty | other>",
+          "key": "<fact | limitation | attachment_reference | uncertainty | other>",
           "value": "<primitive or null>",
           "evidence": "<exact substring>"
         }

@@ -62,7 +62,7 @@ function deriveSupportRouting(input: DeriveSupportRoutingInput): DerivedSupportR
     });
   }
 
-  if (supportNeed === "feature_request" || supportNeed === "product_feedback") {
+  if (supportNeed === "feature_request") {
     return buildRouting({
       catalogueShouldRun: false,
       catalogueMode: "skip",

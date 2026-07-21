@@ -25,7 +25,6 @@ type AttemptedAction = {
 
 type ValidatedSupportTextUnderstanding = {
   sourceSegmentIds: string[];
-  messageAct: string;
   extractedFields: KeyedPrimitiveEvidence[];
   attemptedActions: AttemptedAction[];
   other: KeyedPrimitiveEvidence[];
@@ -76,9 +75,16 @@ function validateSupportTextUnderstanding(
 
   const referencedSegments = sourceSegmentIds.map((segmentId) => segmentById.get(segmentId));
   if (referencedSegments.some((segment) => segment === undefined)) return null;
+  if (!hasOnlyKeys(rawUnderstanding, [
+    "sourceSegmentIds",
+    "extractedFields",
+    "attemptedActions",
+    "other",
+    "summary",
+    "supportDomain"
+  ])) return null;
 
   const segments = referencedSegments as SupportTextSegment[];
-  const messageAct = validateEnumValue(rawUnderstanding.messageAct, formatCatalogSelection.messageActs);
   const extractedFields = validateKeyedPrimitiveEvidenceArray(
     rawUnderstanding.extractedFields,
     formatCatalogSelection.extractableFields,
@@ -93,7 +99,6 @@ function validateSupportTextUnderstanding(
   const supportDomain = validateSupportDomain(rawUnderstanding.supportDomain);
 
   if (
-    !messageAct ||
     !extractedFields ||
     !attemptedActions ||
     !other ||
@@ -104,9 +109,8 @@ function validateSupportTextUnderstanding(
     return null;
   }
 
-    return {
+  return {
     sourceSegmentIds,
-    messageAct,
     extractedFields,
     attemptedActions,
     other,
@@ -234,6 +238,11 @@ function asPrimitive(value: unknown): Primitive | undefined {
 // Small runtime guards for unknown parsed JSON.
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: string[]): boolean {
+  const allowedKeySet = new Set(allowedKeys);
+  return Object.keys(value).every((key) => allowedKeySet.has(key));
 }
 
 export {

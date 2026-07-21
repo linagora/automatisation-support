@@ -1,8 +1,8 @@
 import {describe, expect, it} from "vitest";
 
-import {assessTopicReadiness} from "../../../../src/support-automation/support-processing-pipeline-v2/assess-topic-readiness-optimized/assessTopicReadiness";
+import {assessTopicReadiness} from "../../../../src/support-automation/support-processing-pipeline-optimized/topic-branch/assess-topic-readiness-optimized/assessTopicReadiness";
 
-import type {AssessTopicReadinessInput} from "../../../../src/support-automation/support-processing-pipeline-v2/assess-topic-readiness-optimized/assessTopicReadiness";
+import type {AssessTopicReadinessInput} from "../../../../src/support-automation/support-processing-pipeline-optimized/topic-branch/assess-topic-readiness-optimized/assessTopicReadiness";
 
 describe("optimized topic readiness assessment", function () {
   it("detects absence of material fields", function () {
@@ -106,7 +106,6 @@ function buildUnderstanding(overrides = {}) {
   return {
     understandingId: "text_understanding_1",
     sourceSegmentIds: ["text_segment_1"],
-    messageAct: "issue_report",
     extractedFields: [],
     attemptedActions: [],
     other: [],

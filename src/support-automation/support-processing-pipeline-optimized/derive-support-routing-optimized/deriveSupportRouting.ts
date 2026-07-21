@@ -1,4 +1,4 @@
-import type {SupportNeedAssessment} from "../assess-support-need-optimized/validateAssessSupportNeedOutput";
+import type {SupportNeedAssessment} from "../topic-branch/assess-support-need-optimized/validateAssessSupportNeedOutput";
 import type {TopicReadinessAssessment} from "../topic-branch/assess-topic-readiness-optimized/assessTopicReadiness";
 
 type CatalogueRoutingMode =
@@ -62,7 +62,7 @@ function deriveSupportRouting(input: DeriveSupportRoutingInput): DerivedSupportR
     });
   }
 
-  if (supportNeed === "feature_request" || supportNeed === "product_feedback") {
+  if (supportNeed === "feature_request") {
     return buildRouting({
       catalogueShouldRun: false,
       catalogueMode: "skip",
