@@ -1,11 +1,11 @@
-import {callLLM} from "../../../../../../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../../../../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../../../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../../../../../infrastructure/llm/parseLLMResponse";
 import {buildExtractIssueSolutionPrompt} from "./buildExtractIssueSolutionPrompt";
 import {extractIssueSolutionResponseFormat} from "./responseFormat";
 import {validateExtractIssueSolutionOutput} from "./validateExtractIssueSolutionOutput";
 
-import type {CurrentUserMessage} from "../../../../../runTopicBranch";
-import type {IssueProgressState} from "../../../runIssueResolutionBranch";
+import type {CurrentUserMessage} from "../../../../runTopicBranch";
+import type {IssueProgressState} from "../../runIssueResolutionBranch";
 import type {ExtractIssueSolutionValidatedOutput} from "./validateExtractIssueSolutionOutput";
 
 type IssueSolutionExtractionOutput = {

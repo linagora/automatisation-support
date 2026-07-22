@@ -170,6 +170,7 @@ async function runTopicBranch(topicBranchInput: TopicBranchInput): Promise<Topic
       fallbackReason: null,
       topicPlannerOutput: {
         topicId: topicBranchInput.topicUpdatePlan.targetTopicId,
+        title: topicBranchInput.topicUpdatePlan.topicIdentity.title,
         say: routedBranchOutput.say
       },
       intermediateOutputs

@@ -15,11 +15,10 @@ import {runAnalyzeSupportAttachments, type AnalyzeSupportAttachmentsInput, type 
 
 import {runProposeTopicUpdates, type ProposeTopicUpdatesInput, type ProposeTopicUpdatesOutput, type TopicUpdatePlan} from "./propose-topic-updates-optimized/runProposeTopicUpdates";
 
-import {runTopicBranch, type LiveMemoryTopicOptimized, type SupportUnderstanding, type TopicBranchOutput, type TopicPlannerOutput} from "./topic-branch-optimized-v2/runTopicBranch";
-import {runComposerPlanner, type ComposerPlannerInput, type ComposerPlannerOutput} from "./composer-planner-optimized/runComposerPlanner";
-import {runRenderer, type RendererInput, type RendererOutput} from "./renderer-optimized/runRenderer";
+import {runTopicBranch, type LiveMemoryTopicOptimized, type SupportUnderstanding, type TopicBranchOutput, type TopicPlannerOutput} from "./topic-branch-optimized-v3/runTopicBranch";
+import {buildMessage, type BuildMessageInput, type BuildMessageOutput} from "./composer-message/buildMessage";
+import {runTranslateMessage, type TranslateMessageInput, type TranslateMessageOutput} from "./translator-message/runTranslateMessage";
 import {buildSupportPatches, type BuildSupportPatchesInput, type BuildSupportPatchesOutput} from "./build-support-patches-optimized/buildSupportPatches";
-
 
 // =====================================================
 // TYPES — pipeline input / output
@@ -80,8 +79,8 @@ type RunSupportProcessingPipelineV3OptimizedIntermOutputs = {
 
   topicBranchOutputs?: TopicBranchOutput[];
 
-  composerPlannerOutput?: ComposerPlannerOutput;
-  rendererOutput?: RendererOutput;
+  buildMessageOutput?: BuildMessageOutput;
+  translateMessageOutput?: TranslateMessageOutput;
   patchesOutput?: BuildSupportPatchesOutput;
 };
 
@@ -190,47 +189,61 @@ async function runSupportProcessingPipelineV3Optimized(
         });
     }
 
-    // -----------------------------------------------------
-    // 5. Route courte : standard only
-    // -----------------------------------------------------
+// -----------------------------------------------------
+// 5. Route courte : standard only
+// -----------------------------------------------------
 
-    const hasSupportRelevant =
-      hasSupportRelevantTextSegments(intermOutputs.analyzeTextSurfaceOutput) ||
-      hasSupportRelevantAttachments(intermOutputs.analyzeAttachmentSurfaceOutput);
+const hasSupportRelevant =
+  hasSupportRelevantTextSegments(intermOutputs.analyzeTextSurfaceOutput) ||
+  hasSupportRelevantAttachments(intermOutputs.analyzeAttachmentSurfaceOutput);
 
-    if (!hasSupportRelevant) {
-      intermOutputs.composerPlannerOutput =
-        await runComposerPlanner({
-          mode: "only_standard_fragments",
-          standardResponseFragments: intermOutputs.buildStandardResponseFragmentsOutput ?? [],
-          topicPlannerOutputs: []
-        });
+if (!hasSupportRelevant) {
+  // Composer déterministe.
+  // Il concatène simplement les standardResponseFragments déjà construits avant.
+  intermOutputs.buildMessageOutput =
+    buildMessage({
+      standardResponseFragments: intermOutputs.buildStandardResponseFragmentsOutput ?? [],
+      topicMessages: []
+    });
 
-      if (intermOutputs.composerPlannerOutput.status === "fallback") return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: intermOutputs.composerPlannerOutput}});
+  // Translator LLM.
+  // Même si la langue est déjà bonne, il renvoie le message tel quel.
+  intermOutputs.translateMessageOutput =
+    await runTranslateMessage({
+      message: intermOutputs.buildMessageOutput.message,
+      targetLanguage: getTargetLanguage(intermOutputs.analyzeTextSurfaceOutput),
+      channel: input.latestUserMessage.channel
+    });
 
-      intermOutputs.rendererOutput =
-        await runRenderer({composerPlannerOutput: intermOutputs.composerPlannerOutput});
+  if (intermOutputs.translateMessageOutput.status === "fallback") {
+    return buildPipelineFallback({
+      input,
+      intermOutputs,
+      fallbackReason: {
+        source: "brick",
+        brickOutput: intermOutputs.translateMessageOutput
+      }
+    });
+  }
 
-      if (intermOutputs.rendererOutput.status === "fallback") return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: intermOutputs.rendererOutput}});
+  // Patches déterministes.
+  // Pas de fallback local : si bug inattendu, le try/catch global de la pipeline le capte.
+  intermOutputs.patchesOutput =
+    buildSupportPatches({
+      liveMemory: input.liveMemory,
+      latestUserMessage: input.latestUserMessage,
+      latestUserAttachments: input.latestUserAttachments,
+      intermOutputs
+    });
 
-      intermOutputs.patchesOutput =
-        await buildSupportPatches({
-          liveMemory: input.liveMemory,
-          latestUserMessage: input.latestUserMessage,
-          latestUserAttachments: input.latestUserAttachments,
-          intermOutputs
-        });
-
-      if (intermOutputs.patchesOutput.status === "fallback") return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: intermOutputs.patchesOutput}});
-
-      return {
-        status: "processed",
-        fallbackReason: null,
-        userResponse: extractUserResponse(intermOutputs.rendererOutput),
-        patches: extractPatches(intermOutputs.patchesOutput),
-        intermOutputs
-      };
-    }
+  return {
+    status: "processed",
+    fallbackReason: null,
+    userResponse: buildUserResponseFromMessage(intermOutputs.translateMessageOutput.message),
+    patches: extractPatches(intermOutputs.patchesOutput),
+    intermOutputs
+  };
+}
 
     // -----------------------------------------------------
     // 6. Deep support texte / attachment
@@ -345,28 +358,41 @@ async function runSupportProcessingPipelineV3Optimized(
         return topicBranchOutput.topicPlannerOutput;
       });
 
-    // -----------------------------------------------------
-    // 9. Composer global
-    // -----------------------------------------------------
+// -----------------------------------------------------
+// 9. Composer message
+// -----------------------------------------------------
 
-    intermOutputs.composerPlannerOutput =
-      await runComposerPlanner({
-        mode: "support",
-        standardResponseFragments: intermOutputs.buildStandardResponseFragmentsOutput ?? [],
-        topicPlannerOutputs
-      });
+intermOutputs.buildMessageOutput =
+  buildMessage({
+    standardResponseFragments: intermOutputs.buildStandardResponseFragmentsOutput ?? [],
+    topicMessages: buildTopicMessages({
+      topicPlannerOutputs,
+      topicUpdatePlans: intermOutputs.proposeTopicUpdatesOutput?.topicUpdatePlans ?? [],
+      liveMemoryTopics: input.liveMemory.topics ?? []
+    })
+  });
 
-    if (intermOutputs.composerPlannerOutput.status === "fallback") return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: intermOutputs.composerPlannerOutput}});
+// -----------------------------------------------------
+// 10. Translator message
+// -----------------------------------------------------
 
-    // -----------------------------------------------------
-    // 10. Renderer
-    // -----------------------------------------------------
+intermOutputs.translateMessageOutput =
+  await runTranslateMessage({
+    message: intermOutputs.buildMessageOutput.message,
+    targetLanguage: getTargetLanguage(intermOutputs.analyzeTextSurfaceOutput),
+    channel: input.latestUserMessage.channel
+  });
 
-    intermOutputs.rendererOutput =
-      await runRenderer({composerPlannerOutput: intermOutputs.composerPlannerOutput});
-
-    if (intermOutputs.rendererOutput.status === "fallback") return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: intermOutputs.rendererOutput}});
-
+if (intermOutputs.translateMessageOutput.status === "fallback") {
+  return buildPipelineFallback({
+    input,
+    intermOutputs,
+    fallbackReason: {
+      source: "brick",
+      brickOutput: intermOutputs.translateMessageOutput
+    }
+  });
+}
     // -----------------------------------------------------
     // 11. Patches
     // -----------------------------------------------------

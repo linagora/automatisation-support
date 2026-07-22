@@ -5,8 +5,8 @@ import {planIssueDeepQualificationAsk} from "./deep-qualification/planner/planIs
 import {analyzeSimilarIssueTopics, type SimilarIssueTopicAnalysisOutput} from "./similar-topic/rag-search-analyze/assess/analyzeSimilarIssueTopics";
 import {planSimilarTopicDisambiguationAsk} from "./similar-topic/rag-search-analyze/planner/planSimilarTopicDisambiguationAsk";
 import {searchSimilarIssueTopics, type SimilarIssueTopicSearchOutput} from "./similar-topic/rag-search/searchSimilarIssueTopics";
-import {extractIssueSolution, type IssueSolutionExtractionOutput} from "./solution/assess/extractIssueSolution";
-import {planIssueSolutionResponse} from "./solution/planner/planIssueSolutionResponse";
+import {extractIssueSolution, type IssueSolutionExtractionOutput} from "./solution/search-solution/assess/extractIssueSolution";
+import {planIssueSolutionResponse} from "./solution/search-solution/planner/planIssueSolutionResponse";
 
 import type {Primitive, RoutedTopicBranchInput, RoutedTopicBranchOutput, SupportUnderstanding} from "../../runTopicBranch";
 
