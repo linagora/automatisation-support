@@ -12,7 +12,7 @@ import {
   SAFETY_SENSITIVE_FALLBACK_CATEGORY,
   UNCLEAR_MESSAGE_SUBCATEGORY,
   getStrongSecuritySurfaceSubcategory
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 import type {
   AnalyzeTextSurfaceInput,

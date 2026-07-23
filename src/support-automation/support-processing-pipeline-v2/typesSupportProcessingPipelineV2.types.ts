@@ -27,7 +27,7 @@ import type {
   CatalogDiagnosticFlowName,
   MessageKindValue,
   SupportCaseDetailFieldName
-} from "../support-catalog";
+} from "../support-catalog-LEGACY";
 import type {
   BroadCategoryHint,
   CandidateFactSupport,

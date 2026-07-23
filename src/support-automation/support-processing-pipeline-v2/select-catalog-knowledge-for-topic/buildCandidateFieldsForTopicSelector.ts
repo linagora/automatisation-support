@@ -8,10 +8,10 @@ import {
   CATEGORY_CANDIDATE_FIELD_NAMES,
   getCandidateDiagnosticFlowsForCatalogSelection,
   getCandidateFieldsForCatalogSelection
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 import type {
   CatalogDiagnosticFlow
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 type KnownTopicField = {
   fieldName: string;

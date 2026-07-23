@@ -17,25 +17,25 @@ const responseFormat = {
           items: {
             type: "object",
             additionalProperties: false,
-            required: ["operation", "sourceUnderstandingIds", "targetTopicId", "topicIdentity"],
+            required: ["topicId", "sourceUnderstandingIds", "title", "summaryTopic", "supportDomain"],
             properties: {
-              operation: {enum: formatCatalogSelection.topicOperations},
-              sourceUnderstandingIds: {type: "array", minItems: 1, items: {type: "string"}},
-              targetTopicId: {
+              topicId: {
                 anyOf: [{type: "integer", minimum: 1}, {type: "null"}]
               },
-              topicIdentity: {
+              sourceUnderstandingIds: {type: "array", minItems: 1, items: {type: "string"}},
+              title: {anyOf: [{type: "string"}, {type: "null"}]},
+              summaryTopic: {anyOf: [{type: "string"}, {type: "null"}]},
+              supportDomain: {
                 type: "object",
                 additionalProperties: false,
-                required: ["title", "supportDomain", "summary"],
+                required: ["value", "reason"],
                 properties: {
-                  title: {anyOf: [{type: "string"}, {type: "null"}]},
-                  supportDomain: {
+                  value: {
                     anyOf: [{enum: formatCatalogSelection.supportDomains}, {type: "null"}]
                   },
-                  summary: {anyOf: [{type: "string"}, {type: "null"}]}
+                  reason: {anyOf: [{type: "string"}, {type: "null"}]}
                 }
-              }
+              },
             }
           }
         }
@@ -49,23 +49,23 @@ function buildOutputJsonShapeForPrompt(): string {
 {
   "topicUpdatePlans": [
     {
-      "operation": "update",
+      "topicId": 12,
       "sourceUnderstandingIds": ["text_understanding_1"],
-      "targetTopicId": 12,
-      "topicIdentity": {
-        "title": null,
-        "supportDomain": null,
-        "summary": "The user has a login problem that is now clarified as happening on Firefox."
+      "title": "Login problem",
+      "summaryTopic": "The user has a login problem that is now clarified as happening on Firefox.",
+      "supportDomain": {
+        "value": "access_security",
+        "reason": "The current understanding and previous topic concern login access."
       }
     },
     {
-      "operation": "create",
+      "topicId": null,
       "sourceUnderstandingIds": ["text_understanding_2"],
-      "targetTopicId": null,
-      "topicIdentity": {
-        "title": "Billing issue",
-        "supportDomain": "billing",
-        "summary": "The user reports a billing issue that should be tracked as a separate support topic."
+      "title": "Billing issue",
+      "summaryTopic": "The user reports a billing issue that should be tracked as a separate support topic.",
+      "supportDomain": {
+        "value": "billing",
+        "reason": "The current understanding is about billing."
       }
     }
   ]

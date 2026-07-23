@@ -1,27 +1,17 @@
 import {formatCatalogSelection} from "./catalogSelection";
 
 import type {AnalyzeSupportTextUnderstanding} from "../../support-processing-pipeline-optimized/analyze-support-text-optimized/runAnalyzeSupportText";
-
-type ExistingSupportTopic = {
-  topicId: number;
-  title?: string;
-  summary?: string;
-  supportDomain?: string | null;
-  extractedFields?: unknown[];
-  attemptedActions?: unknown[];
-};
-
-type ProposedTopicIdentity = {
-  title: string | null;
-  supportDomain: string | null;
-  summary: string | null;
-};
+import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type TopicUpdatePlan = {
-  operation: "update" | "create";
+  topicId: number | null;
   sourceUnderstandingIds: string[];
-  targetTopicId: number | null;
-  topicIdentity: ProposedTopicIdentity;
+  title: string | null;
+  summaryTopic: string | null;
+  supportDomain: {
+    value: string | null;
+    reason: string | null;
+  };
 };
 
 // LLM output validation:
@@ -30,7 +20,7 @@ type TopicUpdatePlan = {
 function validateProposeTopicUpdatesOutput(
   parsedResponse: unknown,
   params: {
-    existingTopics: ExistingSupportTopic[];
+    existingTopics: LiveMemoryTopicOptimized[];
     understandings: AnalyzeSupportTextUnderstanding[];
   }
 ): TopicUpdatePlan[] | null {
@@ -41,7 +31,9 @@ function validateProposeTopicUpdatesOutput(
   const understandingById = new Map(
     params.understandings.map((understanding) => [understanding.understandingId, understanding])
   );
-  const existingTopicIds = new Set(params.existingTopics.map((topic) => topic.topicId));
+  const existingTopicIds = new Set(
+    params.existingTopics.map((topic) => topic.sourceProposeTopicUpdates.topicId)
+  );
   const coveredUnderstandingIds = new Set<string>();
   const plans: TopicUpdatePlan[] = [];
 
@@ -74,12 +66,12 @@ function validatePlan(params: {
 }): TopicUpdatePlan | null {
   if (!isRecord(params.rawPlan)) return null;
   if (!hasOnlyKeys(params.rawPlan, [
-    "operation",
+    "topicId",
     "sourceUnderstandingIds",
-    "targetTopicId",
-    "topicIdentity"
+    "title",
+    "summaryTopic",
+    "supportDomain"
   ])) return null;
-  if (!isTopicOperation(params.rawPlan.operation)) return null;
 
   const sourceUnderstandingIds = validateSourceUnderstandingIds({
     value: params.rawPlan.sourceUnderstandingIds,
@@ -89,51 +81,21 @@ function validatePlan(params: {
 
   if (!sourceUnderstandingIds) return null;
 
-  return params.rawPlan.operation === "update"
-    ? validateUpdatePlan({
-        rawPlan: params.rawPlan,
-        sourceUnderstandingIds,
-        existingTopicIds: params.existingTopicIds
-      })
-    : validateCreatePlan({
-        rawPlan: params.rawPlan,
-        sourceUnderstandingIds
-      });
-}
+  const topicId = validateTopicId(params.rawPlan.topicId, params.existingTopicIds);
+  const title = validateNullableText(params.rawPlan.title);
+  const summaryTopic = validateNullableText(params.rawPlan.summaryTopic);
+  const supportDomain = validateSupportDomain(params.rawPlan.supportDomain);
 
-function validateUpdatePlan(params: {
-  rawPlan: Record<string, unknown>;
-  sourceUnderstandingIds: string[];
-  existingTopicIds: Set<number>;
-}): TopicUpdatePlan | null {
-  if (!isPositiveInteger(params.rawPlan.targetTopicId)) return null;
-  if (!params.existingTopicIds.has(params.rawPlan.targetTopicId)) return null;
-
-  const identity = validateTopicIdentityForUpdate(params.rawPlan.topicIdentity);
-  if (!identity) return null;
+  if (topicId === undefined || title === undefined || summaryTopic === undefined || !supportDomain) {
+    return null;
+  }
 
   return {
-    operation: "update",
-    sourceUnderstandingIds: params.sourceUnderstandingIds,
-    targetTopicId: params.rawPlan.targetTopicId,
-    topicIdentity: identity
-  };
-}
-
-function validateCreatePlan(params: {
-  rawPlan: Record<string, unknown>;
-  sourceUnderstandingIds: string[];
-}): TopicUpdatePlan | null {
-  if (params.rawPlan.targetTopicId !== null) return null;
-
-  const identity = validateTopicIdentityForCreate(params.rawPlan.topicIdentity);
-  if (!identity) return null;
-
-  return {
-    operation: "create",
-    sourceUnderstandingIds: params.sourceUnderstandingIds,
-    targetTopicId: null,
-    topicIdentity: identity
+    topicId,
+    sourceUnderstandingIds,
+    title,
+    summaryTopic,
+    supportDomain
   };
 }
 
@@ -161,36 +123,10 @@ function validateSourceUnderstandingIds(params: {
   return sourceUnderstandingIds;
 }
 
-function validateTopicIdentityForUpdate(value: unknown): ProposedTopicIdentity | null {
-  const identity = validateTopicIdentityObject(value);
-  if (!identity) return null;
-
-  const title = validateNullableText(identity.title);
-  const supportDomain = validateNullableEnumValue(identity.supportDomain, formatCatalogSelection.supportDomains);
-  const summary = validateNullableText(identity.summary);
-
-  if (title === undefined || supportDomain === undefined || summary === undefined) return null;
-
-  return {title, supportDomain, summary};
-}
-
-function validateTopicIdentityForCreate(value: unknown): ProposedTopicIdentity | null {
-  const identity = validateTopicIdentityObject(value);
-  if (!identity) return null;
-
-  const title = validateRequiredText(identity.title);
-  const supportDomain = validateEnumValue(identity.supportDomain, formatCatalogSelection.supportDomains);
-  const summary = validateRequiredText(identity.summary);
-
-  if (!title || !supportDomain || !summary) return null;
-
-  return {title, supportDomain, summary};
-}
-
-function validateTopicIdentityObject(value: unknown): Record<string, unknown> | null {
-  if (!isRecord(value)) return null;
-  if (!hasOnlyKeys(value, ["title", "supportDomain", "summary"])) return null;
-  return value;
+function validateTopicId(value: unknown, existingTopicIds: Set<number>): number | null | undefined {
+  if (value === null) return null;
+  if (!isPositiveInteger(value)) return undefined;
+  return existingTopicIds.has(value) ? value : undefined;
 }
 
 function validateNullableText(value: unknown): string | null | undefined {
@@ -202,9 +138,19 @@ function validateRequiredText(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== "" ? value : null;
 }
 
-function validateNullableEnumValue(value: unknown, allowedValues: readonly string[]): string | null | undefined {
-  if (value === null) return null;
-  return validateEnumValue(value, allowedValues) ?? undefined;
+function validateSupportDomain(value: unknown): TopicUpdatePlan["supportDomain"] | null {
+  if (!isRecord(value)) return null;
+  if (!hasOnlyKeys(value, ["value", "reason"])) return null;
+
+  const domainValue = validateNullableEnumValue(value.value, formatCatalogSelection.supportDomains);
+  const reason = validateNullableText(value.reason);
+
+  if (domainValue === undefined || reason === undefined) return null;
+
+  return {
+    value: domainValue,
+    reason
+  };
 }
 
 function hasPersistableUnderstandingCoverage(params: {
@@ -218,18 +164,21 @@ function hasPersistableUnderstandingCoverage(params: {
 }
 
 function isPersistableUnderstanding(understanding: AnalyzeSupportTextUnderstanding): boolean {
-  return understanding.extractedFields.length > 0 ||
-    understanding.attemptedActions.length > 0 ||
-    understanding.other.length > 0 ||
-    understanding.summary.trim().length > 0;
-}
+  const {attemptedActionsExtracted} = understanding;
 
-function isTopicOperation(value: unknown): value is TopicUpdatePlan["operation"] {
-  return validateEnumValue(value, formatCatalogSelection.topicOperations) !== null;
+  return understanding.caseDetailsExtracted.length > 0 ||
+    attemptedActionsExtracted.length > 0 ||
+    understanding.other.length > 0 ||
+    understanding.summaryMessage.trim().length > 0;
 }
 
 function validateEnumValue(value: unknown, allowedValues: readonly string[]): string | null {
   return typeof value === "string" && allowedValues.includes(value) ? value : null;
+}
+
+function validateNullableEnumValue(value: unknown, allowedValues: readonly string[]): string | null | undefined {
+  if (value === null) return null;
+  return validateEnumValue(value, allowedValues) ?? undefined;
 }
 
 function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: string[]): boolean {
@@ -250,7 +199,5 @@ export {
 };
 
 export type {
-  ExistingSupportTopic,
-  ProposedTopicIdentity,
   TopicUpdatePlan
 };

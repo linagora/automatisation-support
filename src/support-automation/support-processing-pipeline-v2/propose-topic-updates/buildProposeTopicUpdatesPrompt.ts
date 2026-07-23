@@ -6,7 +6,7 @@ import {
   BROAD_CATEGORY_HINTS,
   renderBroadCategoryDefinitionsForPrompt,
   renderMessageKindDefinitionsForPrompt
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 const TOPIC_UPDATE_OPS = [
   "update",

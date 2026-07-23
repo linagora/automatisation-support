@@ -16,7 +16,7 @@ import {
 import {
   BROAD_INTENT_MODES,
   renderBroadIntentDefinitionsForPrompt
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 function toCompactJson(value: unknown): string {
   return JSON.stringify(value);

@@ -11,15 +11,6 @@ type SelectionEntry = {
 type Catalog = Record<string, SelectionEntry>;
 type PromptItem = {key: string; extractionGuidance: string};
 
-const topicOperationSelection = {
-  update: {
-    extractionGuidance: "Use when the latest understanding continues, clarifies, corrects, confirms, denies, or adds information to an existing persistent support topic."
-  },
-  create: {
-    extractionGuidance: "Use only when the latest understanding describes a distinct new support issue, request, question, feedback, or objective not covered by existing topics."
-  }
-} as const;
-
 const supportDomainSelection = {
   product_behavior: keyWithExtraction,
   access_security: keyWithExtraction,
@@ -37,17 +28,12 @@ const supportDomainSelection = {
 
 // Example shape:
 // {
-//   topicOperations: ["update", "create"],
 //   supportDomains: ["product_behavior", "access_security", "billing", ..., "other"]
 // }
 const formatCatalogSelection = resolveFormatCatalogSelection();
 
 // Example shape:
 // {
-//   topicOperations: [
-//     {key: "update", extractionGuidance: "..."},
-//     {key: "create", extractionGuidance: "..."}
-//   ],
 //   supportDomains: [
 //     {key: "product_behavior", extractionGuidance: "..."},
 //     {key: "access_security", extractionGuidance: "..."}
@@ -57,36 +43,14 @@ const promptCatalogSelection = resolvePromptCatalogSelection();
 
 function resolveFormatCatalogSelection() {
   return {
-    topicOperations: buildLocalKeys(topicOperationSelection, "topic operation"),
     supportDomains: buildCatalogKeys(supportDomainCatalog, "support domain", supportDomainSelection)
   };
 }
 
 function resolvePromptCatalogSelection() {
   return {
-    topicOperations: buildLocalPromptItems(topicOperationSelection, "topic operation"),
     supportDomains: buildCatalogPromptItems(supportDomainCatalog, "support domain", supportDomainSelection)
   };
-}
-
-function buildLocalKeys<TSelection extends Record<string, SelectionEntry>>(
-  selection: TSelection,
-  label: string
-): string[] {
-  return Object.keys(selection).map((selectedKey) => {
-    getExtractionGuidance(selection, label, selectedKey);
-    return selectedKey;
-  });
-}
-
-function buildLocalPromptItems<TSelection extends Record<string, SelectionEntry>>(
-  selection: TSelection,
-  label: string
-): PromptItem[] {
-  return Object.keys(selection).map((selectedKey) => ({
-    key: selectedKey,
-    extractionGuidance: getExtractionGuidance(selection, label, selectedKey)
-  }));
 }
 
 function buildCatalogKeys<TSelection extends Record<string, typeof keyWithExtraction>>(

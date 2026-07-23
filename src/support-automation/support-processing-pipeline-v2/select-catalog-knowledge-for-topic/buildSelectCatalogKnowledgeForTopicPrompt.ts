@@ -7,7 +7,7 @@ import {
 } from "./buildCandidateFieldsForTopicSelector";
 import {
   getAnalysisPromptFields
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 function toPrettyJson(value: unknown): string {
   return JSON.stringify(value, null, 2);

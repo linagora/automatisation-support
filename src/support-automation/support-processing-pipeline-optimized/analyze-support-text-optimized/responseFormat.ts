@@ -1,10 +1,5 @@
 import {formatCatalogSelection} from "./catalogSelection";
 
-const supportDomainValues = [
-  ...formatCatalogSelection.supportDomains,
-  "unknown"
-] as const;
-
 const outputJsonShapeForPrompt = buildOutputJsonShapeForPrompt();
 
 const responseFormat = {
@@ -24,11 +19,10 @@ const responseFormat = {
             additionalProperties: false,
             required: [
               "sourceSegmentIds",
-              "extractedFields",
-              "attemptedActions",
+              "caseDetailsExtracted",
+              "attemptedActionsExtracted",
               "other",
-              "summary",
-              "supportDomain"
+              "summaryMessage"
             ],
             properties: {
               sourceSegmentIds: {
@@ -38,12 +32,12 @@ const responseFormat = {
                   type: "string"
                 }
               },
-              extractedFields: {
+              caseDetailsExtracted: {
                 type: "array",
                 items: {
                   type: "object",
                   additionalProperties: false,
-                  required: ["key", "value", "evidence"],
+                  required: ["key", "value", "evidence", "status"],
                   properties: {
                     key: {
                       enum: formatCatalogSelection.extractableFields
@@ -58,16 +52,19 @@ const responseFormat = {
                     },
                     evidence: {
                       type: "string"
+                    },
+                    status: {
+                      enum: ["obtained", "user_declared_unavailable"]
                     }
                   }
                 }
               },
-              attemptedActions: {
+              attemptedActionsExtracted: {
                 type: "array",
                 items: {
                   type: "object",
                   additionalProperties: false,
-                  required: ["action", "outcome", "evidence"],
+                  required: ["action", "outcome", "evidence", "status"],
                   properties: {
                     action: {
                       type: "string"
@@ -77,6 +74,9 @@ const responseFormat = {
                     },
                     evidence: {
                       type: "string"
+                    },
+                    status: {
+                      enum: ["obtained", "user_declared_unavailable"]
                     }
                   }
                 }
@@ -105,11 +105,8 @@ const responseFormat = {
                   }
                 }
               },
-              summary: {
+              summaryMessage: {
                 type: "string"
-              },
-              supportDomain: {
-                enum: supportDomainValues
               }
             }
           }
@@ -125,18 +122,20 @@ function buildOutputJsonShapeForPrompt(): string {
   "understandings": [
     {
       "sourceSegmentIds": ["text_segment_1"],
-      "extractedFields": [
+      "caseDetailsExtracted": [
         {
           "key": "<field key>",
           "value": "<primitive or null>",
-          "evidence": "<exact substring>"
+          "evidence": "<exact substring>",
+          "status": "obtained"
         }
       ],
-      "attemptedActions": [
+      "attemptedActionsExtracted": [
         {
           "action": "<short user attempted action>",
           "outcome": "<attempted action outcome>",
-          "evidence": "<exact substring>"
+          "evidence": "<exact substring>",
+          "status": "obtained"
         }
       ],
       "other": [
@@ -146,8 +145,7 @@ function buildOutputJsonShapeForPrompt(): string {
           "evidence": "<exact substring>"
         }
       ],
-      "summary": "<short local understanding>",
-      "supportDomain": "<support domain or unknown>"
+      "summaryMessage": "<short local understanding of this message/understanding>"
     }
   ]
 }

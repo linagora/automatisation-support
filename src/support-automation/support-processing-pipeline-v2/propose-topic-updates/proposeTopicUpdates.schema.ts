@@ -1,6 +1,6 @@
 import {
   BROAD_CATEGORY_HINTS
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 const TOPIC_UPDATE_OPS = [
   "update",

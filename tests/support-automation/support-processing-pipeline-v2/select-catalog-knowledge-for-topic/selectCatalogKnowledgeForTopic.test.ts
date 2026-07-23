@@ -20,7 +20,7 @@ import {
 } from "../../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic.schema";
 import {
   getCandidateDiagnosticFlowsForCatalogSelection
-} from "../../../../src/support-automation/support-catalog";
+} from "../../../../src/support-automation/support-catalog-LEGACY";
 
 import type {
   ExtractableFieldDefinition,

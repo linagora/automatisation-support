@@ -5,7 +5,7 @@ export {
   TEXT_SURFACE_SAFETY_SENSITIVE_SUBCATEGORIES,
   TEXT_SURFACE_STANDARD_INTERACTION_SUBCATEGORIES,
   TEXT_SURFACE_SUBCATEGORIES_BY_CATEGORY
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 export type {
   TextSurfaceCategory,
@@ -14,4 +14,4 @@ export type {
   TextSurfaceSafetySensitiveSubcategory,
   TextSurfaceStandardInteractionSubcategory,
   TextSurfaceStandardSubcategory
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";

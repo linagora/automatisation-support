@@ -61,9 +61,6 @@ ${renderPromptItems(promptCatalogSelection.attemptedActionOutcomes)}
 Other keys:
 ${renderPromptItems(promptCatalogSelection.otherKeys)}
 
-Support domains:
-${renderPromptItems(promptCatalogSelection.supportDomains)}
-
 # Task
 
 Create one understanding per coherent support need.
@@ -100,24 +97,34 @@ If a value is ambiguous, omit it or put the ambiguity in other with key "uncerta
 
 # Fields
 
-extractedFields: use only catalogued field keys. Put concrete dossier information here: product/service, feature/page, account, billing, access, environment, device, browser, version, error, behavior, trigger, observed result, expected result, impact, reference, date, quantity, or user-provided value. Do not create free keys.
+caseDetailsExtracted: use only catalogued field keys. Put concrete dossier information here.
 
-attemptedActions: create only when the user explicitly tried to solve, verify, diagnose, recover, or work around the issue, and an outcome is expressed or strongly implied. Normal product actions that fail usually belong in extractedFields as trigger_action or observed_result, not attemptedActions.
+Each item must include:
+- status "obtained" when the user provides the value or the fact is directly available in the current message.
+- status "user_declared_unavailable" only when the user explicitly says they cannot provide, access, know, test, retrieve, or share that requested field. In that case, use value null and evidence must be the exact sentence or phrase where the user declares it unavailable.
 
-other: use only catalogued other keys. Put useful support information here only when it does not fit extractedFields or attemptedActions. Keep it short; do not dump the whole message.
+attemptedActionsExtracted: create when the user explicitly tried to solve, verify, diagnose, recover, or work around the issue, and an outcome is expressed or strongly implied.
 
-summary: write a short neutral local understanding supported by the referenced segments. No solution, diagnosis, next step, topic decision, or unsupported assumption.
+Each item must include:
+- status "obtained" when the user actually tried the action or reports its result.
+- status "user_declared_unavailable" only when the user explicitly says they cannot try or perform a relevant requested action. In that case, outcome should be "unknown" unless the message clearly says otherwise, and evidence must be the exact sentence or phrase where the user declares the action unavailable.
 
-supportDomain: choose the support domain/topic area after understanding the unit. It is not the support need, message act, routing, diagnosis, or response planning. Use "unknown" when the unit is too short, too contextual, or not reliably classifiable.
+other: use only catalogued other keys. Put useful support information here only when it does not fit caseDetailsExtracted or attemptedActionsExtracted. Keep it short; do not dump the whole message.
+
+summaryMessage: write a short neutral local understanding supported by the referenced segments. No solution, diagnosis, next step, topic decision, topic summary, support domain, or unsupported assumption.
 
 # Final checks
 
 Before returning JSON, verify:
 1. Every provided segment is referenced by at least one understanding.
 2. Every evidence value is an exact substring of a referenced segment.
-3. extractedFields.key, attemptedActions.outcome, other.key, and supportDomain use only allowed values.
-4. Empty arrays are used when there are no extractedFields, attemptedActions, or other entries.
-5. The output contains no topic update, response plan, diagnosis, solution, or user-facing answer.
+3. caseDetailsExtracted.key, attemptedActionsExtracted.outcome, and other.key use only allowed values.
+4. Empty arrays are used when there are no caseDetailsExtracted, attemptedActionsExtracted, or other entries.
+5. caseDetailsExtracted.status must be "obtained" or "user_declared_unavailable".
+6. attemptedActionsExtracted.status must be "obtained" or "user_declared_unavailable".
+7. Use "user_declared_unavailable" only for explicit user declarations, never by inference.
+8. Do not output a support domain field. Support domain is handled later by proposeTopicUpdates.
+9. The output contains no topic update, response plan, diagnosis, solution, or user-facing answer.
 
 # Output JSON shape
 

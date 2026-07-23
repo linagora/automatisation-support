@@ -3,14 +3,14 @@ import {
   CASE_DETAIL_FIELDS,
   MESSAGE_KIND_VALUES,
   SUPPORT_METADATA_FIELDS
-} from "../support-catalog";
+} from "../support-catalog-LEGACY";
 
 import type {
   ExtractableFieldDefinition
 } from "./typesSupportProcessingPipelineV2.types";
 import type {
   SupportCatalogField
-} from "../support-catalog";
+} from "../support-catalog-LEGACY";
 
 type SupportTextAnalysisCatalogField = ExtractableFieldDefinition & {
   promptHint?: string;

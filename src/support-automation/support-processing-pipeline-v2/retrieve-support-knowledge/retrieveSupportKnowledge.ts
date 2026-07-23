@@ -6,7 +6,7 @@ import {
 } from "../../../infrastructure/rag/httpSupportKnowledgeRetriever";
 import {
   buildSupportKnowledgeRetrievalFiltersFromCaseDetails
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 import type {
   KnowledgeChunk,

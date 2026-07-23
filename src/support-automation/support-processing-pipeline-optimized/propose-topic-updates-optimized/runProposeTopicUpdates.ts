@@ -5,12 +5,10 @@ import {buildProposeTopicUpdatesPrompt} from "./buildProposeTopicUpdatesPrompt";
 import {validateProposeTopicUpdatesOutput} from "./validateProposeTopicUpdatesOutput";
 
 import type {AnalyzeSupportTextUnderstanding} from "../../support-processing-pipeline-optimized/analyze-support-text-optimized/runAnalyzeSupportText";
+import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RecentInteractionContext} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {TopicUpdateFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
-import type {
-  ExistingSupportTopic,
-  TopicUpdatePlan
-} from "./validateProposeTopicUpdatesOutput";
+import type {TopicUpdatePlan} from "./validateProposeTopicUpdatesOutput";
 
 // Stage contract:
 // Input: existing topics, optimized support understandings, and recent interaction context.
@@ -19,7 +17,7 @@ import type {
 // Validation policy: strict JSON validation, strict topic/understanding linking, no hidden repair.
 
 type ProposeTopicUpdatesInput = {
-  existingTopics: ExistingSupportTopic[];
+  existingTopics: LiveMemoryTopicOptimized[];
   understandings: AnalyzeSupportTextUnderstanding[];
   recentInteractionContext: RecentInteractionContext;
 };

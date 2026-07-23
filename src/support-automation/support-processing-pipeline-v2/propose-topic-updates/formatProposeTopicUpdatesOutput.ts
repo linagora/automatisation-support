@@ -1,7 +1,7 @@
 import { TOPIC_UPDATE_OPS } from "./proposeTopicUpdates.schema";
 import {
   BROAD_CATEGORY_HINTS
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 import type {
   FormatProposeTopicUpdatesOutputInput,

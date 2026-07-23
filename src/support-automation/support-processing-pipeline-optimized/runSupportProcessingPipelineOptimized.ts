@@ -1,24 +1,25 @@
 // =====================================================
-// IMPORTS — une brique = fonction + input + output
+// IMPORTS - one brick = function + input + output
 // =====================================================
 
-import {detectSuspiciousPromptPatterns, type DetectSuspiciousPromptPatternsInput, type DetectSuspiciousPromptPatternsOutput} from "./detect-suspicious-prompt-patterns/detectSuspiciousPromptPatterns";
-import {planTurnAnalysis, type PlanTurnAnalysisInput, type TurnAnalysisPlan} from "./plan-turn-analysis/planTurnAnalysis";
+import {detectSuspiciousPromptPatterns, type PromptSecuritySignals} from "./detect-suspicious-prompt-patterns/detectSuspiciousPromptPatterns";
+import {planTurnAnalysis, type TurnAnalysisPlan} from "./plan-turn-analysis/planTurnAnalysis";
 
-import {runAnalyzeTextSurface, type AnalyzeTextSurfaceInput, type AnalyzeTextSurfaceOutput} from "./analyze-text-surface-optimized/runAnalyzeTextSurface";
-import {runAnalyzeAttachmentSurface, type AnalyzeAttachmentSurfaceInput, type AnalyzeAttachmentSurfaceOutput} from "./analyze-attachment-surface-optimized/runAnalyzeAttachmentSurface";
+import {runAnalyzeTextSurface, type AnalyzeTextSurfaceOutput} from "./analyze-text-surface-optimized/runAnalyzeTextSurface";
+import {runAnalyzeAttachmentSurface, type AnalyzeAttachmentSurfaceOutput} from "./analyze-attachment-surface-optimized/runAnalyzeAttachmentSurface";
 
-import {buildStandardResponseFragments, type BuildStandardResponseFragmentsInput, type BuildStandardResponseFragmentsOutput} from "./build-standard-response-fragments/buildStandardResponseFragments";
+import {buildStandardResponseFragments, type BuildStandardResponseFragmentsOutput} from "./build-standard-response-fragments/buildStandardResponseFragments";
 
-import {runAnalyzeSupportText, type AnalyzeSupportTextInput, type AnalyzeSupportTextOutput, type AnalyzeSupportTextUnderstanding} from "./analyze-support-text-optimized/runAnalyzeSupportText";
-import {runAnalyzeSupportAttachments, type AnalyzeSupportAttachmentsInput, type AnalyzeSupportAttachmentsOutput} from "./analyze-support-attachments-optimized/runAnalyzeSupportAttachments";
+import {runAnalyzeSupportText, type AnalyzeSupportTextOutput, type AnalyzeSupportTextUnderstanding} from "./analyze-support-text-optimized/runAnalyzeSupportText";
+import {runAnalyzeSupportAttachments, type AnalyzeSupportAttachmentsOutput} from "./analyze-support-attachments-optimized/runAnalyzeSupportAttachments";
 
-import {runProposeTopicUpdates, type ProposeTopicUpdatesInput, type ProposeTopicUpdatesOutput, type TopicUpdatePlan} from "./propose-topic-updates-optimized/runProposeTopicUpdates";
+import {runProposeTopicUpdates, type ProposeTopicUpdatesOutput, type TopicUpdatePlan} from "./propose-topic-updates-optimized/runProposeTopicUpdates";
 
-import {runTopicBranch, type LiveMemoryTopicOptimized, type SupportUnderstanding, type TopicBranchOutput, type TopicPlannerOutput} from "./topic-branch-optimized-v3/runTopicBranch";
-import {buildMessage, type BuildMessageInput, type BuildMessageOutput} from "./composer-message/buildMessage";
-import {runTranslateMessage, type TranslateMessageInput, type TranslateMessageOutput} from "./translator-message/runTranslateMessage";
-import {buildSupportPatches, type BuildSupportPatchesInput, type BuildSupportPatchesOutput} from "./build-support-patches-optimized/buildSupportPatches";
+import {runTopicManager, type RunTopicManagerOutput, type TopicPlannerOutput} from "./topic-manager/runTopicManager";
+import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import {buildMessage, type BuildMessageOutput} from "./composer-message/buildMessage";
+import {runTranslateMessage, type TranslateMessageOutput} from "./translator-message/runTranslateMessage";
+import {buildLiveMemoryPatches, type BuildLiveMemoryPatchesOutput} from "./build-live-memory-patches/buildLiveMemoryPatches";
 
 // =====================================================
 // TYPES — pipeline input / output
@@ -34,13 +35,41 @@ type RunSupportProcessingPipelineV3OptimizedInput = {
 };
 
 type SupportLiveMemoryInput = {
-  topics: unknown[];
-  lastUserVerbatim?: string;
-  lastBotVerbatim?: string;
-  userState?: {
-    status?: string;
-    flags?: unknown[];
+  topics: LiveMemoryTopicOptimized[];
+
+  previousConversationTurn: {
+    previousUserMessage: string | null;
+    previousBotMessage: string | null;
   };
+
+  userState: {
+    status: "normal" | "safe" | "suspicious" | "dangerous" | string;
+    flags: string[];
+  };
+
+  securityAlerts: Array<{
+    concernedUserMessage: string[];
+    concernedAttachment: unknown[];
+    flags: string[];
+  }>;
+
+  failedPipelineMessages: Array<{
+    concernedUserMessage: string[];
+    concernedAttachment: unknown[];
+    fallbackReason: unknown;
+  }>;
+};
+
+type PipelineUserResponse = {
+  content: string;
+  handoffRecommended: boolean;
+};
+type PipelinePatch = unknown;
+
+type RecentInteractionContext = {
+  previousUserMessageSummary?: string;
+  previousBotResponseSummary?: string;
+  previousBotQuestionFieldNames?: string[];
 };
 
 type RunSupportProcessingPipelineV3OptimizedOutput = {
@@ -55,16 +84,13 @@ type RunSupportProcessingPipelineV3OptimizedFallbackReason =
   | {source: "brick"; brickOutput: unknown}
   | {source: "runner_or_unexpected"; errorMessage: unknown};
 
-type PipelineUserResponse = unknown;
-type PipelinePatch = unknown;
-
 
 // =====================================================
 // TYPES — interm outputs
 // =====================================================
 
-type RunSupportProcessingPipelineV3OptimizedIntermOutputs = {
-  detectSuspiciousPromptPatternsOutput?: DetectSuspiciousPromptPatternsOutput;
+export type RunSupportProcessingPipelineV3OptimizedIntermOutputs = {
+  detectSuspiciousPromptPatternsOutput?: PromptSecuritySignals;
   planTurnAnalysisOutput?: TurnAnalysisPlan;
 
   analyzeTextSurfaceOutput?: AnalyzeTextSurfaceOutput | null;
@@ -77,11 +103,11 @@ type RunSupportProcessingPipelineV3OptimizedIntermOutputs = {
 
   proposeTopicUpdatesOutput?: ProposeTopicUpdatesOutput | null;
 
-  topicBranchOutputs?: TopicBranchOutput[];
+  topicManagerOutputs?: RunTopicManagerOutput[];
 
   buildMessageOutput?: BuildMessageOutput;
   translateMessageOutput?: TranslateMessageOutput;
-  patchesOutput?: BuildSupportPatchesOutput;
+  patchesOutput?: BuildLiveMemoryPatchesOutput;
 };
 
 // =====================================================
@@ -93,11 +119,15 @@ async function runSupportProcessingPipelineV3Optimized(
 ): Promise<RunSupportProcessingPipelineV3OptimizedOutput> {
   const intermOutputs: RunSupportProcessingPipelineV3OptimizedIntermOutputs = {};
   const currentUserMessage = input.latestUserMessage;
-  const recentInteractionContext = buildRecentInteractionContext(input.liveMemory);
+  const recentInteractionContext: RecentInteractionContext = {
+    previousUserMessageSummary: input.liveMemory.previousConversationTurn.previousUserMessage ?? undefined,
+    previousBotResponseSummary: input.liveMemory.previousConversationTurn.previousBotMessage ?? undefined,
+    previousBotQuestionFieldNames: []
+  };
 
   try {
     // -----------------------------------------------------
-    // 1. Préflight déterministe
+    // 1. Deterministic preflight
     // -----------------------------------------------------
 
     intermOutputs.detectSuspiciousPromptPatternsOutput =
@@ -108,11 +138,11 @@ async function runSupportProcessingPipelineV3Optimized(
         latestUserMessage: input.latestUserMessage,
         latestUserAttachments: input.latestUserAttachments,
         promptSecuritySignals: intermOutputs.detectSuspiciousPromptPatternsOutput,
-        accountTrustStatus: {status: input.liveMemory.userState?.status ?? "neutral"}
+        accountTrustStatus: {status: input.liveMemory.userState.status}
       });
 
     // -----------------------------------------------------
-    // 2. Aucun chemin d’analyse activé
+    // 2. No analysis path enabled
     // -----------------------------------------------------
 
     if (
@@ -123,7 +153,7 @@ async function runSupportProcessingPipelineV3Optimized(
     }
 
     // -----------------------------------------------------
-    // 3. Analyse surface texte / attachment
+    // 3. Text / attachment surface analysis
     // -----------------------------------------------------
 
     if (
@@ -189,64 +219,65 @@ async function runSupportProcessingPipelineV3Optimized(
         });
     }
 
-// -----------------------------------------------------
-// 5. Route courte : standard only
-// -----------------------------------------------------
+    // -----------------------------------------------------
+    // 5. Short route: standard only
+    // -----------------------------------------------------
 
-const hasSupportRelevant =
-  hasSupportRelevantTextSegments(intermOutputs.analyzeTextSurfaceOutput) ||
-  hasSupportRelevantAttachments(intermOutputs.analyzeAttachmentSurfaceOutput);
+    const hasSupportRelevant =
+      hasSupportRelevantTextSegments(intermOutputs.analyzeTextSurfaceOutput) ||
+      hasSupportRelevantAttachments(intermOutputs.analyzeAttachmentSurfaceOutput);
 
-if (!hasSupportRelevant) {
-  // Composer déterministe.
-  // Il concatène simplement les standardResponseFragments déjà construits avant.
-  intermOutputs.buildMessageOutput =
-    buildMessage({
-      standardResponseFragments: intermOutputs.buildStandardResponseFragmentsOutput ?? [],
-      topicMessages: []
-    });
+    if (!hasSupportRelevant) {
+      // Deterministic composer.
+      // It simply concatenates the standardResponseFragments already built earlier.
+      intermOutputs.buildMessageOutput =
+        buildMessage({
+          standardResponseFragments: intermOutputs.buildStandardResponseFragmentsOutput ?? [],
+          topicMessages: []
+        });
 
-  // Translator LLM.
-  // Même si la langue est déjà bonne, il renvoie le message tel quel.
-  intermOutputs.translateMessageOutput =
-    await runTranslateMessage({
-      message: intermOutputs.buildMessageOutput.message,
-      targetLanguage: getTargetLanguage(intermOutputs.analyzeTextSurfaceOutput),
-      channel: input.latestUserMessage.channel
-    });
+      // Translator LLM.
+      // If the language is already correct, it returns the message unchanged.
+      intermOutputs.translateMessageOutput =
+        await runTranslateMessage({
+          message: intermOutputs.buildMessageOutput.message,
+          targetLanguage: getTargetLanguage(intermOutputs.analyzeTextSurfaceOutput)
+        });
 
-  if (intermOutputs.translateMessageOutput.status === "fallback") {
-    return buildPipelineFallback({
-      input,
-      intermOutputs,
-      fallbackReason: {
-        source: "brick",
-        brickOutput: intermOutputs.translateMessageOutput
+      if (intermOutputs.translateMessageOutput.status === "fallback") {
+        return buildPipelineFallback({
+          input,
+          intermOutputs,
+          fallbackReason: {
+            source: "brick",
+            brickOutput: intermOutputs.translateMessageOutput
+          }
+        });
       }
-    });
-  }
 
-  // Patches déterministes.
-  // Pas de fallback local : si bug inattendu, le try/catch global de la pipeline le capte.
-  intermOutputs.patchesOutput =
-    buildSupportPatches({
-      liveMemory: input.liveMemory,
-      latestUserMessage: input.latestUserMessage,
-      latestUserAttachments: input.latestUserAttachments,
-      intermOutputs
-    });
+      // Deterministic patches.
+      // No local fallback: if an unexpected bug occurs, the pipeline-level try/catch catches it.
+      intermOutputs.patchesOutput =
+        buildLiveMemoryPatches({
+          latestUserMessage: input.latestUserMessage,
+          latestUserAttachments: input.latestUserAttachments,
+          intermOutputs
+        });
 
-  return {
-    status: "processed",
-    fallbackReason: null,
-    userResponse: buildUserResponseFromMessage(intermOutputs.translateMessageOutput.message),
-    patches: extractPatches(intermOutputs.patchesOutput),
-    intermOutputs
-  };
-}
+      return {
+        status: "processed",
+        fallbackReason: null,
+        userResponse: buildUserResponseFromMessage(
+          intermOutputs.translateMessageOutput.message,
+          hasHandoverRequestedSurface(intermOutputs.analyzeTextSurfaceOutput)
+        ),
+        patches: extractPatches(intermOutputs.patchesOutput),
+        intermOutputs
+      };
+    }
 
     // -----------------------------------------------------
-    // 6. Deep support texte / attachment
+    // 6. Deep support text / attachment
     // -----------------------------------------------------
 
     const shouldAnalyzeSupportText =
@@ -255,13 +286,18 @@ if (!hasSupportRelevant) {
     const shouldAnalyzeSupportAttachments =
       hasSupportRelevantAttachments(intermOutputs.analyzeAttachmentSurfaceOutput);
 
+    const supportTextSurfaceAnalysis =
+      shouldAnalyzeSupportText && intermOutputs.analyzeTextSurfaceOutput?.status === "analyzed"
+        ? intermOutputs.analyzeTextSurfaceOutput
+        : null;
+
     if (shouldAnalyzeSupportText && shouldAnalyzeSupportAttachments) {
       [
         intermOutputs.analyzeSupportTextOutput,
         intermOutputs.analyzeSupportAttachmentsOutput
       ] = await Promise.all([
         runAnalyzeSupportText({
-          textSurfaceAnalysis: intermOutputs.analyzeTextSurfaceOutput,
+          textSurfaceAnalysis: supportTextSurfaceAnalysis ?? {segments: []},
           recentInteractionContext
         }),
         runAnalyzeSupportAttachments({
@@ -278,7 +314,7 @@ if (!hasSupportRelevant) {
     else if (shouldAnalyzeSupportText) {
       intermOutputs.analyzeSupportTextOutput =
         await runAnalyzeSupportText({
-          textSurfaceAnalysis: intermOutputs.analyzeTextSurfaceOutput,
+          textSurfaceAnalysis: supportTextSurfaceAnalysis ?? {segments: []},
           recentInteractionContext
         });
 
@@ -313,8 +349,7 @@ if (!hasSupportRelevant) {
       await runProposeTopicUpdates({
         understandings: supportUnderstandings,
         existingTopics: input.liveMemory.topics,
-        recentInteractionContext,
-        latestUserMessageContent: input.latestUserMessage.content
+        recentInteractionContext
       });
 
     if (intermOutputs.proposeTopicUpdatesOutput.status === "fallback") return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: intermOutputs.proposeTopicUpdatesOutput}});
@@ -324,13 +359,13 @@ if (!hasSupportRelevant) {
     }
 
     // -----------------------------------------------------
-    // 8. Branches topic en parallèle
+    // 8. Topic managers in parallel
     // -----------------------------------------------------
 
-    const topicBranchOutputs =
+    const topicManagerOutputs =
       await Promise.all(
         intermOutputs.proposeTopicUpdatesOutput.topicUpdatePlans.map((topicUpdatePlan) => {
-          return runTopicBranch({
+          return runTopicManager({
             topicUpdatePlan,
             currentTopic: selectCurrentTopic(input.liveMemory, topicUpdatePlan),
             sourceUnderstandings: selectSourceUnderstandings(
@@ -338,79 +373,76 @@ if (!hasSupportRelevant) {
               topicUpdatePlan.sourceUnderstandingIds
             ),
             currentUserMessage: {
-              content: currentUserMessage.content
+              content: currentUserMessage.content,
+              channel: currentUserMessage.channel
             },
-            previousConversationTurn: resolvePreviousConversationTurn(input.liveMemory)
+            previousConversationTurn: input.liveMemory.previousConversationTurn
           });
         })
       );
 
-    intermOutputs.topicBranchOutputs = topicBranchOutputs;
+    intermOutputs.topicManagerOutputs = topicManagerOutputs;
 
-    const failedTopicBranch =
-      topicBranchOutputs.find((topicBranchOutput) => topicBranchOutput.status === "fallback");
+    const failedTopicManager =
+      topicManagerOutputs.find((topicManagerOutput) => topicManagerOutput.status === "fallback");
 
-    if (failedTopicBranch) return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: failedTopicBranch.fallbackReason}});
+    if (failedTopicManager) return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: failedTopicManager.fallbackReason}});
 
     const topicPlannerOutputs =
-      topicBranchOutputs.map((topicBranchOutput) => {
-        if (topicBranchOutput.topicPlannerOutput === null) throw new Error("Missing topicPlannerOutput");
-        return topicBranchOutput.topicPlannerOutput;
+      topicManagerOutputs.map((topicManagerOutput) => {
+        if (topicManagerOutput.topicPlannerOutput === null) throw new Error("Missing topicPlannerOutput");
+        return topicManagerOutput.topicPlannerOutput;
       });
 
-// -----------------------------------------------------
-// 9. Composer message
-// -----------------------------------------------------
+    // -----------------------------------------------------
+    // 9. Composer message
+    // -----------------------------------------------------
 
-intermOutputs.buildMessageOutput =
-  buildMessage({
-    standardResponseFragments: intermOutputs.buildStandardResponseFragmentsOutput ?? [],
-    topicMessages: buildTopicMessages({
-      topicPlannerOutputs,
-      topicUpdatePlans: intermOutputs.proposeTopicUpdatesOutput?.topicUpdatePlans ?? [],
-      liveMemoryTopics: input.liveMemory.topics ?? []
-    })
-  });
+    intermOutputs.buildMessageOutput =
+      buildMessage({
+        standardResponseFragments: intermOutputs.buildStandardResponseFragmentsOutput ?? [],
+        topicMessages: topicPlannerOutputs
+      });
 
-// -----------------------------------------------------
-// 10. Translator message
-// -----------------------------------------------------
+    // -----------------------------------------------------
+    // 10. Translator message
+    // -----------------------------------------------------
 
-intermOutputs.translateMessageOutput =
-  await runTranslateMessage({
-    message: intermOutputs.buildMessageOutput.message,
-    targetLanguage: getTargetLanguage(intermOutputs.analyzeTextSurfaceOutput),
-    channel: input.latestUserMessage.channel
-  });
+    intermOutputs.translateMessageOutput =
+      await runTranslateMessage({
+        message: intermOutputs.buildMessageOutput.message,
+        targetLanguage: getTargetLanguage(intermOutputs.analyzeTextSurfaceOutput)
+      });
 
-if (intermOutputs.translateMessageOutput.status === "fallback") {
-  return buildPipelineFallback({
-    input,
-    intermOutputs,
-    fallbackReason: {
-      source: "brick",
-      brickOutput: intermOutputs.translateMessageOutput
+    if (intermOutputs.translateMessageOutput.status === "fallback") {
+      return buildPipelineFallback({
+        input,
+        intermOutputs,
+        fallbackReason: {
+          source: "brick",
+          brickOutput: intermOutputs.translateMessageOutput
+        }
+      });
     }
-  });
-}
     // -----------------------------------------------------
     // 11. Patches
     // -----------------------------------------------------
 
     intermOutputs.patchesOutput =
-      await buildSupportPatches({
-        liveMemory: input.liveMemory,
+      buildLiveMemoryPatches({
         latestUserMessage: input.latestUserMessage,
         latestUserAttachments: input.latestUserAttachments,
         intermOutputs
       });
 
-    if (intermOutputs.patchesOutput.status === "fallback") return buildPipelineFallback({input, intermOutputs, fallbackReason: {source: "brick", brickOutput: intermOutputs.patchesOutput}});
-
     return {
       status: "processed",
       fallbackReason: null,
-      userResponse: extractUserResponse(intermOutputs.rendererOutput),
+      userResponse: buildUserResponseFromMessage(
+        intermOutputs.translateMessageOutput.message,
+        hasHandoverRequestedSurface(intermOutputs.analyzeTextSurfaceOutput) ||
+          hasTopicManagerHandoverRequested(intermOutputs.topicManagerOutputs)
+      ),
       patches: extractPatches(intermOutputs.patchesOutput),
       intermOutputs
     };
@@ -434,43 +466,80 @@ function selectCurrentTopic(
   liveMemory: SupportLiveMemoryInput,
   topicUpdatePlan: TopicUpdatePlan
 ): LiveMemoryTopicOptimized | null {
-  if (topicUpdatePlan.targetTopicId === null) return null;
+  if (topicUpdatePlan.topicId === null) return null;
 
-  const topic = liveMemory.topics.find((candidate) => {
-    return isRecord(candidate) && candidate.topicId === topicUpdatePlan.targetTopicId;
-  });
-
-  return isRecord(topic)
-    ? topic as LiveMemoryTopicOptimized
-    : null;
+  return liveMemory.topics.find((topic) => {
+    return topic.sourceProposeTopicUpdates.topicId === topicUpdatePlan.topicId;
+  }) ?? null;
 }
 
 function selectSourceUnderstandings(
   supportUnderstandings: AnalyzeSupportTextUnderstanding[],
   sourceUnderstandingIds: string[]
-): SupportUnderstanding[] {
+): AnalyzeSupportTextUnderstanding[] {
   const sourceIdSet = new Set(sourceUnderstandingIds);
   return supportUnderstandings.filter((understanding) => {
     return sourceIdSet.has(understanding.understandingId);
   });
 }
 
-function resolvePreviousConversationTurn(
-  liveMemory: SupportLiveMemoryInput
-): {
-  previousUserVerbatim: string | null;
-  previousBotVerbatim: string | null;
-} {
+function hasSupportRelevantTextSegments(
+  output: AnalyzeTextSurfaceOutput | null | undefined
+): boolean {
+  return output?.status === "analyzed" &&
+    output.segments.some((segment) => segment.category === "support_relevant");
+}
+
+function hasSupportRelevantAttachments(
+  output: AnalyzeAttachmentSurfaceOutput | null | undefined
+): boolean {
+  return output?.status === "analyzed" &&
+    output.attachments.some((attachment) => attachment.supportRelevant === true);
+}
+
+function hasHandoverRequestedSurface(
+  output: AnalyzeTextSurfaceOutput | null | undefined
+): boolean {
+  return output?.status === "analyzed" &&
+    output.segments.some((segment) => {
+      const candidate = segment as {
+        standardSubcategory?: unknown;
+        standardAction?: unknown;
+      };
+
+      return candidate.standardSubcategory === "handover_requested" ||
+        candidate.standardAction === "handover_requested";
+    });
+}
+
+function hasTopicManagerHandoverRequested(
+  outputs: RunTopicManagerOutput[] | undefined
+): boolean {
+  return outputs?.some((output) => {
+    return output.status === "processed" &&
+      output.sourceTopicManager.handover.isRequested === true;
+  }) ?? false;
+}
+
+function getTargetLanguage(
+  output: AnalyzeTextSurfaceOutput | null | undefined
+): string | null {
+  return output?.status === "analyzed" ? output.userLanguage : null;
+}
+
+function buildUserResponseFromMessage(
+  message: string,
+  handoffRecommended = false
+): PipelineUserResponse {
   return {
-    previousUserVerbatim: liveMemory.lastUserVerbatim ?? null,
-    previousBotVerbatim: liveMemory.lastBotVerbatim ?? null
+    content: message,
+    handoffRecommended
   };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function extractPatches(output: BuildLiveMemoryPatchesOutput): PipelinePatch[] {
+  return [output];
 }
-
 
 // =====================================================
 // OUTPUT BUILDERS
@@ -485,7 +554,7 @@ function buildPipelineFallback(params: {
     status: "fallback",
     fallbackReason: params.fallbackReason,
     userResponse: {
-      content: "Erreur technique dans l’analyse automatique. Un membre du support va reprendre votre demande.",
+      content: "Technical issue while processing the request. A support team member will take over.",
       handoffRecommended: true
     },
     patches: [
@@ -508,7 +577,7 @@ function buildNotAnalyzedOutput(params: {
     status: "processed",
     fallbackReason: null,
     userResponse: {
-      content: "Votre message n’a pas pu être analysé automatiquement. Un membre du support pourra le reprendre si nécessaire.",
+      content: "We could not automatically analyze your message. A support team member may take over if needed.",
       handoffRecommended: true
     },
     patches: [

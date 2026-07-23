@@ -2,7 +2,7 @@ import {
 renderSurfaceCategoryDefinitionsForPrompt,
 renderSurfaceSubcategoryDefinitionsForPrompt,
 renderSurfaceSubcategoryValuesForPrompt
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 import type {
 AnalyzeTextSurfacePrompt,

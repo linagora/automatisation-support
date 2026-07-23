@@ -3,7 +3,7 @@ import type {
 } from "../typesSupportProcessingPipelineV2.types";
 import type {
   SupportCaseDetailFieldName
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 export type SupportTopicContextCaseDetailV2 = {
   key: string;

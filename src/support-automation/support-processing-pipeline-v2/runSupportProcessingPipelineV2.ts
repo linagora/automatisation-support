@@ -65,7 +65,7 @@ import {
 } from "./responsePlanIds";
 import {
   buildTemporarySelectedCatalogKnowledge
-} from "../support-catalog";
+} from "../support-catalog-LEGACY";
 import type {
   AttachmentSurfaceAnalysis,
   AttachmentUnderstanding,

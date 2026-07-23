@@ -5,7 +5,7 @@ import type {
 } from "../../support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {
   SupportCaseDetailFieldName
-} from "../../support-automation/support-catalog";
+} from "../../support-automation/support-catalog-LEGACY";
 
 export type LiveMemoryUserState = {
   status: "normal" | "watch" | "blocked";

@@ -1,6 +1,6 @@
 import {
   BROAD_INTENT_MODES
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 function objectOf(
   properties: Record<string, unknown>,

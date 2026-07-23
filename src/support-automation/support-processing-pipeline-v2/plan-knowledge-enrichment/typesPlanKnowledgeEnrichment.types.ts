@@ -11,7 +11,7 @@ import type {
 } from "../../../infrastructure/llm/llm-client";
 import type {
   StrictBroadIntentMode
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 export type KnowledgeEnrichmentRoute =
   | "none"

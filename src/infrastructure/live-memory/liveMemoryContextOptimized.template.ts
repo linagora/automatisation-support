@@ -1,15 +1,19 @@
-type LiveMemoryContextOptimized = {
-  topics: LiveMemoryTopicOptimized[];
+export type LiveMemoryContextOptimized = {
+  handover: {
+    isHandover: boolean;
+    handoverReason: asked_by_user | detected_by_system | null;
+  };
 
   previousConversationTurn: {
     previousUserMessage: string | null;
     previousBotMessage: string | null;
   };
 
-  userState: {
-    status: "normal" | "safe" | "suspicious" | "dangerous" | string;
-    flags: string[];
-  };
+  failedPipelineMessages: Array<{
+    concernedUserMessage: string[];
+    concernedAttachment: unknown;
+    fallbackReason: unknown;
+  }>;
 
   securityAlerts: Array<{
     concernedUserMessage: string[];
@@ -17,77 +21,131 @@ type LiveMemoryContextOptimized = {
     flags: string[];
   }>;
 
-  failedPipelineMessage: Array<{
-    concernedUserMessage: string[];
-    concernedAttachment: unknown[];
-    fallbackReason: unknown;
-  }>;
+  userState: {
+    status: "normal" | "safe" | "suspicious" | "dangerous" | string;
+    flags: string[];
+  };
+
+  topics: LiveMemoryTopicOptimized[] | null;
 };
 
-type LiveMemoryTopicOptimized = {
-  topicId: number;
-  title: string | null;
-
-  supportNeed: {
-    value: "issue_resolution" | "feature_request" | "knowledge_answer" | "support_action" | "unclear" | null;
-    evidence: string | null;
-  };
-
-  supportDomain: {
-    value: string | null; // à terme : union issue du supportDomainCatalog
-    evidence: string | null;
-  };
-
-  summary: string | null;
-
-  caseDetails: Array<{
-    key: string;
-    value: string | number | boolean | null;
-    evidence: string | null;
-    status: "obtained" | "missing_but_asked" | "user_declared_unavailable";
-  }>;
-
-  attemptedActions: Array<{
-    action: string | null;
-    outcome: string | null;
-    evidence: string | null;
-    status: "obtained" | "missing_but_asked" | "user_declared_unavailable";
-  }>;
-
-  topicBranch: {
-    supportNeed: "issue_resolution" | "feature_request" | "knowledge_answer" | "support_action" | "unclear";
-
-    currentStep: "basic_qualification" | "similar_topic" | "deep_qualification" | "solution" | "completed" | "fallback";
-
-    stepsProgression: {
-      basicQualification: "not_started" | "complete" | "waiting_user" | "fallback";
-      similarTopic: "not_searched" | "searched" | "failed" | "not_analyzed" | "identified" | "unclear" | "absent" | "fallback";
-      deepQualification: "not_started" | "complete" | "waiting_user" | "fallback";
-      solution: "not_started" | "available" | "not_found" | "not_relevant" | "provided" | "fallback";
-      idleMode: "not_started" | "active_solved" | "active_unsolved" | "fallback";
-    };
-  } | null;
-
-  supportKnowledge?: {
-    rawRagKnowledge: unknown;
-    filteredRagKnowledge: unknown;
-    selectionSummary: unknown;
-
-    caseDetailsToAskBecauseOfRag: Array<{
-      key: string | null;
-      reason: string | null;
+export type LiveMemoryTopicOptimized = {
+  status: "solved_by_bot" | "solved_by_human" | "unsolved" | "in_progress" ;
+  sourceAnalyzeSupportText: {
+    caseDetailsExtracted: Array<{
+      key: string;
+      value: string | number | boolean | null;
+      evidence: string | null;
+      status: "obtained" | "user_declared_unavailable";
     }>;
 
-    attemptedActionsToAskBecauseOfRag: Array<{
+    attemptedActionsExtracted: Array<{
       action: string | null;
-      reason: string | null;
+      outcome: string | null;
+      evidence: string | null;
+      status: "obtained" | "user_declared_unavailable";
     }>;
-
-    supportFacingInformation: string | null;
   };
-};
 
-export type {
-  LiveMemoryContextOptimized,
-  LiveMemoryTopicOptimized
+  sourceProposeTopicUpdates: {
+    topicId: number;
+    title: string | null;
+    summaryTopic: string | null;
+
+    supportDomain: {
+      value: string | null;
+      reason: string | null;
+    };
+  };
+
+  sourceTopicManager: {
+    currentStep:
+      | "support_need_resolution"
+      | "basic_qualification"
+      | "retrieve_knowledge"
+      | "deep_qualification"
+      | "solution"
+      | "idle"
+      | null;
+
+    supportNeedResolution: {
+      supportNeed: {
+        value:
+          | "issue_resolution"
+          | "feature_request"
+          | "knowledge_answer"
+          | "support_action"
+          | "unclear";
+        reason: string | null;
+      };
+    };
+
+    basicQualification: {
+      isBuilt: boolean;
+      isCompleted: boolean;
+//case details created in asking and obtained after the built. Status are changed according to what is obtained in extracted details.
+      caseDetailsToAskBecauseOfBasicQualification: Array<{
+        key: string | null;
+        reason: string | null;
+        status: "asking" | "obtained" | "user_declared_unavailable";
+      }>;
+    };
+
+    retrieveKnowledge: {
+      isCompleted: boolean;
+
+      rankedSearch: {
+        isSearched: boolean;
+        rawRagKnowledge: unknown;
+      };
+
+      filter: {
+        isFiltered: boolean;
+        filteredRagKnowledge: unknown;
+        filterExplanation: string | null;
+      };
+
+      selection: {
+        isClearSelected: boolean;
+        clarificationQuestion: string | null;
+        selectedfilteredRagKnowledge: unknown;
+        selectionExplanation: string | null;
+      };
+
+      segmentationKnowledge: {
+        isSegmented: boolean;
+        userFacingInformation: string | null;
+        supportFacingInformation: string | null;
+      };
+    };
+
+    deepQualification: {
+      isBuilt: boolean;
+      isCompleted: boolean;
+
+      caseDetailsToAskBecauseOfDeepQualification: Array<{
+        key: string | null;
+        reason: string | null;
+        status: "asking" | "obtained" | "user_declared_unavailable";
+      }>;
+    };
+
+    solution: {
+      isActionForUserBuilt: boolean;
+      isActionForSupportBuilt: boolean;
+      isCompleted: boolean;
+
+      attemptedActionsToAskBecauseOfSolutionFound: Array<{
+        action: string | null;
+        reason: string | null;
+        status: "asking" | "succeeded" | "failed" | "user_declared_unavailable";
+      }>;
+
+      actionToTakeForSupport: string | null;
+    };
+
+    idleMode: {
+      isActivated: boolean;
+    };
+  };
 };

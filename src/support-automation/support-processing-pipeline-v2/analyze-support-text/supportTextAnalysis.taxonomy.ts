@@ -6,7 +6,7 @@ import {
   SUPPORT_NEEDS,
   TESTED_ACTION_OUTCOMES,
   TEXT_UNCERTAINTY_REASONS
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 type PrimaryUserExpectation = typeof PRIMARY_USER_EXPECTATIONS[number];
 type SupportNeed = typeof SUPPORT_NEEDS[number];

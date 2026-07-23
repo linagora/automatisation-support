@@ -4,7 +4,7 @@ import type {
 } from "./typesSupportProcessingPipelineV2.types";
 import type {
   SupportCaseDetailFieldName
-} from "../support-catalog";
+} from "../support-catalog-LEGACY";
 
 function nonEmptyString(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== ""

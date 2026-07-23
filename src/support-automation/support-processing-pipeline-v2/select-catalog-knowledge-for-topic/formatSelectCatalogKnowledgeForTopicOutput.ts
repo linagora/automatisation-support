@@ -5,7 +5,7 @@ import type {
 } from "../typesSupportProcessingPipelineV2.types";
 import type {
   CatalogDiagnosticFlow
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 import type {
   FormatSelectCatalogKnowledgeForTopicOutputInput,
   RawSelectedCatalogKnowledgeForTopic,

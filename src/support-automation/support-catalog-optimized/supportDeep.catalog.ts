@@ -113,11 +113,11 @@ const testedActionOutcomeCatalog = {
 const caseDetailFieldCatalog = {
   user_identifier: {
     extractionGuidance: "Extract only when the user gives a concrete login, username, email, or user id.",
-    askGuidance: "Ask which user account is affected, using a login, email, username, or user id if available."
+    askGuidance: "Which user account is affected? Send the login, email, username, or user ID if available."
   },
   account_identifier: {
     extractionGuidance: "Extract when the user provides an account id, tenant id, customer id, billing account, or similar identifier.",
-    askGuidance: "Ask for the relevant account, tenant, or customer identifier if support needs to locate the account."
+    askGuidance: "Which account should support check? Send the account ID, tenant ID, customer ID, or billing account if available."
   },
   account_status: {
     extractionGuidance: "Extract when the user explicitly mentions a known account status or access state.",
@@ -126,233 +126,233 @@ const caseDetailFieldCatalog = {
 
   organization_name: {
     extractionGuidance: "Extract when the user names the organization, company, school, customer, or legal entity.",
-    askGuidance: "Ask which organization or customer entity is concerned if it is needed to route or locate the topic."
+    askGuidance: "Which organization or customer entity is concerned?"
   },
   workspace_name: {
     extractionGuidance: "Extract when the user names a workspace, team, room, project, tenant, or shared space.",
-    askGuidance: "Ask which workspace, team, room, project, or shared space is affected."
+    askGuidance: "Which workspace, team, room, project, tenant, or shared space is affected?"
   },
   product_or_service: {
     extractionGuidance: "Extract when the user names the product, service, module, app, connector, or integration. Prefer explicit user wording over assumptions.",
-    askGuidance: "Ask which product, service, module, or app the topic concerns."
+    askGuidance: "Which product, service, module, or app is concerned?"
   },
   feature_or_page: {
     extractionGuidance: "Extract when the user mentions a specific page, screen, button, feature, flow, or capability.",
-    askGuidance: "Ask which feature, page, screen, or action is concerned."
+    askGuidance: "Where does the issue happen? Name the feature, page, screen, button, or action you are using."
   },
 
   platform: {
     extractionGuidance: "Extract this when the user mentions web, browser, mobile, Android, iPhone, iOS, desktop app, Windows app, macOS app, or a similar access context.",
-    askGuidance: "Ask how the user accesses the service, for example whether they use a web browser, the mobile app, or the desktop app."
+    askGuidance: "How do you access the service: web browser, mobile app, or desktop app?"
   },
   operating_system: {
     extractionGuidance: "Extract only the operating system context, such as Android, iOS, Windows, macOS, or Linux, including the version when provided.",
-    askGuidance: "Ask which operating system the user is using, including the version if they know it."
+    askGuidance: "Which operating system are you using? Include the version if you know it."
   },
   browser: {
     extractionGuidance: "Extract this when the user mentions Chrome, Firefox, Safari, Edge, a webview, or another browser.",
-    askGuidance: "Ask which browser the user uses if they access the service through the web version."
+    askGuidance: "Which browser are you using for the web version?"
   },
   app_version: {
     extractionGuidance: "Extract when the user gives a concrete version number or release identifier for an app, client, plugin, extension, or connector.",
-    askGuidance: "Ask which app or client version the user is using, if version can affect diagnosis."
+    askGuidance: "Which app, client, plugin, or connector version are you using?"
   },
   device: {
     extractionGuidance: "Extract when the user mentions a device model or category such as iPhone 13, Samsung Galaxy, laptop, tablet, or workstation.",
-    askGuidance: "Ask which device the user is using if device context may affect the issue."
+    askGuidance: "Which device are you using? Include the model if available."
   },
   notification_permission_status: {
     extractionGuidance: "Extract when the user says OS-level notification permission is enabled, disabled, granted, denied, or checked.",
-    askGuidance: "Ask whether notifications are allowed at the operating-system level for the app."
+    askGuidance: "Are notifications allowed for this app in your device or operating system settings?"
   },
   notification_channel_status: {
     extractionGuidance: "Extract when the user mentions app notification channels, in-app notification settings, notification categories, or per-channel settings.",
-    askGuidance: "Ask whether the relevant in-app notification setting or notification channel is enabled."
+    askGuidance: "Is the relevant notification setting or channel enabled inside the app?"
   },
 
   pre_problem_state: {
     extractionGuidance: "Extract when the user explains what worked before, what changed, or what the previous normal state was.",
-    askGuidance: "Ask what was working before the issue started, if that helps understand the change."
+    askGuidance: "What was working before the issue started?"
   },
   trigger_action: {
     extractionGuidance: "Extract the normal product action or event that reveals the issue, not troubleshooting attempts.",
-    askGuidance: "Ask what action the user is trying to perform when the issue appears."
+    askGuidance: "What action are you trying to perform when the issue appears?"
   },
   failure_step: {
     extractionGuidance: "Extract when the user identifies where in the flow the problem appears, such as after clicking, during login, at upload, or on a specific step.",
-    askGuidance: "Ask at which exact step the problem appears or blocks the workflow."
+    askGuidance: "At which exact step does the issue appear or block you?"
   },
   reproduction_steps: {
     extractionGuidance: "Extract when the user describes a sequence of actions that leads to the issue.",
-    askGuidance: "Ask the user to describe the exact steps they follow before the issue appears."
+    askGuidance: "What exact steps do you follow before the issue appears?"
   },
   workflow_context: {
     extractionGuidance: "Extract when the user explains the larger workflow, goal, or context around the requested action or issue.",
-    askGuidance: "Ask in which workflow, feature, or usage context the user is trying to achieve the result."
+    askGuidance: "What workflow or goal are you trying to complete?"
   },
   error_message: {
     extractionGuidance: "Extract only when the user explicitly provides the exact message, error code, or a very close paraphrase.",
-    askGuidance: "Ask the user to share the exact error message or code shown on screen, if there is one."
+    askGuidance: "What exact error message or code is shown on screen?"
   },
   observed_result: {
     extractionGuidance: "Extract the concrete behavior the user observes, including failures, unexpected results, missing results, or current state.",
-    askGuidance: "Ask what happens exactly when the user tries the action."
+    askGuidance: "What happens exactly when you try the action?"
   },
   expected_result: {
     extractionGuidance: "Extract when the expected behavior is explicit or clearly implied by the reported negative result.",
-    askGuidance: "Ask what the user expected to happen instead."
+    askGuidance: "What did you expect to happen instead?"
   },
   available_workaround: {
     extractionGuidance: "Extract only when the user explicitly mentions a workaround, temporary solution, or lack of workaround.",
-    askGuidance: "Ask whether the user has found or tried any workaround, if this helps prioritize or route the topic."
+    askGuidance: "Have you found or tried any workaround?"
   },
 
   issue_started_at: {
     extractionGuidance: "Extract dates, times, relative timing, or first-noticed timing related to the start of the issue.",
-    askGuidance: "Ask when the issue started or when the user first noticed it."
+    askGuidance: "When did the issue start or when did you first notice it?"
   },
   issue_duration: {
     extractionGuidance: "Extract a duration such as minutes, hours, days, weeks, or ongoing since a given period.",
-    askGuidance: "Ask how long the issue has been happening."
+    askGuidance: "How long has the issue been happening?"
   },
   deadline_or_expected_date: {
     extractionGuidance: "Extract when the user mentions a deadline, expected resolution date, renewal date, scheduled action, or timing constraint.",
-    askGuidance: "Ask whether there is a deadline or expected date if timing matters."
+    askGuidance: "Is there a deadline or expected date for this issue?"
   },
   frequency: {
     extractionGuidance: "Extract frequency wording such as always, every time, sometimes, intermittent, once, after each email, or only in some cases.",
-    askGuidance: "Ask whether it happens every time, only sometimes, or only in specific cases."
+    askGuidance: "Does it happen every time, sometimes, or only in specific cases?"
   },
   affected_scope: {
     extractionGuidance: "Extract when the user describes what part of the product, data, workspace, or organization is affected.",
-    askGuidance: "Ask whether the issue affects one item, several items, a workspace, or everyone."
+    askGuidance: "What is affected: one item, several items, one workspace, or everyone?"
   },
   affected_users: {
     extractionGuidance: "Extract when the user says who is affected or how many people are affected.",
-    askGuidance: "Ask whether the issue affects only the user or other users as well."
+    askGuidance: "Does this affect only you or other users too?"
   },
   user_impact: {
     extractionGuidance: "Extract concrete impact such as blocked work, lost access, payment risk, customer impact, production issue, or urgency.",
-    askGuidance: "Ask what impact the issue has on the user's work or organization if prioritization needs more context."
+    askGuidance: "What impact does this issue have on your work or organization?"
   },
 
   access_action: {
     extractionGuidance: "Extract when the user mentions login, password reset, invite, unlock, permission, recovery, SSO, MFA, or account access action.",
-    askGuidance: "Ask which access action the user is trying to perform, such as logging in, resetting a password, accepting an invite, or changing permissions."
+    askGuidance: "Which access action are you trying to perform: login, password reset, invite, unlock, recovery, or permission change?"
   },
   auth_method: {
     extractionGuidance: "Extract when the user names the authentication method or login mechanism.",
-    askGuidance: "Ask which authentication method the user uses, such as password, SSO, magic link, or MFA."
+    askGuidance: "Which authentication method are you using: password, SSO, magic link, MFA, or another method?"
   },
   server_or_instance: {
     extractionGuidance: "Extract when the user mentions an instance, server, domain, endpoint, tenant, region, or deployment context.",
-    askGuidance: "Ask which server, instance, tenant, domain, or endpoint is concerned if support needs that context."
+    askGuidance: "Which server, instance, tenant, domain, region, or endpoint is concerned?"
   },
   recovery_channel: {
     extractionGuidance: "Extract when the user mentions a recovery email, SMS, backup code, admin approval, or other recovery channel.",
-    askGuidance: "Ask which recovery channel the user is using or expecting, such as email, SMS, backup code, or admin approval."
+    askGuidance: "Which recovery channel are you using or expecting: email, SMS, backup code, or admin approval?"
   },
   user_role_or_permission: {
     extractionGuidance: "Extract when the user mentions admin/member/guest roles, permission level, access right, entitlement, or authorization status.",
-    askGuidance: "Ask what role or permission level the affected user has."
+    askGuidance: "What role or permission level does the affected user have?"
   },
   mfa_status: {
     extractionGuidance: "Extract when the user mentions MFA, 2FA, authenticator app, one-time code, backup code, or multi-factor requirement/status.",
-    askGuidance: "Ask whether MFA or two-factor authentication is enabled, required, or failing for the account."
+    askGuidance: "Is MFA or two-factor authentication enabled, required, or failing for the account?"
   },
 
   integration_or_connector: {
     extractionGuidance: "Extract when the user names an integration, connector, bot, webhook, API, or external service.",
-    askGuidance: "Ask which integration, connector, bot, API, or external service is involved."
+    askGuidance: "Which integration, connector, bot, API, webhook, or external service is involved?"
   },
   sync_target: {
     extractionGuidance: "Extract when the user mentions what is being synced or where sync is expected to happen.",
-    askGuidance: "Ask what object, system, file, folder, workspace, or destination should be syncing."
+    askGuidance: "What should be syncing, and where should it sync to?"
   },
   sync_status: {
     extractionGuidance: "Extract when the user describes sync as pending, stuck, failed, delayed, duplicated, incomplete, missing, or complete.",
-    askGuidance: "Ask what the current sync status is, for example pending, stuck, failed, delayed, or duplicated."
+    askGuidance: "What is the current sync status: pending, stuck, failed, delayed, duplicated, or something else?"
   },
 
   plan_or_subscription: {
     extractionGuidance: "Extract when the user mentions a plan, subscription, license, quota, seat count, package, or offer.",
-    askGuidance: "Ask which plan, subscription, license, or package is concerned."
+    askGuidance: "Which plan, subscription, license, package, or quota is concerned?"
   },
   billing_or_payment_status: {
     extractionGuidance: "Extract when the user describes the current billing or payment state, such as paid, failed, pending, refunded, charged, renewed, or unpaid.",
-    askGuidance: "Ask what the current billing or payment status is, if it is needed to understand the case."
+    askGuidance: "What is the current billing or payment status: paid, failed, pending, refunded, charged, renewed, or unpaid?"
   },
   billing_issue_type: {
     extractionGuidance: "Extract the billing problem type when the user mentions invoice, payment, duplicate charge, refund, renewal, subscription, or payment method issues.",
-    askGuidance: "Ask what kind of billing issue it is, such as invoice, refund, renewal, duplicate charge, failed payment, or subscription issue."
+    askGuidance: "What kind of billing issue is it: invoice, refund, renewal, duplicate charge, failed payment, or subscription issue?"
   },
   duplicate_billing_impact: {
     extractionGuidance: "Extract when the user clarifies whether the duplicate concerns an invoice/document or an actual payment/charge.",
-    askGuidance: "Ask whether the duplicate concerns only an invoice/document or whether the user was charged twice."
+    askGuidance: "Is the duplicate only an invoice or document, or were you charged twice?"
   },
   billing_provider: {
     extractionGuidance: "Extract when the user mentions Stripe, Apple, Google, marketplace billing, bank, card provider, or another payment provider.",
-    askGuidance: "Ask which billing provider, marketplace, bank, or payment processor was used if relevant."
+    askGuidance: "Which billing provider, marketplace, bank, card provider, or payment processor was used?"
   },
   amount: {
     extractionGuidance: "Extract numeric amounts, charged amounts, invoice totals, quota quantities, seat counts, or billable quantities when provided.",
-    askGuidance: "Ask for the amount concerned, including the charged or invoiced amount if relevant."
+    askGuidance: "What amount is concerned? Include the charged or invoiced amount if relevant."
   },
   currency: {
     extractionGuidance: "Extract currency codes or symbols linked to an amount.",
-    askGuidance: "Ask which currency the amount is in if the amount is provided without currency."
+    askGuidance: "Which currency is the amount in?"
   },
   billing_date_or_period: {
     extractionGuidance: "Extract dates or periods related to invoices, payments, renewals, subscription periods, charges, or refunds.",
-    askGuidance: "Ask for the billing date, invoice date, charge date, or subscription period involved."
+    askGuidance: "Which billing date, invoice date, charge date, or subscription period is involved?"
   },
   payment_method: {
     extractionGuidance: "Extract when the user mentions the payment method used or expected.",
-    askGuidance: "Ask which payment method was used, such as card, bank transfer, PayPal, SEPA, or invoice."
+    askGuidance: "Which payment method was used: card, bank transfer, PayPal, SEPA, invoice, or another method?"
   },
 
   question_intent: {
     extractionGuidance: "Extract when the user asks a question and its purpose is clear.",
-    askGuidance: "Ask what the user wants to know or achieve if the question is too vague."
+    askGuidance: "What do you want to know or achieve?"
   },
   gap_observed: {
     extractionGuidance: "Extract when the user describes what is missing, unsupported, limited, inconvenient, or desired as an improvement.",
-    askGuidance: "Ask what is missing today or what capability the user would like to have."
+    askGuidance: "What is missing today, or what capability do you need?"
   },
 
   assistive_technology: {
     extractionGuidance: "Extract when the user names assistive technology or accessibility tooling.",
-    askGuidance: "Ask which assistive technology or accessibility tool the user is using."
+    askGuidance: "Which assistive technology or accessibility tool are you using?"
   },
   accessibility_barrier: {
     extractionGuidance: "Extract when the user describes the type of accessibility barrier encountered.",
-    askGuidance: "Ask what accessibility barrier the user encounters, such as focus, label, contrast, keyboard navigation, or screen reader issue."
+    askGuidance: "What accessibility barrier do you encounter: focus, label, contrast, keyboard navigation, screen reader, or another issue?"
   },
   inaccessible_element: {
     extractionGuidance: "Extract when the user identifies the inaccessible element, content, page, or workflow.",
-    askGuidance: "Ask which element, page, button, field, or workflow is inaccessible."
+    askGuidance: "Which element is inaccessible? Name the page, button, field, content, or workflow."
   },
 
   migration_or_transition_context: {
     extractionGuidance: "Extract when the user mentions a migration, rollout, import, export, product change, tenant move, or transition.",
-    askGuidance: "Ask what migration, rollout, import, export, or transition context is involved."
+    askGuidance: "What migration, rollout, import, export, tenant move, or transition is involved?"
   },
   previous_product_or_service: {
     extractionGuidance: "Extract when the user mentions the previous product, service, plan, tenant, provider, or tool.",
-    askGuidance: "Ask what product, service, plan, tenant, or tool was used before the migration or change."
+    askGuidance: "What product, service, plan, tenant, provider, or tool was used before the migration or change?"
   },
 
   provided_url: {
     extractionGuidance: "Extract URLs, domains, callback URLs, webhook URLs, page addresses, or endpoints provided by the user.",
-    askGuidance: "Ask for the relevant URL, link, domain, webhook URL, callback URL, or endpoint if support needs it."
+    askGuidance: "What relevant URL, link, domain, webhook URL, callback URL, or endpoint should support check?"
   },
   reference_id: {
     extractionGuidance: "Extract when the user provides a reference id, ticket id, invoice id, order id, transaction id, email id, or similar identifier.",
-    askGuidance: "Ask for the relevant reference ID, such as ticket, invoice, order, transaction, or request ID."
+    askGuidance: "What reference ID is relevant? Send the ticket, invoice, order, transaction, email, or request ID."
   },
   visual_evidence: {
     extractionGuidance: "Extract when the user has provided, mentions, or describes visual evidence directly related to the issue.",
-    askGuidance: "Ask for a screenshot, photo, or video only if visual evidence would materially help understand the issue."
+    askGuidance: "Can you send a screenshot, photo, or video that shows the issue?"
   }
 } as const satisfies Record<string, SupportFieldCatalogEntry>;
 

@@ -5,6 +5,7 @@ import {formatCatalogSelection} from "./catalogSelection";
 // This file does not call the LLM, build prompts, repair output, or decide fallbacks.
 
 type Primitive = string | number | boolean | null;
+type ExtractedStatus = "obtained" | "user_declared_unavailable";
 
 type SupportTextSegment = {
   segmentId: string;
@@ -15,21 +16,28 @@ type KeyedPrimitiveEvidence = {
   key: string;
   value: Primitive;
   evidence: string;
+  status: ExtractedStatus;
+};
+
+type KeyedOtherEvidence = {
+  key: string;
+  value: Primitive;
+  evidence: string;
 };
 
 type AttemptedAction = {
   action: string;
   outcome: string;
   evidence: string;
+  status: ExtractedStatus;
 };
 
 type ValidatedSupportTextUnderstanding = {
   sourceSegmentIds: string[];
-  extractedFields: KeyedPrimitiveEvidence[];
-  attemptedActions: AttemptedAction[];
-  other: KeyedPrimitiveEvidence[];
-  summary: string;
-  supportDomain: string;
+  caseDetailsExtracted: KeyedPrimitiveEvidence[];
+  attemptedActionsExtracted: AttemptedAction[];
+  other: KeyedOtherEvidence[];
+  summaryMessage: string;
 };
 
 // Validates the top-level LLM payload and checks that no support segment was dropped.
@@ -77,45 +85,41 @@ function validateSupportTextUnderstanding(
   if (referencedSegments.some((segment) => segment === undefined)) return null;
   if (!hasOnlyKeys(rawUnderstanding, [
     "sourceSegmentIds",
-    "extractedFields",
-    "attemptedActions",
+    "caseDetailsExtracted",
+    "attemptedActionsExtracted",
     "other",
-    "summary",
-    "supportDomain"
+    "summaryMessage"
   ])) return null;
 
   const segments = referencedSegments as SupportTextSegment[];
-  const extractedFields = validateKeyedPrimitiveEvidenceArray(
-    rawUnderstanding.extractedFields,
+  const caseDetailsExtracted = validateKeyedPrimitiveEvidenceArray(
+    rawUnderstanding.caseDetailsExtracted,
     formatCatalogSelection.extractableFields,
     segments
   );
-  const attemptedActions = validateAttemptedActions(rawUnderstanding.attemptedActions, segments);
-  const other = validateKeyedPrimitiveEvidenceArray(
+  const attemptedActionsExtracted = validateAttemptedActions(rawUnderstanding["attemptedActionsExtracted"], segments);
+  const other = validateKeyedOtherEvidenceArray(
     rawUnderstanding.other,
     formatCatalogSelection.otherKeys,
     segments
   );
-  const supportDomain = validateSupportDomain(rawUnderstanding.supportDomain);
 
   if (
-    !extractedFields ||
-    !attemptedActions ||
+    !caseDetailsExtracted ||
+    !attemptedActionsExtracted ||
     !other ||
-    !supportDomain ||
-    typeof rawUnderstanding.summary !== "string" ||
-    rawUnderstanding.summary.trim() === ""
+    typeof rawUnderstanding.summaryMessage !== "string" ||
+    rawUnderstanding.summaryMessage.trim() === ""
   ) {
     return null;
   }
 
   return {
     sourceSegmentIds,
-    extractedFields,
-    attemptedActions,
+    caseDetailsExtracted,
+    attemptedActionsExtracted,
     other,
-    summary: rawUnderstanding.summary,
-    supportDomain
+    summaryMessage: rawUnderstanding.summaryMessage
   };
 }
 
@@ -161,15 +165,17 @@ function validateKeyedPrimitiveEvidenceArray(
 
     const key = validateEnumValue(rawItem.key, allowedKeys);
     const value = asPrimitive(rawItem.value);
+    const status = validateExtractedStatus(rawItem.status);
 
-    if (!key || value === undefined || !containsExactEvidence(rawItem.evidence, segments)) {
+    if (!key || value === undefined || !status || !containsExactEvidence(rawItem.evidence, segments)) {
       return null;
     }
 
     items.push({
       key,
       value,
-      evidence: rawItem.evidence
+      evidence: rawItem.evidence,
+      status
     });
   }
 
@@ -191,11 +197,13 @@ function validateAttemptedActions(
       rawItem.outcome,
       formatCatalogSelection.attemptedActionOutcomes
     );
+    const status = validateExtractedStatus(rawItem.status);
 
     if (
       typeof rawItem.action !== "string" ||
       rawItem.action.trim() === "" ||
       !outcome ||
+      !status ||
       !containsExactEvidence(rawItem.evidence, segments)
     ) {
       return null;
@@ -204,21 +212,51 @@ function validateAttemptedActions(
     attemptedActions.push({
       action: rawItem.action,
       outcome,
-      evidence: rawItem.evidence
+      evidence: rawItem.evidence,
+      status
     });
   }
 
   return attemptedActions;
 }
 
-function validateSupportDomain(value: unknown): string | null {
-  return value === "unknown"
-    ? value
-    : validateEnumValue(value, formatCatalogSelection.supportDomains);
+function validateKeyedOtherEvidenceArray(
+  rawItems: unknown,
+  allowedKeys: readonly string[],
+  segments: SupportTextSegment[]
+): KeyedOtherEvidence[] | null {
+  if (!Array.isArray(rawItems)) return null;
+
+  const items: KeyedOtherEvidence[] = [];
+
+  for (const rawItem of rawItems) {
+    if (!isRecord(rawItem)) return null;
+
+    const key = validateEnumValue(rawItem.key, allowedKeys);
+    const value = asPrimitive(rawItem.value);
+
+    if (!key || value === undefined || !containsExactEvidence(rawItem.evidence, segments)) {
+      return null;
+    }
+
+    items.push({
+      key,
+      value,
+      evidence: rawItem.evidence
+    });
+  }
+
+  return items;
 }
 
 function validateEnumValue(value: unknown, allowedValues: readonly string[]): string | null {
   return typeof value === "string" && allowedValues.includes(value) ? value : null;
+}
+
+function validateExtractedStatus(value: unknown): ExtractedStatus | null {
+  return value === "obtained" || value === "user_declared_unavailable"
+    ? value
+    : null;
 }
 
 function containsExactEvidence(value: unknown, segments: SupportTextSegment[]): value is string {

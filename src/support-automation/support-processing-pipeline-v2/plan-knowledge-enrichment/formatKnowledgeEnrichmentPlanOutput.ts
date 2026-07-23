@@ -8,7 +8,7 @@ import type {
 } from "./typesPlanKnowledgeEnrichment.types";
 import {
   BROAD_INTENT_MODES
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 const ALLOWED_BROAD_INTENTS = new Set<BroadIntentMode>(BROAD_INTENT_MODES);
 

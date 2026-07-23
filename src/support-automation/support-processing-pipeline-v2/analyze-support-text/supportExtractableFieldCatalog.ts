@@ -12,14 +12,14 @@ import {
   SUPPORT_REFERENCE_FIELDS as CATALOG_SUPPORT_REFERENCE_FIELDS,
   SUPPORT_TECHNICAL_ENVIRONMENT_FIELDS as CATALOG_SUPPORT_TECHNICAL_ENVIRONMENT_FIELDS,
   SUPPORT_TEMPORALITY_AND_IMPACT_FIELDS as CATALOG_SUPPORT_TEMPORALITY_AND_IMPACT_FIELDS
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 import type {
   ExtractableFieldDefinition
 } from "../typesSupportProcessingPipelineV2.types";
 import type {
   SupportCatalogField
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 function toExtractableFieldDefinition(
   field: SupportCatalogField

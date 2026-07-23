@@ -8,10 +8,10 @@ import {
   getAnalysisPromptFields,
   renderFieldDefinitionsForPrompt,
   renderMessageKindDefinitionsForPrompt
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 import type {
   PromptFieldDefinition
-} from "../../support-catalog";
+} from "../../support-catalog-LEGACY";
 
 function toPromptJson(value: unknown): string {
   return JSON.stringify(value);

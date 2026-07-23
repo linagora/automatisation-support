@@ -22,6 +22,11 @@ function buildStandardResponseFragments(
   // We only build standard fragments from non-support segments.
   // Support-relevant segments are handled later by support understanding + topic branch.
   for (const segment of input.textSurfaceAnalysis?.segments ?? []) {
+    const standardSubcategory = segment.standardSubcategory;
+    if (typeof standardSubcategory !== "string" || standardSubcategory.trim() === "") {
+      continue;
+    }
+
     const say = getSayForStandardSegment(segment);
 
     if (say === null) {
@@ -30,7 +35,7 @@ function buildStandardResponseFragments(
 
     fragments.push({
       category: segment.category,
-      standardSubcategory: segment.standardSubcategory,
+      standardSubcategory,
       say
     });
   }
@@ -57,7 +62,8 @@ function getSayForStandardSegment(
     return null;
   }
 
-  const subcategoryCatalog = categoryCatalog.subcategories[segment.standardSubcategory];
+  const subcategories: Record<string, {say?: string}> = categoryCatalog.subcategories;
+  const subcategoryCatalog = subcategories[segment.standardSubcategory];
 
   // `say` is the only user-facing fragment we keep.
   // No legacy `content` alias.

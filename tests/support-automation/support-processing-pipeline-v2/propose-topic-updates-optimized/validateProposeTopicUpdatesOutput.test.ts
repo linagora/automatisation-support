@@ -8,8 +8,8 @@ const understandings: AnalyzeSupportTextUnderstanding[] = [
   {
     understandingId: "text_understanding_1",
     sourceSegmentIds: ["text_segment_1"],
-    extractedFields: [],
-    attemptedActions: [],
+    caseDetailsExtracted: [],
+    attemptedActionsExtracted: [],
     other: [],
     summary: "The user reports a login issue.",
     supportDomain: "access_security"
@@ -73,10 +73,10 @@ describe("optimized topic-update proposal validation", function () {
       {
         understandingId: "text_understanding_1",
         sourceSegmentIds: ["text_segment_1"],
-        extractedFields: [
+        caseDetailsExtracted: [
           {key: "feature_or_page", value: "login", evidence: "login"}
         ],
-        attemptedActions: [],
+        attemptedActionsExtracted: [],
         other: [],
         summary: "The user reports a login issue.",
         supportDomain: "access_security"
@@ -84,10 +84,10 @@ describe("optimized topic-update proposal validation", function () {
       {
         understandingId: "text_understanding_2",
         sourceSegmentIds: ["text_segment_2"],
-        extractedFields: [
+        caseDetailsExtracted: [
           {key: "error_message", value: "SAML invalid audience", evidence: "SAML invalid audience"}
         ],
-        attemptedActions: [],
+        attemptedActionsExtracted: [],
         other: [],
         summary: "The login issue shows a SAML invalid audience error.",
         supportDomain: "access_security"
