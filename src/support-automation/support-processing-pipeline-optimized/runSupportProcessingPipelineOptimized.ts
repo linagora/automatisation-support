@@ -16,7 +16,7 @@ import {runAnalyzeSupportAttachments, type AnalyzeSupportAttachmentsOutput} from
 import {runProposeTopicUpdates, type ProposeTopicUpdatesOutput, type TopicUpdatePlan} from "./propose-topic-updates-optimized/runProposeTopicUpdates";
 
 import {runTopicManager, type RunTopicManagerOutput, type TopicPlannerOutput} from "./topic-manager/runTopicManager";
-import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import {buildMessage, type BuildMessageOutput} from "./composer-message/buildMessage";
 import {runTranslateMessage, type TranslateMessageOutput} from "./translator-message/runTranslateMessage";
 import {buildLiveMemoryPatches, type BuildLiveMemoryPatchesOutput} from "./build-live-memory-patches/buildLiveMemoryPatches";
@@ -507,8 +507,8 @@ function hasHandoverRequestedSurface(
         standardAction?: unknown;
       };
 
-      return candidate.standardSubcategory === "handover_requested" ||
-        candidate.standardAction === "handover_requested";
+      return candidate.standardSubcategory === "handover_request" ||
+        candidate.standardAction === "handover_request";
     });
 }
 
@@ -590,3 +590,11 @@ function buildNotAnalyzedOutput(params: {
     intermOutputs: params.intermOutputs
   };
 }
+
+export {runSupportProcessingPipelineV3Optimized};
+
+export type {
+  RunSupportProcessingPipelineV3OptimizedInput,
+  RunSupportProcessingPipelineV3OptimizedOutput,
+  SupportLiveMemoryInput
+};

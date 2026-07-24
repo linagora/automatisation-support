@@ -2,11 +2,11 @@ import {describe, expect, it} from "vitest";
 
 import {
   buildStandardResponseFragments
-} from "../../../../src/support-automation/support-processing-pipeline-v2/build-standard-response-fragments/buildStandardResponseFragments";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/build-standard-response-fragments/buildStandardResponseFragments";
 
 import type {
   BuildStandardResponseFragmentsInput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/build-standard-response-fragments/buildStandardResponseFragments";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/build-standard-response-fragments/buildStandardResponseFragments";
 
 function buildInput(
   params: BuildStandardResponseFragmentsInput

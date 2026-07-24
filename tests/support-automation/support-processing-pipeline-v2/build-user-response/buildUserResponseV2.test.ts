@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   buildUserResponseV2
-} from "../../../../src/support-automation/support-processing-pipeline-v2/build-user-response/buildUserResponseV2";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/build-user-response/buildUserResponseV2";
 
 import type {
   RenderedSupportResponse
-} from "../../../../src/support-automation/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/response-renderer/typesRenderSupportResponse.types";
 
 describe("buildUserResponseV2", function () {
   it("uses trimmed finalResponseText when it is present", function () {

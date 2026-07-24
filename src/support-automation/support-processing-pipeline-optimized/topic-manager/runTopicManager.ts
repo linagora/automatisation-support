@@ -1,11 +1,13 @@
-import {
-  runIssueResolutionBranch,
-  type IssueResolutionBranchOutput
-} from "./topic-treatement/issue-resolution-branch/runIssueResolutionBranch";
+import {runSupportNeedResolution, type RunSupportNeedResolutionOutput} from "./support-need-resolution/runSupportNeedResolution";
+import {runIssueResolutionBranch, type IssueResolutionBranchOutput} from "./topic-treatement/issue-resolution-branch/runIssueResolutionBranch";
+import {runFeatureRequestBranch, type FeatureRequestBranchOutput} from "./topic-treatement/feature-request-branch/runFeatureRequestBranch";
+import {runKnowledgeAnswerBranch, type KnowledgeAnswerBranchOutput} from "./topic-treatement/knowledge-answer-branch/runKnowledgeAnswerBranch";
+import {runSupportActionBranch, type SupportActionBranchOutput} from "./topic-treatement/support-action-branch/runSupportActionBranch";
+import {runUnclearTopicBranch, type UnclearTopicBranchOutput} from "./topic-treatement/unclear-topic-branch/runUnclearTopicBranch";
 
 import type {AnalyzeSupportTextUnderstanding} from "../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {TopicUpdatePlan} from "../propose-topic-updates-optimized/runProposeTopicUpdates";
-import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type CurrentUserMessage = {
   content: string;
@@ -36,9 +38,7 @@ type RunTopicManagerProcessedOutput = {
   fallbackReason: null;
   topicPlannerOutput: TopicPlannerOutput;
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
-  intermediateOutputs: {
-    issueResolutionBranchOutput: IssueResolutionBranchOutput | null;
-  };
+  intermediateOutputs: RunTopicManagerIntermediateOutputs;
 };
 
 type RunTopicManagerFallbackOutput = {
@@ -46,92 +46,82 @@ type RunTopicManagerFallbackOutput = {
   fallbackReason: unknown;
   topicPlannerOutput: null;
   sourceTopicManager: null;
-  intermediateOutputs: {
-    issueResolutionBranchOutput: IssueResolutionBranchOutput | null;
-  };
+  intermediateOutputs: RunTopicManagerIntermediateOutputs;
 };
 
 type RunTopicManagerOutput = RunTopicManagerProcessedOutput | RunTopicManagerFallbackOutput;
 
-type SupportNeedValue = LiveMemoryTopicOptimized["sourceTopicManager"]["supportNeedResolution"]["supportNeed"]["value"];
+type RunTopicManagerIntermediateOutputs = {
+  supportNeedResolutionOutput: RunSupportNeedResolutionOutput | null;
+  issueResolutionBranchOutput: IssueResolutionBranchOutput | null;
+  featureRequestBranchOutput: FeatureRequestBranchOutput | null;
+  knowledgeAnswerBranchOutput: KnowledgeAnswerBranchOutput | null;
+  supportActionBranchOutput: SupportActionBranchOutput | null;
+  unclearTopicBranchOutput: UnclearTopicBranchOutput | null;
+};
+
+type TopicTreatmentOutput =
+  | IssueResolutionBranchOutput
+  | FeatureRequestBranchOutput
+  | KnowledgeAnswerBranchOutput
+  | SupportActionBranchOutput
+  | UnclearTopicBranchOutput;
 
 async function runTopicManager(input: RunTopicManagerInput): Promise<RunTopicManagerOutput> {
-  const intermediateOutputs: RunTopicManagerProcessedOutput["intermediateOutputs"] = {
-    issueResolutionBranchOutput: null
-  };
+  const intermediateOutputs = buildEmptyIntermediateOutputs();
 
   try {
-    const sourceTopicManager = buildInitialSourceTopicManager(input);
-    const supportNeed = sourceTopicManager.supportNeedResolution.supportNeed.value;
+    let sourceTopicManager = buildInitialSourceTopicManager(input.currentTopic);
 
-    if (supportNeed === "unclear") {
-      return buildProcessedOutput({
-        topicUpdatePlan: input.topicUpdatePlan,
-        say: buildSupportNeedClarificationMessage(input.topicUpdatePlan.summaryTopic),
-        sourceTopicManager: {
-          ...sourceTopicManager,
-          currentStep: "support_need_resolution",
-          resolutionStatus: {
-            value: "in_progress",
-            reason: "The support need is still unclear."
-          },
-          handover: {
-            isRequested: false,
-            reason: null
-          },
-          idleMode: {
-            isActivated: false
-          }
-        },
-        intermediateOutputs
-      });
-    }
-
-    if (supportNeed === "issue_resolution") {
-      const issueResolutionBranchOutput = await runIssueResolutionBranch({
+    if (shouldRunSupportNeedResolution(sourceTopicManager)) {
+      const supportNeedResolutionOutput = await runSupportNeedResolution({
         topicUpdatePlan: input.topicUpdatePlan,
         currentTopic: input.currentTopic,
         sourceUnderstandings: input.sourceUnderstandings,
         currentUserMessage: input.currentUserMessage,
-        previousConversationTurn: input.previousConversationTurn,
-        sourceTopicManager
+        previousConversationTurn: input.previousConversationTurn
       });
 
-      intermediateOutputs.issueResolutionBranchOutput = issueResolutionBranchOutput;
+      intermediateOutputs.supportNeedResolutionOutput = supportNeedResolutionOutput;
 
-      if (issueResolutionBranchOutput.status === "fallback") {
+      if (supportNeedResolutionOutput.status === "fallback") {
         return buildFallbackOutput({
-          fallbackReason: issueResolutionBranchOutput.fallbackReason,
+          fallbackReason: supportNeedResolutionOutput.fallbackReason,
           intermediateOutputs
         });
       }
 
-      return buildProcessedOutput({
-        topicUpdatePlan: input.topicUpdatePlan,
-        say: issueResolutionBranchOutput.say,
-        sourceTopicManager: issueResolutionBranchOutput.sourceTopicManager,
+      sourceTopicManager = {
+        ...sourceTopicManager,
+        currentStep: "support_need_resolution",
+        supportNeedResolution: supportNeedResolutionOutput.supportNeedResolution,
+        resolutionStatus: {
+          value: "in_progress",
+          reason: "The support need has been classified and the topic is ready for treatment."
+        },
+        idleMode: {
+          isActivated: false
+        }
+      };
+    }
+
+    const treatmentOutput = await runTopicTreatment({
+      input,
+      sourceTopicManager,
+      intermediateOutputs
+    });
+
+    if (treatmentOutput.status === "fallback") {
+      return buildFallbackOutput({
+        fallbackReason: treatmentOutput.fallbackReason,
         intermediateOutputs
       });
     }
 
     return buildProcessedOutput({
       topicUpdatePlan: input.topicUpdatePlan,
-      say: buildNonIssueSupportNeedMessage(supportNeed),
-      sourceTopicManager: {
-        ...sourceTopicManager,
-        currentStep: "idle",
-        resolutionStatus: {
-          value: "solved_by_human",
-          reason: `The topic was classified as ${supportNeed}, but this optimized route is not implemented yet.`
-        },
-        handover: {
-          isRequested: true,
-          reason: `The ${supportNeed} route should be handled by support.`
-        },
-        idleMode: {
-          isActivated: true
-        }
-      },
+      say: treatmentOutput.say,
+      sourceTopicManager: treatmentOutput.sourceTopicManager,
       intermediateOutputs
     });
   } catch (error) {
@@ -145,22 +135,81 @@ async function runTopicManager(input: RunTopicManagerInput): Promise<RunTopicMan
   }
 }
 
+async function runTopicTreatment(params: {
+  input: RunTopicManagerInput;
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
+  intermediateOutputs: RunTopicManagerIntermediateOutputs;
+}): Promise<TopicTreatmentOutput> {
+  const supportNeed = params.sourceTopicManager.supportNeedResolution.supportNeed.value;
+
+  if (supportNeed === "issue_resolution") {
+    const output = await runIssueResolutionBranch({
+      topicUpdatePlan: params.input.topicUpdatePlan,
+      currentTopic: params.input.currentTopic,
+      sourceUnderstandings: params.input.sourceUnderstandings,
+      currentUserMessage: params.input.currentUserMessage,
+      previousConversationTurn: params.input.previousConversationTurn,
+      sourceTopicManager: params.sourceTopicManager
+    });
+
+    params.intermediateOutputs.issueResolutionBranchOutput = output;
+    return output;
+  }
+
+  if (supportNeed === "feature_request") {
+    const output = await runFeatureRequestBranch({
+      topicUpdatePlan: params.input.topicUpdatePlan,
+      sourceTopicManager: params.sourceTopicManager
+    });
+
+    params.intermediateOutputs.featureRequestBranchOutput = output;
+    return output;
+  }
+
+  if (supportNeed === "knowledge_answer") {
+    const output = await runKnowledgeAnswerBranch({
+      topicUpdatePlan: params.input.topicUpdatePlan,
+      sourceTopicManager: params.sourceTopicManager
+    });
+
+    params.intermediateOutputs.knowledgeAnswerBranchOutput = output;
+    return output;
+  }
+
+  if (supportNeed === "support_action") {
+    const output = await runSupportActionBranch({
+      topicUpdatePlan: params.input.topicUpdatePlan,
+      sourceTopicManager: params.sourceTopicManager
+    });
+
+    params.intermediateOutputs.supportActionBranchOutput = output;
+    return output;
+  }
+
+  const output = await runUnclearTopicBranch({
+    topicUpdatePlan: params.input.topicUpdatePlan,
+    sourceTopicManager: params.sourceTopicManager
+  });
+
+  params.intermediateOutputs.unclearTopicBranchOutput = output;
+  return output;
+}
+
+function shouldRunSupportNeedResolution(
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
+): boolean {
+  return sourceTopicManager.supportNeedResolution.supportNeed.value === "unclear";
+}
+
 function buildInitialSourceTopicManager(
-  input: RunTopicManagerInput
+  currentTopic: LiveMemoryTopicOptimized | null
 ): LiveMemoryTopicOptimized["sourceTopicManager"] {
-  const previousSourceTopicManager = input.currentTopic?.sourceTopicManager;
-  const supportNeedValue = resolveSupportNeedValue(input);
+  const previousSourceTopicManager = currentTopic?.sourceTopicManager;
 
   return {
-    currentStep: null,
-
-    supportNeedResolution: {
-      supportNeed: {
-        value: supportNeedValue,
-        reason: resolveSupportNeedReason(input, supportNeedValue)
-      }
-    },
-
+    currentStep: previousSourceTopicManager?.currentStep ?? null,
+    supportNeedResolution:
+      previousSourceTopicManager?.supportNeedResolution ?? buildEmptySupportNeedResolution(),
     basicQualification: previousSourceTopicManager?.basicQualification ?? buildEmptyBasicQualification(),
     retrieveKnowledge: previousSourceTopicManager?.retrieveKnowledge ?? buildEmptyRetrieveKnowledge(),
     deepQualification: previousSourceTopicManager?.deepQualification ?? buildEmptyDeepQualification(),
@@ -177,79 +226,13 @@ function buildInitialSourceTopicManager(
   };
 }
 
-function resolveSupportNeedValue(input: RunTopicManagerInput): SupportNeedValue {
-  const previousSupportNeed = input.currentTopic?.sourceTopicManager.supportNeedResolution.supportNeed.value;
-
-  if (previousSupportNeed && previousSupportNeed !== "unclear") {
-    return previousSupportNeed;
-  }
-
-  if (input.topicUpdatePlan.summaryTopic || input.sourceUnderstandings.length > 0) {
-    return "issue_resolution";
-  }
-
-  return "unclear";
-}
-
-function resolveSupportNeedReason(
-  input: RunTopicManagerInput,
-  supportNeedValue: SupportNeedValue
-): string | null {
-  const previousReason = input.currentTopic?.sourceTopicManager.supportNeedResolution.supportNeed.reason;
-
-  if (previousReason && supportNeedValue !== "unclear") {
-    return previousReason;
-  }
-
-  if (supportNeedValue === "issue_resolution") {
-    return "The optimized issue-resolution route is the implemented treatment route for this support topic.";
-  }
-
-  return "The topic does not contain enough information to select a treatment route.";
-}
-
-function buildProcessedOutput(params: {
-  topicUpdatePlan: TopicUpdatePlan;
-  say: string;
-  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
-  intermediateOutputs: RunTopicManagerProcessedOutput["intermediateOutputs"];
-}): RunTopicManagerProcessedOutput {
+function buildEmptySupportNeedResolution(): LiveMemoryTopicOptimized["sourceTopicManager"]["supportNeedResolution"] {
   return {
-    status: "processed",
-    fallbackReason: null,
-    topicPlannerOutput: {
-      topicId: params.topicUpdatePlan.topicId,
-      title: params.topicUpdatePlan.title,
-      say: params.say
-    },
-    sourceTopicManager: params.sourceTopicManager,
-    intermediateOutputs: params.intermediateOutputs
+    supportNeed: {
+      value: "unclear",
+      reason: null
+    }
   };
-}
-
-function buildFallbackOutput(params: {
-  fallbackReason: unknown;
-  intermediateOutputs: RunTopicManagerFallbackOutput["intermediateOutputs"];
-}): RunTopicManagerFallbackOutput {
-  return {
-    status: "fallback",
-    fallbackReason: params.fallbackReason,
-    topicPlannerOutput: null,
-    sourceTopicManager: null,
-    intermediateOutputs: params.intermediateOutputs
-  };
-}
-
-function buildSupportNeedClarificationMessage(summaryTopic: string | null): string {
-  const topicIntro = summaryTopic
-    ? `I understand the topic as: ${summaryTopic}`
-    : "I understand that you need help, but I cannot safely classify the request yet.";
-
-  return `${topicIntro}\n\nCould you clarify whether you want help resolving a problem, requesting a feature, getting an answer, or asking the support team to take an action?`;
-}
-
-function buildNonIssueSupportNeedMessage(supportNeed: SupportNeedValue): string {
-  return `I have classified this topic as ${supportNeed}. A support team member should take over from here.`;
 }
 
 function buildEmptyBasicQualification(): LiveMemoryTopicOptimized["sourceTopicManager"]["basicQualification"] {
@@ -301,6 +284,49 @@ function buildEmptySolution(): LiveMemoryTopicOptimized["sourceTopicManager"]["s
     isCompleted: false,
     attemptedActionsToAskBecauseOfSolutionFound: [],
     actionToTakeForSupport: null
+  };
+}
+
+function buildProcessedOutput(params: {
+  topicUpdatePlan: TopicUpdatePlan;
+  say: string;
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
+  intermediateOutputs: RunTopicManagerIntermediateOutputs;
+}): RunTopicManagerProcessedOutput {
+  return {
+    status: "processed",
+    fallbackReason: null,
+    topicPlannerOutput: {
+      topicId: params.topicUpdatePlan.topicId,
+      title: params.topicUpdatePlan.title,
+      say: params.say
+    },
+    sourceTopicManager: params.sourceTopicManager,
+    intermediateOutputs: params.intermediateOutputs
+  };
+}
+
+function buildFallbackOutput(params: {
+  fallbackReason: unknown;
+  intermediateOutputs: RunTopicManagerIntermediateOutputs;
+}): RunTopicManagerFallbackOutput {
+  return {
+    status: "fallback",
+    fallbackReason: params.fallbackReason,
+    topicPlannerOutput: null,
+    sourceTopicManager: null,
+    intermediateOutputs: params.intermediateOutputs
+  };
+}
+
+function buildEmptyIntermediateOutputs(): RunTopicManagerIntermediateOutputs {
+  return {
+    supportNeedResolutionOutput: null,
+    issueResolutionBranchOutput: null,
+    featureRequestBranchOutput: null,
+    knowledgeAnswerBranchOutput: null,
+    supportActionBranchOutput: null,
+    unclearTopicBranchOutput: null
   };
 }
 

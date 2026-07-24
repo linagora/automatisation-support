@@ -1,4 +1,4 @@
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type ResolutionStatus = LiveMemoryTopicOptimized["sourceTopicManager"]["resolutionStatus"];
 type Handover = LiveMemoryTopicOptimized["sourceTopicManager"]["handover"];
@@ -28,6 +28,10 @@ function validateIdleModeDecisionOutput(
     return null;
   }
 
+  if (resolutionStatus.value === "solved_by_bot" && handover.isRequested) {
+    return null;
+  }
+
   return {
     resolutionStatus,
     handover,
@@ -44,11 +48,7 @@ function validateResolutionStatus(value: unknown): ResolutionStatus | null {
 
   const raw = value as Record<string, unknown>;
 
-  if (
-    raw.value !== "in_progress" &&
-    raw.value !== "solved_by_bot" &&
-    raw.value !== "solved_by_human"
-  ) {
+  if (raw.value !== "solved_by_bot" && raw.value !== "unsolved") {
     return null;
   }
 

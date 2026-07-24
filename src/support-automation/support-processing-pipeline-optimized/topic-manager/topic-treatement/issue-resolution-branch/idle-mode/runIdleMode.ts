@@ -1,10 +1,10 @@
-import {callLLM} from "../../../../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../../../infrastructure/llm/parseLLMResponse";
 import {buildIdleModeDecisionPrompt} from "./buildIdleModeDecisionPrompt";
 import {idleModeResponseFormat} from "./responseFormat";
 import {validateIdleModeDecisionOutput} from "./validateIdleModeDecisionOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type RunIdleModeInput = {
   mode: "finalize_after_solution" | "reevaluate_existing_idle";
@@ -61,58 +61,113 @@ async function runIdleMode(input: RunIdleModeInput): Promise<RunIdleModeOutput> 
 }
 
 function buildFallbackIdleModeOutput(input: RunIdleModeInput): RunIdleModeOutput {
-  if (input.mode === "finalize_after_solution") {
-    if (input.sourceTopicManager.solution.actionToTakeForSupport) {
-      return {
-        say: "Thanks. I have enough information for now, and I will pass the relevant internal action to the support team.",
-        resolutionStatus: {
-          value: "solved_by_human",
-          reason: "The automated route reached idle with an internal support action to take."
-        },
-        handover: {
-          isRequested: true,
-          reason: "The topic requires a support-side follow-up action."
-        },
-        idleMode: {
-          isActivated: true
-        }
-      };
-    }
-
-    return {
-      say: "Thanks. I have enough information for now. If the issue comes back, you can add more details here.",
-      resolutionStatus: {
-        value: "solved_by_bot",
-        reason: "The automated route reached idle without a support-side action to take."
-      },
-      handover: {
-        isRequested: false,
-        reason: null
-      },
-      idleMode: {
-        isActivated: true
-      }
-    };
+  if (looksSolvedByUser(input.currentUserMessage.content)) {
+    return buildSolvedOutput();
   }
 
+  return buildUnsolvedOutput({
+    say: input.mode === "finalize_after_solution"
+      ? "Thanks. I’ve kept the information collected so far. A support team member can take over if more help is needed."
+      : "Thanks. I’ll keep that update with the topic and pass it to the support team if needed.",
+    reason: input.mode === "finalize_after_solution"
+      ? "Idle-mode fallback did not receive a validated explicit resolution confirmation."
+      : "The topic was already idle and the latest message did not provide a validated resolved confirmation.",
+    handoverReason: shouldRequestHandover(input)
+      ? "The topic is idle and remains unresolved."
+      : null,
+    isHandoverRequested: shouldRequestHandover(input)
+  });
+}
+
+function looksSolvedByUser(message: string): boolean {
+  const normalized = message.toLowerCase();
+
+  return [
+    "it works",
+    "it's working",
+    "its working",
+    "fixed",
+    "resolved",
+    "solved",
+    "ça marche",
+    "ca marche",
+    "c'est bon",
+    "cest bon",
+    "résolu",
+    "resolu",
+    "réglé",
+    "reglé",
+    "merci ça marche",
+    "merci ca marche"
+  ].some((pattern) => normalized.includes(pattern));
+}
+
+function shouldRequestHandover(input: RunIdleModeInput): boolean {
+  return input.sourceTopicManager.solution.actionToTakeForSupport !== null ||
+    input.mode === "reevaluate_existing_idle" ||
+    looksLikeHumanRequest(input.currentUserMessage.content);
+}
+
+function looksLikeHumanRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+
+  return [
+    "human",
+    "support team",
+    "agent",
+    "someone",
+    "humain",
+    "support",
+    "conseiller",
+    "quelqu'un",
+    "quelqu’un"
+  ].some((pattern) => normalized.includes(pattern));
+}
+
+function buildSolvedOutput(): RunIdleModeOutput {
   return {
-    say: "Thanks, I’ll keep that update with the topic and pass it to the support team if needed.",
-    resolutionStatus: input.sourceTopicManager.resolutionStatus.value === "solved_by_bot"
-      ? input.sourceTopicManager.resolutionStatus
-      : {
-        value: "solved_by_human",
-        reason: "The topic was already idle and the latest message did not produce a validated resolved-by-bot confirmation."
-      },
-    handover: input.sourceTopicManager.resolutionStatus.value === "solved_by_bot"
-      ? input.sourceTopicManager.handover
-      : {
-        isRequested: true,
-        reason: "The topic is idle and should be handled by support after the new information."
-      },
+    say: "Great, I’m glad this is working now. I’ll keep the topic marked as resolved.",
+    resolutionStatus: buildResolutionStatus(
+      "solved_by_bot",
+      "The user explicitly indicated that the issue is now resolved."
+    ),
+    handover: {
+      isRequested: false,
+      reason: null
+    },
     idleMode: {
       isActivated: true
     }
   };
+}
+
+function buildUnsolvedOutput(input: {
+  say: string;
+  reason: string;
+  isHandoverRequested: boolean;
+  handoverReason: string | null;
+}): RunIdleModeOutput {
+  return {
+    say: input.say,
+    resolutionStatus: buildResolutionStatus("unsolved", input.reason),
+    handover: {
+      isRequested: input.isHandoverRequested,
+      reason: input.handoverReason
+    },
+    idleMode: {
+      isActivated: true
+    }
+  };
+}
+
+function buildResolutionStatus(
+  value: "solved_by_bot" | "unsolved",
+  reason: string | null
+): LiveMemoryTopicOptimized["sourceTopicManager"]["resolutionStatus"] {
+  return {
+    value,
+    reason
+  } as LiveMemoryTopicOptimized["sourceTopicManager"]["resolutionStatus"];
 }
 
 export {runIdleMode};

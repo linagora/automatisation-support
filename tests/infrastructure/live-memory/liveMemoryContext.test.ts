@@ -28,16 +28,16 @@ import type {
 } from "../../../src/infrastructure/matrix/typesMatrixChannel.types";
 import type {
   SupportProcessingPersistenceEffectsV2
-} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   LiveMemoryContextUpdate
-} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   LiveMemoryContext
 } from "../../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
 import type {
   MergedTopicSnapshot
-} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 function buildSnapshot(
   overrides: Partial<MergedTopicSnapshot> = {}

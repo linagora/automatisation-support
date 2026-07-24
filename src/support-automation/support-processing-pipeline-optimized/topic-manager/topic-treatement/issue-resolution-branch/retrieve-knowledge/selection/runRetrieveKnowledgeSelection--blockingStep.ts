@@ -1,10 +1,10 @@
-import {callLLM} from "../../../../../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../../../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../../../../infrastructure/llm/parseLLMResponse";
 import {buildDeterministicRetrieveKnowledgeSelectionQuestion, buildRetrieveKnowledgeSelectionPrompt} from "./buildRetrieveKnowledgeSelectionPrompt";
 import {retrieveKnowledgeSelectionResponseFormat} from "./responseFormat";
 import {validateRetrieveKnowledgeSelectionOutput} from "./validateRetrieveKnowledgeSelectionOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type RetrieveKnowledgeSelection = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["selection"];
 

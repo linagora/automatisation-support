@@ -4,7 +4,7 @@ import {
 } from "./responseFormat";
 import {promptCatalogSelection} from "./catalogSelection";
 
-import type {LLMMessage} from "../../../infrastructure/llm/llm-client";
+import type {LLMMessage} from "../../infrastructure/llm/llm-client";
 import type {
   RecentInteractionContext,
   TurnAnalysisPlan

@@ -1,10 +1,10 @@
-import {callLLM} from "../../../../../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../../../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../../../../infrastructure/llm/parseLLMResponse";
 import {buildRetrieveKnowledgeFilterPrompt} from "./buildRetrieveKnowledgeFilterPrompt";
 import {retrieveKnowledgeFilterResponseFormat} from "./responseFormat";
 import {validateRetrieveKnowledgeFilterOutput} from "./validateRetrieveKnowledgeFilterOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type RetrieveKnowledgeFilter = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["filter"];
 

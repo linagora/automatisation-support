@@ -1,4 +1,4 @@
-import { runSupportProcessingPipelineV2 } from "./support-processing-pipeline-v2/runSupportProcessingPipelineV2";
+import { runSupportProcessingPipelineV2 } from "./support-processing-pipeline-v2-LEGACY/runSupportProcessingPipelineV2";
 import { buildSupportProcessingInputV2 } from "./build-input/buildSupportProcessingInputV2";
 import {
   readLiveMemoryContext
@@ -23,7 +23,7 @@ import type {
   SupportProcessingPipelineV2Input,
   SupportProcessingPipelineV2Steps,
   SupportProcessingPersistenceEffectsV2
-} from "./support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "./support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   DeliveryMessage
 } from "./delivery/typesDelivery.types";

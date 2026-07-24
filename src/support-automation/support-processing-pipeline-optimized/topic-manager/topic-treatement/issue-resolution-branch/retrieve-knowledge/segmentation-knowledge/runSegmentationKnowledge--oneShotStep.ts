@@ -1,10 +1,10 @@
-import {callLLM} from "../../../../../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../../../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../../../../infrastructure/llm/parseLLMResponse";
 import {buildSegmentationKnowledgePrompt} from "./buildSegmentationKnowledgePrompt";
 import {segmentationKnowledgeResponseFormat} from "./responseFormat";
 import {validateSegmentationKnowledgeOutput} from "./validateSegmentationKnowledgeOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type SegmentationKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"];
 

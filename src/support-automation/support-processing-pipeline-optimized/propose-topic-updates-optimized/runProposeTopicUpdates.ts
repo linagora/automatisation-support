@@ -1,11 +1,11 @@
-import {callLLM} from "../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../infrastructure/llm/parseLLMResponse";
 import {topicUpdateFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
 import {buildProposeTopicUpdatesPrompt} from "./buildProposeTopicUpdatesPrompt";
 import {validateProposeTopicUpdatesOutput} from "./validateProposeTopicUpdatesOutput";
 
 import type {AnalyzeSupportTextUnderstanding} from "../../support-processing-pipeline-optimized/analyze-support-text-optimized/runAnalyzeSupportText";
-import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RecentInteractionContext} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 import type {TopicUpdateFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
 import type {TopicUpdatePlan} from "./validateProposeTopicUpdatesOutput";

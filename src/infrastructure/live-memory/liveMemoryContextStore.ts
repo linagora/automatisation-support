@@ -7,7 +7,7 @@ import {
 } from "./normalizeLiveMemoryTopicId";
 import {
   normalizeSupportKnowledgeSummary
-} from "../../support-automation/support-processing-pipeline-v2/supportKnowledgeSummary";
+} from "../../support-automation/support-processing-pipeline-v2-LEGACY/supportKnowledgeSummary";
 
 import type {
   LiveMemoryContext,

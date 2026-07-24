@@ -8,7 +8,7 @@ import {
 import {
   mergeSupportKnowledgeSummary,
   normalizeSupportKnowledgeSummary
-} from "../support-processing-pipeline-v2/supportKnowledgeSummary";
+} from "../support-processing-pipeline-v2-LEGACY/supportKnowledgeSummary";
 
 import type {
   SupportTurnIdentityV2
@@ -22,7 +22,7 @@ import type {
   LiveMemoryCaseDetail,
   LiveMemoryContextUpdate,
   LiveMemoryTopicUpdate
-} from "../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 type ApplyLiveMemoryUpdateDeliveryResult = {
   status: "sent" | "failed" | "partial";

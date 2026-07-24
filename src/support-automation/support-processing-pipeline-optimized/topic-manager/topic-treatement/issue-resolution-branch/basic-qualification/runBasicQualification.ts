@@ -2,7 +2,7 @@ import {buildTopicQualification} from "./buildTopicQualification--oneShotStep";
 import {isTopicQualified} from "./isTopicQualified--blockingStep";
 import {planIssueBasicQualificationAsk} from "./asking-planner/planIssueBasicQualificationAsk";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type BasicQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["basicQualification"];
 type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];

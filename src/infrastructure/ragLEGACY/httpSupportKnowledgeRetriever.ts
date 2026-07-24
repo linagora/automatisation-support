@@ -3,7 +3,7 @@ import type {
   RetrievalRequest,
   RetrieveSupportKnowledgeInput,
   SupportKnowledgeRetriever
-} from "../../support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 type HttpSupportKnowledgeRetrieverOptions = {
   baseUrl: string;

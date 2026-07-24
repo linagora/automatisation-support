@@ -7,7 +7,7 @@ import {runIdleMode} from "./idle-mode/runIdleMode";
 
 import type {AnalyzeSupportTextUnderstanding} from "../../../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {TopicUpdatePlan} from "../../../propose-topic-updates-optimized/runProposeTopicUpdates";
-import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type IssueResolutionBranchInput = {
   topicUpdatePlan: TopicUpdatePlan;

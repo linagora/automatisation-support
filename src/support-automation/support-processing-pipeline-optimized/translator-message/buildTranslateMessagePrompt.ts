@@ -1,5 +1,5 @@
 import {outputJsonShapeForPrompt, responseFormat} from "./responseFormat";
-import type {LLMMessage} from "../../../infrastructure/llm/llm-client";
+import type {LLMMessage} from "../../infrastructure/llm/llm-client";
 
 type BuildTranslateMessagePromptInput = {
   message: string;

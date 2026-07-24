@@ -8,7 +8,7 @@ import type {
   SupportKnowledgeRetriever,
   TextUnderstanding,
   TopicEvidence
-} from "../../support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 function compactText(value: string | null | undefined): string | undefined {
   const compacted = value?.replace(/\s+/g, " ").trim();

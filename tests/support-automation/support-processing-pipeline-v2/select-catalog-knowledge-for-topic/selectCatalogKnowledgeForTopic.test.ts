@@ -5,22 +5,22 @@ import {
 } from "../../../../src/infrastructure/llm/llm-client";
 import {
   buildCandidateFieldsForTopicSelector
-} from "../../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/buildCandidateFieldsForTopicSelector";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/select-catalog-knowledge-for-topic/buildCandidateFieldsForTopicSelector";
 import {
   buildSelectCatalogKnowledgeForTopicPrompt
-} from "../../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/buildSelectCatalogKnowledgeForTopicPrompt";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/select-catalog-knowledge-for-topic/buildSelectCatalogKnowledgeForTopicPrompt";
 import {
   formatSelectCatalogKnowledgeForTopicOutput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/formatSelectCatalogKnowledgeForTopicOutput";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/select-catalog-knowledge-for-topic/formatSelectCatalogKnowledgeForTopicOutput";
 import {
   requestSelectCatalogKnowledgeForTopic
-} from "../../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/requestSelectCatalogKnowledgeForTopic";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/select-catalog-knowledge-for-topic/requestSelectCatalogKnowledgeForTopic";
 import {
   selectCatalogKnowledgeForTopicResponseFormat
-} from "../../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic.schema";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/select-catalog-knowledge-for-topic/selectCatalogKnowledgeForTopic.schema";
 import {
   getCandidateDiagnosticFlowsForCatalogSelection
-} from "../../../../src/support-automation/support-catalog-LEGACY";
+} from "../../../../src/archive/support-catalog-LEGACY";
 
 import type {
   ExtractableFieldDefinition,
@@ -28,10 +28,10 @@ import type {
   MergedTopicSnapshot,
   TextUnderstanding,
   TopicEvidence
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   SelectCatalogKnowledgeForTopicInput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/typesSelectCatalogKnowledgeForTopic.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/select-catalog-knowledge-for-topic/typesSelectCatalogKnowledgeForTopic.types";
 
 vi.mock("../../../../src/infrastructure/llm/llm-client", function () {
   return {

@@ -3,7 +3,7 @@ import type {
 } from "../../infrastructure/live-memory/typesLiveMemoryContext.types";
 import type {
   SupportTopicContextV2
-} from "../support-processing-pipeline-v2/topic-context/typesSupportTopicContextV2.types";
+} from "../support-processing-pipeline-v2-LEGACY/topic-context/typesSupportTopicContextV2.types";
 
 function convertLiveMemoryContextToSupportTopicContextV2(
   liveMemoryContext: LiveMemoryContext

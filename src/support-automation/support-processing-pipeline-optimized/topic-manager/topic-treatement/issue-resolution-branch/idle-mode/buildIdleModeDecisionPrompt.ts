@@ -1,5 +1,5 @@
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
-import type {LLMMessage} from "../../../../../../infrastructure/llm/types.llm-types";
+import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LLMMessage} from "../../../../../infrastructure/llm/types.llm-types";
 
 export type BuildIdleModeDecisionPromptInput = {
   mode: "finalize_after_solution" | "reevaluate_existing_idle";
@@ -17,12 +17,12 @@ function buildIdleModeDecisionPrompt(
   const system = [
     "You are an internal support topic idle-mode evaluator.",
     "Your job is not to solve the issue again.",
-    "Your job is to decide whether the user just confirmed resolution, requested human support, or only added information after the automated route has reached idle.",
+    "Your job is only to decide whether the topic is solved or still unsolved after the automated route reached idle.",
     "Return strict JSON only."
   ].join("\n");
 
   const user = [
-    "Evaluate the topic state.",
+    "Evaluate the topic idle state.",
     "",
     `Mode: ${input.mode}`,
     `Topic summary: ${input.summaryTopic ?? "null"}`,
@@ -34,17 +34,20 @@ function buildIdleModeDecisionPrompt(
     input.currentUserMessage.content,
     "",
     "Decision rules:",
-    "- If the user clearly says the issue is now fixed, resolved, working, or that the assistant's previous suggestion was right, set resolutionStatus.value to solved_by_bot, handover.isRequested to false, and write a short human acknowledgement in English.",
-    "- If the user explicitly asks for a human/support team/person to take over, set resolutionStatus.value to solved_by_human and handover.isRequested to true.",
-    "- If the user says the previous proposed action failed, or adds more diagnostic information without saying it is resolved, set resolutionStatus.value to solved_by_human and handover.isRequested to true. The automated route has already reached idle, so the support team should now use the added information.",
-    "- If the user only sends a neutral acknowledgement without new information or resolution, keep the current resolutionStatus if it is already solved_by_bot or solved_by_human; otherwise set solved_by_human with handover requested.",
-    "- Use in_progress only if the current message clearly reopens the topic and still requires automated processing outside idle-mode. Do not use it for normal idle acknowledgement.",
-    "- say must be English and user-facing. It can be null only when no user-facing acknowledgement is useful.",
+    "- Output only solved_by_bot or unsolved as resolutionStatus.value.",
+    "- Use solved_by_bot only when the user clearly says the issue is fixed, resolved, working now, or that the assistant's proposed action worked.",
+    "- Use unsolved when the user says the previous action failed, did not help, cannot be done, asks for a human, or adds diagnostic information without confirming resolution.",
+    "- Use unsolved when the automated route reached idle with an internal support action to take.",
+    "- Never output in_progress from idle-mode. Idle-mode does not restart the automated route.",
+    "- Never output solved_by_human from idle-mode. Human resolution is not confirmed here; use unsolved plus handover instead.",
+    "- If resolutionStatus.value is solved_by_bot, handover.isRequested must be false.",
+    "- If resolutionStatus.value is unsolved and the user asked for a human, an internal support action exists, or the latest message adds useful unresolved information, handover.isRequested should be true.",
+    "- say must be English and user-facing. It can be null only when no acknowledgement is useful.",
     "",
     "JSON shape:",
     JSON.stringify({
       resolutionStatus: {
-        value: "solved_by_bot | solved_by_human | in_progress",
+        value: "solved_by_bot | unsolved",
         reason: "short internal reason or null"
       },
       handover: {

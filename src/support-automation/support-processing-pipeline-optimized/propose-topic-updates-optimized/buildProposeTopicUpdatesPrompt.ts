@@ -4,9 +4,9 @@ import {
 } from "./responseFormat";
 import {promptCatalogSelection} from "./catalogSelection";
 
-import type {LLMMessage} from "../../../infrastructure/llm/llm-client";
+import type {LLMMessage} from "../../infrastructure/llm/llm-client";
 import type {AnalyzeSupportTextUnderstanding} from "../../support-processing-pipeline-optimized/analyze-support-text-optimized/runAnalyzeSupportText";
-import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RecentInteractionContext} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
 
 type BuildProposeTopicUpdatesPromptInput = {

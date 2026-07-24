@@ -5,19 +5,19 @@ import {
 } from "../../../../src/infrastructure/llm/llm-client";
 import {
   analyzeSupportText
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/analyzeSupportText";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-support-text/analyzeSupportText";
 import {
   buildAnalyzeSupportTextPrompt
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/buildAnalyzeSupportTextPrompt";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-support-text/buildAnalyzeSupportTextPrompt";
 import {
   formatSupportTextAnalysisOutput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/formatSupportTextAnalysisOutput";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-support-text/formatSupportTextAnalysisOutput";
 import {
   requestSupportTextAnalysis
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/requestSupportTextAnalysis";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-support-text/requestSupportTextAnalysis";
 import {
   supportTextAnalysisResponseFormat
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/supportTextAnalysis.schema";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-support-text/supportTextAnalysis.schema";
 
 import type {
   AnalyzeSupportTextInput,
@@ -25,10 +25,10 @@ import type {
   RecentInteractionContext,
   TextSurfaceAnalysis,
   TurnAnalysisPlan
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   SupportTextSegment
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/typesAnalyzeSupportText.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-support-text/typesAnalyzeSupportText.types";
 
 vi.mock("../../../../src/infrastructure/llm/llm-client", function () {
   return {

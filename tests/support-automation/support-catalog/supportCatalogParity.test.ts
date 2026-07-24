@@ -6,24 +6,24 @@ import {
   CATEGORY_CANDIDATE_FIELD_NAMES as CATALOG_CATEGORY_CANDIDATE_FIELD_NAMES,
   MESSAGE_KIND_VALUES as CATALOG_MESSAGE_KIND_VALUES,
   SUPPORT_METADATA_FIELDS
-} from "../../../src/support-automation/support-catalog-LEGACY";
+} from "../../../src/archive/support-catalog-LEGACY";
 import {
   DEFAULT_SUPPORT_EXTRACTABLE_FIELD_CATALOG
-} from "../../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/supportExtractableFieldCatalog";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-support-text/supportExtractableFieldCatalog";
 import {
   BROAD_CATEGORY_HINTS
-} from "../../../src/support-automation/support-processing-pipeline-v2/analyze-support-text/supportTextAnalysis.taxonomy";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-support-text/supportTextAnalysis.taxonomy";
 import {
   CASE_DETAIL_FIELD_CATALOG,
   MESSAGE_KIND_VALUES,
   SUPPORT_METADATA_FIELD_CATALOG
-} from "../../../src/support-automation/support-processing-pipeline-v2/support-text-analysis.catalog";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/support-text-analysis.catalog";
 import {
   CATEGORY_CANDIDATE_FIELD_NAMES
-} from "../../../src/support-automation/support-processing-pipeline-v2/select-catalog-knowledge-for-topic/buildCandidateFieldsForTopicSelector";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/select-catalog-knowledge-for-topic/buildCandidateFieldsForTopicSelector";
 import type {
   SupportCatalogField
-} from "../../../src/support-automation/support-catalog-LEGACY";
+} from "../../../src/archive/support-catalog-LEGACY";
 
 function legacyFieldProjection(field: SupportCatalogField): {
   fieldName: string;

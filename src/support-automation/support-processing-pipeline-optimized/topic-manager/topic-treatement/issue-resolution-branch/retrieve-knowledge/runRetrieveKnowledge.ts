@@ -3,7 +3,7 @@ import {runRetrieveKnowledgeFilter} from "./filter/runRetrieveKnowledgeFilter--o
 import {runRetrieveKnowledgeSelection} from "./selection/runRetrieveKnowledgeSelection--blockingStep";
 import {runSegmentationKnowledge} from "./segmentation-knowledge/runSegmentationKnowledge--oneShotStep";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {SearchSimilarIssueTopics} from "./ranked-search/runRankedSearch--oneShotStep";
 
 type RetrieveKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"];

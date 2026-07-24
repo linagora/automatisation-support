@@ -4,25 +4,25 @@ import { join } from "node:path";
 
 import {
   runSupportProcessingPipelineV2
-} from "../../../src/support-automation/support-processing-pipeline-v2/runSupportProcessingPipelineV2";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/runSupportProcessingPipelineV2";
 import {
   runSupportProcessingPipelineV2Debug
-} from "../../../src/support-automation/support-processing-pipeline-v2/runSupportProcessingPipelineV2Debug";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/runSupportProcessingPipelineV2Debug";
 import {
   buildSupportProcessingPersistenceEffectsV2
-} from "../../../src/support-automation/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 import {
   buildTopicResponsePlanDebug
-} from "../../../src/support-automation/support-processing-pipeline-v2/responsePlanIds";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/responsePlanIds";
 import {
   planKnowledgeEnrichment
-} from "../../../src/support-automation/support-processing-pipeline-v2/plan-knowledge-enrichment/planKnowledgeEnrichment";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-knowledge-enrichment/planKnowledgeEnrichment";
 import {
   retrieveSupportKnowledge
-} from "../../../src/support-automation/support-processing-pipeline-v2/retrieve-support-knowledge/retrieveSupportKnowledge";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/retrieve-support-knowledge/retrieveSupportKnowledge";
 import {
   synthesizeRetrievedKnowledge
-} from "../../../src/support-automation/support-processing-pipeline-v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
 import {
   applyTopicsByExactId
 } from "../../../src/support-automation/patch-live-memory/applyLiveMemoryUpdate";
@@ -49,10 +49,10 @@ import type {
   TopicUpdateProposal,
   ProposeTopicUpdatesOutput,
   UserResponse
-} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   RenderedSupportResponse
-} from "../../../src/support-automation/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/response-renderer/typesRenderSupportResponse.types";
 import type {
   LiveMemoryTopic
 } from "../../../src/infrastructure/live-memory/typesLiveMemoryContext.types";

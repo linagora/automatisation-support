@@ -1,6 +1,6 @@
 import type {
   OtherSupportPipelineInformation
-} from "../../support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 type SupportPipelineInformationRepository = {
   persist: (value: OtherSupportPipelineInformation) => Promise<void>;

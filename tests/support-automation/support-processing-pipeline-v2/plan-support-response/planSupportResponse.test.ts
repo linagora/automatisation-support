@@ -2,23 +2,23 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPlanSupportResponsePrompt
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/buildPlanSupportResponsePrompt";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-support-response/buildPlanSupportResponsePrompt";
 import {
   formatPlanSupportResponseOutput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/formatPlanSupportResponseOutput";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-support-response/formatPlanSupportResponseOutput";
 import {
   planSupportResponseResponseFormat
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/planSupportResponse.schema";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-support-response/planSupportResponse.schema";
 import {
   formatComposeSupportResponsePlanOutput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
 
 import type {
   BuildPlanSupportResponsePromptInput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/typesPlanSupportResponse.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-support-response/typesPlanSupportResponse.types";
 import type {
   TextUnderstanding
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 function understanding(
   overrides: Partial<TextUnderstanding> = {}

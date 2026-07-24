@@ -22,13 +22,13 @@ import type {
 import type {
   LatestUserAttachment,
   SupportProcessingPipelineV2Input
-} from "../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   ConversationHistory
-} from "../support-processing-pipeline-v2/typesConversationContext.types";
+} from "../support-processing-pipeline-v2-LEGACY/typesConversationContext.types";
 import type {
   SupportTopicContextV2
-} from "../support-processing-pipeline-v2/topic-context/typesSupportTopicContextV2.types";
+} from "../support-processing-pipeline-v2-LEGACY/topic-context/typesSupportTopicContextV2.types";
 
 const MAX_RECENT_SUMMARY_LENGTH = 500;
 const EMPTY_PREVIOUS_USER_MESSAGE_SUMMARY =

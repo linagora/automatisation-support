@@ -1,4 +1,4 @@
-import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RunSupportProcessingPipelineV3OptimizedIntermOutputs} from "../runSupportProcessingPipelineOptimized";
 
 export type BuildLiveMemoryPatchesInput = {
@@ -13,6 +13,11 @@ export type BuildLiveMemoryPatchesInput = {
 };
 
 export type BuildLiveMemoryPatchesOutput = {
+  handover: {
+    isHandover: boolean;
+    handoverReason: "asked_by_user" | "detected_by_system" | null;
+  } | null;
+
   previousConversationTurn: {
     previousUserMessage: string | null;
     previousBotMessage: string | null;
@@ -39,6 +44,8 @@ export type BuildLiveMemoryPatchesOutput = {
 };
 
 export type BuildLiveMemoryTopicPatch = {
+  status: LiveMemoryTopicOptimized["status"];
+
   sourceAnalyzeSupportText: LiveMemoryTopicOptimized["sourceAnalyzeSupportText"];
 
   sourceProposeTopicUpdates: Omit<
@@ -55,6 +62,7 @@ export function buildLiveMemoryPatches(
   input: BuildLiveMemoryPatchesInput
 ): BuildLiveMemoryPatchesOutput {
   const patch: BuildLiveMemoryPatchesOutput = {
+    handover: null,
     previousConversationTurn: null,
     failedPipelineMessages: null,
     securityAlerts: null,
@@ -103,6 +111,13 @@ function buildGlobalLiveMemoryPatch(
     patch.previousConversationTurn = {
       previousUserMessage: input.latestUserMessage.content,
       previousBotMessage: input.intermOutputs.translateMessageOutput.message
+    };
+  }
+
+  if (hasHandoverRequestedSurface(input.intermOutputs.analyzeTextSurfaceOutput)) {
+    patch.handover = {
+      isHandover: true,
+      handoverReason: "asked_by_user"
     };
   }
 
@@ -159,7 +174,14 @@ function buildTopicLiveMemoryPatch(
       return topicUpdatePlan.sourceUnderstandingIds.includes(understanding.understandingId);
     });
 
+    const sourceTopicManager = applySurfaceHandoverIfNeeded(
+      topicManagerOutput.sourceTopicManager,
+      surfaceHandoverRequested
+    );
+
     topicPatches.push({
+      status: resolveTopicStatus(sourceTopicManager),
+
       sourceAnalyzeSupportText: {
         caseDetailsExtracted: relatedUnderstandings.flatMap((understanding) => {
           return understanding.caseDetailsExtracted.map((caseDetail) => {
@@ -194,16 +216,35 @@ function buildTopicLiveMemoryPatch(
         }
       },
 
-      sourceTopicManager: applySurfaceHandoverIfNeeded(
-        topicManagerOutput.sourceTopicManager,
-        surfaceHandoverRequested
-      )
+      sourceTopicManager
     });
   }
 
   patch.topics = topicPatches.length > 0 ? topicPatches : null;
 
+  if (topicPatches.some((topicPatch) => topicPatch.sourceTopicManager.handover.isRequested)) {
+    patch.handover = {
+      isHandover: true,
+      handoverReason: surfaceHandoverRequested ? "asked_by_user" : "detected_by_system"
+    };
+  }
+
   return patch;
+}
+
+function resolveTopicStatus(
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
+): LiveMemoryTopicOptimized["status"] {
+  if (sourceTopicManager.currentStep !== "idle") {
+    return "in_progress";
+  }
+
+  if (sourceTopicManager.resolutionStatus.value === "solved_by_bot") {
+    return "solved_by_bot";
+  }
+
+
+  return "unsolved";
 }
 
 function hasHandoverRequestedSurface(
@@ -216,8 +257,8 @@ function hasHandoverRequestedSurface(
         standardAction?: unknown;
       };
 
-      return candidate.standardSubcategory === "handover_requested" ||
-        candidate.standardAction === "handover_requested";
+      return candidate.standardSubcategory === "handover_request" ||
+        candidate.standardAction === "handover_request";
     });
 }
 

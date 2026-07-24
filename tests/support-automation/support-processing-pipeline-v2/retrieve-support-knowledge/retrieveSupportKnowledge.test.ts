@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createDefaultSupportKnowledgeRetriever,
   retrieveSupportKnowledge
-} from "../../../../src/support-automation/support-processing-pipeline-v2/retrieve-support-knowledge/retrieveSupportKnowledge";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/retrieve-support-knowledge/retrieveSupportKnowledge";
 import {
   HttpSupportKnowledgeRetriever
 } from "../../../../src/infrastructure/rag/httpSupportKnowledgeRetriever";
@@ -22,7 +22,7 @@ import type {
   KnowledgeChunk,
   KnowledgeEnrichmentPlan,
   RetrieveSupportKnowledgeInput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   JsonKnowledgeItem
 } from "../../../../src/archive/repositories/json/typesJsonRepositories.types";

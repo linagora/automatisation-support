@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSupportProcessingPersistenceEffectsV2
-} from "../../../../src/support-automation/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 
 import type {
   BuildSupportPersistenceEffectsInput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 function buildInput(
   overrides: Partial<BuildSupportPersistenceEffectsInput> = {}

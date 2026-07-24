@@ -41,7 +41,7 @@ import type {
 } from "../infrastructure/live-memory/noopTelemetryEmitter";
 import type {
   SupportProcessingPipelineV2Steps
-} from "./support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "./support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   MatrixSupportAutomationLogger
 } from "../infrastructure/matrix/matrixSupportAutomationLogger";

@@ -1,10 +1,10 @@
-import {callLLM} from "../../../../../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../../../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../../../../infrastructure/llm/parseLLMResponse";
 import {buildActionForUserPrompt} from "./buildActionForUserPrompt";
 import {buildActionForUserResponseFormat} from "./responseFormat";
 import {validateBuildActionForUserOutput} from "./validateBuildActionForUserOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
 

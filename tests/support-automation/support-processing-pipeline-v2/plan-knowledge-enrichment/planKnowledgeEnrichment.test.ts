@@ -14,13 +14,13 @@ vi.mock("../../../../src/support-automation/support-processing-pipeline-v2/plan-
 
 import {
   planKnowledgeEnrichment
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-knowledge-enrichment/planKnowledgeEnrichment";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-knowledge-enrichment/planKnowledgeEnrichment";
 
 import type {
   MergedTopicSnapshot,
   PlanKnowledgeEnrichmentInput,
   TextUnderstanding
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 type RuntimeKnowledgeEnrichmentPlan = {
   rag: {

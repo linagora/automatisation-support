@@ -1,4 +1,4 @@
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
 type AttemptedActionToAsk = Solution["attemptedActionsToAskBecauseOfSolutionFound"][number];

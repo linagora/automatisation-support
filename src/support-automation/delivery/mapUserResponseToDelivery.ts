@@ -6,7 +6,7 @@ import type {
 } from "../build-input/buildSupportTurnIdentityV2";
 import type {
   UserResponse
-} from "../support-processing-pipeline-v2/typesSupportMessaging.types";
+} from "../support-processing-pipeline-v2-LEGACY/typesSupportMessaging.types";
 import type {
   DeliveryMessage
 } from "./typesDelivery.types";

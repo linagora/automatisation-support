@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildUnansweredRequestedFieldNamesForTopic
-} from "../../../src/support-automation/support-processing-pipeline-v2/unansweredRequestedFields";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/unansweredRequestedFields";
 
 import type {
   MergedTopicSnapshot,
   ResponsePlanV2
-} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 function snapshot(
   overrides: Partial<MergedTopicSnapshot> = {}

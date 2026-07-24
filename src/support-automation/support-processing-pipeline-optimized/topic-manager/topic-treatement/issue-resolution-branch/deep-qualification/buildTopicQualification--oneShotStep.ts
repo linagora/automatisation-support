@@ -1,6 +1,6 @@
 import {getDeepIssueFieldSpecs} from "./qualificationRules.catalog";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
 type DeepQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["deepQualification"];

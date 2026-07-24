@@ -1,5 +1,5 @@
-import {callLLM} from "../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../infrastructure/llm/parseLLMResponse";
 import {textSurfaceFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
 import {buildAnalyzeTextSurfacePrompt} from "./buildAnalyzeTextSurfacePrompt";
 import {validateAnalyzeTextSurfaceOutput} from "./validateAnalyzeTextSurfaceOutput";

@@ -2,16 +2,16 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   synthesizeRetrievedKnowledge
-} from "../../../../src/support-automation/support-processing-pipeline-v2/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/synthesize-retrieved-knowledge/synthesizeRetrievedKnowledge";
 
 import type {
   KnowledgeEnrichmentPlan,
   SynthesizeRetrievedKnowledgeInput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   RawSynthesizeRetrievedKnowledge,
   SynthesizeRetrievedKnowledgeRequester
-} from "../../../../src/support-automation/support-processing-pipeline-v2/synthesize-retrieved-knowledge/typesSynthesizeRetrievedKnowledge.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/synthesize-retrieved-knowledge/typesSynthesizeRetrievedKnowledge.types";
 
 function knowledgePlan(topicId: number): KnowledgeEnrichmentPlan {
   return {

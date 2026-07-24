@@ -1,23 +1,54 @@
-import type {RoutedTopicBranchInput, RoutedTopicBranchOutput} from "../../runTopicBranch";
+import type {TopicUpdatePlan} from "../../../propose-topic-updates-optimized/runProposeTopicUpdates";
+import type {LiveMemoryTopicOptimized} from "../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type KnowledgeAnswerInternalOutputs = {
-  branch: "knowledge_answer";
+type KnowledgeAnswerBranchInput = {
+  topicUpdatePlan: TopicUpdatePlan;
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
 };
 
-type KnowledgeAnswerBranchOutput = RoutedTopicBranchOutput<KnowledgeAnswerInternalOutputs>;
+type KnowledgeAnswerBranchOutput = {
+  status: "processed";
+  fallbackReason: null;
+  say: string;
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
+  internalOutputs: {
+    branch: "knowledge_answer";
+  };
+};
 
 async function runKnowledgeAnswerBranch(
-  _input: RoutedTopicBranchInput
+  input: KnowledgeAnswerBranchInput
 ): Promise<KnowledgeAnswerBranchOutput> {
   return {
     status: "processed",
     fallbackReason: null,
-    say: "Thanks for your question. I understand that you are looking for an answer or explanation. I cannot provide a detailed knowledge response yet, but please make your question as specific as possible, including the product area, the exact behavior you are asking about, and any relevant context so the support team can answer it properly.",
+    say: buildKnowledgeAnswerMessage(input.topicUpdatePlan),
+    sourceTopicManager: {
+      ...input.sourceTopicManager,
+      currentStep: "idle",
+      resolutionStatus: {
+        value: "unsolved",
+        reason: "The topic is a knowledge question. The dedicated knowledge-answer route is not implemented yet."
+      },
+      handover: {
+        isRequested: false,
+        reason: null
+      },
+      idleMode: {
+        isActivated: true
+      }
+    },
     internalOutputs: {
       branch: "knowledge_answer"
     }
   };
 }
 
+function buildKnowledgeAnswerMessage(topicUpdatePlan: TopicUpdatePlan): string {
+  const topic = topicUpdatePlan.summaryTopic ?? topicUpdatePlan.title ?? "your question";
+
+  return `I’ve understood this as a question about ${topic}. I’ve kept the context. This automated branch is not fully implemented yet, so please add any detail that would help the support team answer precisely.`;
+}
+
 export {runKnowledgeAnswerBranch};
-export type {KnowledgeAnswerBranchOutput, KnowledgeAnswerInternalOutputs};
+export type {KnowledgeAnswerBranchInput, KnowledgeAnswerBranchOutput};
