@@ -1,5 +1,5 @@
 import type {TopicUpdatePlan} from "../../../propose-topic-updates-optimized/runProposeTopicUpdates";
-import type {LiveMemoryTopicOptimized} from "../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type FeatureRequestBranchInput = {
   topicUpdatePlan: TopicUpdatePlan;

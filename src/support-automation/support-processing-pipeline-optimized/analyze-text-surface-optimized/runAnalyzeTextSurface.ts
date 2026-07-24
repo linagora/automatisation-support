@@ -1,13 +1,11 @@
-import {callLLM} from "../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../infrastructure/llm/parseLLMResponse";
 import {textSurfaceFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
 import {buildAnalyzeTextSurfacePrompt} from "./buildAnalyzeTextSurfacePrompt";
 import {validateAnalyzeTextSurfaceOutput} from "./validateAnalyzeTextSurfaceOutput";
 
-import type {
-  RecentInteractionContext,
-  TurnAnalysisPlan
-} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+import type {TurnAnalysisPlan} from "../plan-turn-analysis/planTurnAnalysis";
+import type {RecentInteractionContext} from "../typesPipelineContext";
 import type {TextSurfaceFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
 import type {
   AnalyzeTextSurfaceSegment

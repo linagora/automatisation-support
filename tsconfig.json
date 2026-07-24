@@ -10,6 +10,6 @@
     "types": ["node", "vitest/globals"],
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.mts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.mts", "docs/archive/runMatrixSupportAutomationV2.ts", "docs/archive/runSupportAutomationPipelineV2.ts"],
   "exclude": ["node_modules", "dist", "tests/archive/**"]
 }

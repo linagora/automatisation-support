@@ -1,5 +1,5 @@
-import {callLLM} from "../../../../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../../../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../../../../../infrastructure/llm/parseLLMResponse";
 import {buildActionForSupportPrompt} from "./buildActionForSupportPrompt";
 import {buildActionForSupportResponseFormat} from "./responseFormat";
 import {validateBuildActionForSupportOutput} from "./validateBuildActionForSupportOutput";

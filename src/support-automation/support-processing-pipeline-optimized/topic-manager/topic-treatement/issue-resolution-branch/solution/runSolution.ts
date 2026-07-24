@@ -3,7 +3,7 @@ import {runBuildActionForSupport} from "./build-action-for-support/runBuildActio
 import {isSolutionCompleted} from "./isSolutionCompleted--blockingStep";
 import {planIssueSolutionAsk} from "./asking-planner/planIssueSolutionAsk";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
 type RetrieveKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"];

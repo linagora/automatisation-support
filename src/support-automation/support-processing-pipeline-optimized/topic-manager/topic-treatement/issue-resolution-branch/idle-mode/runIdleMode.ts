@@ -1,10 +1,10 @@
-import {callLLM} from "../../../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../../../../infrastructure/llm/parseLLMResponse";
 import {buildIdleModeDecisionPrompt} from "./buildIdleModeDecisionPrompt";
 import {idleModeResponseFormat} from "./responseFormat";
 import {validateIdleModeDecisionOutput} from "./validateIdleModeDecisionOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type RunIdleModeInput = {
   mode: "finalize_after_solution" | "reevaluate_existing_idle";

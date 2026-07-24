@@ -1,7 +1,7 @@
 import {formatCatalogSelection} from "./catalogSelection";
 
-import type {AnalyzeSupportTextUnderstanding} from "../../support-processing-pipeline-optimized/analyze-support-text-optimized/runAnalyzeSupportText";
-import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {AnalyzeSupportTextUnderstanding} from "../analyze-support-text-optimized/runAnalyzeSupportText";
+import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type TopicUpdatePlan = {
   topicId: number | null;

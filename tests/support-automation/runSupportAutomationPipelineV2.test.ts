@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   runSupportAutomationTurnV2
-} from "../../src/support-automation/runSupportAutomationPipelineV2";
+} from "../../docs/archive/runSupportAutomationPipelineV2";
 import {
   buildSupportTurnIdentityV2
 } from "../../src/support-automation/build-input/buildSupportTurnIdentityV2";

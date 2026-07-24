@@ -1,5 +1,5 @@
-import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
-import type {LLMMessage} from "../../../../../infrastructure/llm/types.llm-types";
+import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LLMMessage} from "../../../../../../infrastructure/llm/types.llm-types";
 
 export type BuildIdleModeDecisionPromptInput = {
   mode: "finalize_after_solution" | "reevaluate_existing_idle";

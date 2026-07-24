@@ -1,5 +1,5 @@
 import {outputJsonShapeForPrompt, responseFormat} from "./responseFormat";
-import type {LLMMessage} from "../../infrastructure/llm/llm-client";
+import type {LLMMessage} from "../../../infrastructure/llm/llm-client";
 
 type BuildTranslateMessagePromptInput = {
   message: string;
@@ -21,6 +21,7 @@ Do not summarize.
 Do not add explanations.
 Do not add greetings.
 Do not change formatting except what is necessary for translation.
+If the letters are in uppercase, keep them in uppercase.
 Return only JSON matching the requested schema.
 `.trim();
 

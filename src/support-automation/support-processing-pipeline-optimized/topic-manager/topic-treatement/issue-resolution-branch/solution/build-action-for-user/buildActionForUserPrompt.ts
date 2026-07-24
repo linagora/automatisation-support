@@ -1,6 +1,6 @@
 import {outputJsonShapeForPrompt} from "./responseFormat";
 
-import type {LLMMessage} from "../../../../../../infrastructure/llm/llm-client";
+import type {LLMMessage} from "../../../../../../../infrastructure/llm/llm-client";
 import type {RunBuildActionForUserInput} from "./runBuildActionForUser--oneShotStep";
 
 function buildActionForUserPrompt(input: RunBuildActionForUserInput): {messages: LLMMessage[]} {

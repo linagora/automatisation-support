@@ -1,8 +1,8 @@
-import {createDefaultSupportRagClient} from "../../../../../../infrastructure/rag/createDefaultSupportRagClient";
+import {createDefaultSupportRagClient} from "../../../../../../../infrastructure/rag/createDefaultSupportRagClient";
 import {buildRankedSearchPrompt} from "./buildRankedSearchPrompt";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
-import type {SupportRagClient} from "../../../../../../infrastructure/rag/supportRagClient";
+import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {SupportRagClient} from "../../../../../../../infrastructure/rag/supportRagClient";
 
 type RankedSearch = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["rankedSearch"];
 

@@ -7,7 +7,7 @@ import {runUnclearTopicBranch, type UnclearTopicBranchOutput} from "./topic-trea
 
 import type {AnalyzeSupportTextUnderstanding} from "../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {TopicUpdatePlan} from "../propose-topic-updates-optimized/runProposeTopicUpdates";
-import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type CurrentUserMessage = {
   content: string;

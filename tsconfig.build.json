@@ -1,5 +1,17 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/**/*.ts"],
-  "exclude": ["tests/**/*.ts", "node_modules", "dist"]
+  "include": [
+    "src/**/*.ts",
+    "scripts/support-automation/**/*.ts",
+    "scripts/matrix/**/*.ts"
+  ],
+  "exclude": [
+    "tests",
+    "docs",
+    "dist",
+    "node_modules",
+    "**/*.backup.*",
+    "**/*LEGACY*",
+    "**/*legacy*"
+  ]
 }

@@ -1,4 +1,4 @@
-import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type ResolutionStatus = LiveMemoryTopicOptimized["sourceTopicManager"]["resolutionStatus"];
 type Handover = LiveMemoryTopicOptimized["sourceTopicManager"]["handover"];

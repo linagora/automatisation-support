@@ -1,5 +1,5 @@
-import {callLLM} from "../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../infrastructure/llm/parseLLMResponse";
+import {callLLM} from "../../../../infrastructure/llm/llm-client";
+import {parseLLMResponse} from "../../../../infrastructure/llm/parseLLMResponse";
 import {supportNeedAssessmentFallbackReason} from "../../../support-catalog-optimized/supportFallback.catalog";
 import {buildAssessSupportNeedPrompt} from "./buildAssessSupportNeedPrompt";
 import {responseFormat} from "./responseFormat";
@@ -8,7 +8,7 @@ import {validateAssessSupportNeedOutput} from "./validateAssessSupportNeedOutput
 import type {SupportNeedAssessmentFallbackReason} from "../../../support-catalog-optimized/supportFallback.catalog";
 import type {AnalyzeSupportTextUnderstanding} from "../../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {TopicUpdatePlan} from "../../propose-topic-updates-optimized/runProposeTopicUpdates";
-import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {SupportNeedAssessment} from "./validateAssessSupportNeedOutput";
 
 type CurrentUserMessage = {

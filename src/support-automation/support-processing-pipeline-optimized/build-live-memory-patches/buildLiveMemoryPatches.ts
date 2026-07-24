@@ -1,4 +1,4 @@
-import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RunSupportProcessingPipelineV3OptimizedIntermOutputs} from "../runSupportProcessingPipelineOptimized";
 
 export type BuildLiveMemoryPatchesInput = {

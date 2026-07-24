@@ -22,7 +22,7 @@ import {
 
 import type {
   SupportAutomationTurnV2Result
-} from "../../../src/support-automation/runSupportAutomationPipelineV2";
+} from "../../../docs/archive/runSupportAutomationPipelineV2";
 import type {
   MatrixDeliveryResult
 } from "../../../src/infrastructure/matrix/typesMatrixChannel.types";

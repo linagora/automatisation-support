@@ -21,30 +21,41 @@ function buildMessage(input: BuildMessageInput): BuildMessageOutput {
 
   // 1. Standard fragments always come first.
   // They are already user-facing sentences written in English.
-  for (const fragment of input.standardResponseFragments ?? []) {
-    const say = cleanText(fragment.say);
-
-    if (say) {
-      messageParts.push(say);
-    }
+  //
+  // Important:
+  // - buildMessage only composes user-facing text;
+  // - it removes exact duplicate fragments;
+  // - it does NOT decide intent priority, such as identity > greeting.
+  for (const say of buildUniqueStandardFragmentMessages(input.standardResponseFragments ?? [])) {
+    messageParts.push(say);
   }
 
   // 2. Topic messages come after standard fragments.
-  // Each topic keeps its title, then the branch planner answer.
-  for (const topicMessage of input.topicMessages ?? []) {
+  //
+  // Important:
+  // - single respondable topic: do NOT render the internal topic title;
+  // - multiple respondable topics: render a visible heading per topic.
+  const respondableTopics = (input.topicMessages ?? []).filter((topicMessage) =>
+    cleanText(topicMessage.say) !== null
+  );
+
+  const shouldRenderTopicHeadings = respondableTopics.length >= 2;
+
+  for (const topicMessage of respondableTopics) {
     const say = cleanText(topicMessage.say);
 
     if (!say) {
       continue;
     }
 
-    const title = cleanText(topicMessage.title);
+    if (!shouldRenderTopicHeadings) {
+      messageParts.push(say);
+      continue;
+    }
 
-    messageParts.push(
-      title
-        ? `${title}\n${say}`
-        : say
-    );
+    const heading = formatTopicHeading(topicMessage.title);
+
+    messageParts.push(`${heading}\n${say}`);
   }
 
   return {
@@ -52,6 +63,43 @@ function buildMessage(input: BuildMessageInput): BuildMessageOutput {
     fallbackReason: null,
     message: messageParts.join("\n\n").trim()
   };
+}
+
+function buildUniqueStandardFragmentMessages(
+  fragments: readonly Array<{say: string}>
+): string[] {
+  const seen = new Set<string>();
+  const messages: string[] = [];
+
+  for (const fragment of fragments) {
+    const say = cleanText(fragment.say);
+
+    if (!say) {
+      continue;
+    }
+
+    const dedupeKey = normalizeForDedupe(say);
+
+    if (seen.has(dedupeKey)) {
+      continue;
+    }
+
+    seen.add(dedupeKey);
+    messages.push(say);
+  }
+
+  return messages;
+}
+
+function formatTopicHeading(title: string | null | undefined): string {
+  return (cleanText(title) ?? "Sujet").toLocaleUpperCase("fr-FR");
+}
+
+function normalizeForDedupe(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase("en-US");
 }
 
 function cleanText(value: string | null | undefined): string | null {

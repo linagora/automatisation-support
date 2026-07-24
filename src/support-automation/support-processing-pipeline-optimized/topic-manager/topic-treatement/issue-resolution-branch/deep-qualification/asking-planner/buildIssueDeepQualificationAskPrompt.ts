@@ -1,7 +1,7 @@
 import {getDeepIssueFieldAskPrompt, getDeepIssueFieldAskType} from "../qualificationRules.catalog";
 
-import type {LLMMessage} from "../../../../../../infrastructure/llm/llm-client";
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LLMMessage} from "../../../../../../../infrastructure/llm/llm-client";
+import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type DeepQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["deepQualification"];
 type FieldToAsk = DeepQualification["caseDetailsToAskBecauseOfDeepQualification"][number] & {status: "asking"};

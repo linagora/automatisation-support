@@ -1,0 +1,566 @@
+{
+  "handover": {
+    "isHandover": false,
+    "handoverReason": null
+  },
+  "previousConversationTurn": {
+    "previousUserMessage": "Oui j'ia tout esssayer et finalement le probleme est résolu merci!",
+    "previousBotMessage": "Retour positif noté.\n\nC'est super d'apprendre que votre problème est résolu ! Pour nous assurer que tout fonctionne correctement, pourriez-vous essayer de créer un dossier en utilisant l'application Drive sur votre téléphone ou votre tablette ? Cela nous aidera à confirmer que le problème est entièrement résolu. Faites-nous savoir si cela fonctionne pour vous !"
+  },
+  "failedPipelineMessages": [],
+  "securityAlerts": [],
+  "userState": {
+    "status": "normal",
+    "flags": []
+  },
+  "topics": [
+    {
+      "status": "in_progress",
+      "sourceAnalyzeSupportText": {
+        "caseDetailsExtracted": [
+          {
+            "key": "product_or_service",
+            "value": "drive",
+            "evidence": "drive",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "créer un dossier",
+            "evidence": "créer un dossier",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "la fentre se ferme mais le dossier n'apparait pas",
+            "evidence": "la fentre se ferme mais le dossier n'apparait pas",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "le dossier apparait",
+            "evidence": "le dossier n'apparait pas",
+            "status": "obtained"
+          },
+          {
+            "key": "product_or_service",
+            "value": "Drive",
+            "evidence": "J’accède au Drive depuis le navigateur web",
+            "status": "obtained"
+          },
+          {
+            "key": "platform",
+            "value": "web",
+            "evidence": "J’accède au Drive depuis le navigateur web",
+            "status": "obtained"
+          },
+          {
+            "key": "browser",
+            "value": "Chrome",
+            "evidence": "J’utilise Chrome sur Ubuntu",
+            "status": "obtained"
+          },
+          {
+            "key": "operating_system",
+            "value": "Ubuntu",
+            "evidence": "J’utilise Chrome sur Ubuntu",
+            "status": "obtained"
+          },
+          {
+            "key": "issue_started_at",
+            "value": "aujourd’hui",
+            "evidence": "Le problème a commencé aujourd’hui",
+            "status": "obtained"
+          },
+          {
+            "key": "reproduction_steps",
+            "value": "1. J’ouvre le Drive. 2. Je fais clic droit dans l’espace du Drive. 3. Je clique sur créer un dossier. 4. La fenêtre de création s’ouvre. 5. Je saisis le nom du dossier. 6. Je valide la création avec un clic gauche.",
+            "evidence": "Les étapes exactes sont : 1. J’ouvre le Drive. 2. Je fais clic droit dans l’espace du Drive. 3. Je clique sur créer un dossier. 4. La fenêtre de création s’ouvre. 5. Je saisis le nom du dossier. 6. Je valide la création avec un clic gauche.",
+            "status": "obtained"
+          },
+          {
+            "key": "failure_step",
+            "value": "validation finale",
+            "evidence": "L’étape bloquante est la validation finale",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "la fenêtre se ferme bien, mais le dossier n’apparaît pas ensuite dans le Drive",
+            "evidence": "la fenêtre se ferme bien, mais le dossier n’apparaît pas ensuite dans le Drive",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "le dossier apparaît dans le Drive",
+            "evidence": "le dossier n’apparaît pas ensuite dans le Drive",
+            "status": "obtained"
+          },
+          {
+            "key": "frequency",
+            "value": "à chaque tentative",
+            "evidence": "Le problème arrive à chaque tentative",
+            "status": "obtained"
+          },
+          {
+            "key": "device",
+            "value": "honor magicbook",
+            "evidence": "un honor magicbook",
+            "status": "obtained"
+          },
+          {
+            "key": "operating_system",
+            "value": "ubuntu",
+            "evidence": "ordinator ubuntu",
+            "status": "obtained"
+          }
+        ],
+        "attemptedActionsExtracted": [
+          {
+            "action": "clic droit pour créer un dossier",
+            "outcome": "partial",
+            "evidence": "quand je fais clic droit pour créer un dossier alors ça ouvre la fentre puis apres quand je vladie la creation par clic gauche alors la fentre se ferme mais le dossier n'apparait pas",
+            "status": "obtained"
+          },
+          {
+            "action": "créer un dossier",
+            "outcome": "failed",
+            "evidence": "Le problème arrive à chaque tentative. J’accède au Drive depuis le navigateur web, sur ordinateur. J’utilise Chrome sur Ubuntu. Le problème a commencé aujourd’hui. Les étapes exactes sont : 1. J’ouvre le Drive. 2. Je fais clic droit dans l’espace du Drive. 3. Je clique sur créer un dossier. 4. La fenêtre de création s’ouvre. 5. Je saisis le nom du dossier. 6. Je valide la création avec un clic gauche. L’étape bloquante est la validation finale : la fenêtre se ferme bien, mais le dossier n’apparaît pas ensuite dans le Drive.",
+            "status": "obtained"
+          },
+          {
+            "action": "essayer de résoudre le problème",
+            "outcome": "success",
+            "evidence": "j'ia tout esssayer et finalement le probleme est résolu",
+            "status": "obtained"
+          }
+        ]
+      },
+      "sourceProposeTopicUpdates": {
+        "topicId": 1,
+        "title": "Création de dossier dans Drive",
+        "summaryTopic": "L'utilisateur ne parvenait pas à créer un dossier dans le Drive via le navigateur Chrome sur Ubuntu. Le problème a commencé aujourd'hui et se manifestait par la fermeture de la fenêtre de création sans que le dossier n'apparaisse dans le Drive. Après avoir vidé le cache et les cookies de Chrome et tenté de créer le dossier via l'application Drive sur un autre appareil, le problème est maintenant résolu.",
+        "supportDomain": {
+          "value": "product_behavior",
+          "reason": "Le problème concerne le comportement du produit lors de la création d'un dossier dans Drive, avec des détails supplémentaires sur la plateforme, le navigateur et le modèle de l'appareil utilisés."
+        }
+      },
+      "sourceTopicManager": {
+        "currentStep": "solution",
+        "resolutionStatus": {
+          "value": "in_progress",
+          "reason": "The issue-resolution route is still collecting information or waiting for a user action."
+        },
+        "handover": {
+          "isRequested": false,
+          "reason": null
+        },
+        "supportNeedResolution": {
+          "supportNeed": {
+            "value": "issue_resolution",
+            "reason": "The user describes a problem with creating a folder in Drive where the window closes without the folder appearing, indicating a need for issue resolution."
+          }
+        },
+        "basicQualification": {
+          "isBuilt": true,
+          "isCompleted": true,
+          "caseDetailsToAskBecauseOfBasicQualification": [
+            {
+              "key": "product_or_service",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "observed_result",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            }
+          ]
+        },
+        "retrieveKnowledge": {
+          "isCompleted": true,
+          "rankedSearch": {
+            "isSearched": true,
+            "rawRagKnowledge": {
+              "query": "L'utilisateur ne parvient pas à créer un dossier dans le drive, la fenêtre se ferme sans que le dossier n'apparaisse.",
+              "content": "{\n  \n\"candidates\": [\n  {\n    \"title\": \"Cannot create folder or subfolder\",\n    \"issueSummary\": \"L'utilisateur ne parvient pas à créer un dossier dans le drive, la fenêtre se ferme sans que le dossier n'apparaisse.\",\n    \"rawKnowledge\": \"Btw, I deployed v0.27.1-rc01 on canary. I will more detail tmr\\n\\nRegarding create (rename delete) mailbox\\nCF https://github.com/linagora/tmail-backend/issues/2299#issuecomment-4162422291\\n(thanks apparently I missed this)\\n\\nI propose to merge anyway as it improves current situation and track following issue (open subtickets and track it for potential customer projects)\\nOk?\",\n    \"whyPotentiallyRelevant\": \"L'utilisateur rencontre un problème pour créer un dossier dans le drive, ce qui correspond au même symptôme décrit dans le résumé du topic.\",\n    \"sourceHint\": \"github_linagora_tmail_flutter_issue_4392.md\"\n  }\n]\n}",
+              "sources": [
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415915989",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915989",
+                  "created_at": "2022-08-26T15:47:59Z",
+                  "indexed_at": "2026-07-02T15:13:25.400811+00:00",
+                  "prev_section_id": 1783005205400791600,
+                  "section_id": 1783005205400791600,
+                  "next_section_id": 1783005205400791600,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005156300_6458_github_linagora_tmail_flutter_issue_892.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 892,
+                  "issue_state": "closed",
+                  "issue_title": "Compose functionality is not working on web and iOS",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/892",
+                  "labels": [
+                    "bug",
+                    "0",
+                    "Critical"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2022-09-26T15:57:54Z",
+                  "closed_at": "2022-09-26T15:57:54Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:892",
+                  "filename": "github_linagora_tmail_flutter_issue_892.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_892.md",
+                  "file_size": "19.08 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_892",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415915989"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916505",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916505",
+                  "created_at": "2026-07-03T12:13:09.479Z",
+                  "indexed_at": "2026-07-03T12:13:20.702106+00:00",
+                  "prev_section_id": 1783080800702091800,
+                  "section_id": 1783080800702091800,
+                  "next_section_id": 1783080800702091800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/domain-validation",
+                  "title": "Domain validation",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790143_69dd_docs_twake_b2b_domain_validation.md",
+                  "filename": "docs_twake_b2b_domain_validation.md",
+                  "original_filename": "docs_twake_b2b_domain_validation.md",
+                  "file_size": "7.41 KB",
+                  "file_id": "docs_twake_b2b_domain_validation",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916505"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916537",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916537",
+                  "created_at": "2026-07-03T12:13:10.87Z",
+                  "indexed_at": "2026-07-03T12:13:24.141656+00:00",
+                  "prev_section_id": 1783080804141646000,
+                  "section_id": 1783080804141646000,
+                  "next_section_id": 1783080804141646000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/registration/email-otp",
+                  "title": "Email OTP",
+                  "section": "registration",
+                  "source": "/app/data/1783080791524_cbda_docs_twake_registration_email_otp.md",
+                  "filename": "docs_twake_registration_email_otp.md",
+                  "original_filename": "docs_twake_registration_email_otp.md",
+                  "file_size": "3.99 KB",
+                  "file_id": "docs_twake_registration_email_otp",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916537"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916090",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916090",
+                  "created_at": "2022-03-17T04:19:44Z",
+                  "indexed_at": "2026-07-02T15:13:40.353578+00:00",
+                  "prev_section_id": 1783005220353568300,
+                  "section_id": 1783005220353568300,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005159325_7680_github_linagora_tmail_flutter_issue_364.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 364,
+                  "issue_state": "closed",
+                  "issue_title": "[Web] Attached images are not displayed in the email content",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/364",
+                  "labels": [
+                    "bug",
+                    "Medium"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2022-04-07T10:33:13Z",
+                  "closed_at": "2022-04-07T10:33:13Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:364",
+                  "filename": "github_linagora_tmail_flutter_issue_364.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_364.md",
+                  "file_size": "5.70 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_364",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916090"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415915970",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915970",
+                  "created_at": "2026-03-19T18:06:36Z",
+                  "indexed_at": "2026-07-02T15:13:09.045186+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783005189045172200,
+                  "next_section_id": 1783005189045172200,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005158894_1dcc_github_linagora_tmail_flutter_issue_4392.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 4392,
+                  "issue_state": "closed",
+                  "issue_title": "Team mailbox system folder management",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/4392",
+                  "labels": [
+                    "bug",
+                    "Critical",
+                    "customer"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2026-04-06T07:56:32Z",
+                  "closed_at": "2026-04-06T07:56:32Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:4392",
+                  "filename": "github_linagora_tmail_flutter_issue_4392.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_4392.md",
+                  "file_size": "4.09 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_4392",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415915970"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916504",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916504",
+                  "created_at": "2026-07-03T12:13:09.479Z",
+                  "indexed_at": "2026-07-03T12:13:20.702106+00:00",
+                  "prev_section_id": 1783080800702091800,
+                  "section_id": 1783080800702091800,
+                  "next_section_id": 1783080800702091800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/domain-validation",
+                  "title": "Domain validation",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790143_69dd_docs_twake_b2b_domain_validation.md",
+                  "filename": "docs_twake_b2b_domain_validation.md",
+                  "original_filename": "docs_twake_b2b_domain_validation.md",
+                  "file_size": "7.41 KB",
+                  "file_id": "docs_twake_b2b_domain_validation",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916504"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415915994",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915994",
+                  "created_at": "2022-08-26T15:47:59Z",
+                  "indexed_at": "2026-07-02T15:13:25.400811+00:00",
+                  "prev_section_id": 1783005205400791600,
+                  "section_id": 1783005205400791600,
+                  "next_section_id": 1783005205400791600,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005156300_6458_github_linagora_tmail_flutter_issue_892.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 892,
+                  "issue_state": "closed",
+                  "issue_title": "Compose functionality is not working on web and iOS",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/892",
+                  "labels": [
+                    "bug",
+                    "0",
+                    "Critical"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2022-09-26T15:57:54Z",
+                  "closed_at": "2022-09-26T15:57:54Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:892",
+                  "filename": "github_linagora_tmail_flutter_issue_892.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_892.md",
+                  "file_size": "19.08 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_892",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415915994"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415915972",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915972",
+                  "created_at": "2026-03-19T18:06:36Z",
+                  "indexed_at": "2026-07-02T15:13:09.045186+00:00",
+                  "prev_section_id": 1783005189045172200,
+                  "section_id": 1783005189045172200,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005158894_1dcc_github_linagora_tmail_flutter_issue_4392.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 4392,
+                  "issue_state": "closed",
+                  "issue_title": "Team mailbox system folder management",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/4392",
+                  "labels": [
+                    "bug",
+                    "Critical",
+                    "customer"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2026-04-06T07:56:32Z",
+                  "closed_at": "2026-04-06T07:56:32Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:4392",
+                  "filename": "github_linagora_tmail_flutter_issue_4392.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_4392.md",
+                  "file_size": "4.09 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_4392",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415915972"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916552",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916552",
+                  "created_at": "2026-07-03T12:13:10.617Z",
+                  "indexed_at": "2026-07-03T12:13:24.769230+00:00",
+                  "prev_section_id": 1783080804769215200,
+                  "section_id": 1783080804769215200,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-drive/drive-upload",
+                  "title": "Drive Upload Mechanism",
+                  "section": "twake-drive",
+                  "source": "/app/data/1783080791270_6343_docs_twake_twake_drive_drive_upload.md",
+                  "filename": "docs_twake_twake_drive_drive_upload.md",
+                  "original_filename": "docs_twake_twake_drive_drive_upload.md",
+                  "file_size": "9.08 KB",
+                  "file_id": "docs_twake_twake_drive_drive_upload",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916552"
+                }
+              ],
+              "metadata": {
+                "retriever": "openrag"
+              }
+            }
+          },
+          "filter": {
+            "isFiltered": true,
+            "filteredRagKnowledge": [
+              {
+                "sourceId": "466474858415915970",
+                "title": "Team mailbox system folder management",
+                "summary": "L'utilisateur ne parvient pas à créer un dossier dans le drive, la fenêtre se ferme sans que le dossier n'apparaisse.",
+                "usefulInformation": "Btw, I deployed v0.27.1-rc01 on canary. I will more detail tmr\\n\\nRegarding create (rename delete) mailbox\\nCF https://github.com/linagora/tmail-backend/issues/2299#issuecomment-4162422291\\n(thanks apparently I missed this)\\n\\nI propose to merge anyway as it improves current situation and track following issue (open subtickets and track it for potential customer projects)\\nOk?",
+                "rawExcerpt": "Btw, I deployed v0.27.1-rc01 on canary. I will more detail tmr\\n\\nRegarding create (rename delete) mailbox\\nCF https://github.com/linagora/tmail-backend/issues/2299#issuecomment-4162422291\\n(thanks apparently I missed this)\\n\\nI propose to merge anyway as it improves current situation and track following issue (open subtickets and track it for potential customer projects)\\nOk?",
+                "keepReason": "L'utilisateur rencontre un problème pour créer un dossier dans le drive, ce qui correspond au même symptôme décrit dans le résumé du topic."
+              },
+              {
+                "sourceId": "466474858415916552",
+                "title": "Drive Upload Mechanism",
+                "summary": "Mécanisme de téléchargement de fichiers dans le drive.",
+                "usefulInformation": "Ce document pourrait contenir des informations sur les problèmes de création de dossiers dans le drive.",
+                "rawExcerpt": "Ce document pourrait contenir des informations sur les problèmes de création de dossiers dans le drive.",
+                "keepReason": "Le document traite du mécanisme de téléchargement de fichiers dans le drive, ce qui pourrait être pertinent pour le problème de création de dossiers."
+              }
+            ],
+            "filterExplanation": "Les autres candidats sont soit des documents de validation de domaine, soit des problèmes liés à des fonctionnalités de messagerie ou à des images attachées, qui ne sont pas directement pertinents pour le problème de création de dossiers dans le drive."
+          },
+          "selection": {
+            "isClearSelected": true,
+            "clarificationQuestion": null,
+            "selectedfilteredRagKnowledge": [
+              {
+                "sourceId": "466474858415915970",
+                "title": "Team mailbox system folder management",
+                "usefulInformation": "Btw, I deployed v0.27.1-rc01 on canary. I will more detail tmr\\n\\nRegarding create (rename delete) mailbox\\nCF https://github.com/linagora/tmail-backend/issues/2299#issuecomment-4162422291\\n(thanks apparently I missed this)\\n\\nI propose to merge anyway as it improves current situation and track following issue (open subtickets and track it for potential customer projects)\\nOk?",
+                "whySelected": "The user's issue matches the symptom described in this document, making it directly relevant to the problem of creating folders in the drive."
+              }
+            ],
+            "selectionExplanation": "The selected knowledge directly addresses the issue of creating folders in the drive, as described by the user. The other document, while related to the drive, does not specifically address the creation of folders and is therefore less relevant."
+          },
+          "segmentationKnowledge": {
+            "isSegmented": true,
+            "userFacingInformation": "The issue may be related to a known problem with creating folders in the drive.",
+            "supportFacingInformation": "Check the deployment of v0.27.1-rc01 on canary and review GitHub issue #2299 for potential fixes or workarounds."
+          }
+        },
+        "deepQualification": {
+          "isBuilt": true,
+          "isCompleted": true,
+          "caseDetailsToAskBecauseOfDeepQualification": [
+            {
+              "key": "frequency",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "platform",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "browser",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "device",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "issue_started_at",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "reproduction_steps",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "failure_step",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            }
+          ]
+        },
+        "solution": {
+          "isActionForUserBuilt": true,
+          "isActionForSupportBuilt": true,
+          "isCompleted": false,
+          "attemptedActionsToAskBecauseOfSolutionFound": [
+            {
+              "action": "Essayez de vider le cache et les cookies de votre navigateur Chrome.",
+              "reason": "Cela peut résoudre les problèmes liés à l'interface utilisateur du Drive.",
+              "status": "asking"
+            },
+            {
+              "action": "Essayez de créer un dossier via l'application Drive sur votre téléphone ou tablette.",
+              "reason": "Cela peut aider à déterminer si le problème est spécifique à votre navigateur Chrome sur Ubuntu.",
+              "status": "asking"
+            },
+            {
+              "action": "Essayez de créer un dossier via l'application Drive sur votre téléphone ou tablette.",
+              "reason": "Cela peut aider à déterminer si le problème est spécifique à votre navigateur Chrome sur Ubuntu.",
+              "status": "asking"
+            }
+          ],
+          "actionToTakeForSupport": "Check the deployment of v0.27.1-rc01 on canary and review GitHub issue #2299 for potential fixes or workarounds related to the user's issue with creating a folder in Drive via Chrome on Ubuntu."
+        },
+        "idleMode": {
+          "isActivated": false
+        }
+      }
+    }
+  ]
+}

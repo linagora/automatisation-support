@@ -4,11 +4,9 @@ import {
 } from "./responseFormat";
 import {promptCatalogSelection} from "./catalogSelection";
 
-import type {LLMMessage} from "../../infrastructure/llm/llm-client";
-import type {
-  RecentInteractionContext,
-  TurnAnalysisPlan
-} from "../../support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+import type {LLMMessage} from "../../../infrastructure/llm/llm-client";
+import type {TurnAnalysisPlan} from "../plan-turn-analysis/planTurnAnalysis";
+import type {RecentInteractionContext} from "../typesPipelineContext";
 
 type BuildAnalyzeTextSurfacePromptInput = {
   latestUserMessageContent: string;

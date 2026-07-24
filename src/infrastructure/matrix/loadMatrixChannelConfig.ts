@@ -1,13 +1,43 @@
 import type {
   MatrixChannelConfig
 } from "./typesMatrixChannel.types";
-import type {
-  MatrixProgressMode,
-  MatrixSupportProgressReporterConfig
-} from "./matrixSupportProgressReporter";
-import {
-  DEFAULT_MATRIX_PROGRESS_MESSAGES
-} from "./matrixProgressMessages";
+
+type MatrixProgressMode =
+  | "typing_only"
+  | "typing_and_static_status"
+  | "typing_and_editable_status";
+
+type MatrixProgressMessages = {
+  queued: string;
+  analyzing: string;
+  retrieving: string;
+  composing: string;
+  translating: string;
+  done: string;
+  failed: string;
+};
+
+type MatrixSupportProgressReporterConfig = {
+  enabled: boolean;
+  mode: MatrixProgressMode;
+  statusMessages: boolean;
+  removeStatusOnDone: boolean;
+  finalMessageEnabled: boolean;
+  finalMessage: string;
+  typingTimeoutMs: number;
+  minStageIntervalMs: number;
+  messages: MatrixProgressMessages;
+};
+
+const DEFAULT_MATRIX_PROGRESS_MESSAGES: MatrixProgressMessages = {
+  queued: "Message reçu, je le prends en compte.",
+  analyzing: "J’analyse votre demande.",
+  retrieving: "Je recherche les informations utiles.",
+  composing: "Je prépare une réponse.",
+  translating: "J’adapte la réponse à votre langue.",
+  done: "Traitement terminé.",
+  failed: "Une erreur technique est survenue."
+};
 
 function loadMatrixChannelConfigFromEnv(
   env: NodeJS.ProcessEnv = process.env
@@ -198,4 +228,9 @@ export {
   loadMatrixProgressConfigFromEnv,
   loadMatrixProcessHistoricalMessagesFromEnv,
   loadMatrixStartupGraceMsFromEnv
+};
+
+export type {
+  MatrixProgressMode,
+  MatrixSupportProgressReporterConfig
 };

@@ -5,13 +5,13 @@ import { tmpdir } from "node:os";
 
 import {
   runMatrixSupportAutomationV2
-} from "../../src/support-automation/runMatrixSupportAutomationV2";
+} from "../../docs/archive/runMatrixSupportAutomationV2";
 import {
   runSupportAutomationTurnV2 as realRunSupportAutomationTurnV2
-} from "../../src/support-automation/runSupportAutomationPipelineV2";
+} from "../../docs/archive/runSupportAutomationPipelineV2";
 import type {
   SupportAutomationTurnV2Result
-} from "../../src/support-automation/runSupportAutomationPipelineV2";
+} from "../../docs/archive/runSupportAutomationPipelineV2";
 import {
   buildSupportTurnIdentityV2
 } from "../../src/support-automation/build-input/buildSupportTurnIdentityV2";
