@@ -49,7 +49,7 @@ async function runTranslateMessage(input: TranslateMessageInput): Promise<Transl
     return {
       status: "processed",
       fallbackReason: null,
-      message: validatedOutput.translatedMessage,
+      message: stripMessageWrapperTags(validatedOutput.translatedMessage),
       translated: true,
       targetLanguage: input.targetLanguage
     };
@@ -64,6 +64,14 @@ function shouldTranslate(targetLanguage: string | null): boolean {
   if (normalized === "" || normalized === "unknown") return false;
 
   return !["en", "eng", "english", "anglais"].includes(normalized);
+}
+
+function stripMessageWrapperTags(message: string): string {
+  return message
+    .trim()
+    .replace(/^<message>\s*/i, "")
+    .replace(/\s*<\/message>$/i, "")
+    .trim();
 }
 
 function buildFallback(input: TranslateMessageInput, fallbackReason: TranslateMessageFallbackReason): TranslateMessageOutput {

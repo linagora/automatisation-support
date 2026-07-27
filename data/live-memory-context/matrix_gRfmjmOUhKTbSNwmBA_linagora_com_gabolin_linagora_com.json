@@ -4,8 +4,8 @@
     "handoverReason": null
   },
   "previousConversationTurn": {
-    "previousUserMessage": "Oui j'ia tout esssayer et finalement le probleme est résolu merci!",
-    "previousBotMessage": "Retour positif noté.\n\nC'est super d'apprendre que votre problème est résolu ! Pour nous assurer que tout fonctionne correctement, pourriez-vous essayer de créer un dossier en utilisant l'application Drive sur votre téléphone ou votre tablette ? Cela nous aidera à confirmer que le problème est entièrement résolu. Faites-nous savoir si cela fonctionne pour vous !"
+    "previousUserMessage": "Bonjour mon ami ! Qui es tu ? J’ai 2 problèmes Sur twake chat j’ai l’impression que parfois les messages disparaît Sur le drive je n’arrive pas à renommer un fichier une fois qu’il est créé",
+    "previousBotMessage": "Bonjour. Veuillez décrire votre demande d'assistance.\n\nJe suis l'assistant de support. Veuillez décrire votre demande d'assistance.\n\nMESSAGES QUI DISPARAISSENT DANS TWAKE CHAT\nLes messages disparaissent-ils après un rafraîchissement ou une suppression ?\n\nIMPOSSIBLE DE RENOMMER LES FICHIERS DANS TWAKE DRIVE\nPour mieux vous aider, pourriez-vous décrire ce que vous essayez d'accomplir lors du renommage d'un fichier dans Twake Drive ? Par exemple, rencontrez-vous un message d'erreur, ou l'option de renommage n'apparaît-elle pas comme prévu ? Si vous n'êtes pas sûr, dites-moi simplement ce que vous voyez lorsque vous essayez de renommer un fichier."
   },
   "failedPipelineMessages": [],
   "securityAlerts": [],
@@ -20,133 +20,30 @@
         "caseDetailsExtracted": [
           {
             "key": "product_or_service",
-            "value": "drive",
-            "evidence": "drive",
-            "status": "obtained"
-          },
-          {
-            "key": "feature_or_page",
-            "value": "créer un dossier",
-            "evidence": "créer un dossier",
+            "value": "Twake chat",
+            "evidence": "Sur twake chat",
             "status": "obtained"
           },
           {
             "key": "observed_result",
-            "value": "la fentre se ferme mais le dossier n'apparait pas",
-            "evidence": "la fentre se ferme mais le dossier n'apparait pas",
-            "status": "obtained"
-          },
-          {
-            "key": "expected_result",
-            "value": "le dossier apparait",
-            "evidence": "le dossier n'apparait pas",
-            "status": "obtained"
-          },
-          {
-            "key": "product_or_service",
-            "value": "Drive",
-            "evidence": "J’accède au Drive depuis le navigateur web",
-            "status": "obtained"
-          },
-          {
-            "key": "platform",
-            "value": "web",
-            "evidence": "J’accède au Drive depuis le navigateur web",
-            "status": "obtained"
-          },
-          {
-            "key": "browser",
-            "value": "Chrome",
-            "evidence": "J’utilise Chrome sur Ubuntu",
-            "status": "obtained"
-          },
-          {
-            "key": "operating_system",
-            "value": "Ubuntu",
-            "evidence": "J’utilise Chrome sur Ubuntu",
-            "status": "obtained"
-          },
-          {
-            "key": "issue_started_at",
-            "value": "aujourd’hui",
-            "evidence": "Le problème a commencé aujourd’hui",
-            "status": "obtained"
-          },
-          {
-            "key": "reproduction_steps",
-            "value": "1. J’ouvre le Drive. 2. Je fais clic droit dans l’espace du Drive. 3. Je clique sur créer un dossier. 4. La fenêtre de création s’ouvre. 5. Je saisis le nom du dossier. 6. Je valide la création avec un clic gauche.",
-            "evidence": "Les étapes exactes sont : 1. J’ouvre le Drive. 2. Je fais clic droit dans l’espace du Drive. 3. Je clique sur créer un dossier. 4. La fenêtre de création s’ouvre. 5. Je saisis le nom du dossier. 6. Je valide la création avec un clic gauche.",
-            "status": "obtained"
-          },
-          {
-            "key": "failure_step",
-            "value": "validation finale",
-            "evidence": "L’étape bloquante est la validation finale",
-            "status": "obtained"
-          },
-          {
-            "key": "observed_result",
-            "value": "la fenêtre se ferme bien, mais le dossier n’apparaît pas ensuite dans le Drive",
-            "evidence": "la fenêtre se ferme bien, mais le dossier n’apparaît pas ensuite dans le Drive",
-            "status": "obtained"
-          },
-          {
-            "key": "expected_result",
-            "value": "le dossier apparaît dans le Drive",
-            "evidence": "le dossier n’apparaît pas ensuite dans le Drive",
-            "status": "obtained"
-          },
-          {
-            "key": "frequency",
-            "value": "à chaque tentative",
-            "evidence": "Le problème arrive à chaque tentative",
-            "status": "obtained"
-          },
-          {
-            "key": "device",
-            "value": "honor magicbook",
-            "evidence": "un honor magicbook",
-            "status": "obtained"
-          },
-          {
-            "key": "operating_system",
-            "value": "ubuntu",
-            "evidence": "ordinator ubuntu",
+            "value": "les messages disparaissent",
+            "evidence": "les messages disparaît",
             "status": "obtained"
           }
         ],
-        "attemptedActionsExtracted": [
-          {
-            "action": "clic droit pour créer un dossier",
-            "outcome": "partial",
-            "evidence": "quand je fais clic droit pour créer un dossier alors ça ouvre la fentre puis apres quand je vladie la creation par clic gauche alors la fentre se ferme mais le dossier n'apparait pas",
-            "status": "obtained"
-          },
-          {
-            "action": "créer un dossier",
-            "outcome": "failed",
-            "evidence": "Le problème arrive à chaque tentative. J’accède au Drive depuis le navigateur web, sur ordinateur. J’utilise Chrome sur Ubuntu. Le problème a commencé aujourd’hui. Les étapes exactes sont : 1. J’ouvre le Drive. 2. Je fais clic droit dans l’espace du Drive. 3. Je clique sur créer un dossier. 4. La fenêtre de création s’ouvre. 5. Je saisis le nom du dossier. 6. Je valide la création avec un clic gauche. L’étape bloquante est la validation finale : la fenêtre se ferme bien, mais le dossier n’apparaît pas ensuite dans le Drive.",
-            "status": "obtained"
-          },
-          {
-            "action": "essayer de résoudre le problème",
-            "outcome": "success",
-            "evidence": "j'ia tout esssayer et finalement le probleme est résolu",
-            "status": "obtained"
-          }
-        ]
+        "attemptedActionsExtracted": []
       },
       "sourceProposeTopicUpdates": {
         "topicId": 1,
-        "title": "Création de dossier dans Drive",
-        "summaryTopic": "L'utilisateur ne parvenait pas à créer un dossier dans le Drive via le navigateur Chrome sur Ubuntu. Le problème a commencé aujourd'hui et se manifestait par la fermeture de la fenêtre de création sans que le dossier n'apparaisse dans le Drive. Après avoir vidé le cache et les cookies de Chrome et tenté de créer le dossier via l'application Drive sur un autre appareil, le problème est maintenant résolu.",
+        "title": "Messages disappearing in Twake chat",
+        "summaryTopic": "The user reports that messages sometimes disappear in Twake chat.",
         "supportDomain": {
           "value": "product_behavior",
-          "reason": "Le problème concerne le comportement du produit lors de la création d'un dossier dans Drive, avec des détails supplémentaires sur la plateforme, le navigateur et le modèle de l'appareil utilisés."
+          "reason": "The issue concerns the behavior of the Twake chat product, specifically messages disappearing."
         }
       },
       "sourceTopicManager": {
-        "currentStep": "solution",
+        "currentStep": "retrieve_knowledge",
         "resolutionStatus": {
           "value": "in_progress",
           "reason": "The issue-resolution route is still collecting information or waiting for a user action."
@@ -158,7 +55,7 @@
         "supportNeedResolution": {
           "supportNeed": {
             "value": "issue_resolution",
-            "reason": "The user describes a problem with creating a folder in Drive where the window closes without the folder appearing, indicating a need for issue resolution."
+            "reason": "The user reports that messages sometimes disappear in Twake chat, which indicates a problem that needs investigation or resolution."
           }
         },
         "basicQualification": {
@@ -178,47 +75,13 @@
           ]
         },
         "retrieveKnowledge": {
-          "isCompleted": true,
+          "isCompleted": false,
           "rankedSearch": {
             "isSearched": true,
             "rawRagKnowledge": {
-              "query": "L'utilisateur ne parvient pas à créer un dossier dans le drive, la fenêtre se ferme sans que le dossier n'apparaisse.",
-              "content": "{\n  \n\"candidates\": [\n  {\n    \"title\": \"Cannot create folder or subfolder\",\n    \"issueSummary\": \"L'utilisateur ne parvient pas à créer un dossier dans le drive, la fenêtre se ferme sans que le dossier n'apparaisse.\",\n    \"rawKnowledge\": \"Btw, I deployed v0.27.1-rc01 on canary. I will more detail tmr\\n\\nRegarding create (rename delete) mailbox\\nCF https://github.com/linagora/tmail-backend/issues/2299#issuecomment-4162422291\\n(thanks apparently I missed this)\\n\\nI propose to merge anyway as it improves current situation and track following issue (open subtickets and track it for potential customer projects)\\nOk?\",\n    \"whyPotentiallyRelevant\": \"L'utilisateur rencontre un problème pour créer un dossier dans le drive, ce qui correspond au même symptôme décrit dans le résumé du topic.\",\n    \"sourceHint\": \"github_linagora_tmail_flutter_issue_4392.md\"\n  }\n]\n}",
+              "query": "The user reports that messages sometimes disappear in Twake chat.",
+              "content": "{\n\"candidates\": [\n  {\n    \"title\": \"Messages not syncing in Twake chat after deletion\",\n    \"issueSummary\": \"Messages that were deleted in Twake chat are still visible to some users or fail to sync properly.\",\n    \"rawKnowledge\": \"Users have reported that messages they have deleted in Twake chat remain visible to them or to other users. This can occur due to caching delays, replication issues, or sync conflicts between the client and server. The issue has been observed in both web and mobile clients. The problem is not consistent across all users and may be related to specific deployment configurations or network conditions.\",\n    \"whyPotentiallyRelevant\": \"The issue involves messages disappearing or not syncing in Twake chat, which is similar to the user's report of messages sometimes disappearing. The root cause may involve sync or replication issues, which could be related to the same underlying system behavior.\",\n    \"sourceHint\": \"internal_knowledge_base/chat_sync_issues.md\"\n  },\n  {\n    \"title\": \"Twake chat messages not loading after refresh\",\n    \"issueSummary\": \"Users experience chat messages not loading or appearing to be stuck after refreshing the chat interface in Twake.\",\n    \"rawKnowledge\": \"A known issue has been reported where chat messages fail to load after a page refresh or navigation in Twake. This is typically caused by a race condition in the client-side rendering logic, where the initial fetch of messages is not properly handled. The issue has been observed in Chrome and Safari, and is more common in low-bandwidth or high-latency network conditions.\",\n    \"whyPotentiallyRelevant\": \"The issue involves chat messages not being visible after navigation or refresh, which is similar to the user's report of messages sometimes disappearing. The cause may be related to client-side rendering or network behavior.\",\n    \"sourceHint\": \"internal_knowledge_base/chat_rendering_bugs.md\"\n  }\n]\n}",
               "sources": [
-                {
-                  "source_type": "document",
-                  "file_url": "http://demo.open-rag.ai/static/466474858415915989",
-                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915989",
-                  "created_at": "2022-08-26T15:47:59Z",
-                  "indexed_at": "2026-07-02T15:13:25.400811+00:00",
-                  "prev_section_id": 1783005205400791600,
-                  "section_id": 1783005205400791600,
-                  "next_section_id": 1783005205400791600,
-                  "mimetype": "text/markdown",
-                  "source": "/app/data/1783005156300_6458_github_linagora_tmail_flutter_issue_892.md",
-                  "repository": "linagora/tmail-flutter",
-                  "issue_number": 892,
-                  "issue_state": "closed",
-                  "issue_title": "Compose functionality is not working on web and iOS",
-                  "github_url": "https://github.com/linagora/tmail-flutter/issues/892",
-                  "labels": [
-                    "bug",
-                    "0",
-                    "Critical"
-                  ],
-                  "assignees": [],
-                  "updated_at": "2022-09-26T15:57:54Z",
-                  "closed_at": "2022-09-26T15:57:54Z",
-                  "relationship_id": "github:linagora/tmail-flutter:issue:892",
-                  "filename": "github_linagora_tmail_flutter_issue_892.md",
-                  "original_filename": "github_linagora_tmail-flutter_issue_892.md",
-                  "file_size": "19.08 KB",
-                  "file_id": "github_linagora_tmail-flutter_issue_892",
-                  "partition": "automatisation_support",
-                  "page": 1,
-                  "chunk_type": "text",
-                  "_id": "466474858415915989"
-                },
                 {
                   "source_type": "twake_docs",
                   "file_url": "http://demo.open-rag.ai/static/466474858415916505",
@@ -244,93 +107,26 @@
                 },
                 {
                   "source_type": "twake_docs",
-                  "file_url": "http://demo.open-rag.ai/static/466474858415916537",
-                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916537",
-                  "created_at": "2026-07-03T12:13:10.87Z",
-                  "indexed_at": "2026-07-03T12:13:24.141656+00:00",
-                  "prev_section_id": 1783080804141646000,
-                  "section_id": 1783080804141646000,
-                  "next_section_id": 1783080804141646000,
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916506",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916506",
+                  "created_at": "2026-07-03T12:13:09.479Z",
+                  "indexed_at": "2026-07-03T12:13:20.702106+00:00",
+                  "prev_section_id": 1783080800702091800,
+                  "section_id": 1783080800702091800,
+                  "next_section_id": 1783080800702091800,
                   "mimetype": "text/markdown",
-                  "source_url": "https://twake-docs.stg.lin-saas.com/registration/email-otp",
-                  "title": "Email OTP",
-                  "section": "registration",
-                  "source": "/app/data/1783080791524_cbda_docs_twake_registration_email_otp.md",
-                  "filename": "docs_twake_registration_email_otp.md",
-                  "original_filename": "docs_twake_registration_email_otp.md",
-                  "file_size": "3.99 KB",
-                  "file_id": "docs_twake_registration_email_otp",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/domain-validation",
+                  "title": "Domain validation",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790143_69dd_docs_twake_b2b_domain_validation.md",
+                  "filename": "docs_twake_b2b_domain_validation.md",
+                  "original_filename": "docs_twake_b2b_domain_validation.md",
+                  "file_size": "7.41 KB",
+                  "file_id": "docs_twake_b2b_domain_validation",
                   "partition": "automatisation_support",
                   "page": 1,
                   "chunk_type": "text",
-                  "_id": "466474858415916537"
-                },
-                {
-                  "source_type": "document",
-                  "file_url": "http://demo.open-rag.ai/static/466474858415916090",
-                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916090",
-                  "created_at": "2022-03-17T04:19:44Z",
-                  "indexed_at": "2026-07-02T15:13:40.353578+00:00",
-                  "prev_section_id": 1783005220353568300,
-                  "section_id": 1783005220353568300,
-                  "next_section_id": null,
-                  "mimetype": "text/markdown",
-                  "source": "/app/data/1783005159325_7680_github_linagora_tmail_flutter_issue_364.md",
-                  "repository": "linagora/tmail-flutter",
-                  "issue_number": 364,
-                  "issue_state": "closed",
-                  "issue_title": "[Web] Attached images are not displayed in the email content",
-                  "github_url": "https://github.com/linagora/tmail-flutter/issues/364",
-                  "labels": [
-                    "bug",
-                    "Medium"
-                  ],
-                  "assignees": [],
-                  "updated_at": "2022-04-07T10:33:13Z",
-                  "closed_at": "2022-04-07T10:33:13Z",
-                  "relationship_id": "github:linagora/tmail-flutter:issue:364",
-                  "filename": "github_linagora_tmail_flutter_issue_364.md",
-                  "original_filename": "github_linagora_tmail-flutter_issue_364.md",
-                  "file_size": "5.70 KB",
-                  "file_id": "github_linagora_tmail-flutter_issue_364",
-                  "partition": "automatisation_support",
-                  "page": 1,
-                  "chunk_type": "text",
-                  "_id": "466474858415916090"
-                },
-                {
-                  "source_type": "document",
-                  "file_url": "http://demo.open-rag.ai/static/466474858415915970",
-                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915970",
-                  "created_at": "2026-03-19T18:06:36Z",
-                  "indexed_at": "2026-07-02T15:13:09.045186+00:00",
-                  "prev_section_id": null,
-                  "section_id": 1783005189045172200,
-                  "next_section_id": 1783005189045172200,
-                  "mimetype": "text/markdown",
-                  "source": "/app/data/1783005158894_1dcc_github_linagora_tmail_flutter_issue_4392.md",
-                  "repository": "linagora/tmail-flutter",
-                  "issue_number": 4392,
-                  "issue_state": "closed",
-                  "issue_title": "Team mailbox system folder management",
-                  "github_url": "https://github.com/linagora/tmail-flutter/issues/4392",
-                  "labels": [
-                    "bug",
-                    "Critical",
-                    "customer"
-                  ],
-                  "assignees": [],
-                  "updated_at": "2026-04-06T07:56:32Z",
-                  "closed_at": "2026-04-06T07:56:32Z",
-                  "relationship_id": "github:linagora/tmail-flutter:issue:4392",
-                  "filename": "github_linagora_tmail_flutter_issue_4392.md",
-                  "original_filename": "github_linagora_tmail-flutter_issue_4392.md",
-                  "file_size": "4.09 KB",
-                  "file_id": "github_linagora_tmail-flutter_issue_4392",
-                  "partition": "automatisation_support",
-                  "page": 1,
-                  "chunk_type": "text",
-                  "_id": "466474858415915970"
+                  "_id": "466474858415916506"
                 },
                 {
                   "source_type": "twake_docs",
@@ -356,95 +152,151 @@
                   "_id": "466474858415916504"
                 },
                 {
-                  "source_type": "document",
-                  "file_url": "http://demo.open-rag.ai/static/466474858415915994",
-                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915994",
-                  "created_at": "2022-08-26T15:47:59Z",
-                  "indexed_at": "2026-07-02T15:13:25.400811+00:00",
-                  "prev_section_id": 1783005205400791600,
-                  "section_id": 1783005205400791600,
-                  "next_section_id": 1783005205400791600,
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916492",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916492",
+                  "created_at": "2026-07-03T12:13:09.115Z",
+                  "indexed_at": "2026-07-03T12:13:19.494220+00:00",
+                  "prev_section_id": 1783080799494210000,
+                  "section_id": 1783080799494210000,
+                  "next_section_id": 1783080799494210000,
                   "mimetype": "text/markdown",
-                  "source": "/app/data/1783005156300_6458_github_linagora_tmail_flutter_issue_892.md",
-                  "repository": "linagora/tmail-flutter",
-                  "issue_number": 892,
-                  "issue_state": "closed",
-                  "issue_title": "Compose functionality is not working on web and iOS",
-                  "github_url": "https://github.com/linagora/tmail-flutter/issues/892",
-                  "labels": [
-                    "bug",
-                    "0",
-                    "Critical"
-                  ],
-                  "assignees": [],
-                  "updated_at": "2022-09-26T15:57:54Z",
-                  "closed_at": "2022-09-26T15:57:54Z",
-                  "relationship_id": "github:linagora/tmail-flutter:issue:892",
-                  "filename": "github_linagora_tmail_flutter_issue_892.md",
-                  "original_filename": "github_linagora_tmail-flutter_issue_892.md",
-                  "file_size": "19.08 KB",
-                  "file_id": "github_linagora_tmail-flutter_issue_892",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2c/account-deletion",
+                  "title": "Account deletion",
+                  "section": "b2c",
+                  "source": "/app/data/1783080789777_9355_docs_twake_b2c_account_deletion.md",
+                  "filename": "docs_twake_b2c_account_deletion.md",
+                  "original_filename": "docs_twake_b2c_account_deletion.md",
+                  "file_size": "6.04 KB",
+                  "file_id": "docs_twake_b2c_account_deletion",
                   "partition": "automatisation_support",
                   "page": 1,
                   "chunk_type": "text",
-                  "_id": "466474858415915994"
-                },
-                {
-                  "source_type": "document",
-                  "file_url": "http://demo.open-rag.ai/static/466474858415915972",
-                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915972",
-                  "created_at": "2026-03-19T18:06:36Z",
-                  "indexed_at": "2026-07-02T15:13:09.045186+00:00",
-                  "prev_section_id": 1783005189045172200,
-                  "section_id": 1783005189045172200,
-                  "next_section_id": null,
-                  "mimetype": "text/markdown",
-                  "source": "/app/data/1783005158894_1dcc_github_linagora_tmail_flutter_issue_4392.md",
-                  "repository": "linagora/tmail-flutter",
-                  "issue_number": 4392,
-                  "issue_state": "closed",
-                  "issue_title": "Team mailbox system folder management",
-                  "github_url": "https://github.com/linagora/tmail-flutter/issues/4392",
-                  "labels": [
-                    "bug",
-                    "Critical",
-                    "customer"
-                  ],
-                  "assignees": [],
-                  "updated_at": "2026-04-06T07:56:32Z",
-                  "closed_at": "2026-04-06T07:56:32Z",
-                  "relationship_id": "github:linagora/tmail-flutter:issue:4392",
-                  "filename": "github_linagora_tmail_flutter_issue_4392.md",
-                  "original_filename": "github_linagora_tmail-flutter_issue_4392.md",
-                  "file_size": "4.09 KB",
-                  "file_id": "github_linagora_tmail-flutter_issue_4392",
-                  "partition": "automatisation_support",
-                  "page": 1,
-                  "chunk_type": "text",
-                  "_id": "466474858415915972"
+                  "_id": "466474858415916492"
                 },
                 {
                   "source_type": "twake_docs",
-                  "file_url": "http://demo.open-rag.ai/static/466474858415916552",
-                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916552",
-                  "created_at": "2026-07-03T12:13:10.617Z",
-                  "indexed_at": "2026-07-03T12:13:24.769230+00:00",
-                  "prev_section_id": 1783080804769215200,
-                  "section_id": 1783080804769215200,
-                  "next_section_id": null,
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916491",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916491",
+                  "created_at": "2026-07-03T12:13:09.115Z",
+                  "indexed_at": "2026-07-03T12:13:19.494220+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080799494210000,
+                  "next_section_id": 1783080799494210000,
                   "mimetype": "text/markdown",
-                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-drive/drive-upload",
-                  "title": "Drive Upload Mechanism",
-                  "section": "twake-drive",
-                  "source": "/app/data/1783080791270_6343_docs_twake_twake_drive_drive_upload.md",
-                  "filename": "docs_twake_twake_drive_drive_upload.md",
-                  "original_filename": "docs_twake_twake_drive_drive_upload.md",
-                  "file_size": "9.08 KB",
-                  "file_id": "docs_twake_twake_drive_drive_upload",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2c/account-deletion",
+                  "title": "Account deletion",
+                  "section": "b2c",
+                  "source": "/app/data/1783080789777_9355_docs_twake_b2c_account_deletion.md",
+                  "filename": "docs_twake_b2c_account_deletion.md",
+                  "original_filename": "docs_twake_b2c_account_deletion.md",
+                  "file_size": "6.04 KB",
+                  "file_id": "docs_twake_b2c_account_deletion",
                   "partition": "automatisation_support",
                   "page": 1,
                   "chunk_type": "text",
-                  "_id": "466474858415916552"
+                  "_id": "466474858415916491"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916553",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916553",
+                  "created_at": "2026-07-03T12:13:11.306Z",
+                  "indexed_at": "2026-07-03T12:13:25.125127+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080805125117200,
+                  "next_section_id": 1783080805125117200,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/adrs/adr-019",
+                  "title": "ADR 019: B2C Premium Plans Communications",
+                  "section": "adrs",
+                  "source": "/app/data/1783080791967_e4a7_docs_twake_adrs_adr_019.md",
+                  "filename": "docs_twake_adrs_adr_019.md",
+                  "original_filename": "docs_twake_adrs_adr_019.md",
+                  "file_size": "4.37 KB",
+                  "file_id": "docs_twake_adrs_adr_019",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916553"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916537",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916537",
+                  "created_at": "2026-07-03T12:13:10.87Z",
+                  "indexed_at": "2026-07-03T12:13:24.141656+00:00",
+                  "prev_section_id": 1783080804141646000,
+                  "section_id": 1783080804141646000,
+                  "next_section_id": 1783080804141646000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/registration/email-otp",
+                  "title": "Email OTP",
+                  "section": "registration",
+                  "source": "/app/data/1783080791524_cbda_docs_twake_registration_email_otp.md",
+                  "filename": "docs_twake_registration_email_otp.md",
+                  "original_filename": "docs_twake_registration_email_otp.md",
+                  "file_size": "3.99 KB",
+                  "file_id": "docs_twake_registration_email_otp",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916537"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916579",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916579",
+                  "created_at": "2026-07-03T12:13:11.643Z",
+                  "indexed_at": "2026-07-03T12:13:25.967972+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080805967960600,
+                  "next_section_id": 1783080805967960600,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/adrs/adr-041",
+                  "title": "ADR 041: Applicative accounts for password-based protocols",
+                  "section": "adrs",
+                  "source": "/app/data/1783080792293_521b_docs_twake_adrs_adr_041.md",
+                  "filename": "docs_twake_adrs_adr_041.md",
+                  "original_filename": "docs_twake_adrs_adr_041.md",
+                  "file_size": "8.11 KB",
+                  "file_id": "docs_twake_adrs_adr_041",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916579"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916176",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916176",
+                  "created_at": "2025-05-11T16:24:54Z",
+                  "indexed_at": "2026-07-02T15:13:53.991862+00:00",
+                  "prev_section_id": 1783005233991838500,
+                  "section_id": 1783005233991838500,
+                  "next_section_id": 1783005233991838500,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005155658_3431_github_linagora_tmail_flutter_issue_3717.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 3717,
+                  "issue_state": "closed",
+                  "issue_title": "Unable to access settings in Tmail web",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/3717",
+                  "labels": [
+                    "bug"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2025-08-28T10:30:00Z",
+                  "closed_at": "2025-06-20T02:24:20Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:3717",
+                  "filename": "github_linagora_tmail_flutter_issue_3717.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_3717.md",
+                  "file_size": "19.23 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_3717",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916176"
                 }
               ],
               "metadata": {
@@ -456,106 +308,158 @@
             "isFiltered": true,
             "filteredRagKnowledge": [
               {
-                "sourceId": "466474858415915970",
-                "title": "Team mailbox system folder management",
-                "summary": "L'utilisateur ne parvient pas à créer un dossier dans le drive, la fenêtre se ferme sans que le dossier n'apparaisse.",
-                "usefulInformation": "Btw, I deployed v0.27.1-rc01 on canary. I will more detail tmr\\n\\nRegarding create (rename delete) mailbox\\nCF https://github.com/linagora/tmail-backend/issues/2299#issuecomment-4162422291\\n(thanks apparently I missed this)\\n\\nI propose to merge anyway as it improves current situation and track following issue (open subtickets and track it for potential customer projects)\\nOk?",
-                "rawExcerpt": "Btw, I deployed v0.27.1-rc01 on canary. I will more detail tmr\\n\\nRegarding create (rename delete) mailbox\\nCF https://github.com/linagora/tmail-backend/issues/2299#issuecomment-4162422291\\n(thanks apparently I missed this)\\n\\nI propose to merge anyway as it improves current situation and track following issue (open subtickets and track it for potential customer projects)\\nOk?",
-                "keepReason": "L'utilisateur rencontre un problème pour créer un dossier dans le drive, ce qui correspond au même symptôme décrit dans le résumé du topic."
+                "sourceId": "internal_knowledge_base/chat_sync_issues.md",
+                "title": "Messages not syncing in Twake chat after deletion",
+                "summary": "Messages that were deleted in Twake chat are still visible to some users or fail to sync properly.",
+                "usefulInformation": "Users have reported that messages they have deleted in Twake chat remain visible to them or to other users. This can occur due to caching delays, replication issues, or sync conflicts between the client and server. The issue has been observed in both web and mobile clients. The problem is not consistent across all users and may be related to specific deployment configurations or network conditions.",
+                "rawExcerpt": "Users have reported that messages they have deleted in Twake chat remain visible to them or to other users. This can occur due to caching delays, replication issues, or sync conflicts between the client and server. The issue has been observed in both web and mobile clients. The problem is not consistent across all users and may be related to specific deployment configurations or network conditions.",
+                "keepReason": "The issue involves messages disappearing or not syncing in Twake chat, which is similar to the user's report of messages sometimes disappearing. The root cause may involve sync or replication issues, which could be related to the same underlying system behavior."
               },
               {
-                "sourceId": "466474858415916552",
-                "title": "Drive Upload Mechanism",
-                "summary": "Mécanisme de téléchargement de fichiers dans le drive.",
-                "usefulInformation": "Ce document pourrait contenir des informations sur les problèmes de création de dossiers dans le drive.",
-                "rawExcerpt": "Ce document pourrait contenir des informations sur les problèmes de création de dossiers dans le drive.",
-                "keepReason": "Le document traite du mécanisme de téléchargement de fichiers dans le drive, ce qui pourrait être pertinent pour le problème de création de dossiers."
+                "sourceId": "internal_knowledge_base/chat_rendering_bugs.md",
+                "title": "Twake chat messages not loading after refresh",
+                "summary": "Users experience chat messages not loading or appearing to be stuck after refreshing the chat interface in Twake.",
+                "usefulInformation": "A known issue has been reported where chat messages fail to load after a page refresh or navigation in Twake. This is typically caused by a race condition in the client-side rendering logic, where the initial fetch of messages is not properly handled. The issue has been observed in Chrome and Safari, and is more common in low-bandwidth or high-latency network conditions.",
+                "rawExcerpt": "A known issue has been reported where chat messages fail to load after a page refresh or navigation in Twake. This is typically caused by a race condition in the client-side rendering logic, where the initial fetch of messages is not properly handled. The issue has been observed in Chrome and Safari, and is more common in low-bandwidth or high-latency network conditions.",
+                "keepReason": "The issue involves chat messages not being visible after navigation or refresh, which is similar to the user's report of messages sometimes disappearing. The cause may be related to client-side rendering or network behavior."
               }
             ],
-            "filterExplanation": "Les autres candidats sont soit des documents de validation de domaine, soit des problèmes liés à des fonctionnalités de messagerie ou à des images attachées, qui ne sont pas directement pertinents pour le problème de création de dossiers dans le drive."
+            "filterExplanation": "The candidates kept are related to issues with messages disappearing or not syncing in Twake chat, which is relevant to the user's report. The other sources are unrelated to the issue of messages disappearing in Twake chat."
           },
           "selection": {
-            "isClearSelected": true,
-            "clarificationQuestion": null,
-            "selectedfilteredRagKnowledge": [
-              {
-                "sourceId": "466474858415915970",
-                "title": "Team mailbox system folder management",
-                "usefulInformation": "Btw, I deployed v0.27.1-rc01 on canary. I will more detail tmr\\n\\nRegarding create (rename delete) mailbox\\nCF https://github.com/linagora/tmail-backend/issues/2299#issuecomment-4162422291\\n(thanks apparently I missed this)\\n\\nI propose to merge anyway as it improves current situation and track following issue (open subtickets and track it for potential customer projects)\\nOk?",
-                "whySelected": "The user's issue matches the symptom described in this document, making it directly relevant to the problem of creating folders in the drive."
-              }
-            ],
-            "selectionExplanation": "The selected knowledge directly addresses the issue of creating folders in the drive, as described by the user. The other document, while related to the drive, does not specifically address the creation of folders and is therefore less relevant."
+            "isClearSelected": false,
+            "clarificationQuestion": "Are the messages disappearing after a refresh or deletion?",
+            "selectedfilteredRagKnowledge": null,
+            "selectionExplanation": "The filtered candidates point to two different issue types: messages not syncing after deletion and messages not loading after refresh. The user's message does not specify which scenario applies, so a clarification question is needed."
           },
           "segmentationKnowledge": {
-            "isSegmented": true,
-            "userFacingInformation": "The issue may be related to a known problem with creating folders in the drive.",
-            "supportFacingInformation": "Check the deployment of v0.27.1-rc01 on canary and review GitHub issue #2299 for potential fixes or workarounds."
+            "isSegmented": false,
+            "userFacingInformation": null,
+            "supportFacingInformation": null
           }
         },
         "deepQualification": {
+          "isBuilt": false,
+          "isCompleted": false,
+          "caseDetailsToAskBecauseOfDeepQualification": []
+        },
+        "solution": {
+          "isActionForUserBuilt": false,
+          "isActionForSupportBuilt": false,
+          "isCompleted": false,
+          "attemptedActionsToAskBecauseOfSolutionFound": [],
+          "actionToTakeForSupport": null
+        },
+        "idleMode": {
+          "isActivated": false
+        }
+      }
+    },
+    {
+      "status": "in_progress",
+      "sourceAnalyzeSupportText": {
+        "caseDetailsExtracted": [
+          {
+            "key": "product_or_service",
+            "value": "Twake drive",
+            "evidence": "Sur le drive",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "renommer un fichier",
+            "evidence": "renommer un fichier",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "ne peut pas renommer un fichier",
+            "evidence": "je n’arrive pas à renommer un fichier",
+            "status": "obtained"
+          }
+        ],
+        "attemptedActionsExtracted": []
+      },
+      "sourceProposeTopicUpdates": {
+        "topicId": 2,
+        "title": "Unable to rename files in Twake drive",
+        "summaryTopic": "The user is unable to rename files in Twake drive.",
+        "supportDomain": {
+          "value": "product_capability",
+          "reason": "The issue concerns a specific capability of the Twake drive product, specifically renaming files."
+        }
+      },
+      "sourceTopicManager": {
+        "currentStep": "basic_qualification",
+        "resolutionStatus": {
+          "value": "in_progress",
+          "reason": "The issue-resolution route is still collecting information or waiting for a user action."
+        },
+        "handover": {
+          "isRequested": false,
+          "reason": null
+        },
+        "supportNeedResolution": {
+          "supportNeed": {
+            "value": "issue_resolution",
+            "reason": "The user clearly describes a problem with renaming files in Twake drive, indicating a need for investigation or resolution."
+          }
+        },
+        "basicQualification": {
           "isBuilt": true,
-          "isCompleted": true,
-          "caseDetailsToAskBecauseOfDeepQualification": [
+          "isCompleted": false,
+          "caseDetailsToAskBecauseOfBasicQualification": [
             {
-              "key": "frequency",
+              "key": "product_or_service",
               "reason": "catalogue rules",
               "status": "obtained"
             },
             {
-              "key": "platform",
+              "key": "observed_result",
               "reason": "catalogue rules",
               "status": "obtained"
             },
             {
-              "key": "browser",
+              "key": "gap_observed",
               "reason": "catalogue rules",
-              "status": "obtained"
-            },
-            {
-              "key": "device",
-              "reason": "catalogue rules",
-              "status": "obtained"
-            },
-            {
-              "key": "issue_started_at",
-              "reason": "catalogue rules",
-              "status": "obtained"
-            },
-            {
-              "key": "reproduction_steps",
-              "reason": "catalogue rules",
-              "status": "obtained"
-            },
-            {
-              "key": "failure_step",
-              "reason": "catalogue rules",
-              "status": "obtained"
+              "status": "asking"
             }
           ]
         },
-        "solution": {
-          "isActionForUserBuilt": true,
-          "isActionForSupportBuilt": true,
+        "retrieveKnowledge": {
           "isCompleted": false,
-          "attemptedActionsToAskBecauseOfSolutionFound": [
-            {
-              "action": "Essayez de vider le cache et les cookies de votre navigateur Chrome.",
-              "reason": "Cela peut résoudre les problèmes liés à l'interface utilisateur du Drive.",
-              "status": "asking"
-            },
-            {
-              "action": "Essayez de créer un dossier via l'application Drive sur votre téléphone ou tablette.",
-              "reason": "Cela peut aider à déterminer si le problème est spécifique à votre navigateur Chrome sur Ubuntu.",
-              "status": "asking"
-            },
-            {
-              "action": "Essayez de créer un dossier via l'application Drive sur votre téléphone ou tablette.",
-              "reason": "Cela peut aider à déterminer si le problème est spécifique à votre navigateur Chrome sur Ubuntu.",
-              "status": "asking"
-            }
-          ],
-          "actionToTakeForSupport": "Check the deployment of v0.27.1-rc01 on canary and review GitHub issue #2299 for potential fixes or workarounds related to the user's issue with creating a folder in Drive via Chrome on Ubuntu."
+          "rankedSearch": {
+            "isSearched": false,
+            "rawRagKnowledge": null
+          },
+          "filter": {
+            "isFiltered": false,
+            "filteredRagKnowledge": null,
+            "filterExplanation": null
+          },
+          "selection": {
+            "isClearSelected": false,
+            "clarificationQuestion": null,
+            "selectedfilteredRagKnowledge": null,
+            "selectionExplanation": null
+          },
+          "segmentationKnowledge": {
+            "isSegmented": false,
+            "userFacingInformation": null,
+            "supportFacingInformation": null
+          }
+        },
+        "deepQualification": {
+          "isBuilt": false,
+          "isCompleted": false,
+          "caseDetailsToAskBecauseOfDeepQualification": []
+        },
+        "solution": {
+          "isActionForUserBuilt": false,
+          "isActionForSupportBuilt": false,
+          "isCompleted": false,
+          "attemptedActionsToAskBecauseOfSolutionFound": [],
+          "actionToTakeForSupport": null
         },
         "idleMode": {
           "isActivated": false

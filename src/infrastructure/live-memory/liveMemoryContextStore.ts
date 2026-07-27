@@ -432,7 +432,7 @@ function normalizeRetrieveKnowledge(
     : {};
 
   return {
-    isCompleted: value.isCompleted === true,
+    isCompleted: normalizeRetrieveKnowledgeCompletionStatus(value.isCompleted),
 
     rankedSearch: {
       isSearched: rankedSearch.isSearched === true,
@@ -458,6 +458,16 @@ function normalizeRetrieveKnowledge(
       supportFacingInformation: nullableString(segmentationKnowledge.supportFacingInformation)
     }
   };
+}
+
+function normalizeRetrieveKnowledgeCompletionStatus(
+  value: unknown
+): boolean | "failed" {
+  if (value === "failed") {
+    return "failed";
+  }
+
+  return value === true;
 }
 
 function normalizeSolutionActionStatus(

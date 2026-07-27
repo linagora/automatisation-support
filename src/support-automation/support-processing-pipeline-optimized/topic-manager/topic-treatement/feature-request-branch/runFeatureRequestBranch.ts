@@ -22,7 +22,7 @@ async function runFeatureRequestBranch(
   return {
     status: "processed",
     fallbackReason: null,
-    say: buildFeatureRequestMessage(input.topicUpdatePlan),
+    say: buildFeatureRequestMessage(),
     sourceTopicManager: {
       ...input.sourceTopicManager,
       currentStep: "idle",
@@ -44,10 +44,16 @@ async function runFeatureRequestBranch(
   };
 }
 
-function buildFeatureRequestMessage(topicUpdatePlan: TopicUpdatePlan): string {
-  const topic = topicUpdatePlan.summaryTopic ?? topicUpdatePlan.title ?? "this request";
-
-  return `Thanks, I’ve understood this as a feature request about ${topic}. I’ve kept the context. You can add what you would expect the feature to do, why it matters, and how it would improve your workflow.`;
+function buildFeatureRequestMessage(): string {
+  return [
+    "I’ve understood this as a feature request. The support team will review it.",
+    "",
+    "In the meantime, I can collect the most useful information to help them understand the request clearly.",
+    "",
+    "Please feel free to share as much information as possible about:",
+    "- What you would like to add or change, and what you would expect it to do.",
+    "- Why you need it, what use case it solves, and how important it is for your workflow."
+  ].join("\n");
 }
 
 export {runFeatureRequestBranch};

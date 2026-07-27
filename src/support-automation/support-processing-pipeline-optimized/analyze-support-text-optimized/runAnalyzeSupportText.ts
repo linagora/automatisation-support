@@ -7,6 +7,7 @@ import {validateAnalyzeSupportTextOutput} from "./validateAnalyzeSupportTextOutp
 import type {RecentInteractionContext} from "../typesPipelineContext";
 import type {SupportTextFallbackReason} from "../../support-catalog-optimized/supportFallback.catalog";
 import type {AnalyzeTextSurfaceSegment} from "../analyze-text-surface-optimized/runAnalyzeTextSurface";
+import type {AnalyzeSupportTextPendingRequestedItems} from "./buildAnalyzeSupportTextPrompt";
 import type {
   SupportTextSegment,
   ValidatedSupportTextUnderstanding
@@ -23,6 +24,7 @@ type AnalyzeSupportTextInput = {
     segments: AnalyzeTextSurfaceSegment[];
   };
   recentInteractionContext: RecentInteractionContext;
+  pendingRequestedItems?: AnalyzeSupportTextPendingRequestedItems;
 };
 
 type AnalyzeSupportTextUnderstanding = ValidatedSupportTextUnderstanding & {
@@ -58,7 +60,8 @@ async function runAnalyzeSupportText(input: AnalyzeSupportTextInput): Promise<An
 
   const {messages, responseFormat} = buildAnalyzeSupportTextPrompt({
     supportSegments,
-    recentInteractionContext: input.recentInteractionContext
+    recentInteractionContext: input.recentInteractionContext,
+    pendingRequestedItems: input.pendingRequestedItems
   });
 
   try {

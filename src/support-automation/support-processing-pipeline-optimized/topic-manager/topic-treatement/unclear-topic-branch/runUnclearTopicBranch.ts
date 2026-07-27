@@ -22,7 +22,7 @@ async function runUnclearTopicBranch(
   return {
     status: "processed",
     fallbackReason: null,
-    say: buildUnclearTopicMessage(input),
+    say: buildUnclearTopicMessage(),
     sourceTopicManager: {
       ...input.sourceTopicManager,
       currentStep: "support_need_resolution",
@@ -44,12 +44,8 @@ async function runUnclearTopicBranch(
   };
 }
 
-function buildUnclearTopicMessage(input: UnclearTopicBranchInput): string {
-  const topicIntro = input.topicUpdatePlan.summaryTopic
-    ? `I understand the topic as: ${input.topicUpdatePlan.summaryTopic}`
-    : "I understand that you need help, but I cannot safely classify the request yet.";
-
-  return `${topicIntro}\n\nCould you clarify whether you want help resolving a problem, requesting a feature, getting an answer, or asking the support team to take an action?`;
+function buildUnclearTopicMessage(): string {
+  return `I have not quite understood the nature of your request. Could you clarify whether you want help resolving a problem, requesting a feature, getting an answer, or asking the support team to take an action?`;
 }
 
 export {runUnclearTopicBranch};

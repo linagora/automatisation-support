@@ -22,7 +22,7 @@ async function runSupportActionBranch(
   return {
     status: "processed",
     fallbackReason: null,
-    say: buildSupportActionMessage(input.topicUpdatePlan),
+    say: buildSupportActionMessage(),
     sourceTopicManager: {
       ...input.sourceTopicManager,
       currentStep: "idle",
@@ -44,11 +44,16 @@ async function runSupportActionBranch(
   };
 }
 
-function buildSupportActionMessage(topicUpdatePlan: TopicUpdatePlan): string {
-  const topic = topicUpdatePlan.summaryTopic ?? topicUpdatePlan.title ?? "this request";
-
-  return `I’ve understood this as a request for the support team to take action on ${topic}. I’ve kept the context and will recommend human handover for this topic.`;
+function buildSupportActionMessage(): string {
+  return [
+    "I’ve understood this as a request for the support team to take action. The support team will review it.",
+    "",
+    "In the meantime, I can collect the most useful information to help them handle the request clearly.",
+    "",
+    "Please feel free to share as much information as possible about:",
+    "- What you would like the support team to do, and what item, account, file, ticket, or situation is affected.",
+    "- Why this action is needed, how urgent it is, and whether you have already tried anything."
+  ].join("\n");
 }
-
 export {runSupportActionBranch};
 export type {SupportActionBranchInput, SupportActionBranchOutput};

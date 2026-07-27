@@ -28,6 +28,9 @@ import {
 import {
   runSupportProcessingPipelineV3Optimized as runSupportProcessingPipelineOptimized
 } from "./support-processing-pipeline-optimized/runSupportProcessingPipelineOptimized";
+import {
+  createSupportProcessingRunDebugDumperFromEnv
+} from "./debug/writeSupportProcessingRunDebugDump";
 
 import type {
   BufferedMessages,
@@ -52,6 +55,9 @@ import type {
   RunSupportProcessingPipelineV3OptimizedInput,
   RunSupportProcessingPipelineV3OptimizedOutput
 } from "./support-processing-pipeline-optimized/runSupportProcessingPipelineOptimized";
+import type {
+  SupportProcessingProgressEvent
+} from "./progress/typesSupportProgress.types";
 
 const DEFAULT_BUFFER_INACTIVITY_MS = 2000;
 const DEFAULT_BUFFER_MAX_WAIT_MS = 30000;
@@ -89,6 +95,14 @@ type SupportAutomationProgressReporter = {
     context: SupportAutomationProgressContext,
     stage: SupportAutomationStage
   ) => Promise<void>;
+  update?: (
+    context: SupportAutomationProgressContext,
+    event: SupportProcessingProgressEvent
+  ) => Promise<void>;
+  deliverFinalMessages?: (
+    context: SupportAutomationProgressContext,
+    messages: DeliveryMessage[]
+  ) => Promise<MatrixDeliveryResult[] | null>;
   finishTurn?: (context: SupportAutomationProgressContext) => Promise<void>;
   failTurn?: (
     context: SupportAutomationProgressContext,
@@ -143,6 +157,8 @@ const noopProgressReporter: Required<SupportAutomationProgressReporter> = {
   startBuffer: async () => undefined,
   startTurn: async () => undefined,
   stage: async () => undefined,
+  update: async () => undefined,
+  deliverFinalMessages: async () => null,
   finishTurn: async () => undefined,
   failTurn: async () => undefined
 };
@@ -344,6 +360,7 @@ async function runSupportAutomation(
     ...noopProgressReporter,
     ...(params.progressReporter ?? {})
   };
+  const debugDumper = createSupportProcessingRunDebugDumperFromEnv();
 
   const listenEvents = params.dependencies?.listenMatrixEvents ?? listenMatrixEvents;
   const sendDelivery =
@@ -413,11 +430,63 @@ async function runSupportAutomation(
 
     const liveMemoryContext =
       await readMemory(conversationKey) ?? createEmptyLiveMemoryContextOptimized();
-    const supportProcessingInput = buildSupportProcessingInput({
-      bufferedMessages,
-      liveMemoryContext
-    });
-    const supportProcessingOutput = await runPipeline(supportProcessingInput);
+    const supportProcessingInput = {
+      ...buildSupportProcessingInput({
+        bufferedMessages,
+        liveMemoryContext
+      }),
+      progress: {
+        report: async (event: SupportProcessingProgressEvent): Promise<void> => {
+          try {
+            await progressReporter.update(progressContext, event);
+          } catch (error) {
+            logError({
+              logger,
+              eventName: "support_automation.progress_update.failed",
+              metadata: {
+                roomId: progressContext.roomId,
+                userId: progressContext.userId,
+                turnId: progressContext.turnId,
+                progressCode: event.code,
+                error: getErrorMessage(error)
+              }
+            });
+          }
+        }
+      }
+    };
+    let supportProcessingOutput: RunSupportProcessingPipelineV3OptimizedOutput;
+
+    try {
+      supportProcessingOutput = await runPipeline(supportProcessingInput);
+
+      await writePipelineDebugDump({
+        phase: "pipeline",
+        progressContext,
+        conversationKey,
+        dryRun,
+        latestUserMessage: supportProcessingInput.latestUserMessage,
+        latestUserAttachments: supportProcessingInput.latestUserAttachments,
+        liveMemoryContextBeforePipeline: liveMemoryContext,
+        supportProcessingInput,
+        supportProcessingOutput
+      });
+    } catch (error) {
+      await writePipelineDebugDump({
+        phase: "runner_error",
+        progressContext,
+        conversationKey,
+        dryRun,
+        latestUserMessage: supportProcessingInput.latestUserMessage,
+        latestUserAttachments: supportProcessingInput.latestUserAttachments,
+        liveMemoryContextBeforePipeline: liveMemoryContext,
+        supportProcessingInput,
+        runnerError: error
+      });
+
+      throw error;
+    }
+
     const deliveryMessages = mapPipelineResponseToDeliveryMessages({
       bufferedMessages,
       output: supportProcessingOutput
@@ -464,7 +533,12 @@ async function runSupportAutomation(
 
     await progressReporter.stage(progressContext, "sending_response");
 
-    matrixDeliveryResults = await sendDelivery({
+    const progressDeliveryResults = await progressReporter.deliverFinalMessages(
+      progressContext,
+      deliveryMessages
+    );
+
+    matrixDeliveryResults = progressDeliveryResults ?? await sendDelivery({
       config: params.matrixConfig,
       messages: deliveryMessages
     });
@@ -522,6 +596,55 @@ async function runSupportAutomation(
       matrixDeliveryResults,
       liveMemoryPatchStatus
     };
+  }
+
+  async function writePipelineDebugDump(params: {
+    phase: "pipeline" | "runner_error";
+    progressContext: SupportAutomationProgressContext;
+    conversationKey: string;
+    dryRun: boolean;
+    latestUserMessage: unknown;
+    latestUserAttachments: unknown;
+    liveMemoryContextBeforePipeline: unknown;
+    supportProcessingInput: unknown;
+    supportProcessingOutput?: unknown;
+    runnerError?: unknown;
+  }): Promise<void> {
+    if (!debugDumper) {
+      return;
+    }
+
+    try {
+      await debugDumper({
+        phase: params.phase,
+        run: {
+          roomId: params.progressContext.roomId,
+          userId: params.progressContext.userId,
+          turnId: params.progressContext.turnId,
+          messageCount: params.progressContext.messageCount,
+          conversationKey: params.conversationKey,
+          dryRun: params.dryRun
+        },
+        latestUserMessage: params.latestUserMessage,
+        latestUserAttachments: params.latestUserAttachments,
+        liveMemoryContextBeforePipeline: params.liveMemoryContextBeforePipeline,
+        supportProcessingInput: params.supportProcessingInput,
+        supportProcessingOutput: params.supportProcessingOutput,
+        runnerError: params.runnerError
+      });
+    } catch (error) {
+      logError({
+        logger,
+        eventName: "support_automation.debug_dump.failed",
+        metadata: {
+          roomId: params.progressContext.roomId,
+          userId: params.progressContext.userId,
+          turnId: params.progressContext.turnId,
+          phase: params.phase,
+          error: getErrorMessage(error)
+        }
+      });
+    }
   }
 
   async function processBufferedMessages(

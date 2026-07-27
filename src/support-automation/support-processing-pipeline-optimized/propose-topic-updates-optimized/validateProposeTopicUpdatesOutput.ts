@@ -16,7 +16,15 @@ type TopicUpdatePlan = {
 
 // LLM output validation:
 // Validates the parsed JSON returned by the optimized topic update proposal LLM.
-// This file does not call the LLM, build prompts, repair output, or decide fallbacks.
+// This validator intentionally keeps memory-safety checks strict,
+// but does not fail the whole pipeline because of harmless extra keys
+// or because the LLM did not use every extracted understanding.
+//
+// Important:
+// - topicId must still be null or an existing topicId;
+// - sourceUnderstandingIds must still reference real understanding ids;
+// - the same understanding cannot be attached to two different plans;
+// - supportDomain.value must still belong to the catalog or be null.
 function validateProposeTopicUpdatesOutput(
   parsedResponse: unknown,
   params: {
@@ -25,15 +33,19 @@ function validateProposeTopicUpdatesOutput(
   }
 ): TopicUpdatePlan[] | null {
   if (!isRecord(parsedResponse)) return null;
-  if (!hasOnlyKeys(parsedResponse, ["topicUpdatePlans"])) return null;
   if (!Array.isArray(parsedResponse.topicUpdatePlans)) return null;
 
   const understandingById = new Map(
-    params.understandings.map((understanding) => [understanding.understandingId, understanding])
+    params.understandings.map((understanding) => [
+      understanding.understandingId,
+      understanding
+    ])
   );
+
   const existingTopicIds = new Set(
     params.existingTopics.map((topic) => topic.sourceProposeTopicUpdates.topicId)
   );
+
   const coveredUnderstandingIds = new Set<string>();
   const plans: TopicUpdatePlan[] = [];
 
@@ -50,12 +62,7 @@ function validateProposeTopicUpdatesOutput(
     plans.push(plan);
   }
 
-  return hasPersistableUnderstandingCoverage({
-    coveredUnderstandingIds,
-    understandings: params.understandings
-  })
-    ? plans
-    : null;
+  return plans;
 }
 
 function validatePlan(params: {
@@ -65,13 +72,6 @@ function validatePlan(params: {
   coveredUnderstandingIds: Set<string>;
 }): TopicUpdatePlan | null {
   if (!isRecord(params.rawPlan)) return null;
-  if (!hasOnlyKeys(params.rawPlan, [
-    "topicId",
-    "sourceUnderstandingIds",
-    "title",
-    "summaryTopic",
-    "supportDomain"
-  ])) return null;
 
   const sourceUnderstandingIds = validateSourceUnderstandingIds({
     value: params.rawPlan.sourceUnderstandingIds,
@@ -81,12 +81,21 @@ function validatePlan(params: {
 
   if (!sourceUnderstandingIds) return null;
 
-  const topicId = validateTopicId(params.rawPlan.topicId, params.existingTopicIds);
+  const topicId = validateTopicId(
+    params.rawPlan.topicId,
+    params.existingTopicIds
+  );
+
   const title = validateNullableText(params.rawPlan.title);
   const summaryTopic = validateNullableText(params.rawPlan.summaryTopic);
   const supportDomain = validateSupportDomain(params.rawPlan.supportDomain);
 
-  if (topicId === undefined || title === undefined || summaryTopic === undefined || !supportDomain) {
+  if (
+    topicId === undefined ||
+    title === undefined ||
+    summaryTopic === undefined ||
+    !supportDomain
+  ) {
     return null;
   }
 
@@ -112,37 +121,59 @@ function validateSourceUnderstandingIds(params: {
   for (const rawId of params.value) {
     if (typeof rawId !== "string" || rawId.trim() === "") return null;
     if (!params.understandingById.has(rawId)) return null;
-    if (planSeen.has(rawId)) return null;
-    if (params.coveredUnderstandingIds.has(rawId)) return null;
+
+    // Duplicate inside the same plan is harmless.
+    // We deduplicate instead of failing the whole LLM output.
+    if (planSeen.has(rawId)) {
+      continue;
+    }
+
+    // But the same understanding must not be attached to two different plans,
+    // otherwise memory persistence becomes ambiguous.
+    if (params.coveredUnderstandingIds.has(rawId)) {
+      return null;
+    }
 
     planSeen.add(rawId);
     params.coveredUnderstandingIds.add(rawId);
     sourceUnderstandingIds.push(rawId);
   }
 
-  return sourceUnderstandingIds;
+  return sourceUnderstandingIds.length > 0 ? sourceUnderstandingIds : null;
 }
 
-function validateTopicId(value: unknown, existingTopicIds: Set<number>): number | null | undefined {
+function validateTopicId(
+  value: unknown,
+  existingTopicIds: Set<number>
+): number | null | undefined {
   if (value === null) return null;
   if (!isPositiveInteger(value)) return undefined;
+
   return existingTopicIds.has(value) ? value : undefined;
 }
 
 function validateNullableText(value: unknown): string | null | undefined {
   if (value === null) return null;
+
   return validateRequiredText(value) ?? undefined;
 }
 
 function validateRequiredText(value: unknown): string | null {
-  return typeof value === "string" && value.trim() !== "" ? value : null;
+  return typeof value === "string" && value.trim() !== ""
+    ? value
+    : null;
 }
 
-function validateSupportDomain(value: unknown): TopicUpdatePlan["supportDomain"] | null {
+function validateSupportDomain(
+  value: unknown
+): TopicUpdatePlan["supportDomain"] | null {
   if (!isRecord(value)) return null;
-  if (!hasOnlyKeys(value, ["value", "reason"])) return null;
 
-  const domainValue = validateNullableEnumValue(value.value, formatCatalogSelection.supportDomains);
+  const domainValue = validateNullableEnumValue(
+    value.value,
+    formatCatalogSelection.supportDomains
+  );
+
   const reason = validateNullableText(value.reason);
 
   if (domainValue === undefined || reason === undefined) return null;
@@ -153,37 +184,22 @@ function validateSupportDomain(value: unknown): TopicUpdatePlan["supportDomain"]
   };
 }
 
-function hasPersistableUnderstandingCoverage(params: {
-  coveredUnderstandingIds: Set<string>;
-  understandings: AnalyzeSupportTextUnderstanding[];
-}): boolean {
-  return params.understandings.every((understanding) => {
-    if (!isPersistableUnderstanding(understanding)) return true;
-    return params.coveredUnderstandingIds.has(understanding.understandingId);
-  });
+function validateEnumValue(
+  value: unknown,
+  allowedValues: readonly string[]
+): string | null {
+  return typeof value === "string" && allowedValues.includes(value)
+    ? value
+    : null;
 }
 
-function isPersistableUnderstanding(understanding: AnalyzeSupportTextUnderstanding): boolean {
-  const {attemptedActionsExtracted} = understanding;
-
-  return understanding.caseDetailsExtracted.length > 0 ||
-    attemptedActionsExtracted.length > 0 ||
-    understanding.other.length > 0 ||
-    understanding.summaryMessage.trim().length > 0;
-}
-
-function validateEnumValue(value: unknown, allowedValues: readonly string[]): string | null {
-  return typeof value === "string" && allowedValues.includes(value) ? value : null;
-}
-
-function validateNullableEnumValue(value: unknown, allowedValues: readonly string[]): string | null | undefined {
+function validateNullableEnumValue(
+  value: unknown,
+  allowedValues: readonly string[]
+): string | null | undefined {
   if (value === null) return null;
-  return validateEnumValue(value, allowedValues) ?? undefined;
-}
 
-function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: string[]): boolean {
-  const allowedKeySet = new Set(allowedKeys);
-  return Object.keys(value).every((key) => allowedKeySet.has(key));
+  return validateEnumValue(value, allowedValues) ?? undefined;
 }
 
 function isPositiveInteger(value: unknown): value is number {

@@ -22,7 +22,7 @@ async function runKnowledgeAnswerBranch(
   return {
     status: "processed",
     fallbackReason: null,
-    say: buildKnowledgeAnswerMessage(input.topicUpdatePlan),
+    say: buildKnowledgeAnswerMessage(),
     sourceTopicManager: {
       ...input.sourceTopicManager,
       currentStep: "idle",
@@ -44,10 +44,16 @@ async function runKnowledgeAnswerBranch(
   };
 }
 
-function buildKnowledgeAnswerMessage(topicUpdatePlan: TopicUpdatePlan): string {
-  const topic = topicUpdatePlan.summaryTopic ?? topicUpdatePlan.title ?? "your question";
-
-  return `I’ve understood this as a question about ${topic}. I’ve kept the context. This automated branch is not fully implemented yet, so please add any detail that would help the support team answer precisely.`;
+function buildKnowledgeAnswerMessage(): string {
+  return [
+    "I’ve understood this as a question for the support team. The support team will review it.",
+    "",
+    "In the meantime, I can collect the most useful information to help them answer precisely.",
+    "",
+    "Please feel free to share as much information as possible about:",
+    "- What you would like to understand or achieve, and where you are currently stuck.",
+    "- Which product, page, feature, or situation your question is about, and what you have already tried."
+  ].join("\n");
 }
 
 export {runKnowledgeAnswerBranch};

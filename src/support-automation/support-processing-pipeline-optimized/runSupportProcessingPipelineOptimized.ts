@@ -21,6 +21,11 @@ import {buildMessage, type BuildMessageOutput} from "./composer-message/buildMes
 import {runTranslateMessage, type TranslateMessageOutput} from "./translator-message/runTranslateMessage";
 import {buildLiveMemoryPatches, type BuildLiveMemoryPatchesOutput} from "./build-live-memory-patches/buildLiveMemoryPatches";
 
+import type {
+  ReportSupportProcessingProgress,
+  SupportProcessingProgressEvent
+} from "../progress/typesSupportProgress.types";
+
 // =====================================================
 // TYPES — pipeline input / output
 // =====================================================
@@ -32,6 +37,9 @@ type RunSupportProcessingPipelineV3OptimizedInput = {
   };
   latestUserAttachments: unknown[];
   liveMemory: SupportLiveMemoryInput;
+  progress?: {
+    report: ReportSupportProcessingProgress;
+  };
 };
 
 type SupportLiveMemoryInput = {
@@ -227,6 +235,17 @@ async function runSupportProcessingPipelineV3Optimized(
       hasSupportRelevantTextSegments(intermOutputs.analyzeTextSurfaceOutput) ||
       hasSupportRelevantAttachments(intermOutputs.analyzeAttachmentSurfaceOutput);
 
+    await reportProgress(input, hasSupportRelevant
+      ? {
+        code: "deep_analysis_processing",
+        title: "Deep analysis processing..."
+      }
+      : {
+        code: "fast_answer_processing",
+        title: "Fast answer processing..."
+      }
+    );
+
     if (!hasSupportRelevant) {
       // Deterministic composer.
       // It simply concatenates the standardResponseFragments already built earlier.
@@ -291,6 +310,9 @@ async function runSupportProcessingPipelineV3Optimized(
         ? intermOutputs.analyzeTextSurfaceOutput
         : null;
 
+    const pendingRequestedItems =
+      buildPendingRequestedItemsFromLiveMemory(input.liveMemory.topics);
+
     if (shouldAnalyzeSupportText && shouldAnalyzeSupportAttachments) {
       [
         intermOutputs.analyzeSupportTextOutput,
@@ -298,7 +320,8 @@ async function runSupportProcessingPipelineV3Optimized(
       ] = await Promise.all([
         runAnalyzeSupportText({
           textSurfaceAnalysis: supportTextSurfaceAnalysis ?? {segments: []},
-          recentInteractionContext
+          recentInteractionContext,
+          pendingRequestedItems
         }),
         runAnalyzeSupportAttachments({
           attachmentSurfaceAnalysis: intermOutputs.analyzeAttachmentSurfaceOutput,
@@ -315,7 +338,8 @@ async function runSupportProcessingPipelineV3Optimized(
       intermOutputs.analyzeSupportTextOutput =
         await runAnalyzeSupportText({
           textSurfaceAnalysis: supportTextSurfaceAnalysis ?? {segments: []},
-          recentInteractionContext
+          recentInteractionContext,
+          pendingRequestedItems
         });
 
       intermOutputs.analyzeSupportAttachmentsOutput = null;
@@ -345,6 +369,11 @@ async function runSupportProcessingPipelineV3Optimized(
         ? intermOutputs.analyzeSupportTextOutput.understandings
         : [];
 
+    await reportProgress(input, {
+      code: "updating_support_topics",
+      title: "Updating support topics..."
+    });
+
     intermOutputs.proposeTopicUpdatesOutput =
       await runProposeTopicUpdates({
         understandings: supportUnderstandings,
@@ -362,18 +391,25 @@ async function runSupportProcessingPipelineV3Optimized(
     // 8. Topic managers in parallel
     // -----------------------------------------------------
 
+    await reportProgress(input, {
+      code: "preparing_answer",
+      title: "Preparing answer..."
+    });
+    
     const topicManagerOutputs =
       await Promise.all(
         intermOutputs.proposeTopicUpdatesOutput.topicUpdatePlans.map((topicUpdatePlan) => {
+          const sourceUnderstandingsForTopic = selectSourceUnderstandings(
+            supportUnderstandings,
+            topicUpdatePlan.sourceUnderstandingIds
+          );
+
           return runTopicManager({
             topicUpdatePlan,
             currentTopic: selectCurrentTopic(input.liveMemory, topicUpdatePlan),
-            sourceUnderstandings: selectSourceUnderstandings(
-              supportUnderstandings,
-              topicUpdatePlan.sourceUnderstandingIds
-            ),
+            sourceUnderstandings: sourceUnderstandingsForTopic,
             currentUserMessage: {
-              content: currentUserMessage.content,
+              content: buildTopicScopedCurrentUserMessageContent(sourceUnderstandingsForTopic),
               channel: currentUserMessage.channel
             },
             previousConversationTurn: input.liveMemory.previousConversationTurn
@@ -459,8 +495,55 @@ async function runSupportProcessingPipelineV3Optimized(
 
 
 // =====================================================
+// PROGRESS HELPERS
+// =====================================================
+
+async function reportProgress(
+  input: RunSupportProcessingPipelineV3OptimizedInput,
+  event: SupportProcessingProgressEvent
+): Promise<void> {
+  try {
+    await input.progress?.report(event);
+  } catch {
+    // Progress updates are UI-only and must never break support processing.
+  }
+}
+
+// =====================================================
 // TOPIC BRANCH INPUT HELPERS
 // =====================================================
+
+function buildPendingRequestedItemsFromLiveMemory(
+  topics: LiveMemoryTopicOptimized[]
+): {
+  caseDetailsToAsk: Array<{
+    key: string;
+    reason: string | null;
+    status: string;
+  }>;
+  attemptedActionsToAsk: Array<{
+    action: string | null;
+    reason: string | null;
+    status: string;
+  }>;
+} {
+  return {
+    caseDetailsToAsk: topics.flatMap((topic) => {
+      return [
+        ...topic.sourceTopicManager.basicQualification.caseDetailsToAskBecauseOfBasicQualification,
+        ...topic.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification
+      ].filter((item): item is {
+        key: string;
+        reason: string | null;
+        status: "asking";
+      } => item.status === "asking" && typeof item.key === "string");
+    }),
+    attemptedActionsToAsk: topics.flatMap((topic) => {
+      return topic.sourceTopicManager.solution.attemptedActionsToAskBecauseOfSolutionFound
+        .filter((item) => item.status === "asking");
+    })
+  };
+}
 
 function selectCurrentTopic(
   liveMemory: SupportLiveMemoryInput,
@@ -481,6 +564,32 @@ function selectSourceUnderstandings(
   return supportUnderstandings.filter((understanding) => {
     return sourceIdSet.has(understanding.understandingId);
   });
+}
+
+function buildTopicScopedCurrentUserMessageContent(
+  sourceUnderstandings: AnalyzeSupportTextUnderstanding[]
+): string {
+  return sourceUnderstandings
+    .map((understanding) => {
+      const parts: string[] = [];
+
+      parts.push(`Understanding: ${understanding.summaryMessage}`);
+
+      for (const detail of understanding.caseDetailsExtracted) {
+        parts.push(`Case detail - ${detail.key}: ${String(detail.value)}`);
+      }
+
+      for (const action of understanding.attemptedActionsExtracted) {
+        parts.push(`Attempted action - ${action.action}: ${action.outcome}`);
+      }
+
+      for (const other of understanding.other) {
+        parts.push(`Other - ${other.key}: ${String(other.value)}`);
+      }
+
+      return parts.join("\n");
+    })
+    .join("\n\n");
 }
 
 function hasSupportRelevantTextSegments(

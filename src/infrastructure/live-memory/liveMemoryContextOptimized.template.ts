@@ -103,7 +103,7 @@ export type LiveMemoryTopicOptimized = {
     };
 
     retrieveKnowledge: {
-      isCompleted: boolean;
+      isCompleted: boolean | "failed";
 
       rankedSearch: {
         isSearched: boolean;

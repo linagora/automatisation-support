@@ -10,6 +10,9 @@ import {
   loadMatrixStartupGraceMsFromEnv
 } from "../../src/infrastructure/matrix/loadMatrixChannelConfig";
 import {runSupportAutomation} from "../../src/support-automation/runSupportAutomation";
+import {
+  createMatrixProgressDeliveryReporter
+} from "../../src/infrastructure/matrix/matrixProgressDeliveryReporter";
 
 function hasFlag(flagName: string): boolean {
   return process.argv.includes(flagName);
@@ -17,15 +20,21 @@ function hasFlag(flagName: string): boolean {
 
 async function main(): Promise<void> {
   const dryRun = hasFlag("--dry-run") || loadMatrixDryRunFromEnv();
+  const matrixConfig = loadMatrixChannelConfigFromEnv();
 
   const handle = await runSupportAutomation({
-    matrixConfig: loadMatrixChannelConfigFromEnv(),
+    matrixConfig,
     inactivityTimeoutMs: loadMatrixBufferInactivityMsFromEnv(),
     maxWaitMs: loadMatrixBufferMaxWaitMsFromEnv(),
     startupGraceMs: loadMatrixStartupGraceMsFromEnv(),
     dryRun,
     ignoreMessagesBeforeStartup: loadMatrixIgnoreMessagesBeforeStartupFromEnv(),
-    processHistoricalMessages: loadMatrixProcessHistoricalMessagesFromEnv()
+    processHistoricalMessages: loadMatrixProcessHistoricalMessagesFromEnv(),
+    progressReporter: createMatrixProgressDeliveryReporter({
+      config: matrixConfig,
+      enabled: !dryRun,
+      typingTimeoutMs: 30_000
+    })
   });
 
   console.log("[SupportAutomation] started");

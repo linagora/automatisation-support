@@ -43,6 +43,13 @@ export type BuildLiveMemoryPatchesOutput = {
   topics: BuildLiveMemoryTopicPatch[] | null;
 };
 
+type RagFailure = {
+  source: "rag";
+  reason: "rag_failed";
+  errorName: string | null;
+  errorMessage: string;
+};
+
 export type BuildLiveMemoryTopicPatch = {
   status: LiveMemoryTopicOptimized["status"];
 
@@ -136,9 +143,73 @@ function buildGlobalLiveMemoryPatch(
     ];
   }
 
-  patch.failedPipelineMessages = null;
+  patch.failedPipelineMessages = buildNonBlockingFailedPipelineMessages(input);
 
   return patch;
+}
+
+function buildNonBlockingFailedPipelineMessages(
+  input: BuildLiveMemoryPatchesInput
+): Array<{
+  concernedUserMessage: string[];
+  concernedAttachment: unknown;
+  fallbackReason: unknown;
+}> | null {
+  const ragFailures = collectRagFailures(input);
+
+  if (ragFailures.length === 0) {
+    return null;
+  }
+
+  return ragFailures.map((ragFailure) => {
+    return {
+      concernedUserMessage: [input.latestUserMessage.content],
+      concernedAttachment: input.latestUserAttachments,
+      fallbackReason: ragFailure
+    };
+  });
+}
+
+function collectRagFailures(
+  input: BuildLiveMemoryPatchesInput
+): RagFailure[] {
+  const topicManagerOutputs = input.intermOutputs.topicManagerOutputs ?? [];
+
+  return topicManagerOutputs.flatMap((topicManagerOutput) => {
+    const retrieveKnowledgeOutput =
+      extractRetrieveKnowledgeOutput(topicManagerOutput);
+
+    const ragFailure = retrieveKnowledgeOutput?.ragFailure;
+
+    return ragFailure ? [ragFailure] : [];
+  });
+}
+
+function extractRetrieveKnowledgeOutput(
+  topicManagerOutput: unknown
+): {
+  ragFailure?: RagFailure;
+} | null {
+  if (!topicManagerOutput || typeof topicManagerOutput !== "object") {
+    return null;
+  }
+
+  const candidate = topicManagerOutput as {
+    intermediateOutputs?: {
+      issueResolutionBranchOutput?: {
+        internalOutputs?: {
+          retrieveKnowledgeOutput?: {
+            ragFailure?: RagFailure;
+          };
+        };
+      };
+    };
+  };
+
+  return candidate.intermediateOutputs
+    ?.issueResolutionBranchOutput
+    ?.internalOutputs
+    ?.retrieveKnowledgeOutput ?? null;
 }
 
 function buildTopicLiveMemoryPatch(

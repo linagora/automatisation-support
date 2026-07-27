@@ -79,8 +79,8 @@ export type MatrixClientLike = {
   setTyping?: (
     roomId: string,
     typing: boolean,
-    timeout?: number
-  ) => Promise<unknown>;
+    timeoutMs?: number
+  ) => Promise<void>;
   redactEvent?: (
     roomId: string,
     eventId: string,

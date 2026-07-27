@@ -21,7 +21,21 @@ Do not summarize.
 Do not add explanations.
 Do not add greetings.
 Do not change formatting except what is necessary for translation.
-If the letters are in uppercase, keep them in uppercase.
+
+Translate all user-visible text, including headings and titles.
+
+Important:
+Lines written in uppercase are usually topic headings or titles.
+They are user-visible text and must be translated too.
+Do not keep an English uppercase heading unchanged when the target language is not English.
+Translate the words of the heading into the target language, then keep the translated heading uppercase.
+Preserve product names and brand names such as Twake Chat, Drive, Twake, Linagora.
+
+Examples for French:
+- "MESSAGES DISAPPEARING IN TWAKE CHAT" must become "MESSAGES QUI DISPARAISSENT DANS TWAKE CHAT".
+- "UNABLE TO RENAME A FILE IN THE DRIVE" must become "IMPOSSIBLE DE RENOMMER UN FICHIER DANS LE DRIVE".
+
+Do not include wrapper tags such as <message> or </message> in the translatedMessage.
 Return only JSON matching the requested schema.
 `.trim();
 
@@ -30,9 +44,8 @@ Return only JSON matching the requested schema.
 ${input.targetLanguage}
 
 # Message to translate
-<message>
+
 ${input.message}
-</message>
 
 # Output JSON shape
 ${outputJsonShapeForPrompt}

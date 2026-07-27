@@ -66,7 +66,7 @@ function buildMessage(input: BuildMessageInput): BuildMessageOutput {
 }
 
 function buildUniqueStandardFragmentMessages(
-  fragments: readonly Array<{say: string}>
+  fragments: ReadonlyArray<{say: string}>
 ): string[] {
   const seen = new Set<string>();
   const messages: string[] = [];
