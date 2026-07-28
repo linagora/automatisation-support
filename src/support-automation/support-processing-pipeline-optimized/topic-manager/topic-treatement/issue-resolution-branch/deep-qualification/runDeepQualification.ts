@@ -1,6 +1,8 @@
-import {buildTopicQualification} from "./buildTopicQualification--oneShotStep";
-import {isTopicQualified} from "./isTopicQualified--blockingStep";
-import {planIssueDeepQualificationAsk} from "./asking-planner/planIssueDeepQualificationAsk";
+import {buildDeepQualificationAsk} from "./buildDeepQualificationAsk";
+import {
+  buildInitialDeepQualification,
+  updateDeepQualificationWithExtractedDetails
+} from "./deepQualificationState";
 
 import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
@@ -32,6 +34,7 @@ async function runDeepQualification(input: RunDeepQualificationInput): Promise<R
   ];
 
   const previousDeepQualification = input.previousTopic?.sourceTopicManager.deepQualification ?? null;
+
   const baseDeepQualification = previousDeepQualification?.isBuilt === true
     ? previousDeepQualification
     : buildInitialDeepQualification({
@@ -39,47 +42,25 @@ async function runDeepQualification(input: RunDeepQualificationInput): Promise<R
       knownCaseDetailsExtracted
     });
 
-  const {deepQualification} = isTopicQualified({
+  const deepQualification = updateDeepQualificationWithExtractedDetails({
     deepQualification: baseDeepQualification,
     caseDetailsExtracted: knownCaseDetailsExtracted
   });
 
   if (deepQualification.isCompleted) {
-    return {say: null, deepQualification};
+    return {
+      say: null,
+      deepQualification
+    };
   }
 
-  const askPlan = await planIssueDeepQualificationAsk({
-    currentUserMessage: input.currentUserMessage,
-    previousConversationTurn: input.previousConversationTurn,
-    deepQualification,
-    userFacingInformation: input.retrieveKnowledge?.segmentationKnowledge.userFacingInformation ?? null,
-    supportDomain: input.supportDomain
-  });
-
   return {
-    say: askPlan.say,
+    say: buildDeepQualificationAsk({
+      deepQualification,
+      userFacingInformation: input.retrieveKnowledge?.segmentationKnowledge.userFacingInformation ?? null,
+      supportDomain: input.supportDomain
+    }),
     deepQualification
-  };
-}
-
-function buildInitialDeepQualification(input: {
-  supportDomain: string | null;
-  knownCaseDetailsExtracted: CaseDetailExtracted[];
-}): DeepQualification {
-  const builtQualification = buildTopicQualification({
-    supportDomain: input.supportDomain,
-    knownCaseDetailsExtracted: input.knownCaseDetailsExtracted
-  });
-
-  const caseDetailsToAskBecauseOfDeepQualification = builtQualification.caseDetailsToAskBecauseOfDeepQualification;
-  const isCompleted = caseDetailsToAskBecauseOfDeepQualification.every((caseDetailToAsk) => {
-    return caseDetailToAsk.status !== "asking";
-  });
-
-  return {
-    isBuilt: true,
-    isCompleted,
-    caseDetailsToAskBecauseOfDeepQualification
   };
 }
 
