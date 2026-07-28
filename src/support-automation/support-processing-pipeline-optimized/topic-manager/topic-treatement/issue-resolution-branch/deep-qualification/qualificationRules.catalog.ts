@@ -13,27 +13,27 @@ type DeepIssueFieldSpec = {
 const typedCaseDetailFieldCatalog = caseDetailFieldCatalog as Record<CaseDetailFieldKey, SupportFieldCatalogEntry>;
 
 const genericDeepIssueFieldKeys = [
-  "frequency",
   "platform",
+  "operating_system",
   "browser",
+  "app_version",
   "device",
-  "issue_started_at",
-  "reproduction_steps"
+  "frequency",
+  "issue_started_at"
 ] as const satisfies readonly CaseDetailFieldKey[];
 
 const issueDeepQualificationKeyCatalog: Record<string, readonly CaseDetailFieldKey[]> = {
   product_behavior: [
-    "reproduction_steps",
-    "failure_step",
-    "platform",
-    "browser",
-    "device",
-    "issue_started_at",
-    "frequency"
+    "affected_scope",
+    "affected_users",
+    "user_impact",
+    "visual_evidence",
+    "pre_problem_state"
   ],
 
   access_security: [
     "user_identifier",
+    "account_identifier",
     "auth_method",
     "mfa_status",
     "recovery_channel",
@@ -42,88 +42,68 @@ const issueDeepQualificationKeyCatalog: Record<string, readonly CaseDetailFieldK
   ],
 
   billing: [
+    "account_identifier",
+    "billing_issue_type",
     "plan_or_subscription",
     "billing_or_payment_status",
     "payment_method",
-    "reference_id"
-  ],
-
-  configuration: [
-    "workflow_context",
-    "pre_problem_state",
-    "trigger_action",
-    "affected_scope",
-    "affected_users"
+    "reference_id",
+    "amount",
+    "currency",
+    "billing_date_or_period",
+    "duplicate_billing_impact",
+    "billing_provider"
   ],
 
   integration_sync: [
+    "integration_or_connector",
+    "sync_target",
+    "sync_status",
     "server_or_instance",
     "provided_url",
     "reference_id",
-    "issue_started_at",
-    "frequency"
+    "affected_scope",
+    "affected_users",
+    "user_impact"
   ],
 
   performance: [
-    "platform",
-    "browser",
-    "device",
     "affected_scope",
-    "issue_started_at",
-    "frequency"
+    "affected_users",
+    "user_impact",
+    "visual_evidence"
   ],
 
   availability: [
     "affected_users",
     "affected_scope",
-    "issue_started_at",
-    "deadline_or_expected_date",
-    "available_workaround"
+    "issue_started_at"
   ],
 
   data_migration: [
-    "workflow_context",
     "issue_started_at",
     "affected_scope",
-    "reference_id",
-    "available_workaround"
+    "reference_id"
   ],
 
   accessibility: [
-    "platform",
-    "browser",
-    "device",
-    "reproduction_steps",
-    "visual_evidence"
-  ],
-
-  product_capability: [
-    "workflow_context",
-    "affected_scope",
-    "available_workaround"
-  ],
-
-  support_process: [
-    "reference_id",
+    "assistive_technology",
+    "accessibility_barrier",
+    "inaccessible_element",
     "visual_evidence",
-    "deadline_or_expected_date"
+    "affected_scope",
+    "user_impact"
   ],
 
   other: []
 };
 
 const contextualProblemDetailKeys = new Set<string>([
-  "reproduction_steps",
-  "failure_step",
-  "workflow_context",
   "pre_problem_state",
-  "trigger_action",
   "affected_scope",
   "affected_users",
-  "available_workaround",
   "accessibility_barrier",
   "inaccessible_element",
-  "gap_observed",
   "sync_status"
 ]);
 

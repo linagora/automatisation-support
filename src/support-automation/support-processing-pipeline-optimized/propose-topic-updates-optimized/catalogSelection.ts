@@ -15,14 +15,11 @@ const supportDomainSelection = {
   product_behavior: keyWithExtraction,
   access_security: keyWithExtraction,
   billing: keyWithExtraction,
-  configuration: keyWithExtraction,
   integration_sync: keyWithExtraction,
   performance: keyWithExtraction,
   availability: keyWithExtraction,
   data_migration: keyWithExtraction,
   accessibility: keyWithExtraction,
-  support_process: keyWithExtraction,
-  product_capability: keyWithExtraction,
   other: keyWithExtraction
 } as const;
 

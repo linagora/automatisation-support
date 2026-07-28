@@ -16,49 +16,64 @@ type PromptItem = {key: string; extractionGuidance?: string};
 
 // Local selection follows the output order:
 // caseDetailsExtracted -> attemptedActionsExtracted -> other.
-
-// Structured support dossier fields.
-// Support-exchange metadata is intentionally not here; it goes to `other`.
+//
+// Important:
+// This is not domain-limited.
+// The latest user message may answer the current pending issue and also introduce
+// another topic or another support need.
+//
+// However, broad fields that compete with atomic issue understanding are intentionally
+// excluded from this support-text extraction view.
+// In particular:
+// - reproduction_steps is synthesized later for support-facing summaries;
+// - workflow_context is too broad and can absorb trigger_action / failure_step;
+// - question_intent and gap_observed belong to other routes;
+// - available_workaround belongs to solution/support-facing handling;
+// - issue_duration is redundant with issue_started_at;
+// - deadline_or_expected_date belongs to urgency/support-process handling unless given as other.
 const extractableFieldSelection = {
   user_identifier: keyWithExtraction,
   account_identifier: keyWithExtraction,
   account_status: keyWithExtraction,
   organization_name: keyWithExtraction,
   workspace_name: keyWithExtraction,
+
   product_or_service: keyWithExtraction,
   feature_or_page: keyWithExtraction,
+
   platform: keyWithExtraction,
   operating_system: keyWithExtraction,
   browser: keyWithExtraction,
   app_version: keyWithExtraction,
   device: keyWithExtraction,
+
   notification_permission_status: keyWithExtraction,
   notification_channel_status: keyWithExtraction,
+
   pre_problem_state: keyWithExtraction,
   trigger_action: keyWithExtraction,
   failure_step: keyWithExtraction,
-  reproduction_steps: keyWithExtraction,
-  workflow_context: keyWithExtraction,
   error_message: keyWithExtraction,
   observed_result: keyWithExtraction,
   expected_result: keyWithExtraction,
-  available_workaround: keyWithExtraction,
+
   issue_started_at: keyWithExtraction,
-  issue_duration: keyWithExtraction,
-  deadline_or_expected_date: keyWithExtraction,
   frequency: keyWithExtraction,
   affected_scope: keyWithExtraction,
   affected_users: keyWithExtraction,
   user_impact: keyWithExtraction,
+
   access_action: keyWithExtraction,
   auth_method: keyWithExtraction,
   server_or_instance: keyWithExtraction,
   recovery_channel: keyWithExtraction,
   user_role_or_permission: keyWithExtraction,
   mfa_status: keyWithExtraction,
+
   integration_or_connector: keyWithExtraction,
   sync_target: keyWithExtraction,
   sync_status: keyWithExtraction,
+
   plan_or_subscription: keyWithExtraction,
   billing_or_payment_status: keyWithExtraction,
   billing_issue_type: keyWithExtraction,
@@ -68,13 +83,14 @@ const extractableFieldSelection = {
   currency: keyWithExtraction,
   billing_date_or_period: keyWithExtraction,
   payment_method: keyWithExtraction,
-  question_intent: keyWithExtraction,
-  gap_observed: keyWithExtraction,
+
   assistive_technology: keyWithExtraction,
   accessibility_barrier: keyWithExtraction,
   inaccessible_element: keyWithExtraction,
+
   migration_or_transition_context: keyWithExtraction,
   previous_product_or_service: keyWithExtraction,
+
   provided_url: keyWithExtraction,
   reference_id: keyWithExtraction,
   visual_evidence: keyWithExtraction
@@ -99,35 +115,10 @@ const otherKeySelection = {
 
 // Resolved selection consumed by responseFormat.ts.
 // Built once at module load, so bad local keys fail early.
-//
-// Example shape:
-// {
-//   extractableFields: ["browser", "error_message", "observed_result", ...],
-//   attemptedActionOutcomes: ["success", "failed", "partial", "unknown"],
-//   otherKeys: ["fact", "limitation", ...]
-// }
 const formatCatalogSelection = resolveFormatCatalogSelection();
 
 // Resolved selection consumed by buildAnalyzeSupportTextPrompt.ts.
-// Extraction guidance is included only where the local selection asks for it.
-//
-// Example shape:
-// {
-//   extractableFields: [
-//     {key: "browser", extractionGuidance: "..."},
-//     {key: "error_message", extractionGuidance: "..."},
-//     ...
-//   ],
-//   attemptedActionOutcomes: [
-//     {key: "success"},
-//     {key: "failed"},
-//     ...
-//   ],
-//   otherKeys: [
-//     {key: "fact", extractionGuidance: "..."},
-//     ...
-//   ]
-// }
+// Built once at module load, so bad local keys fail early.
 const promptCatalogSelection = resolvePromptCatalogSelection();
 
 function resolveFormatCatalogSelection() {

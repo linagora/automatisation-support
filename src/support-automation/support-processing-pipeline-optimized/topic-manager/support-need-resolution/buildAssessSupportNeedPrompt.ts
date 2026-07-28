@@ -37,8 +37,7 @@ A non-unclear supportNeed must be supported by concrete evidence from the latest
 Do not infer a clear supportNeed only from a vague topic title, a vague summaryTopic, or a broad supportDomain.
 
 supportDomain is only a hint. It must never force the supportNeed.
-A topic with supportDomain "support_process" can still be "unclear".
-A topic with supportDomain "product_capability" can still be "knowledge_answer", "issue_resolution", or "unclear".
+A broad or ambiguous supportDomain can still map to "unclear" when the concrete support need is not explicit.
 
 # When to use "unclear"
 Use "unclear" when the topic does not contain enough concrete information to choose one supportNeed confidently.

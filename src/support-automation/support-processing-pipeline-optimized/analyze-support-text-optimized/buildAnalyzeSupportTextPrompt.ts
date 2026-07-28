@@ -48,12 +48,15 @@ function buildAnalyzeSupportTextPrompt(
 You are a strict support text understanding engine.
 
 Analyze only the provided support_relevant segments from the latest user message.
-Produce local support understandings for later topic matching and topic update.
+Extract structured support facts for later topic matching and topic handling.
 
 Do not answer the user.
 Do not create, match, merge, update, or classify topics.
-Do not classify the user's intent here. Do not decide whether this is a new topic or an update to an existing topic. Topic linking is handled later by proposeTopicUpdates. Global support need is assessed later by assessSupportNeed.
-Do not diagnose root cause, propose solutions, retrieve knowledge, analyze attachments, choose next questions, or write a response.
+Do not classify the global support need.
+Do not diagnose root cause.
+Do not propose solutions.
+Do not choose next questions.
+Do not write a user-facing response.
 
 Return only JSON matching the requested schema.
 `.trim();
@@ -88,61 +91,66 @@ ${renderPromptItems(promptCatalogSelection.otherKeys)}
 
 Create one understanding per coherent support need.
 
-Important multi-issue splitting rule:
+A user message may contain:
+- an answer to a previously requested detail;
+- extra details for an existing issue;
+- a new independent support subject;
+- several independent support subjects.
 
-If the user describes multiple independent support subjects, create one separate understanding per subject.
+Do not merge independent support subjects.
+Create separate understandings when different products, features, actions, symptoms, expected results, objectives, or blocking points are described.
 
-Independent support subjects must not be merged only because they appear in the same sentence, paragraph, or support segment.
+# Pending requested items
 
-A subject should usually be split when it has its own product, feature, action, symptom, expected result, user objective, or blocking point.
+pending_requested_items are not a filter.
+You must still extract any relevant support information from the latest message.
 
-Split especially when:
-- the user explicitly says there are multiple problems, issues, requests, questions, or needs;
-- the user mentions different products, services, modules, or workspaces;
-- the user mentions different features or actions;
-- the user reports different observed results or blocking points;
-- the user uses list markers or connectors such as "first", "second", "also", "another", "and", "but", "on X", "on Y", "for X", "for Y", "sur X", "sur Y".
+However, pending requested items are priority targets.
 
+When pending_requested_items.caseDetailsToAsk contains fields with status "asking":
+- interpret the latest user message as a possible answer to those requested fields;
+- reuse exactly the requested field key when the message answers it;
+- prefer the pending requested key over another less specific key;
+- do not ignore a pending field only because the user answered naturally instead of using the field wording.
 
-Default assumption: one support_relevant segment often corresponds to one understanding, but surface segmentation may be imperfect.
+When pending_requested_items.attemptedActionsToAsk contains actions with status "asking":
+- interpret the latest user message as a possible result for those requested actions;
+- reuse exactly the requested action string;
+- do not translate, shorten, or paraphrase the requested action;
+- use outcome "success", "failed", "partial", or "unknown".
 
-Split when the text contains distinct issues, questions, requests, features, objectives, corrections, or follow-up details.
-Group segments only when they clearly complete the same support need.
-A single segment may create several understandings when it contains several independent support needs.
+# Extraction principles
 
-Support-exchange context such as screenshot, proof, attachment, logs, availability, or testing limitation should be attached to the related understanding through sourceSegmentIds and other when it is useful to the local support extraction.
-If the segment is only support-process or bot feedback with no concrete business support subject, keep the useful fact as "other" only if it was already routed as support_relevant.
+Use caseDetailsExtracted for concrete facts about the issue:
+- what product area is affected;
+- what the user is trying to do;
+- where or when the flow breaks;
+- what actually happens;
+- what should normally happen;
+- exact errors, identifiers, environment, scope, timing, or evidence when provided.
+
+Use attemptedActionsExtracted only for actions the user tried to fix, verify, diagnose, recover from, or work around the issue.
+
+Normal product usage is not an attempted action.
+For example, opening, clicking, typing, validating, sending, renaming, reading, uploading, or creating something as part of the normal workflow should be extracted as case details, not as attempted actions.
+
+If the user explicitly says a requested detail does not exist, is unavailable, cannot be accessed, cannot be provided, or cannot be tested:
+- output the requested field or action with status "user_declared_unavailable";
+- use value null for case details;
+- use outcome "unknown" for attempted actions.
+
+Do not output status "obtained" with value null.
+
+expected_result may be inferred only when it is the direct and obvious normal outcome of the failed user action.
 
 # Context use
 
-Use recent_interaction_context only to interpret short contextual answers such as yes/no, same issue, an ID, a version, a date, a browser, a number, an option choice, or a value answering the bot's previous question.
+Use recent_interaction_context only to interpret short contextual replies such as yes/no, same issue, an ID, a version, a date, a browser, a number, or an answer to the previous bot question.
 
-Use pending_requested_items only to recognize when the latest user message answers, confirms, denies, fails, succeeds, cannot provide, or cannot perform a previously requested field or action.
-Only use pending_requested_items as identity/context. Evidence must remain exact current text.
-
-For pending case details:
-- reuse exactly the requested field key from pending_requested_items.caseDetailsToAsk.key;
-- if the user explicitly cannot provide that requested field, output status "user_declared_unavailable", value null, and exact current evidence.
-
-For pending attempted actions:
-- when the user answers a requested action, reuse exactly the requested action string from pending_requested_items.attemptedActionsToAsk.action;
-- do not translate, paraphrase, shorten, or replace that action string with the user's wording;
-- keep the canonical requested action wording so deterministic completion checks can match it later;
-- if the user says the action failed, use outcome "failed";
-- if the user says the action succeeded or fixed the issue, use outcome "succeeded";
-- if the user says they cannot try or perform the requested action, use status "user_declared_unavailable" and outcome "unknown".
-
-Example:
-If pending action is "refresh the page" and the user says "J’ai déjà essayé de rafraîchir la page mais le problème continue", output attemptedActionsExtracted.action exactly as "refresh the page", outcome "failed", status "obtained", and evidence from the current user text.
-
-Example:
-If pending action is "clear the browser cache" and the user says "Je ne peux pas vider le cache", output attemptedActionsExtracted.action exactly as "clear the browser cache", outcome "unknown", status "user_declared_unavailable", and evidence from the current user text.
-
-For normal detailed messages, extract only from current support segments.
-For contextual short replies, the interpreted value may rely on recent_interaction_context or pending_requested_items, but evidence must remain exact current text.
-
+For normal detailed messages, extract from the current support segments.
 Never use recent_interaction_context as evidence.
-Do not infer hidden fields, actions, notes, categories, or topics from context alone.
+
+Evidence must always be exact text from the current support segments.
 
 # Grounding
 
@@ -153,25 +161,12 @@ Every provided segment should be referenced by at least one understanding.
 Every evidence value must be an exact substring of one referenced segment verbatim.
 Never output evidence that spans multiple segments.
 Never normalize, translate, correct, rewrite, shorten, or repair evidence.
-If a value is ambiguous, omit it or put the ambiguity in other with key "uncertainty".
 
-# Fields
+If useful information does not fit caseDetailsExtracted or attemptedActionsExtracted, put it in other.
+Keep other short.
 
-caseDetailsExtracted: use only catalogued field keys. Put concrete dossier information here.
-
-Each item must include:
-- status "obtained" when the user provides the value or the fact is directly available in the current message.
-- status "user_declared_unavailable" only when the user explicitly says they cannot provide, access, know, test, retrieve, or share that requested field. In that case, use value null and evidence must be the exact sentence or phrase where the user declares it unavailable.
-
-attemptedActionsExtracted: create when the user explicitly tried to solve, verify, diagnose, recover, or work around the issue, and an outcome is expressed or strongly implied.
-
-Each item must include:
-- status "obtained" when the user actually tried the action or reports its result.
-- status "user_declared_unavailable" only when the user explicitly says they cannot try or perform a relevant requested action. In that case, outcome should be "unknown" unless the message clearly says otherwise, and evidence must be the exact sentence or phrase where the user declares the action unavailable.
-
-other: use only catalogued other keys. Put useful support information here only when it does not fit caseDetailsExtracted or attemptedActionsExtracted. Keep it short; do not dump the whole message.
-
-summaryMessage: write a short neutral local understanding supported by the referenced segments. No solution, diagnosis, next step, topic decision, topic summary, support domain, or unsupported assumption.
+summaryMessage must be a short neutral local understanding.
+No solution, diagnosis, topic decision, support domain, or user-facing answer.
 
 # Final checks
 
@@ -182,9 +177,9 @@ Before returning JSON, verify:
 4. Empty arrays are used when there are no caseDetailsExtracted, attemptedActionsExtracted, or other entries.
 5. caseDetailsExtracted.status must be "obtained" or "user_declared_unavailable".
 6. attemptedActionsExtracted.status must be "obtained" or "user_declared_unavailable".
-7. Use "user_declared_unavailable" only for explicit user declarations, never by inference.
-8. When answering a pending attempted action, reuse exactly the pending action string.
-9. Do not output a support domain field. Support domain is handled later by proposeTopicUpdates.
+7. Do not output status "obtained" with value null.
+8. When answering a pending case detail, reuse exactly the pending case detail key.
+9. When answering a pending attempted action, reuse exactly the pending action string.
 10. The output contains no topic update, response plan, diagnosis, solution, or user-facing answer.
 
 # Output JSON shape

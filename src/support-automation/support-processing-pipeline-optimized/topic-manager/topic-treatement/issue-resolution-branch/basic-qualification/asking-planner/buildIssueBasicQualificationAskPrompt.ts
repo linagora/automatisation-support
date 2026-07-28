@@ -38,9 +38,22 @@ The message will be translated later, so write English only.
 
 Your task:
 - Ask only for the missing basic qualification details.
+- Basic qualification is only for understanding the issue flow.
+- Ask for the missing details needed to understand:
+  - what the user is trying to do;
+  - the exact steps they follow;
+  - the exact step where it fails;
+  - what happens;
+  - what they expected instead.
 - Do not expose internal field keys.
 - Use the provided askGuidance as guidance, not as copy-paste final wording.
 - Make the answer sound human and useful, not like a raw checklist.
+- Do not ask for technical environment details here unless they are explicitly part of the missing fields.
+- Do not suggest troubleshooting steps.
+- Do not ask the user to try anything.
+- Ask at most 3 compact questions in one message.
+- If many fields are missing, ask for a compact description of the flow instead of listing every field separately.
+- Avoid repeated connectors such as "also", "additionally", or "moreover".
 
 Structure:
 - If contextualProblemDetails is not empty, write it first. This paragraph must use the user's actual context to guide them precisely.
@@ -53,13 +66,14 @@ Contextual problem details:
 - Do not ask them generically when the message gives context. Use the current issue context to make the question easier to answer.
 
 Simple factual details:
-- These are practical facts like OS, browser, device, version, account, identifier, date, or affected service.
+- These are practical facts like the affected service or another explicit missing field.
 - Combine them naturally in one compact paragraph.
 
 Final constraints:
 - Allow the user to say if they cannot provide a detail.
 - Do not claim the issue is solved.
 - Do not suggest troubleshooting steps here.
+- Do not ask the user to try anything.
 - Return only JSON matching the response schema.`
       },
       {
@@ -80,28 +94,32 @@ function buildDeterministicBasicQualificationAsk(input: {
   fieldsToAsk: FieldToAsk[];
 }): string {
   const promptFields = input.fieldsToAsk.map(formatFieldForPrompt);
-  const contextualProblemDetails = promptFields.filter((field) => field.askKind === "contextual_problem_detail");
-  const simpleFactualDetails = promptFields.filter((field) => field.askKind === "simple_factual_detail");
+  const productField = promptFields.find((field) => normalizeKey(field.key ?? "") === "product_or_service");
+  const nonProductFields = promptFields.filter((field) => normalizeKey(field.key ?? "") !== "product_or_service");
+  const suffix = "If you cannot provide one of these details, just say so.";
 
-  const paragraphs: string[] = [];
-
-  if (contextualProblemDetails.length > 0) {
-    paragraphs.push(
-      `To understand the issue properly, could you clarify ${joinAskGuidance(contextualProblemDetails)}?`
-    );
+  if (promptFields.length === 0) {
+    return `Could you share a few more details about what happened so I can understand the issue properly? ${suffix}`;
   }
 
-  if (simpleFactualDetails.length > 0) {
-    paragraphs.push(
-      `Could you also share these quick details: ${joinAskGuidance(simpleFactualDetails)}?`
-    );
+  if (promptFields.length === 1 && productField) {
+    return `Which product or service is affected? ${suffix}`;
   }
 
-  if (paragraphs.length === 0) {
-    return "Could you share a few more details about what happened so I can understand the issue properly?";
+  if (nonProductFields.length > 2) {
+    const productQuestion = productField ? "Which product or service is affected?" : "";
+    const flowQuestion = "To understand the issue properly, could you describe the exact steps you follow, the step where it fails, what happens, and what you expected instead?";
+    return [productQuestion, flowQuestion, suffix].filter(Boolean).join(" ");
   }
 
-  return `${paragraphs.join("\n\n")} If you cannot provide one of these details, just say so and I can continue with what is available.`;
+  const questions = [
+    productField ? "Which product or service is affected?" : "",
+    nonProductFields.length > 0
+      ? `Could you clarify ${joinAskGuidance(nonProductFields)}?`
+      : ""
+  ].filter(Boolean);
+
+  return `${questions.join(" ")} ${suffix}`;
 }
 
 function formatFieldForPrompt(field: FieldToAsk): PromptField {

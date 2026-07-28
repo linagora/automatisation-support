@@ -39,7 +39,14 @@ Rules:
 - Do not claim the issue is solved.
 - Do not ask for information that is already present.
 - Use the ask guidance as meaning, not as final wording.
+- Deep qualification is for technical context and diagnostic details, not for re-asking the basic issue flow.
+- Do not ask again for the reproduction steps, trigger action, failure step, observed result, or expected result unless they are explicitly present in fieldsToAsk.
+- Ask at most 3 compact questions in one message.
+- Prioritize details that materially help diagnosis.
+- Group technical environment details naturally.
+- Avoid repeated connectors such as "also", "additionally", or "moreover".
 - If the user may not have one detail, say they can tell us if they cannot provide it.
+- If the user may not know a detail, say they can tell us they do not know.
 - If userFacingInformation contains useful context from similar cases, use it to ask a more targeted first paragraph.
 - If userFacingInformation is null or not useful for a question, do not invent a knowledge-based paragraph.
 - The final say should have at most two paragraphs.
@@ -66,13 +73,16 @@ function buildDeterministicDeepQualificationAsk(input: {
   fieldsToAsk: FieldToAsk[];
   userFacingInformation: string | null;
 }): string {
+  const maxQuestions = 3;
   const contextualPrompts = input.fieldsToAsk
     .filter((field) => getDeepIssueFieldAskType(field.key) === "contextual_problem_detail")
-    .map((field) => getDeepIssueFieldAskPrompt(field.key));
+    .map((field) => getDeepIssueFieldAskPrompt(field.key))
+    .slice(0, maxQuestions);
 
   const simplePrompts = input.fieldsToAsk
     .filter((field) => getDeepIssueFieldAskType(field.key) === "simple_factual_detail")
-    .map((field) => getDeepIssueFieldAskPrompt(field.key));
+    .map((field) => getDeepIssueFieldAskPrompt(field.key))
+    .slice(0, Math.max(0, maxQuestions - contextualPrompts.length));
 
   const paragraphs: string[] = [];
 

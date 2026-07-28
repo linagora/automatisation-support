@@ -18,9 +18,6 @@ const supportDomainCatalog = {
   billing: {
     extractionGuidance: "Use when the topic concerns invoices, payments, subscriptions, refunds, renewals, duplicate charges, payment methods, pricing, plan changes, or billing status."
   },
-  configuration: {
-    extractionGuidance: "Use when the topic concerns settings, setup, configuration, admin configuration, or expected configured behavior."
-  },
   integration_sync: {
     extractionGuidance: "Use when the topic concerns integrations, connectors, synchronization, external services, webhooks, bots, or data sync."
   },
@@ -35,12 +32,6 @@ const supportDomainCatalog = {
   },
   accessibility: {
     extractionGuidance: "Use when the topic concerns assistive technology, accessibility barriers, inaccessible workflows, keyboard navigation, screen readers, or related usability barriers."
-  },
-  support_process: {
-    extractionGuidance: "Use when the topic concerns the support exchange, support process, previous support response, support delay, support handling, proof, attachments, logs, or support constraints."
-  },
-  product_capability: {
-    extractionGuidance: "Use when the topic concerns a product capability, feature behavior, missing capability, desired improvement, product gap, or product area not covered by a more specific domain."
   },
   other: {
     extractionGuidance: "Use only as a fallback when no more specific support domain is clear."
@@ -182,14 +173,6 @@ const caseDetailFieldCatalog = {
     extractionGuidance: "Extract when the user identifies where in the flow the problem appears, such as after clicking, during login, at upload, or on a specific step.",
     askGuidance: "At which exact step does the issue appear or block you?"
   },
-  reproduction_steps: {
-    extractionGuidance: "Extract when the user describes a sequence of actions that leads to the issue.",
-    askGuidance: "What exact steps do you follow before the issue appears?"
-  },
-  workflow_context: {
-    extractionGuidance: "Extract when the user explains the larger workflow, goal, or context around the requested action or issue.",
-    askGuidance: "What workflow or goal are you trying to complete?"
-  },
   error_message: {
     extractionGuidance: "Extract only when the user explicitly provides the exact message, error code, or a very close paraphrase.",
     askGuidance: "What exact error message or code is shown on screen?"
@@ -202,22 +185,9 @@ const caseDetailFieldCatalog = {
     extractionGuidance: "Extract when the expected behavior is explicit or clearly implied by the reported negative result.",
     askGuidance: "What did you expect to happen instead?"
   },
-  available_workaround: {
-    extractionGuidance: "Extract only when the user explicitly mentions a workaround, temporary solution, or lack of workaround.",
-    askGuidance: "Have you found or tried any workaround?"
-  },
-
   issue_started_at: {
     extractionGuidance: "Extract dates, times, relative timing, or first-noticed timing related to the start of the issue.",
     askGuidance: "When did the issue start or when did you first notice it?"
-  },
-  issue_duration: {
-    extractionGuidance: "Extract a duration such as minutes, hours, days, weeks, or ongoing since a given period.",
-    askGuidance: "How long has the issue been happening?"
-  },
-  deadline_or_expected_date: {
-    extractionGuidance: "Extract when the user mentions a deadline, expected resolution date, renewal date, scheduled action, or timing constraint.",
-    askGuidance: "Is there a deadline or expected date for this issue?"
   },
   frequency: {
     extractionGuidance: "Extract frequency wording such as always, every time, sometimes, intermittent, once, after each email, or only in some cases.",
@@ -309,15 +279,6 @@ const caseDetailFieldCatalog = {
   payment_method: {
     extractionGuidance: "Extract when the user mentions the payment method used or expected.",
     askGuidance: "Which payment method was used: card, bank transfer, PayPal, SEPA, invoice, or another method?"
-  },
-
-  question_intent: {
-    extractionGuidance: "Extract when the user asks a question and its purpose is clear.",
-    askGuidance: "What do you want to know or achieve?"
-  },
-  gap_observed: {
-    extractionGuidance: "Extract when the user describes what is missing, unsupported, limited, inconvenient, or desired as an improvement.",
-    askGuidance: "What is missing today, or what capability do you need?"
   },
 
   assistive_technology: {
