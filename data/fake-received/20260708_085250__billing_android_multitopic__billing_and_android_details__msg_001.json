@@ -1,0 +1,19 @@
+{
+  "runId": "20260708_085250",
+  "scenarioId": "billing_android_multitopic",
+  "messageName": "billing_and_android_details",
+  "event": {
+    "channel": "matrix",
+    "roomId": "!fake-multitopic:example.org",
+    "userId": "@fake-multitopic:example.org",
+    "messageId": "20260708_085250__billing_android_multitopic__msg_001",
+    "content": "Pour la facture, j'ai deux prélèvements de 9,99 euros le 28 juin. Pour Android, j'ai déjà désactivé l'optimisation batterie.",
+    "createdAt": "2026-07-08T08:52:50.115Z",
+    "rawEvent": {
+      "fakeMatrixScenarioId": "billing_android_multitopic",
+      "messageName": "billing_and_android_details"
+    }
+  },
+  "delayMs": 0,
+  "typingBeforeMs": 0
+}

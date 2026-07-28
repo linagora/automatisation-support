@@ -1,298 +1,428 @@
-# Global Pipeline
+# Support Automation
 
-Commandes locales pour tester le flux support complet avec fake Matrix.
+Commandes locales pour tester et lancer le bot de support automatisé Matrix/Twake.
+
+Ce README correspond au pipeline actuel :
+
+```text
+Matrix/Twake
+→ buffer réel
+→ runSupportAutomation
+→ runSupportProcessingPipeline optimized
+→ delivery Matrix/Twake
+→ patch live memory
+```
+
+Les anciennes commandes `global-pipeline:*` ne sont plus utilisées dans le `package.json` actuel.
+
+---
 
 ## Commandes principales
 
-Nettoyer les données de test :
+### Vérifier que le projet compile
 
 ```bash
-npm run global-pipeline:empty-data
+npm run typecheck
 ```
 
-Runner fake Matrix local :
+Cette commande utilise :
 
 ```bash
-npm run global-pipeline:fake
+tsc -p tsconfig.build.json --noEmit
 ```
 
-Runner live Matrix/Twake réel :
+C’est la commande à utiliser pour le périmètre actuel.
+
+---
+
+### Build
 
 ```bash
-npm run global-pipeline:live
+npm run build
 ```
 
-## Voir les cas et groupes disponibles
+---
+
+### Tests actuels
 
 ```bash
-npm run global-pipeline:fake -- --list
+npm test
 ```
 
-## Lancer un cas précis
+ou :
 
 ```bash
-npm run global-pipeline:fake -- --case double_charge_clarification --debug
+npm run test:run
 ```
 
-Avec logs détaillés dans le terminal :
-
-```bash
-npm run global-pipeline:fake -- --case double_charge_clarification --debug --verbose
-```
-
-Avec clean avant :
-
-```bash
-npm run global-pipeline:empty-data
-npm run global-pipeline:fake -- --case double_charge_clarification --debug
-```
-
-## Lancer plusieurs cas
-
-```bash
-npm run global-pipeline:fake -- --case double_charge_clarification,android_notifications_already_tried --debug
-```
-
-## Lancer par tag
-
-```bash
-npm run global-pipeline:fake -- --tag billing --debug
-```
-
-```bash
-npm run global-pipeline:fake -- --tag billing,language --debug
-```
-
-```bash
-npm run global-pipeline:fake -- --tag android,notifications --debug
-```
-
-Les tags sont en logique OR.
-
-## Lancer par groupe
-
-```bash
-npm run global-pipeline:fake -- --group smoke --debug
-```
-
-```bash
-npm run global-pipeline:fake -- --group billing-regression --debug
-```
-
-```bash
-npm run global-pipeline:fake -- --group android-notifications --debug
-```
-
-```bash
-npm run global-pipeline:fake -- --group regression --debug
-```
-
-Plusieurs groupes :
-
-```bash
-npm run global-pipeline:fake -- --group billing-regression,android-notifications --debug
-```
-
-## Lancer tout le dataset
-
-En série :
-
-```bash
-npm run global-pipeline:fake -- --all --serial --debug
-```
-
-En parallèle :
-
-```bash
-npm run global-pipeline:fake -- --all --parallel --concurrency 3 --debug
-```
-
-Par vagues :
-
-```bash
-npm run global-pipeline:fake -- --all --wave-size 3 --wave-delay-ms 10000 --debug
-```
-
-## Stopper à une étape précise
-
-Jusqu’à l’analyse surface :
-
-```bash
-npm run global-pipeline:fake -- --case language-it-notifications --until surface --debug --verbose
-```
-
-Jusqu’aux topics :
-
-```bash
-npm run global-pipeline:fake -- --case double_charge_clarification --until topics --debug --verbose
-```
-
-Jusqu’au render :
-
-```bash
-npm run global-pipeline:fake -- --case double_charge_clarification --until render --debug --verbose
-```
-
-Étapes disponibles :
+Ces commandes lancent uniquement :
 
 ```text
---until security
---until plan
---until surface
---until standard
---until support
---until topics
---until knowledge
---until response-plan
---until compose
---until render
---until all
+tests/current
 ```
 
-Quand `--until` n’est pas `all`, le run s’arrête volontairement et le statut du cas peut être `stopped`.
+---
 
-## Fichiers debug
+## Attention à `typecheck:all`
 
-Avec `--debug`, les fichiers sont écrits dans :
+```bash
+npm run typecheck:all
+```
+
+Cette commande lance :
+
+```bash
+tsc --noEmit
+```
+
+Elle vérifie tout le dépôt, y compris d’anciens tests ou fichiers legacy qui peuvent référencer des modules supprimés.
+
+À utiliser seulement si l’objectif est de nettoyer tout l’ancien périmètre.
+
+Pour le pipeline actuel, utiliser plutôt :
+
+```bash
+npm run typecheck
+```
+
+---
+
+## Vérifier la configuration Matrix/Twake
+
+```bash
+npm run matrix:check
+```
+
+Cette commande sert à vérifier que la configuration Matrix/Twake est correctement chargée depuis l’environnement.
+
+---
+
+## Écouter les événements Matrix/Twake
+
+```bash
+npm run matrix:listen
+```
+
+Utile pour vérifier que le bot reçoit bien les messages Matrix/Twake.
+
+---
+
+## Envoyer un message de test Matrix/Twake
+
+```bash
+npm run matrix:send-test
+```
+
+Utile pour vérifier que l’envoi Matrix/Twake fonctionne.
+
+---
+
+## Lancer le bot en dry-run
+
+```bash
+npm run automation:dry-run
+```
+
+Le dry-run lance le bot avec :
+
+```bash
+SUPPORT_MATRIX_DRY_RUN=true
+```
+
+En dry-run :
+
+* le bot écoute les messages ;
+* la pipeline est exécutée ;
+* les réponses prévues sont loggées ;
+* les messages ne sont pas réellement envoyés ;
+* la live memory n’est pas patchée.
+
+C’est la commande recommandée pour tester un scénario réel sans envoyer de réponse utilisateur.
+
+---
+
+## Lancer le bot en live
+
+```bash
+npm run automation:live
+```
+
+Le live lance le bot réel Matrix/Twake.
+
+En live :
+
+* le bot écoute les messages ;
+* la pipeline est exécutée ;
+* les réponses sont envoyées dans Matrix/Twake ;
+* la live memory est patchée.
+
+À utiliser seulement quand le dry-run est validé.
+
+---
+
+## Variables d’environnement
+
+Le fichier `.env` doit être à la racine du projet :
 
 ```text
-tmp/global-pipeline-runs/<runId>/
+/home/georges/automatisation-support/.env
+/home/georges/automatisation-support/src/
 ```
 
-Pour chaque cas :
+Les scripts `automation:*` chargent l’environnement avec :
+
+```bash
+-r dotenv/config
+```
+
+---
+
+## Variables RAG requises
+
+Le RAG actuel utilise ces variables :
+
+```env
+SUPPORT_RAG_API_URL=
+SUPPORT_RAG_API_KEY=
+SUPPORT_RAG_MODEL=
+```
+
+Il n’utilise pas les anciennes variables `LLM_RAG_*`.
+
+Pour vérifier que ces variables sont bien lues depuis la racine du projet :
+
+```bash
+node -r dotenv/config -e "console.log({
+  cwd: process.cwd(),
+  hasApiUrl: Boolean(process.env.SUPPORT_RAG_API_URL),
+  hasApiKey: Boolean(process.env.SUPPORT_RAG_API_KEY),
+  hasModel: Boolean(process.env.SUPPORT_RAG_MODEL)
+})"
+```
+
+Résultat attendu :
 
 ```text
-tmp/global-pipeline-runs/<runId>/<caseId>/
-  scenario-report.json
-  input.json
-  pipeline-progress-events.json
-  pipeline-progress-summary.json
-  pipeline-partial.json
-  pipeline-output.json
-  pipeline-debug-status.json
-  dataset-assertions.json
+{
+  cwd: '/home/georges/automatisation-support',
+  hasApiUrl: true,
+  hasApiKey: true,
+  hasModel: true
+}
 ```
 
-Lire le rapport :
+---
+
+## Workflow recommandé avant un test live
 
 ```bash
-cat tmp/global-pipeline-runs/<runId>/<caseId>/scenario-report.json | jq
+npm run typecheck
+npm run build
+npm test
+npm run automation:dry-run
 ```
 
-Lire le debug interne :
+Si le dry-run est correct :
 
 ```bash
-cat tmp/global-pipeline-runs/<runId>/<caseId>/pipeline-partial.json | jq
+npm run automation:live
 ```
 
-Lire la réponse finale :
+---
+
+## Workflow de debug RAG
+
+Lancer le bot en dry-run :
 
 ```bash
-cat tmp/global-pipeline-runs/<runId>/<caseId>/scenario-report.json | jq '.sentContent'
+npm run automation:dry-run
 ```
 
-## Clean data
+Puis reproduire le cas utilisateur dans Twake/Matrix.
 
-```bash
-npm run global-pipeline:empty-data
-```
-
-Vide et recrée :
+Surveiller les logs :
 
 ```text
-data/fake-received/
-data/fake-sent/
-data/live-memory-context/
+[support-rag]
 ```
 
-Ne touche pas à :
+Logs utiles attendus :
 
 ```text
-tmp/global-pipeline-runs/
+[support-rag] create_default_client
+[support-rag] request
+[support-rag] response_ok
+[support-rag] response_error
+[support-rag] invalid_json
+[support-rag] thrown
 ```
 
-## Workflows utiles
+Si le log affiche :
 
-Clean + smoke :
+```text
+hasApiUrl: false
+hasApiKey: false
+hasModel: false
+```
+
+alors le process du bot ne lit pas correctement les variables RAG.
+
+Si le log affiche :
+
+```text
+hasApiUrl: true
+hasApiKey: true
+hasModel: true
+```
+
+alors le RAG est bien configuré et il faut regarder les logs HTTP suivants.
+
+---
+
+## Tests attachment analysis
+
+### Image locale
 
 ```bash
-npm run global-pipeline:empty-data
-npm run global-pipeline:fake -- --group smoke --debug
+npm run test:local:image
 ```
 
-Clean + cas précis :
+### Image en ligne
 
 ```bash
-npm run global-pipeline:empty-data
-npm run global-pipeline:fake -- --case double_charge_clarification --debug
+npm run test:online:image
 ```
 
-Debug profond :
+### Vidéo locale
 
 ```bash
-npm run global-pipeline:empty-data
-npm run global-pipeline:fake -- --case double_charge_clarification --until render --debug --verbose
+npm run test:local:video
 ```
 
-Billing + language :
+### Vidéo en ligne
 
 ```bash
-npm run global-pipeline:empty-data
-npm run global-pipeline:fake -- --tag billing,language --debug
+npm run test:online:video
 ```
 
-Full regression en série :
+---
 
-```bash
-npm run global-pipeline:empty-data
-npm run global-pipeline:fake -- --group regression --serial --debug
-```
-
-## Scripts package.json attendus
+## Scripts actuellement disponibles
 
 ```json
 {
   "scripts": {
-    "global-pipeline:fake": "tsx scripts/global-pipeline/runners/fake-matrix/runGlobalPipelineDataset.ts",
-    "global-pipeline:empty-data": "tsx scripts/global-pipeline/runners/fake-matrix/runGlobalPipelineDataset.ts --empty-data",
-    "global-pipeline:live": "tsx scripts/global-pipeline/runners/live-matrix/runMatrixSupportProcessingV2.ts"
+    "test": "vitest run --passWithNoTests tests/current",
+    "test:run": "vitest run --passWithNoTests tests/current",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "typecheck:all": "tsc --noEmit",
+    "matrix:check": "tsx scripts/matrix/matrix-tools.ts check",
+    "matrix:listen": "tsx scripts/matrix/matrix-tools.ts listen",
+    "matrix:send-test": "tsx scripts/matrix/matrix-tools.ts send-test",
+    "automation:live": "tsx -r dotenv/config scripts/support-automation/runSupportAutomation.ts",
+    "automation:dry-run": "SUPPORT_MATRIX_DRY_RUN=true tsx -r dotenv/config scripts/support-automation/runSupportAutomation.ts --dry-run",
+    "test:local:image": "tsx -r dotenv/config scripts/attachment-analysis/test-local-image.ts",
+    "test:online:image": "tsx -r dotenv/config scripts/attachment-analysis/test-online-image.ts",
+    "test:local:video": "tsx -r dotenv/config scripts/attachment-analysis/test-local-video.ts",
+    "test:online:video": "tsx -r dotenv/config scripts/attachment-analysis/test-online-video.ts"
   }
 }
 ```
 
-## Repères
+---
 
-Dataset :
+## Repères fichiers
+
+Runner automation :
 
 ```text
-scripts/global-pipeline/dataset/textAnalysisDataset.ts
+scripts/support-automation/runSupportAutomation.ts
 ```
 
-Groupes :
+Runner principal :
 
 ```text
-scripts/global-pipeline/dataset/groups/
+src/support-automation/runSupportAutomation.ts
 ```
 
-Runner fake :
+Pipeline support optimisée :
 
 ```text
-scripts/global-pipeline/runners/fake-matrix/runGlobalPipelineDataset.ts
+src/support-automation/support-processing-pipeline-optimized/runSupportProcessingPipelineOptimized.ts
 ```
 
-Runner live :
+Client RAG :
 
 ```text
-scripts/global-pipeline/runners/live-matrix/runMatrixSupportProcessingV2.ts
+src/infrastructure/rag/httpSupportRagClient.ts
 ```
 
-Le runner fake simule seulement les bords Matrix :
+Création du client RAG :
 
 ```text
-fake Matrix listener
-→ buffer réel
-→ build input réel
-→ pipeline V2 réelle
-→ fake sent
-→ live memory réelle
+src/infrastructure/rag/createDefaultSupportRagClient.ts
+```
+
+Outils Matrix :
+
+```text
+scripts/matrix/matrix-tools.ts
+```
+
+Configuration Matrix :
+
+```text
+src/infrastructure/matrix/loadMatrixChannelConfig.ts
+```
+
+Live memory :
+
+```text
+src/infrastructure/live-memory/
+src/support-automation/patch-live-memory/
+```
+
+---
+
+## Anciennes commandes supprimées
+
+Les commandes suivantes ne sont plus présentes dans le `package.json` actuel :
+
+```bash
+npm run global-pipeline:fake
+npm run global-pipeline:live
+npm run global-pipeline:empty-data
+```
+
+Si un ancien README ou une ancienne note les mentionne encore, il faut les considérer comme obsolètes pour le pipeline actuel.
+
+---
+
+## Commandes les plus utiles au quotidien
+
+Vérifier que le code actuel est propre :
+
+```bash
+npm run typecheck
+npm run build
+npm test
+```
+
+Tester sans envoyer de réponse réelle :
+
+```bash
+npm run automation:dry-run
+```
+
+Lancer le bot réel :
+
+```bash
+npm run automation:live
+```
+
+Vérifier Matrix/Twake :
+
+```bash
+npm run matrix:check
 ```

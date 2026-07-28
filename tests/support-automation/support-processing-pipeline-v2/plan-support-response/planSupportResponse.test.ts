@@ -2,23 +2,23 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPlanSupportResponsePrompt
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/buildPlanSupportResponsePrompt";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-support-response/buildPlanSupportResponsePrompt";
 import {
   formatPlanSupportResponseOutput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/formatPlanSupportResponseOutput";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-support-response/formatPlanSupportResponseOutput";
 import {
   planSupportResponseResponseFormat
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/planSupportResponse.schema";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-support-response/planSupportResponse.schema";
 import {
   formatComposeSupportResponsePlanOutput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
 
 import type {
   BuildPlanSupportResponsePromptInput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-support-response/typesPlanSupportResponse.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-support-response/typesPlanSupportResponse.types";
 import type {
   TextUnderstanding
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 function understanding(
   overrides: Partial<TextUnderstanding> = {}
@@ -133,6 +133,14 @@ function completed(parsedResponse: unknown) {
   };
 }
 
+function promptText(
+  overrides: Partial<BuildPlanSupportResponsePromptInput> = {}
+): string {
+  return buildPlanSupportResponsePrompt(input(overrides)).messages
+    .map((message) => message.content)
+    .join("\n");
+}
+
 function format(
   parsedResponse: unknown,
   overrides: Partial<BuildPlanSupportResponsePromptInput> = {}
@@ -145,9 +153,7 @@ function format(
 
 describe("planSupportResponse", function () {
   it("builds a prompt around merged topic, selector fields, and retrieved knowledge", function () {
-    const prompt = buildPlanSupportResponsePrompt(input()).messages
-      .map((message) => message.content)
-      .join("\n");
+    const prompt = promptText();
 
     expect(prompt).toContain("senior support response planner");
     expect(prompt).toContain('"topicSnapshot"');
@@ -169,6 +175,112 @@ describe("planSupportResponse", function () {
     expect(prompt).toContain(
       "Do not ask the user to perform internal support, developer, backend"
     );
+  });
+
+  it("explains enriched catalog direct question guidance", function () {
+    const prompt = promptText();
+
+    expect(prompt).toContain("selectedCatalogKnowledge.directQuestionGuidance");
+    expect(prompt).toContain(
+      "Use it to understand which atomic missing fields may be useful to ask and how to group them."
+    );
+    expect(prompt).toContain(
+      "Direct field questions can be represented through ask[], but only for fields present in selectedCatalogKnowledge.selectedFields."
+    );
+  });
+
+  it("explains diagnosticFlow as say guidance rather than ask items", function () {
+    const prompt = promptText();
+
+    expect(prompt).toContain("selectedCatalogKnowledge.diagnosticFlow");
+    expect(prompt).toContain(
+      "For now, express useful diagnostic flow requests in say, not ask[]"
+    );
+    expect(prompt).toContain(
+      "Do not split a diagnostic flow mechanically into many ask[] items."
+    );
+    expect(prompt).toContain(
+      "Do not use diagnosticFlow targetFieldNames to bypass ask[] validation."
+    );
+  });
+
+  it("explains sufficientlyQualified and avoids redundant questions", function () {
+    const prompt = promptText();
+
+    expect(prompt).toContain("selectedCatalogKnowledge.sufficientlyQualified");
+    expect(prompt).toContain(
+      "If true, avoid asking more questions unless there is a decisive missing direct field."
+    );
+    expect(prompt).toContain(
+      "prefer the human review / best-effort support fallback instead of asking redundant questions"
+    );
+  });
+
+  it("explains unansweredRequestedFieldNames as planner anti-repetition memory", function () {
+    const prompt = promptText({
+      topicEvidence: {
+        ...input().topicEvidence,
+        topicSnapshot: {
+          ...input().topicEvidence.topicSnapshot!,
+          unansweredRequestedFieldNames: ["app_version"]
+        }
+      }
+    });
+
+    expect(prompt).toContain("topicSnapshot.unansweredRequestedFieldNames");
+    expect(prompt).toContain(
+      "previously requested or planned by the bot but are still missing"
+    );
+    expect(prompt).toContain(
+      "Do not repeat these fields mechanically."
+    );
+    expect(prompt).toContain('"unansweredRequestedFieldNames":["app_version"]');
+  });
+
+  it("includes enriched catalog qualification data in the planner task JSON", function () {
+    const prompt = promptText({
+      selectedCatalogKnowledge: {
+        selectedFieldNames: [
+          "app_version"
+        ],
+        selectedFields: [
+          {
+            fieldName: "app_version",
+            description: "App version.",
+            askableByUser: true
+          }
+        ],
+        selectedGenericKnowledge: [],
+        directQuestionGuidance: {
+          fieldNames: [
+            "app_version"
+          ],
+          guidance: "Ask for the app version naturally.",
+          reason: "Version affects troubleshooting."
+        },
+        diagnosticFlow: {
+          name: "issue_diagnostic",
+          targetFieldNames: [
+            "trigger_action",
+            "failure_step",
+            "observed_result"
+          ],
+          attemptedActionsRelevant: true,
+          guidance:
+            "Ask the user to describe the exact steps and where the issue appears.",
+          reason: "The issue needs step-by-step qualification."
+        },
+        sufficientlyQualified: false,
+        reason: "Missing reproduction context.",
+        rejectedFieldNames: [],
+        scopeReason: "selected_candidate_fields"
+      }
+    });
+
+    expect(prompt).toContain('"directQuestionGuidance"');
+    expect(prompt).toContain('"diagnosticFlow"');
+    expect(prompt).toContain('"sufficientlyQualified":false');
+    expect(prompt).toContain('"Missing reproduction context."');
   });
 
   it("accepts answer only without decision or forbid", function () {
@@ -552,7 +664,7 @@ describe("planSupportResponse", function () {
     expect(composed.ask).toEqual([
       {
         goal: "This must remain internal planning metadata.",
-        sourceTopicIds: ["topic_1"]
+        sourceTopicIds: ["response_plan_topic_1"]
       }
     ]);
     expect(composed).not.toHaveProperty("sections");

@@ -1,0 +1,19 @@
+{
+  "runId": "20260708_085250",
+  "scenarioId": "double_charge_clarification",
+  "messageName": "billing_confirmation",
+  "event": {
+    "channel": "matrix",
+    "roomId": "!fake-double-charge:example.org",
+    "userId": "@fake-double-charge:example.org",
+    "messageId": "20260708_085250__double_charge_clarification__msg_001",
+    "content": "Oui, j'ai bien deux prélèvements pour le même abonnement. La référence facture est FAC-2026-7781.",
+    "createdAt": "2026-07-08T08:52:50.115Z",
+    "rawEvent": {
+      "fakeMatrixScenarioId": "double_charge_clarification",
+      "messageName": "billing_confirmation"
+    }
+  },
+  "delayMs": 0,
+  "typingBeforeMs": 0
+}

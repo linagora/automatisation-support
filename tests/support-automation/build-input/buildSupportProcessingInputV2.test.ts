@@ -21,7 +21,7 @@ import type {
 } from "../../../src/archive/repositories/json/typesJsonRepositories.types";
 import type {
   ConversationHistory
-} from "../../../src/support-automation/support-processing-pipeline-v2/typesConversationContext.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesConversationContext.types";
 import type {
   LiveMemoryContext
 } from "../../../src/infrastructure/live-memory/typesLiveMemoryContext.types";

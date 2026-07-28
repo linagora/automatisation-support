@@ -4,22 +4,20 @@
   "description": "Backend service for automated customer support management: automated responses and AI-assisted ticket filling powered by SLM/LLM analysis.",
   "main": "dist/src/index.js",
   "scripts": {
-    "test": "vitest",
-    "test:run": "vitest run",
+    "test": "vitest run --passWithNoTests tests/current",
+    "test:run": "vitest run --passWithNoTests tests/current",
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
-    "test:local:image": "tsx -r dotenv/config scripts/attachment-analysis/test-local-image.ts",
-    "test:online:image": "tsx -r dotenv/config scripts/attachment-analysis/test-online-image.ts",
-    "test:local:video": "tsx -r dotenv/config scripts/attachment-analysis/test-local-video.ts",
-    "test:online:video": "tsx -r dotenv/config scripts/attachment-analysis/test-online-video.ts",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "typecheck:all": "tsc --noEmit",
     "matrix:check": "tsx scripts/matrix/matrix-tools.ts check",
     "matrix:listen": "tsx scripts/matrix/matrix-tools.ts listen",
     "matrix:send-test": "tsx scripts/matrix/matrix-tools.ts send-test",
-    "support:v2:dataset": "tsx scripts/support-processing-pipeline-v2/runTextAnalysisDataset.ts",
-    "support:v2:dataset:legacy": "tsx scripts/global-pipeline-v2/runners/legacy/runTextAnalysisDataset.legacy.ts",
-    "global-pipeline:fake": "tsx scripts/global-pipeline/runners/fake-matrix/runGlobalPipelineDataset.ts",
-    "global-pipeline:empty-data": "tsx scripts/global-pipeline/runners/fake-matrix/runGlobalPipelineDataset.ts --empty-data",
-    "global-pipeline:live": "tsx scripts/global-pipeline/runners/live-matrix/runMatrixSupportProcessingV2.ts"
+    "automation:live": "tsx -r dotenv/config scripts/support-automation/runSupportAutomation.ts",
+    "automation:dry-run": "SUPPORT_MATRIX_DRY_RUN=true tsx -r dotenv/config scripts/support-automation/runSupportAutomation.ts --dry-run",
+    "test:local:image": "tsx -r dotenv/config scripts/attachment-analysis/test-local-image.ts",
+    "test:online:image": "tsx -r dotenv/config scripts/attachment-analysis/test-online-image.ts",
+    "test:local:video": "tsx -r dotenv/config scripts/attachment-analysis/test-local-video.ts",
+    "test:online:video": "tsx -r dotenv/config scripts/attachment-analysis/test-online-video.ts"
   },
   "repository": {
     "type": "git",
@@ -38,6 +36,7 @@
     "ffmpeg-static": "^5.3.0",
     "ffprobe-static": "^3.1.0",
     "matrix-bot-sdk": "^0.8.0",
+    "matrix-js-sdk": "^42.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

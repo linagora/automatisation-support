@@ -22,22 +22,22 @@ import {
 
 import type {
   SupportAutomationTurnV2Result
-} from "../../../src/support-automation/runSupportAutomationPipelineV2";
+} from "../../../docs/archive/runSupportAutomationPipelineV2";
 import type {
   MatrixDeliveryResult
 } from "../../../src/infrastructure/matrix/typesMatrixChannel.types";
 import type {
   SupportProcessingPersistenceEffectsV2
-} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   LiveMemoryContextUpdate
-} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   LiveMemoryContext
 } from "../../../src/infrastructure/live-memory/typesLiveMemoryContext.types";
 import type {
   MergedTopicSnapshot
-} from "../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 function buildSnapshot(
   overrides: Partial<MergedTopicSnapshot> = {}
@@ -517,6 +517,66 @@ describe("live memory context", function () {
         supportFacing: null
       }
     }));
+    await expect(
+      readLiveMemoryContext(turnIdentity.conversationKey)
+    ).resolves.toEqual(context);
+  });
+
+  it("persists and replaces unansweredRequestedFieldNames on live-memory topics", async function () {
+    const turnIdentity = {
+      channel: "matrix" as const,
+      conversationKey: buildLiveMemoryConversationKey({
+        channel: "matrix",
+        roomId: "!room:example.org",
+        threadId: null,
+        userId: "@user:example.org"
+      }),
+      roomId: "!room:example.org",
+      threadId: null,
+      userId: "@user:example.org"
+    };
+
+    await applyLiveMemoryUpdate({
+      turnIdentity,
+      liveMemoryUpdate: buildLiveMemoryUpdate({
+        topics: [
+          {
+            topicId: 1,
+            title: "Login problem",
+            broadCategoryHint: "access_security",
+            summary: "The user cannot log in.",
+            caseDetails: [],
+            attemptedActions: [],
+            unansweredRequestedFieldNames: ["error_message"]
+          }
+        ]
+      })
+    });
+
+    const context = await applyLiveMemoryUpdate({
+      turnIdentity,
+      liveMemoryUpdate: buildLiveMemoryUpdate({
+        topics: [
+          {
+            topicId: 1,
+            title: "Login problem",
+            broadCategoryHint: "access_security",
+            summary: "The user cannot log in.",
+            caseDetails: [
+              {
+                key: "error_message",
+                value: "Invalid password",
+                evidence: "Invalid password"
+              }
+            ],
+            attemptedActions: []
+          }
+        ]
+      })
+    });
+
+    expect(context.topics[0]?.unansweredRequestedFieldNames).toBeUndefined();
+    expect(context.topics[0]).not.toHaveProperty("qualificationSummary");
     await expect(
       readLiveMemoryContext(turnIdentity.conversationKey)
     ).resolves.toEqual(context);

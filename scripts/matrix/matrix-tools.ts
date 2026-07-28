@@ -1,7 +1,5 @@
 import "dotenv/config";
 
-import * as sdk from "matrix-js-sdk";
-
 import {
   loadMatrixChannelConfigFromEnv
 } from "../../src/infrastructure/matrix/loadMatrixChannelConfig";
@@ -15,6 +13,22 @@ type MinimalMatrixConfig = {
   homeserverUrl: string;
   accessToken: string;
   roomId: string;
+};
+
+type MatrixClientForTools = {
+  getUserId: () => string | null;
+  on: (eventName: string, handler: (...args: unknown[]) => void) => void;
+  startClient: (options: { initialSyncLimit: number }) => Promise<void> | void;
+  stopClient: () => void;
+  sendEvent: (
+    roomId: string,
+    eventType: string,
+    content: {
+      msgtype: string;
+      body: string;
+    },
+    txnId: string
+  ) => Promise<unknown>;
 };
 
 function printUsage(): void {
@@ -54,11 +68,11 @@ function readCommand(): MatrixToolCommand {
 }
 
 function readMatrixConfig(): MinimalMatrixConfig {
-  const loadedConfig = loadMatrixChannelConfigFromEnv() as Partial<MinimalMatrixConfig>;
+  const loadedConfig = loadMatrixChannelConfigFromEnv();
 
   const homeserverUrl = loadedConfig.homeserverUrl;
   const accessToken = loadedConfig.accessToken;
-  const roomId = loadedConfig.roomId;
+  const roomId = loadedConfig.defaultRoomId;
 
   if (!homeserverUrl || !accessToken || !roomId) {
     throw new Error(
@@ -94,11 +108,15 @@ function checkMatrixConfig(): void {
   console.log("[MatrixConfig] OK");
 }
 
-function createMatrixClient(config: MinimalMatrixConfig): sdk.MatrixClient {
+async function createMatrixClient(
+  config: MinimalMatrixConfig
+): Promise<MatrixClientForTools> {
+  const sdk = await import("matrix-js-sdk");
+
   return sdk.createClient({
     baseUrl: config.homeserverUrl,
     accessToken: config.accessToken
-  });
+  }) as MatrixClientForTools;
 }
 
 async function listenMatrixRoom(): Promise<void> {
@@ -109,7 +127,7 @@ async function listenMatrixRoom(): Promise<void> {
   }
 
   const config = readMatrixConfig();
-  const client = createMatrixClient(config);
+  const client = await createMatrixClient(config);
   const startedAt = Date.now();
   const botUserId = client.getUserId();
 
@@ -204,7 +222,7 @@ async function sendTestMatrixMessage(): Promise<void> {
   }
 
   const config = readMatrixConfig();
-  const client = createMatrixClient(config);
+  const client = await createMatrixClient(config);
   const message =
     process.argv.slice(3).join(" ").trim() ||
     "Test Matrix integration from support-processing pipeline.";

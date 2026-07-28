@@ -1,0 +1,19 @@
+{
+  "runId": "20260708_085250",
+  "scenarioId": "android_notifications_already_tried",
+  "messageName": "android_permissions_done",
+  "event": {
+    "channel": "matrix",
+    "roomId": "!fake-android-notifications:example.org",
+    "userId": "@fake-android-notifications:example.org",
+    "messageId": "20260708_085250__android_notifications_already_tried__msg_001",
+    "content": "J'ai déjà activé les notifications Android pour l'application, et le mode ne pas déranger est désactivé.",
+    "createdAt": "2026-07-08T08:52:50.115Z",
+    "rawEvent": {
+      "fakeMatrixScenarioId": "android_notifications_already_tried",
+      "messageName": "android_permissions_done"
+    }
+  },
+  "delayMs": 0,
+  "typingBeforeMs": 0
+}

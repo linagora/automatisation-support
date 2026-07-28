@@ -871,3 +871,230 @@ Notes:
 
 ```
 ```
+de chaque brique import {fonctionts, typeinput, typeoutput}
+type input de l support procesing pipleine
+type outut de la support processing pipeline
+type RunSupportProcessingPipelineV3OptimizedOutput = {
+  status: "processed" | "fallback";
+  fallbackReason: RunSupportProcessingPipelineV3OptimizedFallbackReason | null;
+  userResponse: PipelineUserResponse;
+  patches: PipelinePatch[];
+  intermOutputs: RunSupportProcessingPipelineV3OptimizedDebug | null;
+};
+type fallback
+
+fonctions principale
+intermOutputs.detectsuspicouspattern=fonctiondelabrique(input1;input2;input 3)
+intermOutputs.plananalysis=fonctiondelabrique(input1;input2;input 3)
+
+if intermOutputs.planalyssianalysetext==true and intermOutputs.plananalyssianalyseattachement==true
+then 
+    const [intermOutputs.analyzeTextSurfaceOutput, intermOutputs.analyzeAttachmentSurfaceOutput] = await Promise all([analyzeTextSurfacePromise,analyzeAttachmentSurfacePromise]);
+    fallbackrouteur(intermOutputs.analyzeTextSurfaceOutput)
+    fallbackrouteur(intermOutputs.analyzeAttachmentSurfaceOutput)
+elif planalyssiouptut.analysetext==true then const
+analysetextsurfacoutput=fonctiondelabrique(input1;input2;input 3)
+debug.analyzeTextSurfaceOutput=analyzeTextSurfaceOutput
+analyseattachementsurfacoutput=null
+debug.analyzeAttachmentSurfaceOutput=analyzeAttachmentSurfaceOutput
+elif lananalyssioutput.analyseattachement==true
+analysetextsurfacoutput=null
+analyseattachementsurfacoutput=fonctiondelabrique(input1;input2;input 3)
+else: return fallback hard code {
+  status: "processed"
+  fallbackReason: null;
+  userResponse: "Not analyzed automatically beacause of untrust message or account"
+  patches: à définir cohénret en live memory, à mettre dans le user state
+  debug: RunSupportProcessingPipelineV3OptimizedDebug
+};
+
+if analyzetextsurfaceouptut =!null and analyzetextsurfaceoutput
+standardfragementoutput=fonctiondelabrique(input1;input2;input 3)
+
+
+//////////////////////////////////////////////////////
+
+de chaque brique :
+  import {functionName, type BrickInput, type BrickOutput}
+
+type RunSupportProcessingPipelineV3OptimizedInput = {
+  latestUserMessage;
+  latestUserAttachments;
+  liveMemory;
+};
+
+type RunSupportProcessingPipelineV3OptimizedOutput = {
+  status: "processed" | "fallback";
+  fallbackReason: RunSupportProcessingPipelineV3OptimizedFallbackReason | null;
+  userResponse:BrickOutput;
+  patches: BrickOutput ;
+  intermOutputs: {BrickOutput1 | null ;
+                  BrickOutput2 | null;
+                  BrickOutput3 | null;
+                  ....}  
+};
+
+type RunSupportProcessingPipelineV3OptimizedFallbackReason =
+  | {source: "brick"; brick_output: unknown}
+  | {source: "runner_or_unexpected"; errorMessage: unknown};
+
+async function runSupportProcessingPipelineV3Optimized(input) {
+  const intermOutputs = {};
+
+  intermOutputs.detectSuspiciousPromptPatternsOutput =
+    detectSuspiciousPromptPatterns(brickinput1,brickinput2,brickinput3...);
+
+  intermOutputs.planTurnAnalysisOutput =
+    planTurnAnalysis(brickinput1,brickinput2,brickinput3...);
+
+  if (
+    intermOutputs.planTurnAnalysisOutput.analyzeText === true &&
+    intermOutputs.planTurnAnalysisOutput.analyzeAttachments === true
+  ) {
+    const [
+      intermOutputs.analyzeTextSurfaceOutput,
+      intermOutputs.analyzeAttachmentSurfaceOutput
+    ] = await Promise.all([
+      runAnalyzeTextSurface(brickinput1,brickinput2,brickinput3...),
+      runAnalyzeAttachmentSurface(brickinput1,brickinput2,brickinput3...)
+    ]);
+
+    fallbackRouter(intermOutputs.analyzeTextSurfaceOutput);
+    fallbackRouter(intermOutputs.analyzeAttachmentSurfaceOutput);
+  }
+
+  else if (intermOutputs.planTurnAnalysisOutput.analyzeText === true) {
+    intermOutputs.analyzeTextSurfaceOutput =
+      await runAnalyzeTextSurface(brickinput1,brickinput2,brickinput3...);
+
+    intermOutputs.analyzeAttachmentSurfaceOutput = null;
+
+    fallbackRouter(intermOutputs.analyzeTextSurfaceOutput);
+  }
+
+  else if (intermOutputs.planTurnAnalysisOutput.analyzeAttachments === true) {
+    intermOutputs.analyzeTextSurfaceOutput = null;
+
+    intermOutputs.analyzeAttachmentSurfaceOutput =
+      await runAnalyzeAttachmentSurface(brickinput1,brickinput2,brickinput3...);
+
+    fallbackRouter(intermOutputs.analyzeAttachmentSurfaceOutput);
+  }
+
+  else {
+    return {
+      status: "processed",
+      fallbackReason: null,
+      userResponse: "Not analyzed automatically because of untrusted message or account",
+      patches: "à définir proprement dans la live memory / userState",
+      intermOutputs
+    };
+  }
+
+  
+  if (
+    intermOutputs.analyzeTextSurfaceOutput !== null)
+    intermOutputs.buildStandardResponseFragmentsOutput =
+      buildStandardResponseFragments(brickinput1,brickinput2,brickinput3...);
+  }
+
+  if (
+    intermOutputs.analyzeTextSurfaceOutput !== null &&
+    lenght(intermOutputs.analyzeTextSurfaceOutput.segments.categories."support_relevant") == 0
+    intermOutputs.composer =await  runComposer(builds responsefragments, mode=onlyresponsefragments)
+    fallbackRouter(intermOutputs.composer);
+    intermOutputs.renderer =await runRenderer(intermOutputs.composer)
+    fallbackRouter(intermOutputs.renderer);
+    intermOutputs.patches=null
+    return {
+      status: "processed",
+      fallbackReason: null,
+      userResponse: intermOutputs.renderer.content",
+      patches: intermOutputs.patches,
+      intermOutputs
+        {
+
+    }
+
+  elif 
+  intermOutputs.analyzeTextSurfaceOutput !== null &&
+    lenght(intermOutputs.analyzeTextSurfaceOutput.segments.categories."support_relevant") > 0
+    intermOutputs.supportnalayse=await  runsupportnalayse(brickinput1,brickinput2,brickinput3...)
+    fallbackRouteur(intermOutputs.supportnalayse)
+
+    intermoutputs.topicUpdatePlans=await runtopicUpdatePlans(brickinput1,brickinput2,brickinput3...)
+    fallbackRouteur(intermOutputs.topicUpdatePlans)
+
+    for topicUpdatePlan in intermOutputs.topicUpdatePlans
+      intermoutputs.asses-support-need=await runasses-support-need(brickinput1,brickinput2,brickinput3...)
+      fallbackRouteur(intermOutputs.asses-support-need)
+      intermoutputs.assess-readiness=buildassess-readiness(brickinput1,brickinput2,brickinput3...)
+      intermoutputs.derives-support-routin-optimized=derives-support-routin-optimized
+      
+      if intermoutputs.derives-support-routin-optimized.shouldSeacrhSimilairty
+      then const [
+      intermOutputs.qualifcaiton_orienter(anciennement calogue),
+      intermOutputs.seacrhsimialrty(anciennement rag)
+    ] = await Promise.all([
+      runqualifcaiton_orienter(brickinput1,brickinput2,brickinput3...),
+      runseacrhsimialrty(brickinput1,brickinput2,brickinput3...)
+    ]);
+    fallbackRouteur(intermOutputs.qualifcaiton_orienter)
+    fallbackRouteur(intermOutputs.seacrhsimialrty)
+    intermOutputs.synthehseiRAG=runsynthehseiRAGbrickinput1,brickinput2,brickinput3...),
+    fallbackRouteur(intermOutputs.synthehseiRAG)
+      else 
+      intermOutputs.qualifcaiton_orienter(anciennement calogue)=runqualifcaiton_orienter(brickinput1,brickinput2,brickinput3...)
+      fallbackRouteur(intermOutputs.qualifcaiton_orienter)
+    intermOutputs.planner=await runplanner(brickinput1,brickinput2,brickinput3...),
+  intermOutputs.composer_planner = ...
+  fallback
+  intermOutputs.render = ...
+  fallback
+  intermOutputs.patches = ...
+  fallback
+  return {
+      status: "processed",
+      fallbackReason: null,
+      userResponse: intermOutputs.renderer.content",
+      patches: intermOutputs.patches,
+      intermOutputs
+        {
+else : 
+return 
+  status: "fallback";
+  fallbackReason: {source: "runner_or_unexpected"; errorMessage: unknown}
+  userResponse:"Error technical in the auotmatique analyse not able to provide response, suppport human will come for you"
+  patches: "à définir proprement dans la live memory / userState",;
+  intermOutputs: {BrickOutput1 | null ;
+                  BrickOutput2 | null;
+                  BrickOutput3 | null;
+                  ....}  
+};
+
+funciton fallbackRouteur{input : output_of_a_brick}
+  if output_of_a_brick.status=fallback
+  
+  STOP AND return 
+  status: "fallback";
+  fallbackReason:  {source: "brick"; brick_output: unknown}
+  userResponse:"Error technical in the auotmatique analyse not able to provide response, suppport human will come for you"
+  patches: "à définir proprement dans la live memory / userState",;
+  intermOutputs: {BrickOutput1 | null ;
+                  BrickOutput2 | null;
+                  BrickOutput3 | null;
+                  ....}  
+} 
+
+  
+
+      
+
+
+
+
+
+
+
+
+}

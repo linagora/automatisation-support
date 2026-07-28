@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   runSupportAutomationTurnV2
-} from "../../src/support-automation/runSupportAutomationPipelineV2";
+} from "../../docs/archive/runSupportAutomationPipelineV2";
 import {
   buildSupportTurnIdentityV2
 } from "../../src/support-automation/build-input/buildSupportTurnIdentityV2";
@@ -30,13 +30,13 @@ import type {
 import type {
   SupportProcessingPipelineV2Steps,
   SupportProcessingPersistenceEffectsV2
-} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   UserResponse
-} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportMessaging.types";
+} from "../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportMessaging.types";
 import type {
   RenderedSupportResponse
-} from "../../src/support-automation/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+} from "../../src/support-automation/support-processing-pipeline-v2-LEGACY/response-renderer/typesRenderSupportResponse.types";
 
 function buildTicket(): JsonTicket {
   return {

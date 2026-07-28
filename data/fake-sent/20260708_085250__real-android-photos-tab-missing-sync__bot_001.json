@@ -1,0 +1,9 @@
+{
+  "runId": "20260708_085250",
+  "scenarioId": "real-android-photos-tab-missing-sync",
+  "providerMessageId": "20260708_085250__real-android-photos-tab-missing-sync__bot_001",
+  "localId": "delivery:matrix:!fake-real-android-photos-tab-missing-sync:example.org:@fake-real-android-photos-tab-missing-sync:example.org:20260708_085250__real-android-photos-tab-missing-sync__msg_001:0",
+  "roomId": "!fake-real-android-photos-tab-missing-sync:example.org",
+  "content": "Merci pour votre retour concernant l'absence de l'onglet Photos dans l'application Twake sur Android 15 et le fait que le bouton Ajouter ne fonctionne pas comme solution de contournement. Pourriez-vous nous indiquer quelle action vous effectuez lorsque le problème se produit et si cela se produit à chaque fois, seulement parfois ou dans des cas spécifiques ?",
+  "deliveredAt": "2026-07-08T08:53:49.774Z"
+}

@@ -1,0 +1,9 @@
+{
+  "runId": "20260708_085250",
+  "scenarioId": "real-duplicate-monthly-charge-cozy-easypark",
+  "providerMessageId": "20260708_085250__real-duplicate-monthly-charge-cozy-easypark__bot_001",
+  "localId": "delivery:matrix:!fake-real-duplicate-monthly-charge-cozy-easypark:example.org:@fake-real-duplicate-monthly-charge-cozy-easypark:example.org:20260708_085250__real-duplicate-monthly-charge-cozy-easypark__msg_001:0",
+  "roomId": "!fake-real-duplicate-monthly-charge-cozy-easypark:example.org",
+  "content": "Je comprends que vous avez été facturé deux fois par mois (2,99 EUR) par CozyCloud et Easypark SARL Metz depuis votre passage à Twake. Pourriez-vous préciser à quel produit ou service ces doublons de facturation correspondent et indiquer les dates ou périodes exactes des facturations en double ?",
+  "deliveredAt": "2026-07-08T08:54:05.537Z"
+}

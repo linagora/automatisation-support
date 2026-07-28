@@ -5,26 +5,26 @@ import {
 } from "../../../../src/infrastructure/llm/llm-client";
 import {
   analyzeTextSurface
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/analyzeTextSurface";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-text-surface/analyzeTextSurface";
 import {
   buildAnalyzeTextSurfacePrompt
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/buildAnalyzeTextSurfacePrompt";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-text-surface/buildAnalyzeTextSurfacePrompt";
 import {
   formatTextSurfaceAnalysisOutput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/formatTextSurfaceAnalysisOutput";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-text-surface/formatTextSurfaceAnalysisOutput";
 import {
   requestTextSurfaceAnalysis
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/requestTextSurfaceAnalysis";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-text-surface/requestTextSurfaceAnalysis";
 import {
   textSurfaceAnalysisResponseFormat
-} from "../../../../src/support-automation/support-processing-pipeline-v2/analyze-text-surface/textSurfaceAnalysis.schema";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/analyze-text-surface/textSurfaceAnalysis.schema";
 
 import type {
   AnalyzeTextSurfaceInput,
   LatestUserMessage,
   RecentInteractionContext,
   TurnAnalysisPlan
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 vi.mock("../../../../src/infrastructure/llm/llm-client", function () {
   return {
@@ -140,7 +140,7 @@ describe("analyzeTextSurface", function () {
     );
   });
 
-  it("requests text surface analysis with the quickDecision preset", async function () {
+  it("requests text surface analysis with the standard preset", async function () {
     callLLMMock.mockResolvedValue({
       success: true,
       content: JSON.stringify({
@@ -160,7 +160,7 @@ describe("analyzeTextSurface", function () {
     expect(callLLMMock).toHaveBeenCalledWith(
       expect.any(Array),
       expect.objectContaining({
-        preset: "quickDecision",
+        preset: "standard",
         temperature: 0,
         maxTokens: 500,
         responseFormat: expect.objectContaining({

@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSupportProcessingPersistenceEffectsV2
-} from "../../../../src/support-automation/support-processing-pipeline-v2/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/build-persistence-effects/buildSupportProcessingPersistenceEffectsV2";
 
 import type {
   BuildSupportPersistenceEffectsInput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 function buildInput(
   overrides: Partial<BuildSupportPersistenceEffectsInput> = {}
@@ -123,5 +123,41 @@ describe("buildSupportProcessingPersistenceEffectsV2", function () {
       status: "watch",
       flags: ["matched_prompt_pattern:ignore_previous_instructions"]
     });
+  });
+
+  it("copies unansweredRequestedFieldNames from topic snapshots into live memory updates", function () {
+    const effects = buildSupportProcessingPersistenceEffectsV2(buildInput({
+      mergedTopicSnapshots: [
+        {
+          snapshotId: "topic_4",
+          temporaryTopicId: null,
+          topicId: 4,
+          isNewTopic: false,
+          title: "Notifications Android",
+          broadCategoryHint: "bug",
+          summary: "Les notifications Android ne sont pas reçues.",
+          caseDetails: [
+            {
+              key: "platform",
+              value: "Android",
+              evidence: "Android"
+            }
+          ],
+          attemptedActions: [],
+          unansweredRequestedFieldNames: ["error_message", "amount"],
+          sourceUnderstandingIds: [],
+          sourceVerbatims: [],
+          sourceOpIndex: 0,
+          baseTopic: null
+        }
+      ]
+    }));
+
+    expect(
+      effects.liveMemoryUpdate.topics[0]?.unansweredRequestedFieldNames
+    ).toEqual(["error_message", "amount"]);
+    expect(effects.liveMemoryUpdate.topics[0]).not.toHaveProperty(
+      "qualificationSummary"
+    );
   });
 });

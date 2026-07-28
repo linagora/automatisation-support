@@ -2,16 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildComposeSupportResponsePlanPrompt
-} from "../../../../src/support-automation/support-processing-pipeline-v2/compose-support-response-plan/buildComposeSupportResponsePlanPrompt";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/compose-support-response-plan/buildComposeSupportResponsePlanPrompt";
 import {
   formatComposeSupportResponsePlanOutput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/compose-support-response-plan/formatComposeSupportResponsePlanOutput";
 
 import type {
   ComposeSupportResponsePlanInput,
   ResponsePlanV2,
   StandardResponseFragment
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 const greetingFragment: StandardResponseFragment = {
   category: "standard_interaction",

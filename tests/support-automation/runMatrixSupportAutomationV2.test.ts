@@ -5,13 +5,13 @@ import { tmpdir } from "node:os";
 
 import {
   runMatrixSupportAutomationV2
-} from "../../src/support-automation/runMatrixSupportAutomationV2";
+} from "../../docs/archive/runMatrixSupportAutomationV2";
 import {
   runSupportAutomationTurnV2 as realRunSupportAutomationTurnV2
-} from "../../src/support-automation/runSupportAutomationPipelineV2";
+} from "../../docs/archive/runSupportAutomationPipelineV2";
 import type {
   SupportAutomationTurnV2Result
-} from "../../src/support-automation/runSupportAutomationPipelineV2";
+} from "../../docs/archive/runSupportAutomationPipelineV2";
 import {
   buildSupportTurnIdentityV2
 } from "../../src/support-automation/build-input/buildSupportTurnIdentityV2";
@@ -32,13 +32,13 @@ import type {
 import type {
   SupportProcessingPipelineV2Steps,
   SupportProcessingPersistenceEffectsV2
-} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 import type {
   RenderedSupportResponse
-} from "../../src/support-automation/support-processing-pipeline-v2/response-renderer/typesRenderSupportResponse.types";
+} from "../../src/support-automation/support-processing-pipeline-v2-LEGACY/response-renderer/typesRenderSupportResponse.types";
 import type {
   UserResponse
-} from "../../src/support-automation/support-processing-pipeline-v2/typesSupportMessaging.types";
+} from "../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportMessaging.types";
 
 function buildTempRepositories(): {
   ticketRepository: JsonTicketRepository;

@@ -11,25 +11,25 @@ vi.mock(
 
 import {
   buildProposeTopicUpdatesPrompt
-} from "../../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/buildProposeTopicUpdatesPrompt";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/propose-topic-updates/buildProposeTopicUpdatesPrompt";
 import {
   buildTopicPatchesAndSnapshots
-} from "../../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/buildTopicPatchesAndSnapshots";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/propose-topic-updates/buildTopicPatchesAndSnapshots";
 import {
   formatProposeTopicUpdatesOutput
-} from "../../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/formatProposeTopicUpdatesOutput";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/propose-topic-updates/formatProposeTopicUpdatesOutput";
 import {
   proposeTopicUpdates
-} from "../../../../src/support-automation/support-processing-pipeline-v2/propose-topic-updates/proposeTopicUpdates";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/propose-topic-updates/proposeTopicUpdates";
 import {
   buildPlanKnowledgeEnrichmentPrompt
-} from "../../../../src/support-automation/support-processing-pipeline-v2/plan-knowledge-enrichment/buildPlanKnowledgeEnrichmentPrompt";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/plan-knowledge-enrichment/buildPlanKnowledgeEnrichmentPrompt";
 
 import type {
   PlanKnowledgeEnrichmentInput,
   TextUnderstanding,
   TopicUpdateOp
-} from "../../../../src/support-automation/support-processing-pipeline-v2/typesSupportProcessingPipelineV2.types";
+} from "../../../../src/support-automation/support-processing-pipeline-v2-LEGACY/typesSupportProcessingPipelineV2.types";
 
 function understanding(params: {
   id: string;
