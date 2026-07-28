@@ -140,33 +140,6 @@ async function runIssueResolutionBranch(
       });
     }
 
-    const deepQualificationOutput = await runDeepQualification({
-      supportDomain,
-      previousTopic: input.currentTopic,
-      currentCaseDetailsExtracted,
-      retrieveKnowledge: sourceTopicManager.retrieveKnowledge,
-      currentUserMessage: input.currentUserMessage,
-      previousConversationTurn: input.previousConversationTurn
-    });
-
-    internalOutputs.deepQualificationOutput = deepQualificationOutput;
-    sourceTopicManager = markInProgress({
-      ...sourceTopicManager,
-      currentStep: deepQualificationOutput.say ? "deep_qualification" : sourceTopicManager.currentStep,
-      deepQualification: deepQualificationOutput.deepQualification,
-      idleMode: {
-        isActivated: false
-      }
-    });
-
-    if (deepQualificationOutput.say) {
-      return buildProcessedOutput({
-        say: deepQualificationOutput.say,
-        sourceTopicManager,
-        internalOutputs
-      });
-    }
-
     const solutionOutput = await runSolution({
       previousTopic: input.currentTopic,
       retrieveKnowledge: sourceTopicManager.retrieveKnowledge,
@@ -189,6 +162,33 @@ async function runIssueResolutionBranch(
     if (solutionOutput.say) {
       return buildProcessedOutput({
         say: solutionOutput.say,
+        sourceTopicManager,
+        internalOutputs
+      });
+    }
+
+    const deepQualificationOutput = await runDeepQualification({
+      supportDomain,
+      previousTopic: input.currentTopic,
+      currentCaseDetailsExtracted,
+      retrieveKnowledge: sourceTopicManager.retrieveKnowledge,
+      currentUserMessage: input.currentUserMessage,
+      previousConversationTurn: input.previousConversationTurn
+    });
+
+    internalOutputs.deepQualificationOutput = deepQualificationOutput;
+    sourceTopicManager = markInProgress({
+      ...sourceTopicManager,
+      currentStep: deepQualificationOutput.say ? "deep_qualification" : sourceTopicManager.currentStep,
+      deepQualification: deepQualificationOutput.deepQualification,
+      idleMode: {
+        isActivated: false
+      }
+    });
+
+    if (deepQualificationOutput.say) {
+      return buildProcessedOutput({
+        say: deepQualificationOutput.say,
         sourceTopicManager,
         internalOutputs
       });
