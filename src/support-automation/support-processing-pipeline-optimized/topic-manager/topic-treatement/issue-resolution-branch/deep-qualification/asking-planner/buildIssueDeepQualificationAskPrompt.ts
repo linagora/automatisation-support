@@ -1,17 +1,15 @@
-import {getDeepIssueFieldAskPrompt, getDeepIssueFieldAskType} from "../qualificationRules.catalog";
+import {
+  getDeepIssueFieldGroupKey,
+  getDeepIssueFieldGroupLabel,
+  getDeepIssueFieldRequestLabel
+} from "../qualificationRules.catalog";
 
 import type {LLMMessage} from "../../../../../../../infrastructure/llm/llm-client";
 import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {DeepQualificationGroupKey} from "../qualificationRules.catalog";
 
 type DeepQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["deepQualification"];
 type FieldToAsk = DeepQualification["caseDetailsToAskBecauseOfDeepQualification"][number] & {status: "asking"};
-
-type FormattedFieldToAsk = {
-  key: string | null;
-  reason: string | null;
-  askGuidance: string;
-  askType: "contextual_problem_detail" | "simple_factual_detail";
-};
 
 export type IssueDeepQualificationAskPromptInput = {
   currentUserMessage: {content: string; channel?: string};
@@ -21,49 +19,15 @@ export type IssueDeepQualificationAskPromptInput = {
   };
   fieldsToAsk: FieldToAsk[];
   userFacingInformation: string | null;
+  supportDomain: string | null;
 };
 
-function buildIssueDeepQualificationAskPrompt(input: IssueDeepQualificationAskPromptInput): {messages: LLMMessage[]} {
-  const formattedFieldsToAsk = input.fieldsToAsk.map(formatFieldForPrompt);
-
+function buildIssueDeepQualificationAskPrompt(_input: IssueDeepQualificationAskPromptInput): {messages: LLMMessage[]} {
   return {
     messages: [
       {
         role: "system",
-        content: `You write a concise customer-facing clarification message for a support issue.
-
-Rules:
-- Write in English.
-- Return only JSON.
-- Do not expose internal field keys.
-- Do not claim the issue is solved.
-- Do not ask for information that is already present.
-- Use the ask guidance as meaning, not as final wording.
-- Deep qualification is for technical context and diagnostic details, not for re-asking the basic issue flow.
-- Do not ask again for the reproduction steps, trigger action, failure step, observed result, or expected result unless they are explicitly present in fieldsToAsk.
-- Ask at most 3 compact questions in one message.
-- Prioritize details that materially help diagnosis.
-- Group technical environment details naturally.
-- Avoid repeated connectors such as "also", "additionally", or "moreover".
-- If the user may not have one detail, say they can tell us if they cannot provide it.
-- If the user may not know a detail, say they can tell us they do not know.
-- If userFacingInformation contains useful context from similar cases, use it to ask a more targeted first paragraph.
-- If userFacingInformation is null or not useful for a question, do not invent a knowledge-based paragraph.
-- The final say should have at most two paragraphs.
-- Paragraph 1, when useful: smart contextual questions based on the issue context and userFacingInformation.
-- Paragraph 2, when useful: simple factual details requested naturally from the simple_factual_detail fields.
-- Do not output bullet lists unless the question is much clearer that way.`
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          currentUserMessage: input.currentUserMessage,
-          previousConversationTurn: input.previousConversationTurn,
-          userFacingInformation: input.userFacingInformation,
-          contextualProblemDetailsToAsk: formattedFieldsToAsk.filter((field) => field.askType === "contextual_problem_detail"),
-          simpleFactualDetailsToAsk: formattedFieldsToAsk.filter((field) => field.askType === "simple_factual_detail"),
-          outputShape: {say: "<customer-facing message in English>"}
-        }, null, 2)
+        content: "Deep qualification is currently deterministic. Do not call the LLM for this step."
       }
     ]
   };
@@ -72,45 +36,80 @@ Rules:
 function buildDeterministicDeepQualificationAsk(input: {
   fieldsToAsk: FieldToAsk[];
   userFacingInformation: string | null;
+  supportDomain: string | null;
 }): string {
-  const maxQuestions = 3;
-  const contextualPrompts = input.fieldsToAsk
-    .filter((field) => getDeepIssueFieldAskType(field.key) === "contextual_problem_detail")
-    .map((field) => getDeepIssueFieldAskPrompt(field.key))
-    .slice(0, maxQuestions);
+  const groupedFields = groupFieldsToAsk({
+    fieldsToAsk: input.fieldsToAsk,
+    supportDomain: input.supportDomain
+  });
 
-  const simplePrompts = input.fieldsToAsk
-    .filter((field) => getDeepIssueFieldAskType(field.key) === "simple_factual_detail")
-    .map((field) => getDeepIssueFieldAskPrompt(field.key))
-    .slice(0, Math.max(0, maxQuestions - contextualPrompts.length));
+  const bullets = groupedFields
+    .map((group) => buildGroupBullet(group))
+    .filter((value) => value.trim() !== "")
+    .slice(0, 4);
 
-  const paragraphs: string[] = [];
-
-  if (contextualPrompts.length > 0 || input.userFacingInformation) {
-    paragraphs.push([
-      input.userFacingInformation
-        ? "Based on what we can already infer from similar cases, I need one more precise detail to narrow this down."
-        : "I need one more precise detail to narrow this down.",
-      ...contextualPrompts
-    ].join(" "));
+  if (bullets.length === 0) {
+    return "Could you share any remaining detail that may help support investigate this issue?";
   }
 
-  if (simplePrompts.length > 0) {
-    paragraphs.push(`${simplePrompts.join(" ")} If you cannot provide one of these details, just say so and I can continue with what is available.`);
-  }
+  const intro = input.userFacingInformation
+    ? "To help the support team check the most relevant cause, please provide these details if available:"
+    : "To help the support team investigate, please provide these details if available:";
 
-  return paragraphs.length > 0
-    ? paragraphs.join("\n\n")
-    : "Could you share a bit more detail about the issue so I can narrow it down?";
+  return `${intro}\n${bullets.join("\n")}\n\nIf you do not know or cannot provide one of these details, just say so.`;
 }
 
-function formatFieldForPrompt(field: FieldToAsk): FormattedFieldToAsk {
-  return {
-    key: field.key,
-    reason: field.reason,
-    askGuidance: getDeepIssueFieldAskPrompt(field.key),
-    askType: getDeepIssueFieldAskType(field.key)
-  };
+type GroupedFieldsToAsk = {
+  groupKey: DeepQualificationGroupKey | "other";
+  groupLabel: string;
+  fields: FieldToAsk[];
+};
+
+function groupFieldsToAsk(input: {
+  fieldsToAsk: FieldToAsk[];
+  supportDomain: string | null;
+}): GroupedFieldsToAsk[] {
+  const groups = new Map<string, GroupedFieldsToAsk>();
+
+  for (const field of input.fieldsToAsk) {
+    const groupKey = getDeepIssueFieldGroupKey(input.supportDomain, field.key) ?? "other";
+    const groupLabel = groupKey === "other"
+      ? "Other details"
+      : getDeepIssueFieldGroupLabel(groupKey);
+
+    const existingGroup = groups.get(groupKey);
+    if (existingGroup) {
+      existingGroup.fields.push(field);
+      continue;
+    }
+
+    groups.set(groupKey, {
+      groupKey,
+      groupLabel,
+      fields: [field]
+    });
+  }
+
+  return [...groups.values()];
+}
+
+function buildGroupBullet(group: GroupedFieldsToAsk): string {
+  const labels = group.fields
+    .map((field) => getDeepIssueFieldRequestLabel(field.key))
+    .filter((value) => value.trim() !== "");
+
+  const uniqueLabels = [...new Set(labels)];
+  if (uniqueLabels.length === 0) return "";
+
+  return `- ${group.groupLabel}: ${joinWithAnd(uniqueLabels)}.`;
+}
+
+function joinWithAnd(values: readonly string[]): string {
+  if (values.length === 0) return "";
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+
+  return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1]}`;
 }
 
 export {

@@ -1,0 +1,612 @@
+{
+  "handover": {
+    "isHandover": true,
+    "handoverReason": "detected_by_system"
+  },
+  "previousConversationTurn": {
+    "previousUserMessage": "ah là ça vient de fonctionne un peu mais parfois le bug revient, ça dépend il semblerait de l'odinateur que j'utilsie",
+    "previousBotMessage": "Merci. Je garderai cette mise à jour avec le sujet et je la transmettrai à l'équipe de support si nécessaire."
+  },
+  "failedPipelineMessages": [],
+  "securityAlerts": [],
+  "userState": {
+    "status": "normal",
+    "flags": []
+  },
+  "topics": [
+    {
+      "status": "unsolved",
+      "sourceAnalyzeSupportText": {
+        "caseDetailsExtracted": [
+          {
+            "key": "product_or_service",
+            "value": "twake",
+            "evidence": "messages sur twake",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "messages disappear",
+            "evidence": "parfois ça disparai",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "Twake Chat",
+            "evidence": "Cela se produit dans Twake Chat",
+            "status": "obtained"
+          },
+          {
+            "key": "failure_step",
+            "value": "lorsque j’entre dans le chat",
+            "evidence": "quand j’entre dans le chat",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "le message n’apparaît pas ou disparaît presque aussitôt",
+            "evidence": "le message n’apparaît pas ou disparaît presque aussitôt",
+            "status": "obtained"
+          },
+          {
+            "key": "error_message",
+            "value": null,
+            "evidence": "Je n’ai pas vu de message d’erreur",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "expected_result",
+            "value": "le message apparaisse normalement dans la conversation de groupe et reste visible dans le fil de discussion, comme les autres messages",
+            "evidence": "Je m’attendais à ce que le message apparaisse normalement dans la conversation de groupe et reste visible dans le fil de discussion, comme les autres messages.",
+            "status": "obtained"
+          },
+          {
+            "key": "trigger_action",
+            "value": "cliquer sur le channel pour voir le message et y répondre",
+            "evidence": "j'ai cliqué sur le channel pour voir le message et y répondre",
+            "status": "obtained"
+          },
+          {
+            "key": "platform",
+            "value": "web",
+            "evidence": "J’accède à Twake Chat depuis un navigateur web",
+            "status": "obtained"
+          },
+          {
+            "key": "operating_system",
+            "value": "Linux",
+            "evidence": "ordinateur sous Ubuntu/Linux",
+            "status": "obtained"
+          },
+          {
+            "key": "browser",
+            "value": "Firefox",
+            "evidence": "navigateur web, sur Firefox",
+            "status": "obtained"
+          },
+          {
+            "key": "device",
+            "value": "ordinateur",
+            "evidence": "ordinateur sous Ubuntu/Linux",
+            "status": "obtained"
+          },
+          {
+            "key": "affected_scope",
+            "value": "conversation de groupe Twake Chat",
+            "evidence": "dans une conversation de groupe Twake Chat",
+            "status": "obtained"
+          },
+          {
+            "key": "affected_users",
+            "value": "only me",
+            "evidence": "Le problème semble m’affecter uniquement moi",
+            "status": "obtained"
+          },
+          {
+            "key": "affected_scope",
+            "value": "unknown if other conversations or workspace are affected",
+            "evidence": "Je ne sais pas si cela concerne d’autres conversations ou tout l’espace de travail",
+            "status": "obtained"
+          },
+          {
+            "key": "issue_started_at",
+            "value": "unknown",
+            "evidence": "Je n’ai pas remarqué que le problème ait commencé après une mise à jour ou un événement particulier",
+            "status": "obtained"
+          },
+          {
+            "key": "pre_problem_state",
+            "value": "messages appeared normally before",
+            "evidence": "Les messages apparaissaient normalement avant, et maintenant cela arrive seulement parfois",
+            "status": "obtained"
+          },
+          {
+            "key": "frequency",
+            "value": "sometimes",
+            "evidence": "maintenant cela arrive seulement parfois",
+            "status": "obtained"
+          },
+          {
+            "key": "visual_evidence",
+            "value": "none",
+            "evidence": "Je n’ai pas de capture d’écran ou de vidéo pour le moment",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "reference_id",
+            "value": "none",
+            "evidence": "ni d’identifiant de référence",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "provided_url",
+            "value": "none",
+            "evidence": "ni d’URL particulière à fournir",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "app_version",
+            "value": null,
+            "evidence": "Je ne connais pas la version exacte de Firefox que j’utilise actuellement.",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "observed_result",
+            "value": "no change",
+            "evidence": "J'ai mis à jour et cela n'a pas changé",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "le bug revient",
+            "evidence": "le bug revient",
+            "status": "obtained"
+          },
+          {
+            "key": "frequency",
+            "value": "parfois",
+            "evidence": "parfois le bug revient",
+            "status": "obtained"
+          },
+          {
+            "key": "pre_problem_state",
+            "value": "ça vient de fonctionne un peu",
+            "evidence": "ah là ça vient de fonctionne un peu",
+            "status": "obtained"
+          },
+          {
+            "key": "device",
+            "value": "ordinateur",
+            "evidence": "ça dépend il semblerait de l'odinateur que j'utilsie",
+            "status": "obtained"
+          }
+        ],
+        "attemptedActionsExtracted": [
+          {
+            "action": "Update Firefox to the latest version",
+            "outcome": "failed",
+            "evidence": "J'ai mis à jour et cela n'a pas changé",
+            "status": "obtained"
+          }
+        ]
+      },
+      "sourceProposeTopicUpdates": {
+        "topicId": 1,
+        "title": "Messages disappearing on Twake",
+        "summaryTopic": "User reports that messages on Twake sometimes disappear, particularly in Twake Chat when entering a conversation. The issue affects only the user in a group conversation and depends on the computer used. The problem started without a specific trigger and occurs sometimes. The user does not know the exact version of Firefox they are using. The user updated Firefox but the issue persists. The bug sometimes returns and seems to depend on the computer being used.",
+        "supportDomain": {
+          "value": "product_behavior",
+          "reason": "The issue concerns unexpected behavior of the product where messages disappear, specifically in Twake Chat."
+        }
+      },
+      "sourceTopicManager": {
+        "currentStep": "idle",
+        "resolutionStatus": {
+          "value": "unsolved",
+          "reason": "The topic was already idle and the latest message did not provide a validated resolved confirmation."
+        },
+        "handover": {
+          "isRequested": true,
+          "reason": "The topic is idle and remains unresolved."
+        },
+        "supportNeedResolution": {
+          "supportNeed": {
+            "value": "issue_resolution",
+            "reason": "The user reports that messages on Twake sometimes disappear, which indicates a problem that needs investigation or resolution."
+          }
+        },
+        "basicQualification": {
+          "isBuilt": true,
+          "isCompleted": true,
+          "caseDetailsToAskBecauseOfBasicQualification": [
+            {
+              "key": "product_or_service",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "feature_or_page",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "trigger_action",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "failure_step",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "observed_result",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "expected_result",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "error_message",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            }
+          ]
+        },
+        "retrieveKnowledge": {
+          "isCompleted": true,
+          "rankedSearch": {
+            "isSearched": true,
+            "rawRagKnowledge": {
+              "query": "User reports that messages on Twake sometimes disappear, particularly in Twake Chat when entering a conversation, and the messages either do not appear or disappear almost immediately. The user expects the message to appear normally in the group conversation and remain visible in the discussion thread, like other messages. The user has also mentioned clicking on the channel to see and respond to a message.",
+              "content": "```json\n{\n  \"candidates\": [\n    {\n      \"title\": \"Twake Mail v0.11 display glitch\",\n      \"issueSummary\": \"User reports message truncation and display issues in Twake Mail v0.11 across different platforms and devices.\",\n      \"rawKnowledge\": \"User reports message truncation and display issues in Twake Mail v0.11 across different platforms and devices. The issue was investigated and fixed in a later update.\",\n      \"whyPotentiallyRelevant\": \"The issue involves messages not being displayed correctly, which is similar to the user's report of messages disappearing in Twake Chat.\",\n      \"sourceHint\": \"github_linagora_tmail_flutter_issue_2629.md\"\n    }\n  ]\n}\n```",
+              "sources": [
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916528",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916528",
+                  "created_at": "2026-07-03T12:13:10.28Z",
+                  "indexed_at": "2026-07-03T12:13:22.386826+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802386819000,
+                  "next_section_id": 1783080802386819000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat",
+                  "title": "Twake Chat",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080790941_0a01_docs_twake_twake_chat.md",
+                  "filename": "docs_twake_twake_chat.md",
+                  "original_filename": "docs_twake_twake_chat.md",
+                  "file_size": "3.48 KB",
+                  "file_id": "docs_twake_twake_chat",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916528"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916526",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916526",
+                  "created_at": "2026-07-03T12:13:10.377Z",
+                  "indexed_at": "2026-07-03T12:13:22.353585+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802353574000,
+                  "next_section_id": 1783080802353574000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat/features",
+                  "title": "Features",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080791026_0cf9_docs_twake_twake_chat_features.md",
+                  "filename": "docs_twake_twake_chat_features.md",
+                  "original_filename": "docs_twake_twake_chat_features.md",
+                  "file_size": "3.07 KB",
+                  "file_id": "docs_twake_twake_chat_features",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916526"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916506",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916506",
+                  "created_at": "2026-07-03T12:13:09.479Z",
+                  "indexed_at": "2026-07-03T12:13:20.702106+00:00",
+                  "prev_section_id": 1783080800702091800,
+                  "section_id": 1783080800702091800,
+                  "next_section_id": 1783080800702091800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/domain-validation",
+                  "title": "Domain validation",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790143_69dd_docs_twake_b2b_domain_validation.md",
+                  "filename": "docs_twake_b2b_domain_validation.md",
+                  "original_filename": "docs_twake_b2b_domain_validation.md",
+                  "file_size": "7.41 KB",
+                  "file_id": "docs_twake_b2b_domain_validation",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916506"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916460",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916460",
+                  "created_at": "2026-07-03T12:13:08.459Z",
+                  "indexed_at": "2026-07-03T12:13:12.020066+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080792020055600,
+                  "next_section_id": 1783080792020055600,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/overview/glossary",
+                  "title": "Glossary",
+                  "section": "overview",
+                  "source": "/app/data/1783080789112_3126_docs_twake_overview_glossary.md",
+                  "filename": "docs_twake_overview_glossary.md",
+                  "original_filename": "docs_twake_overview_glossary.md",
+                  "file_size": "6.27 KB",
+                  "file_id": "docs_twake_overview_glossary",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916460"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916530",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916530",
+                  "created_at": "2026-07-03T12:13:10.457Z",
+                  "indexed_at": "2026-07-03T12:13:22.471625+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802471615000,
+                  "next_section_id": 1783080802471615000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat/security",
+                  "title": "Security",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080791107_d92e_docs_twake_twake_chat_security.md",
+                  "filename": "docs_twake_twake_chat_security.md",
+                  "original_filename": "docs_twake_twake_chat_security.md",
+                  "file_size": "2.35 KB",
+                  "file_id": "docs_twake_twake_chat_security",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916530"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916499",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916499",
+                  "created_at": "2026-07-03T12:13:09.299Z",
+                  "indexed_at": "2026-07-03T12:13:19.822852+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080799822841300,
+                  "next_section_id": 1783080799822841300,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/app-provisioning",
+                  "title": "App provisioning",
+                  "section": "b2b",
+                  "source": "/app/data/1783080789956_42e5_docs_twake_b2b_app_provisioning.md",
+                  "filename": "docs_twake_b2b_app_provisioning.md",
+                  "original_filename": "docs_twake_b2b_app_provisioning.md",
+                  "file_size": "7.08 KB",
+                  "file_id": "docs_twake_b2b_app_provisioning",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916499"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916141",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916141",
+                  "created_at": "2024-02-22T03:06:32Z",
+                  "indexed_at": "2026-07-02T15:13:52.579344+00:00",
+                  "prev_section_id": 1783005232579329300,
+                  "section_id": 1783005232579329300,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005160104_708c_github_linagora_tmail_flutter_issue_2629.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 2629,
+                  "issue_state": "closed",
+                  "issue_title": "Display glitch",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/2629",
+                  "labels": [
+                    "bug"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2025-05-07T20:18:05Z",
+                  "closed_at": "2024-10-28T06:39:16Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:2629",
+                  "filename": "github_linagora_tmail_flutter_issue_2629.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_2629.md",
+                  "file_size": "2.75 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_2629",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916141"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916570",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916570",
+                  "created_at": "2026-07-03T12:13:11.559Z",
+                  "indexed_at": "2026-07-03T12:13:25.681200+00:00",
+                  "prev_section_id": 1783080805681187300,
+                  "section_id": 1783080805681187300,
+                  "next_section_id": 1783080805681187300,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/adrs/adr-034",
+                  "title": "ADR 034: Handling B2B User Deletion",
+                  "section": "adrs",
+                  "source": "/app/data/1783080792209_8a53_docs_twake_adrs_adr_034.md",
+                  "filename": "docs_twake_adrs_adr_034.md",
+                  "original_filename": "docs_twake_adrs_adr_034.md",
+                  "file_size": "9.50 KB",
+                  "file_id": "docs_twake_adrs_adr_034",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916570"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916541",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916541",
+                  "created_at": "2026-07-03T12:13:09.932Z",
+                  "indexed_at": "2026-07-03T12:13:24.206253+00:00",
+                  "prev_section_id": 1783080804206241800,
+                  "section_id": 1783080804206241800,
+                  "next_section_id": 1783080804206241800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/user-lifecycle",
+                  "title": "User lifecycle",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790587_3808_docs_twake_b2b_user_lifecycle.md",
+                  "filename": "docs_twake_b2b_user_lifecycle.md",
+                  "original_filename": "docs_twake_b2b_user_lifecycle.md",
+                  "file_size": "8.42 KB",
+                  "file_id": "docs_twake_b2b_user_lifecycle",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916541"
+                }
+              ],
+              "metadata": {
+                "retriever": "openrag"
+              }
+            }
+          },
+          "filter": {
+            "isFiltered": true,
+            "filteredRagKnowledge": [
+              {
+                "sourceId": "466474858415916141",
+                "title": "Twake Mail v0.11 display glitch",
+                "summary": "User reports message truncation and display issues in Twake Mail v0.11 across different platforms and devices.",
+                "usefulInformation": "The issue was investigated and fixed in a later update.",
+                "rawExcerpt": "User reports message truncation and display issues in Twake Mail v0.11 across different platforms and devices. The issue was investigated and fixed in a later update.",
+                "keepReason": "The issue involves messages not being displayed correctly, which is similar to the user's report of messages disappearing in Twake Chat."
+              }
+            ],
+            "filterExplanation": "Removed all sources that are not related to Twake Chat or message display issues. Kept the candidate related to message display issues in Twake Mail as it might be relevant to the user's problem with Twake Chat."
+          },
+          "selection": {
+            "isClearSelected": true,
+            "clarificationQuestion": null,
+            "selectedfilteredRagKnowledge": [
+              {
+                "sourceId": "466474858415916141",
+                "title": "Twake Mail v0.11 display glitch",
+                "usefulInformation": "The issue was investigated and fixed in a later update.",
+                "whySelected": "The issue involves messages not being displayed correctly, which is similar to the user's report of messages disappearing in Twake Chat."
+              }
+            ],
+            "selectionExplanation": "The filtered RAG knowledge describes a similar issue type (messages not being displayed correctly) as the user's report of messages disappearing in Twake Chat. Therefore, it is clear that this knowledge can be used to help the user."
+          },
+          "segmentationKnowledge": {
+            "isSegmented": true,
+            "userFacingInformation": "The issue with messages not displaying correctly in Twake Chat was investigated and fixed in a later update.",
+            "supportFacingInformation": "The issue was tracked under the title 'Twake Mail v0.11 display glitch' and was resolved in a subsequent update."
+          }
+        },
+        "deepQualification": {
+          "isBuilt": true,
+          "isCompleted": true,
+          "caseDetailsToAskBecauseOfDeepQualification": [
+            {
+              "key": "platform",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "operating_system",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "browser",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "app_version",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            },
+            {
+              "key": "device",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "affected_scope",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "affected_users",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "issue_started_at",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "frequency",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "pre_problem_state",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "visual_evidence",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            },
+            {
+              "key": "reference_id",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            },
+            {
+              "key": "provided_url",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            }
+          ]
+        },
+        "solution": {
+          "isActionForUserBuilt": true,
+          "isActionForSupportBuilt": true,
+          "isCompleted": true,
+          "attemptedActionsToAskBecauseOfSolutionFound": [
+            {
+              "action": "Update Firefox to the latest version",
+              "reason": "The issue with messages not displaying correctly in Twake Chat was fixed in a later update.",
+              "status": "failed"
+            }
+          ],
+          "actionToTakeForSupport": "Check if the user's Twake app is updated to the latest version, as the issue was resolved in a subsequent update."
+        },
+        "idleMode": {
+          "isActivated": true
+        }
+      }
+    }
+  ]
+}

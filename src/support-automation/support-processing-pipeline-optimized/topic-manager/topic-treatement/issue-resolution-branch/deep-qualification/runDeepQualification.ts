@@ -52,7 +52,8 @@ async function runDeepQualification(input: RunDeepQualificationInput): Promise<R
     currentUserMessage: input.currentUserMessage,
     previousConversationTurn: input.previousConversationTurn,
     deepQualification,
-    userFacingInformation: input.retrieveKnowledge?.segmentationKnowledge.userFacingInformation ?? null
+    userFacingInformation: input.retrieveKnowledge?.segmentationKnowledge.userFacingInformation ?? null,
+    supportDomain: input.supportDomain
   });
 
   return {

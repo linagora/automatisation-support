@@ -20,6 +20,7 @@ type DeepQualificationGroupKey =
   | "scope_timing_context"
   | "evidence_context"
   | "account_context"
+  | "access_security_context"
   | "billing_context"
   | "sync_context"
   | "migration_context"
@@ -83,6 +84,12 @@ const issueQualificationDomainRules = {
         "organization_name",
         "workspace_name",
         "server_or_instance"
+      ],
+      access_security_context: [
+        "auth_method",
+        "mfa_status",
+        "recovery_channel",
+        "user_role_or_permission"
       ],
       environment_context: [
         "platform",
@@ -336,6 +343,79 @@ const issueQualificationDomainRules = {
   }
 } as const satisfies Record<IssueQualificationDomain, IssueQualificationDomainRule>;
 
+const deepQualificationGroupOrder = [
+  "account_context",
+  "access_security_context",
+  "billing_context",
+  "sync_context",
+  "migration_context",
+  "accessibility_context",
+  "environment_context",
+  "scope_timing_context",
+  "evidence_context"
+] as const satisfies readonly DeepQualificationGroupKey[];
+
+const deepQualificationGroupLabels = {
+  environment_context: "Environment",
+  scope_timing_context: "Scope and timing",
+  evidence_context: "Evidence",
+  account_context: "Account context",
+  access_security_context: "Access details",
+  billing_context: "Billing details",
+  sync_context: "Integration or sync details",
+  migration_context: "Migration details",
+  accessibility_context: "Accessibility details"
+} as const satisfies Record<DeepQualificationGroupKey, string>;
+
+const fieldRequestLabels: Partial<Record<CaseDetailFieldKey, string>> = {
+  user_identifier: "affected user",
+  account_identifier: "account, tenant, customer, or billing account ID",
+  organization_name: "organization or customer name",
+  workspace_name: "workspace, team, room, project, tenant, or shared space",
+  server_or_instance: "server, instance, tenant, domain, region, or endpoint",
+
+  platform: "access mode",
+  operating_system: "operating system",
+  browser: "browser",
+  app_version: "app or browser version",
+  device: "device or computer model",
+
+  issue_started_at: "when it started",
+  frequency: "whether it happens every time or only sometimes",
+  affected_scope: "whether it affects one item, several items, one workspace, or a broader scope",
+  affected_users: "whether it affects only you or other users too",
+  pre_problem_state: "what was working before the issue started",
+
+  visual_evidence: "screenshot, photo, or video if available",
+  reference_id: "relevant reference ID",
+  provided_url: "relevant URL or endpoint",
+
+  auth_method: "authentication method",
+  mfa_status: "MFA or two-factor authentication status",
+  recovery_channel: "recovery channel",
+  user_role_or_permission: "role or permission level",
+
+  plan_or_subscription: "plan, subscription, license, package, or quota",
+  billing_or_payment_status: "current billing or payment status",
+  duplicate_billing_impact: "whether the duplicate is only an invoice or an actual double charge",
+  billing_provider: "billing provider, marketplace, bank, card provider, or payment processor",
+  amount: "amount",
+  currency: "currency",
+  billing_date_or_period: "billing date, charge date, invoice date, or subscription period",
+  payment_method: "payment method",
+
+  integration_or_connector: "integration, connector, bot, API, webhook, or external service",
+  sync_target: "what should sync and where",
+  sync_status: "current sync status",
+
+  migration_or_transition_context: "migration, rollout, import, export, tenant move, or transition",
+  previous_product_or_service: "previous product, service, plan, tenant, provider, or tool",
+
+  assistive_technology: "assistive technology or accessibility tool",
+  accessibility_barrier: "accessibility barrier",
+  inaccessible_element: "inaccessible page, button, field, content, or workflow"
+};
+
 function resolveIssueQualificationDomain(supportDomain: string | null): IssueQualificationDomain {
   if (supportDomain && isIssueQualificationDomain(supportDomain)) {
     return supportDomain;
@@ -347,25 +427,32 @@ function resolveIssueQualificationDomain(supportDomain: string | null): IssueQua
 function getBasicIssueQualificationFieldKeys(supportDomain: string | null): CaseDetailFieldKey[] {
   const domain = resolveIssueQualificationDomain(supportDomain);
 
-  return issueQualificationDomainRules[domain].basic
-    .filter((key) => isAskableCaseDetailField(key));
+  return issueQualificationDomainRules[domain].basic.filter((key) => {
+    return isAskableCaseDetailField(key);
+  });
 }
 
 function getDeepIssueQualificationGroups(
   supportDomain: string | null
 ): Partial<Record<DeepQualificationGroupKey, CaseDetailFieldKey[]>> {
   const domain = resolveIssueQualificationDomain(supportDomain);
-  const groups = issueQualificationDomainRules[domain].deep;
-  const result: Partial<Record<DeepQualificationGroupKey, CaseDetailFieldKey[]>> = {};
 
-  const entries = Object.entries(groups) as Array<
-    [DeepQualificationGroupKey, readonly CaseDetailFieldKey[]]
+  const groups = issueQualificationDomainRules[domain].deep as Partial<
+    Record<DeepQualificationGroupKey, readonly CaseDetailFieldKey[]>
   >;
 
-  for (const [groupKey, fieldKeys] of entries) {
-    result[groupKey] = fieldKeys.filter((key: CaseDetailFieldKey) => {
+  const result: Partial<Record<DeepQualificationGroupKey, CaseDetailFieldKey[]>> = {};
+
+  for (const groupKey of deepQualificationGroupOrder) {
+    const fieldKeys = groups[groupKey] ?? [];
+
+    const askableFieldKeys = fieldKeys.filter((key: CaseDetailFieldKey) => {
       return isAskableCaseDetailField(key);
     });
+
+    if (askableFieldKeys.length > 0) {
+      result[groupKey] = askableFieldKeys;
+    }
   }
 
   return result;
@@ -378,6 +465,26 @@ function getDeepIssueQualificationFieldKeys(supportDomain: string | null): CaseD
   return dedupeFieldKeys(keys);
 }
 
+function getDeepIssueQualificationGroupKey(
+  supportDomain: string | null,
+  key: string | null
+): DeepQualificationGroupKey | null {
+  if (!key || !isCaseDetailFieldKey(key)) return null;
+
+  const groups = getDeepIssueQualificationGroups(supportDomain);
+
+  for (const groupKey of deepQualificationGroupOrder) {
+    const fieldKeys = groups[groupKey] ?? [];
+    if (fieldKeys.includes(key)) return groupKey;
+  }
+
+  return null;
+}
+
+function getDeepIssueQualificationGroupLabel(groupKey: DeepQualificationGroupKey): string {
+  return deepQualificationGroupLabels[groupKey];
+}
+
 function getCaseDetailFieldAskPrompt(key: string | null): string {
   if (key && isCaseDetailFieldKey(key)) {
     const catalogEntry = typedCaseDetailFieldCatalog[key];
@@ -385,6 +492,14 @@ function getCaseDetailFieldAskPrompt(key: string | null): string {
   }
 
   return "Please clarify the missing information.";
+}
+
+function getCaseDetailFieldRequestLabel(key: string | null): string {
+  if (key && isCaseDetailFieldKey(key)) {
+    return fieldRequestLabels[key] ?? buildLabel(key);
+  }
+
+  return "missing detail";
 }
 
 function isAskableCaseDetailField(key: CaseDetailFieldKey): boolean {
@@ -408,9 +523,14 @@ function buildLabel(key: string): string {
 }
 
 export {
+  deepQualificationGroupLabels,
+  deepQualificationGroupOrder,
   getBasicIssueQualificationFieldKeys,
   getCaseDetailFieldAskPrompt,
+  getCaseDetailFieldRequestLabel,
   getDeepIssueQualificationFieldKeys,
+  getDeepIssueQualificationGroupKey,
+  getDeepIssueQualificationGroupLabel,
   getDeepIssueQualificationGroups,
   issueQualificationDomainRules,
   resolveIssueQualificationDomain

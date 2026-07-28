@@ -1,8 +1,4 @@
-import {callLLM} from "../../../../../../../infrastructure/llm/llm-client";
-import {parseLLMResponse} from "../../../../../../../infrastructure/llm/parseLLMResponse";
-import {buildDeterministicDeepQualificationAsk, buildIssueDeepQualificationAskPrompt} from "./buildIssueDeepQualificationAskPrompt";
-import {issueDeepQualificationAskPlannerResponseFormat} from "./responseFormat";
-import {validateIssueDeepQualificationAskPlannerOutput} from "./validateIssueDeepQualificationAskPlannerOutput";
+import {buildDeterministicDeepQualificationAsk} from "./buildIssueDeepQualificationAskPrompt";
 
 import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
@@ -17,6 +13,7 @@ export type PlanIssueDeepQualificationAskInput = {
   };
   deepQualification: DeepQualification;
   userFacingInformation: string | null;
+  supportDomain: string | null;
 };
 
 export type PlanIssueDeepQualificationAskOutput = {
@@ -25,38 +22,14 @@ export type PlanIssueDeepQualificationAskOutput = {
 
 async function planIssueDeepQualificationAsk(input: PlanIssueDeepQualificationAskInput): Promise<PlanIssueDeepQualificationAskOutput> {
   const fieldsToAsk = selectFieldsToAsk(input.deepQualification);
-  const fallbackSay = buildDeterministicDeepQualificationAsk({
-    fieldsToAsk,
-    userFacingInformation: input.userFacingInformation
-  });
 
-  const {messages} = buildIssueDeepQualificationAskPrompt({
-    currentUserMessage: input.currentUserMessage,
-    previousConversationTurn: input.previousConversationTurn,
-    fieldsToAsk,
-    userFacingInformation: input.userFacingInformation
-  });
-
-  try {
-    const result = await callLLM(messages, {
-      stage: "issue_deep_qualification_ask_planner",
-      preset: "standard",
-      temperature: 0.2,
-      maxTokens: 450,
-      responseFormat: issueDeepQualificationAskPlannerResponseFormat
-    });
-
-    if (!result.success || !result.content) {
-      return {say: fallbackSay};
-    }
-
-    const parsed = parseLLMResponse(result.content);
-    const validated = validateIssueDeepQualificationAskPlannerOutput(parsed);
-
-    return {say: validated?.say ?? fallbackSay};
-  } catch {
-    return {say: fallbackSay};
-  }
+  return {
+    say: buildDeterministicDeepQualificationAsk({
+      fieldsToAsk,
+      userFacingInformation: input.userFacingInformation,
+      supportDomain: input.supportDomain
+    })
+  };
 }
 
 function selectFieldsToAsk(deepQualification: DeepQualification): FieldToAsk[] {
