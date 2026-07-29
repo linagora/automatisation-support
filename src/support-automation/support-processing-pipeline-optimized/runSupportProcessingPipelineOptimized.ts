@@ -10,7 +10,13 @@ import {runAnalyzeAttachmentSurface, type AnalyzeAttachmentSurfaceOutput} from "
 
 import {buildStandardResponseFragments, type BuildStandardResponseFragmentsOutput} from "./build-standard-response-fragments/buildStandardResponseFragments";
 
-import {runAnalyzeSupportText, type AnalyzeSupportTextOutput, type AnalyzeSupportTextUnderstanding} from "./analyze-support-text-optimized/runAnalyzeSupportText";
+import {
+  runAnalyzeSupportText,
+  type AnalyzeSupportTextAttemptedAction,
+  type AnalyzeSupportTextCaseDetail,
+  type AnalyzeSupportTextOther,
+  type AnalyzeSupportTextOutput
+} from "./analyze-support-text-optimized/runAnalyzeSupportText";
 import {runAnalyzeSupportAttachments, type AnalyzeSupportAttachmentsOutput} from "./analyze-support-attachments-optimized/runAnalyzeSupportAttachments";
 
 import {runProposeTopicUpdates, type ProposeTopicUpdatesOutput, type TopicUpdatePlan} from "./propose-topic-updates-optimized/runProposeTopicUpdates";
@@ -80,6 +86,12 @@ type RecentInteractionContext = {
   previousBotQuestionFieldNames?: string[];
 };
 
+type AtomicSupportFacts = {
+  caseDetailsExtracted: AnalyzeSupportTextCaseDetail[];
+  attemptedActionsExtracted: AnalyzeSupportTextAttemptedAction[];
+  otherExtracted: AnalyzeSupportTextOther[];
+};
+
 type RunSupportProcessingPipelineV3OptimizedOutput = {
   status: "processed" | "fallback";
   fallbackReason: RunSupportProcessingPipelineV3OptimizedFallbackReason | null;
@@ -127,10 +139,12 @@ async function runSupportProcessingPipelineV3Optimized(
 ): Promise<RunSupportProcessingPipelineV3OptimizedOutput> {
   const intermOutputs: RunSupportProcessingPipelineV3OptimizedIntermOutputs = {};
   const currentUserMessage = input.latestUserMessage;
+  const pendingRequestedItems =
+    buildAnalyzeSupportTextPendingRequestedItems(input.liveMemory.topics);
   const recentInteractionContext: RecentInteractionContext = {
     previousUserMessageSummary: input.liveMemory.previousConversationTurn.previousUserMessage ?? undefined,
     previousBotResponseSummary: input.liveMemory.previousConversationTurn.previousBotMessage ?? undefined,
-    previousBotQuestionFieldNames: []
+    previousBotQuestionFieldNames: pendingRequestedItems.caseDetailsToAsk.map((item) => item.key)
   };
 
   try {
@@ -310,9 +324,6 @@ async function runSupportProcessingPipelineV3Optimized(
         ? intermOutputs.analyzeTextSurfaceOutput
         : null;
 
-    const pendingRequestedItems =
-      buildPendingRequestedItemsFromLiveMemory(input.liveMemory.topics);
-
     if (shouldAnalyzeSupportText && shouldAnalyzeSupportAttachments) {
       [
         intermOutputs.analyzeSupportTextOutput,
@@ -364,10 +375,9 @@ async function runSupportProcessingPipelineV3Optimized(
     // 7. Topic updates
     // -----------------------------------------------------
 
-    const supportUnderstandings =
-      intermOutputs.analyzeSupportTextOutput?.status === "analyzed"
-        ? intermOutputs.analyzeSupportTextOutput.understandings
-        : [];
+    const supportTextFacts = collectAnalyzeSupportTextFacts(
+      intermOutputs.analyzeSupportTextOutput
+    );
 
     await reportProgress(input, {
       code: "updating_support_topics",
@@ -376,8 +386,17 @@ async function runSupportProcessingPipelineV3Optimized(
 
     intermOutputs.proposeTopicUpdatesOutput =
       await runProposeTopicUpdates({
-        understandings: supportUnderstandings,
         existingTopics: input.liveMemory.topics,
+        currentUserMessage: {
+          content: currentUserMessage.content,
+          channel: currentUserMessage.channel
+        },
+        summaryMessage: intermOutputs.analyzeSupportTextOutput?.status === "analyzed"
+          ? intermOutputs.analyzeSupportTextOutput.summaryMessage
+          : null,
+        caseDetailsExtracted: supportTextFacts.caseDetailsExtracted,
+        attemptedActionsExtracted: supportTextFacts.attemptedActionsExtracted,
+        otherExtracted: supportTextFacts.otherExtracted,
         recentInteractionContext
       });
 
@@ -399,17 +418,15 @@ async function runSupportProcessingPipelineV3Optimized(
     const topicManagerOutputs =
       await Promise.all(
         intermOutputs.proposeTopicUpdatesOutput.topicUpdatePlans.map((topicUpdatePlan) => {
-          const sourceUnderstandingsForTopic = selectSourceUnderstandings(
-            supportUnderstandings,
-            topicUpdatePlan.sourceUnderstandingIds
-          );
-
           return runTopicManager({
             topicUpdatePlan,
             currentTopic: selectCurrentTopic(input.liveMemory, topicUpdatePlan),
-            sourceUnderstandings: sourceUnderstandingsForTopic,
+            sourceFacts: selectSourceFacts({
+              facts: supportTextFacts,
+              topicUpdatePlan
+            }),
             currentUserMessage: {
-              content: buildTopicScopedCurrentUserMessageContent(sourceUnderstandingsForTopic),
+              content: currentUserMessage.content,
               channel: currentUserMessage.channel
             },
             previousConversationTurn: input.liveMemory.previousConversationTurn
@@ -513,7 +530,7 @@ async function reportProgress(
 // TOPIC BRANCH INPUT HELPERS
 // =====================================================
 
-function buildPendingRequestedItemsFromLiveMemory(
+function buildAnalyzeSupportTextPendingRequestedItems(
   topics: LiveMemoryTopicOptimized[]
 ): {
   caseDetailsToAsk: Array<{
@@ -532,15 +549,30 @@ function buildPendingRequestedItemsFromLiveMemory(
       return [
         ...topic.sourceTopicManager.basicQualification.caseDetailsToAskBecauseOfBasicQualification,
         ...topic.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification
-      ].filter((item): item is {
-        key: string;
-        reason: string | null;
-        status: "asking";
-      } => item.status === "asking" && typeof item.key === "string");
+      ]
+        .filter((field) => {
+          return field.status === "asking" &&
+            typeof field.key === "string" &&
+            field.key.trim() !== "";
+        })
+        .map((field) => ({
+          key: field.key as string,
+          reason: field.reason,
+          status: field.status
+        }));
     }),
     attemptedActionsToAsk: topics.flatMap((topic) => {
       return topic.sourceTopicManager.solution.attemptedActionsToAskBecauseOfSolutionFound
-        .filter((item) => item.status === "asking");
+        .filter((action) => {
+          return action.status === "asking" &&
+            typeof action.action === "string" &&
+            action.action.trim() !== "";
+        })
+        .map((action) => ({
+          action: action.action,
+          reason: action.reason,
+          status: action.status
+        }));
     })
   };
 }
@@ -556,40 +588,43 @@ function selectCurrentTopic(
   }) ?? null;
 }
 
-function selectSourceUnderstandings(
-  supportUnderstandings: AnalyzeSupportTextUnderstanding[],
-  sourceUnderstandingIds: string[]
-): AnalyzeSupportTextUnderstanding[] {
-  const sourceIdSet = new Set(sourceUnderstandingIds);
-  return supportUnderstandings.filter((understanding) => {
-    return sourceIdSet.has(understanding.understandingId);
-  });
+function collectAnalyzeSupportTextFacts(
+  output: AnalyzeSupportTextOutput | null | undefined
+): AtomicSupportFacts {
+  if (output?.status !== "analyzed") {
+    return {
+      caseDetailsExtracted: [],
+      attemptedActionsExtracted: [],
+      otherExtracted: []
+    };
+  }
+
+  return {
+    caseDetailsExtracted: output.caseDetailsExtracted,
+    attemptedActionsExtracted: output.attemptedActionsExtracted,
+    otherExtracted: output.otherExtracted
+  };
 }
 
-function buildTopicScopedCurrentUserMessageContent(
-  sourceUnderstandings: AnalyzeSupportTextUnderstanding[]
-): string {
-  return sourceUnderstandings
-    .map((understanding) => {
-      const parts: string[] = [];
+function selectSourceFacts(params: {
+  facts: AtomicSupportFacts;
+  topicUpdatePlan: TopicUpdatePlan;
+}): AtomicSupportFacts {
+  const caseDetailIdSet = new Set(params.topicUpdatePlan.sourceCaseDetailIds);
+  const attemptedActionIdSet = new Set(params.topicUpdatePlan.sourceAttemptedActionIds);
+  const otherIdSet = new Set(params.topicUpdatePlan.sourceOtherIds);
 
-      parts.push(`Understanding: ${understanding.summaryMessage}`);
-
-      for (const detail of understanding.caseDetailsExtracted) {
-        parts.push(`Case detail - ${detail.key}: ${String(detail.value)}`);
-      }
-
-      for (const action of understanding.attemptedActionsExtracted) {
-        parts.push(`Attempted action - ${action.action}: ${action.outcome}`);
-      }
-
-      for (const other of understanding.other) {
-        parts.push(`Other - ${other.key}: ${String(other.value)}`);
-      }
-
-      return parts.join("\n");
+  return {
+    caseDetailsExtracted: params.facts.caseDetailsExtracted.filter((fact) => {
+      return caseDetailIdSet.has(fact.caseDetailId);
+    }),
+    attemptedActionsExtracted: params.facts.attemptedActionsExtracted.filter((fact) => {
+      return attemptedActionIdSet.has(fact.attemptedActionId);
+    }),
+    otherExtracted: params.facts.otherExtracted.filter((fact) => {
+      return otherIdSet.has(fact.otherId);
     })
-    .join("\n\n");
+  };
 }
 
 function hasSupportRelevantTextSegments(

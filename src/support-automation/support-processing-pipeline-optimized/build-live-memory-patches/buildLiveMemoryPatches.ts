@@ -1,5 +1,10 @@
 import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RunSupportProcessingPipelineV3OptimizedIntermOutputs} from "../runSupportProcessingPipelineOptimized";
+import type {
+  AnalyzeSupportTextAttemptedAction,
+  AnalyzeSupportTextCaseDetail,
+  AnalyzeSupportTextOther
+} from "../analyze-support-text-optimized/runAnalyzeSupportText";
 
 export type BuildLiveMemoryPatchesInput = {
   latestUserMessage: {
@@ -48,6 +53,12 @@ type RagFailure = {
   reason: "rag_failed";
   errorName: string | null;
   errorMessage: string;
+};
+
+type AtomicSupportFacts = {
+  caseDetailsExtracted: AnalyzeSupportTextCaseDetail[];
+  attemptedActionsExtracted: AnalyzeSupportTextAttemptedAction[];
+  otherExtracted: AnalyzeSupportTextOther[];
 };
 
 export type BuildLiveMemoryTopicPatch = {
@@ -223,10 +234,9 @@ function buildTopicLiveMemoryPatch(
   }
 
   const topicManagerOutputs = input.intermOutputs.topicManagerOutputs ?? [];
-  const supportUnderstandings =
-    input.intermOutputs.analyzeSupportTextOutput?.status === "analyzed"
-      ? input.intermOutputs.analyzeSupportTextOutput.understandings
-      : [];
+  const supportTextFacts = collectAnalyzeSupportTextFacts(
+    input.intermOutputs.analyzeSupportTextOutput
+  );
 
   const surfaceHandoverRequested = hasHandoverRequestedSurface(
     input.intermOutputs.analyzeTextSurfaceOutput
@@ -241,8 +251,9 @@ function buildTopicLiveMemoryPatch(
       throw new Error("Missing processed topicManagerOutput for topic patch");
     }
 
-    const relatedUnderstandings = supportUnderstandings.filter((understanding) => {
-      return topicUpdatePlan.sourceUnderstandingIds.includes(understanding.understandingId);
+    const relatedFacts = selectSourceFacts({
+      facts: supportTextFacts,
+      topicUpdatePlan
     });
 
     const sourceTopicManager = applySurfaceHandoverIfNeeded(
@@ -254,26 +265,22 @@ function buildTopicLiveMemoryPatch(
       status: resolveTopicStatus(sourceTopicManager),
 
       sourceAnalyzeSupportText: {
-        caseDetailsExtracted: relatedUnderstandings.flatMap((understanding) => {
-          return understanding.caseDetailsExtracted.map((caseDetail) => {
-            return {
-              key: caseDetail.key,
-              value: caseDetail.value,
-              evidence: caseDetail.evidence,
-              status: caseDetail.status
-            };
-          });
+        caseDetailsExtracted: relatedFacts.caseDetailsExtracted.map((caseDetail) => {
+          return {
+            key: caseDetail.key,
+            value: caseDetail.value,
+            evidence: caseDetail.evidence,
+            status: caseDetail.status
+          };
         }),
 
-        attemptedActionsExtracted: relatedUnderstandings.flatMap((understanding) => {
-          return understanding.attemptedActionsExtracted.map((attemptedAction) => {
-            return {
-              action: attemptedAction.action,
-              outcome: attemptedAction.outcome,
-              evidence: attemptedAction.evidence,
-              status: attemptedAction.status
-            };
-          });
+        attemptedActionsExtracted: relatedFacts.attemptedActionsExtracted.map((attemptedAction) => {
+          return {
+            action: attemptedAction.action,
+            outcome: attemptedAction.outcome,
+            evidence: attemptedAction.evidence,
+            status: attemptedAction.status
+          };
         })
       },
 
@@ -347,5 +354,48 @@ function applySurfaceHandoverIfNeeded(
       isRequested: true,
       reason: "The user explicitly requested a human handover in the surface analysis."
     }
+  };
+}
+
+function collectAnalyzeSupportTextFacts(
+  output: RunSupportProcessingPipelineV3OptimizedIntermOutputs["analyzeSupportTextOutput"]
+): AtomicSupportFacts {
+  if (output?.status !== "analyzed") {
+    return {
+      caseDetailsExtracted: [],
+      attemptedActionsExtracted: [],
+      otherExtracted: []
+    };
+  }
+
+  return {
+    caseDetailsExtracted: output.caseDetailsExtracted,
+    attemptedActionsExtracted: output.attemptedActionsExtracted,
+    otherExtracted: output.otherExtracted
+  };
+}
+
+function selectSourceFacts(params: {
+  facts: AtomicSupportFacts;
+  topicUpdatePlan: {
+    sourceCaseDetailIds: string[];
+    sourceAttemptedActionIds: string[];
+    sourceOtherIds: string[];
+  };
+}): AtomicSupportFacts {
+  const caseDetailIdSet = new Set(params.topicUpdatePlan.sourceCaseDetailIds);
+  const attemptedActionIdSet = new Set(params.topicUpdatePlan.sourceAttemptedActionIds);
+  const otherIdSet = new Set(params.topicUpdatePlan.sourceOtherIds);
+
+  return {
+    caseDetailsExtracted: params.facts.caseDetailsExtracted.filter((fact) => {
+      return caseDetailIdSet.has(fact.caseDetailId);
+    }),
+    attemptedActionsExtracted: params.facts.attemptedActionsExtracted.filter((fact) => {
+      return attemptedActionIdSet.has(fact.attemptedActionId);
+    }),
+    otherExtracted: params.facts.otherExtracted.filter((fact) => {
+      return otherIdSet.has(fact.otherId);
+    })
   };
 }

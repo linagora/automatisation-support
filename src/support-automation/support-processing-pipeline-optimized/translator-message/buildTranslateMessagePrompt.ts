@@ -36,6 +36,11 @@ Examples for French:
 - "UNABLE TO RENAME A FILE IN THE DRIVE" must become "IMPOSSIBLE DE RENOMMER UN FICHIER DANS LE DRIVE".
 
 Do not include wrapper tags such as <message> or </message> in the translatedMessage.
+Preserve the exact paragraph structure of the source message.
+Preserve blank lines between sections.
+If the source contains two newline characters between sections, the translation must also contain two newline characters.
+Do not merge section headers with the previous paragraph.
+Do not remove blank lines.
 Return only JSON matching the requested schema.
 `.trim();
 

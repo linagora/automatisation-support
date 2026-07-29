@@ -5,14 +5,25 @@ import {runDeepQualification} from "./deep-qualification/runDeepQualification";
 import {runSolution} from "./solution/runSolution";
 import {runIdleMode} from "./idle-mode/runIdleMode";
 
-import type {AnalyzeSupportTextUnderstanding} from "../../../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {TopicUpdatePlan} from "../../../propose-topic-updates-optimized/runProposeTopicUpdates";
 import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+
+type CurrentCaseDetailExtracted =
+  LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
+
+type CurrentAttemptedActionExtracted =
+  LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["attemptedActionsExtracted"][number];
+
+type IssueResolutionSourceFacts = {
+  caseDetailsExtracted: CurrentCaseDetailExtracted[];
+  attemptedActionsExtracted: CurrentAttemptedActionExtracted[];
+  otherExtracted: unknown[];
+};
 
 type IssueResolutionBranchInput = {
   topicUpdatePlan: TopicUpdatePlan;
   currentTopic: LiveMemoryTopicOptimized | null;
-  sourceUnderstandings: AnalyzeSupportTextUnderstanding[];
+  sourceFacts: IssueResolutionSourceFacts;
   currentUserMessage: {
     content: string;
     channel?: string;
@@ -61,8 +72,8 @@ async function runIssueResolutionBranch(
     let sourceTopicManager = input.sourceTopicManager;
     const supportDomain = input.topicUpdatePlan.supportDomain.value;
     const summaryTopic = input.topicUpdatePlan.summaryTopic;
-    const currentCaseDetailsExtracted = collectCurrentCaseDetailsExtracted(input.sourceUnderstandings);
-    const currentAttemptedActionsExtracted = collectCurrentAttemptedActionsExtracted(input.sourceUnderstandings);
+    const currentCaseDetailsExtracted = input.sourceFacts.caseDetailsExtracted;
+    const currentAttemptedActionsExtracted = input.sourceFacts.attemptedActionsExtracted;
 
     if (sourceTopicManager.idleMode.isActivated === true) {
       const idleModeOutput = await runIdleMode({
@@ -90,10 +101,9 @@ async function runIssueResolutionBranch(
 
     const basicQualificationOutput = await runBasicQualification({
       supportDomain,
+      summaryTopic,
       previousTopic: input.currentTopic,
-      currentCaseDetailsExtracted,
-      currentUserMessage: input.currentUserMessage,
-      previousConversationTurn: input.previousConversationTurn
+      currentCaseDetailsExtracted
     });
 
     internalOutputs.basicQualificationOutput = basicQualificationOutput;
@@ -226,22 +236,6 @@ async function runIssueResolutionBranch(
   }
 }
 
-function collectCurrentCaseDetailsExtracted(
-  sourceUnderstandings: AnalyzeSupportTextUnderstanding[]
-): LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"] {
-  return sourceUnderstandings.flatMap((understanding) => {
-    return understanding.caseDetailsExtracted;
-  });
-}
-
-function collectCurrentAttemptedActionsExtracted(
-  sourceUnderstandings: AnalyzeSupportTextUnderstanding[]
-): LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["attemptedActionsExtracted"] {
-  return sourceUnderstandings.flatMap((understanding) => {
-    return understanding.attemptedActionsExtracted;
-  });
-}
-
 function markInProgress(
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
 ): LiveMemoryTopicOptimized["sourceTopicManager"] {
@@ -314,5 +308,6 @@ export {runIssueResolutionBranch};
 export type {
   IssueResolutionBranchInput,
   IssueResolutionBranchOutput,
-  IssueResolutionInternalOutputs
+  IssueResolutionInternalOutputs,
+  IssueResolutionSourceFacts
 };

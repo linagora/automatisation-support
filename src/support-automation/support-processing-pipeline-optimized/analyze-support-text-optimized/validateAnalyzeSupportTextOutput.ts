@@ -1,16 +1,5 @@
 import {formatCatalogSelection} from "./catalogSelection";
 
-// LLM output validation:
-// Validates the parsed JSON returned by the support text analysis LLM.
-// This validator is intentionally tolerant on grounding details:
-// - it validates structure and allowed enum values;
-// - it does not require exact verbatim evidence matching;
-// - it does not reject harmless extra keys;
-// - it does not fail the whole brick because one support segment was not covered.
-//
-// The goal is to prevent malformed outputs from entering the pipeline,
-// without turning small LLM formatting/evidence imperfections into global fallbacks.
-
 type Primitive = string | number | boolean | null;
 type ExtractedStatus = "obtained" | "user_declared_unavailable";
 
@@ -19,255 +8,266 @@ type SupportTextSegment = {
   verbatim: string;
 };
 
-type KeyedPrimitiveEvidence = {
+type SourceGrounding = {
+  sourceSegmentIds: string[];
+};
+
+type KeyedPrimitiveEvidence = SourceGrounding & {
   key: string;
   value: Primitive;
   evidence: string;
   status: ExtractedStatus;
 };
 
-type KeyedOtherEvidence = {
+type KeyedOtherEvidence = SourceGrounding & {
   key: string;
   value: Primitive;
   evidence: string;
 };
 
-type AttemptedAction = {
+type AttemptedAction = SourceGrounding & {
   action: string;
   outcome: string;
   evidence: string;
   status: ExtractedStatus;
 };
 
-type ValidatedSupportTextUnderstanding = {
-  sourceSegmentIds: string[];
+type ValidatedSupportTextAnalysis = {
+  summaryMessage: string | null;
+  userLanguage: string;
   caseDetailsExtracted: KeyedPrimitiveEvidence[];
   attemptedActionsExtracted: AttemptedAction[];
-  other: KeyedOtherEvidence[];
-  summaryMessage: string;
+  otherExtracted: KeyedOtherEvidence[];
 };
 
 function validateAnalyzeSupportTextOutput(
   parsedResponse: unknown,
   supportSegments: SupportTextSegment[]
-): ValidatedSupportTextUnderstanding[] | null {
+): ValidatedSupportTextAnalysis | null {
   if (!isRecord(parsedResponse)) return null;
-  if (!Array.isArray(parsedResponse.understandings)) return null;
 
-  const segmentById = new Map(
-    supportSegments.map((segment) => [segment.segmentId, segment])
+  const knownSegmentIds = new Set(
+    supportSegments.map((segment) => segment.segmentId)
   );
-
-  const understandings: ValidatedSupportTextUnderstanding[] = [];
-
-  for (const rawUnderstanding of parsedResponse.understandings) {
-    const understanding = validateSupportTextUnderstanding(
-      rawUnderstanding,
-      segmentById
-    );
-
-    if (!understanding) {
-      return null;
-    }
-
-    understandings.push(understanding);
-  }
-
-  return understandings;
-}
-
-function validateSupportTextUnderstanding(
-  rawUnderstanding: unknown,
-  segmentById: Map<string, SupportTextSegment>
-): ValidatedSupportTextUnderstanding | null {
-  if (!isRecord(rawUnderstanding)) return null;
-
-  const sourceSegmentIds = validateSourceSegmentIds(
-    rawUnderstanding.sourceSegmentIds,
-    segmentById
-  );
-
-  if (!sourceSegmentIds) return null;
-
-  const caseDetailsExtracted = validateKeyedPrimitiveEvidenceArray(
-    rawUnderstanding.caseDetailsExtracted,
-    formatCatalogSelection.extractableFields
-  );
-
-  const attemptedActionsExtracted = validateAttemptedActions(
-    rawUnderstanding.attemptedActionsExtracted
-  );
-
-  const other = validateKeyedOtherEvidenceArray(
-    rawUnderstanding.other,
-    formatCatalogSelection.otherKeys
-  );
-
-  if (
-    !caseDetailsExtracted ||
-    !attemptedActionsExtracted ||
-    !other ||
-    typeof rawUnderstanding.summaryMessage !== "string" ||
-    rawUnderstanding.summaryMessage.trim() === ""
-  ) {
-    return null;
-  }
 
   return {
-    sourceSegmentIds,
-    caseDetailsExtracted,
-    attemptedActionsExtracted,
-    other,
-    summaryMessage: rawUnderstanding.summaryMessage
+    summaryMessage: asNullableNonEmptyString(parsedResponse.summaryMessage),
+    userLanguage: asNonEmptyString(parsedResponse.userLanguage) ?? "unknown",
+    caseDetailsExtracted: validateCaseDetails(
+      parsedResponse.caseDetailsExtracted,
+      knownSegmentIds
+    ),
+    attemptedActionsExtracted: validateAttemptedActions(
+      parsedResponse.attemptedActionsExtracted,
+      knownSegmentIds
+    ),
+    otherExtracted: validateOtherItems(
+      parsedResponse.otherExtracted,
+      knownSegmentIds
+    )
   };
 }
 
-function validateSourceSegmentIds(
-  rawSourceSegmentIds: unknown,
-  segmentById: Map<string, SupportTextSegment>
-): string[] | null {
-  if (!Array.isArray(rawSourceSegmentIds) || rawSourceSegmentIds.length === 0) {
-    return null;
-  }
-
-  const sourceSegmentIds: string[] = [];
-  const seen = new Set<string>();
-
-  for (const value of rawSourceSegmentIds) {
-    if (typeof value !== "string") return null;
-    if (!segmentById.has(value)) return null;
-
-    if (!seen.has(value)) {
-      seen.add(value);
-      sourceSegmentIds.push(value);
-    }
-  }
-
-  return sourceSegmentIds;
-}
-
-function validateKeyedPrimitiveEvidenceArray(
+function validateCaseDetails(
   rawItems: unknown,
-  allowedKeys: readonly string[]
-): KeyedPrimitiveEvidence[] | null {
-  if (!Array.isArray(rawItems)) return null;
+  knownSegmentIds: Set<string>
+): KeyedPrimitiveEvidence[] {
+  if (!Array.isArray(rawItems)) return [];
 
   const items: KeyedPrimitiveEvidence[] = [];
 
   for (const rawItem of rawItems) {
-    if (!isRecord(rawItem)) return null;
+    const item = validateCaseDetail(rawItem, knownSegmentIds);
 
-    const key = validateEnumValue(rawItem.key, allowedKeys);
-    const value = asPrimitive(rawItem.value);
-    const status = validateExtractedStatus(rawItem.status);
-    const evidence = validateEvidence(rawItem.evidence);
-
-    if (!key || value === undefined || !status || !evidence) {
-      return null;
+    if (item) {
+      items.push(item);
     }
-
-    items.push({
-      key,
-      value,
-      evidence,
-      status
-    });
   }
 
   return items;
 }
 
+function validateCaseDetail(
+  rawItem: unknown,
+  knownSegmentIds: Set<string>
+): KeyedPrimitiveEvidence | null {
+  if (!isRecord(rawItem)) return null;
+
+  const key = asAllowedString(
+    rawItem.key,
+    formatCatalogSelection.extractableFields
+  );
+
+  const value = asPrimitive(rawItem.value);
+  const evidence = asNonEmptyString(rawItem.evidence);
+  const sourceSegmentIds = validateSourceSegmentIds(
+    rawItem.sourceSegmentIds,
+    knownSegmentIds
+  );
+
+  if (!key || value === undefined || !evidence || sourceSegmentIds.length === 0) {
+    return null;
+  }
+
+  return {
+    key,
+    value,
+    evidence,
+    status: value === null
+      ? "user_declared_unavailable"
+      : validateStatus(rawItem.status),
+    sourceSegmentIds
+  };
+}
+
 function validateAttemptedActions(
-  rawItems: unknown
-): AttemptedAction[] | null {
-  if (!Array.isArray(rawItems)) return null;
+  rawItems: unknown,
+  knownSegmentIds: Set<string>
+): AttemptedAction[] {
+  if (!Array.isArray(rawItems)) return [];
 
   const attemptedActions: AttemptedAction[] = [];
 
   for (const rawItem of rawItems) {
-    if (!isRecord(rawItem)) return null;
+    const attemptedAction = validateAttemptedAction(rawItem, knownSegmentIds);
 
-    const outcome = validateEnumValue(
-      rawItem.outcome,
-      formatCatalogSelection.attemptedActionOutcomes
-    );
-
-    const status = validateExtractedStatus(rawItem.status);
-    const evidence = validateEvidence(rawItem.evidence);
-
-    if (
-      typeof rawItem.action !== "string" ||
-      rawItem.action.trim() === "" ||
-      !outcome ||
-      !status ||
-      !evidence
-    ) {
-      return null;
+    if (attemptedAction) {
+      attemptedActions.push(attemptedAction);
     }
-
-    attemptedActions.push({
-      action: rawItem.action,
-      outcome,
-      evidence,
-      status
-    });
   }
 
   return attemptedActions;
 }
 
-function validateKeyedOtherEvidenceArray(
+function validateAttemptedAction(
+  rawItem: unknown,
+  knownSegmentIds: Set<string>
+): AttemptedAction | null {
+  if (!isRecord(rawItem)) return null;
+
+  const action = asNonEmptyString(rawItem.action);
+  const outcome = asAllowedString(
+    rawItem.outcome,
+    formatCatalogSelection.attemptedActionOutcomes
+  );
+  const evidence = asNonEmptyString(rawItem.evidence);
+  const sourceSegmentIds = validateSourceSegmentIds(
+    rawItem.sourceSegmentIds,
+    knownSegmentIds
+  );
+
+  if (!action || !outcome || !evidence || sourceSegmentIds.length === 0) {
+    return null;
+  }
+
+  const status = validateStatus(rawItem.status);
+
+  return {
+    action,
+    outcome: status === "user_declared_unavailable" ? "unknown" : outcome,
+    evidence,
+    status,
+    sourceSegmentIds
+  };
+}
+
+function validateOtherItems(
   rawItems: unknown,
-  allowedKeys: readonly string[]
-): KeyedOtherEvidence[] | null {
-  if (!Array.isArray(rawItems)) return null;
+  knownSegmentIds: Set<string>
+): KeyedOtherEvidence[] {
+  if (!Array.isArray(rawItems)) return [];
 
   const items: KeyedOtherEvidence[] = [];
 
   for (const rawItem of rawItems) {
-    if (!isRecord(rawItem)) return null;
+    const item = validateOtherItem(rawItem, knownSegmentIds);
 
-    const key = validateEnumValue(rawItem.key, allowedKeys);
-    const value = asPrimitive(rawItem.value);
-    const evidence = validateEvidence(rawItem.evidence);
-
-    if (!key || value === undefined || !evidence) {
-      return null;
+    if (item) {
+      items.push(item);
     }
-
-    items.push({
-      key,
-      value,
-      evidence
-    });
   }
 
   return items;
 }
 
-function validateEnumValue(
-  value: unknown,
-  allowedValues: readonly string[]
-): string | null {
-  return typeof value === "string" && allowedValues.includes(value)
-    ? value
-    : null;
-}
+function validateOtherItem(
+  rawItem: unknown,
+  knownSegmentIds: Set<string>
+): KeyedOtherEvidence | null {
+  if (!isRecord(rawItem)) return null;
 
-function validateExtractedStatus(value: unknown): ExtractedStatus | null {
-  return value === "obtained" || value === "user_declared_unavailable"
-    ? value
-    : null;
-}
+  const key = asAllowedString(
+    rawItem.key,
+    formatCatalogSelection.otherKeys
+  );
 
-function validateEvidence(value: unknown): string | null {
-  if (typeof value !== "string") {
+  const value = asPrimitive(rawItem.value);
+  const evidence = asNonEmptyString(rawItem.evidence);
+  const sourceSegmentIds = validateSourceSegmentIds(
+    rawItem.sourceSegmentIds,
+    knownSegmentIds
+  );
+
+  if (!key || value === undefined || !evidence || sourceSegmentIds.length === 0) {
     return null;
   }
 
+  return {
+    key,
+    value,
+    evidence,
+    sourceSegmentIds
+  };
+}
+
+function validateSourceSegmentIds(
+  rawSourceSegmentIds: unknown,
+  knownSegmentIds: Set<string>
+): string[] {
+  if (!Array.isArray(rawSourceSegmentIds)) return [];
+
+  const sourceSegmentIds: string[] = [];
+  const seen = new Set<string>();
+
+  for (const rawId of rawSourceSegmentIds) {
+    if (typeof rawId !== "string") continue;
+    if (!knownSegmentIds.has(rawId)) continue;
+    if (seen.has(rawId)) continue;
+
+    seen.add(rawId);
+    sourceSegmentIds.push(rawId);
+  }
+
+  return sourceSegmentIds;
+}
+
+function validateStatus(value: unknown): ExtractedStatus {
+  return value === "user_declared_unavailable"
+    ? "user_declared_unavailable"
+    : "obtained";
+}
+
+function asAllowedString(
+  value: unknown,
+  allowedValues: readonly string[]
+): string | null {
+  if (typeof value !== "string") return null;
+
+  return allowedValues.includes(value) ? value : null;
+}
+
+function asNullableNonEmptyString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+
+  return asNonEmptyString(value);
+}
+
+function asNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
   const trimmed = value.trim();
 
-  return trimmed === "" ? null : value;
+  return trimmed === "" ? null : trimmed;
 }
 
 function asPrimitive(value: unknown): Primitive | undefined {
@@ -275,6 +275,7 @@ function asPrimitive(value: unknown): Primitive | undefined {
   if (typeof value === "string") return value.trim() === "" ? undefined : value;
   if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
   if (typeof value === "boolean") return value;
+
   return undefined;
 }
 
@@ -288,8 +289,10 @@ export {
 
 export type {
   AttemptedAction,
+  ExtractedStatus,
+  KeyedOtherEvidence,
   KeyedPrimitiveEvidence,
   Primitive,
   SupportTextSegment,
-  ValidatedSupportTextUnderstanding
+  ValidatedSupportTextAnalysis
 };

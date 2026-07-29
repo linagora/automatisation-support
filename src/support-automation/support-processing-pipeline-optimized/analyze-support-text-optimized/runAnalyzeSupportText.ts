@@ -9,15 +9,19 @@ import type {SupportTextFallbackReason} from "../../support-catalog-optimized/su
 import type {AnalyzeTextSurfaceSegment} from "../analyze-text-surface-optimized/runAnalyzeTextSurface";
 import type {AnalyzeSupportTextPendingRequestedItems} from "./buildAnalyzeSupportTextPrompt";
 import type {
+  AttemptedAction,
+  KeyedOtherEvidence,
+  KeyedPrimitiveEvidence,
   SupportTextSegment,
-  ValidatedSupportTextUnderstanding
+  ValidatedSupportTextAnalysis
 } from "./validateAnalyzeSupportTextOutput";
 
 // Stage contract:
 // Input: analyzed text-surface segments and recent interaction context.
-// Output: local support understandings, or a structured fallback.
-// Non-goals: no topic update, no diagnosis, no retrieval, no response drafting.
-// Validation policy: strict JSON validation, exact evidence grounding, no hidden repair.
+// Output: atomic support facts extracted from the latest user message.
+// Non-goals: no topic update, no topic matching, no diagnosis, no retrieval,
+// no response drafting, no subject hint.
+// Routing facts to topics is the responsibility of proposeTopicUpdates.
 
 type AnalyzeSupportTextInput = {
   textSurfaceAnalysis: {
@@ -27,20 +31,36 @@ type AnalyzeSupportTextInput = {
   pendingRequestedItems?: AnalyzeSupportTextPendingRequestedItems;
 };
 
-type AnalyzeSupportTextUnderstanding = ValidatedSupportTextUnderstanding & {
-  understandingId: string;
+type AnalyzeSupportTextCaseDetail = KeyedPrimitiveEvidence & {
+  caseDetailId: string;
+};
+
+type AnalyzeSupportTextAttemptedAction = AttemptedAction & {
+  attemptedActionId: string;
+};
+
+type AnalyzeSupportTextOther = KeyedOtherEvidence & {
+  otherId: string;
 };
 
 type AnalyzeSupportTextAnalyzedOutput = {
   status: "analyzed";
   fallbackReason: null;
-  understandings: AnalyzeSupportTextUnderstanding[];
+  summaryMessage: string | null;
+  userLanguage: string;
+  caseDetailsExtracted: AnalyzeSupportTextCaseDetail[];
+  attemptedActionsExtracted: AnalyzeSupportTextAttemptedAction[];
+  otherExtracted: AnalyzeSupportTextOther[];
 };
 
 type AnalyzeSupportTextFallbackOutput = {
   status: "fallback";
   fallbackReason: SupportTextFallbackReason;
-  understandings: [];
+  summaryMessage: null;
+  userLanguage: "unknown";
+  caseDetailsExtracted: [];
+  attemptedActionsExtracted: [];
+  otherExtracted: [];
 };
 
 type AnalyzeSupportTextOutput =
@@ -54,7 +74,11 @@ async function runAnalyzeSupportText(input: AnalyzeSupportTextInput): Promise<An
     return {
       status: "analyzed",
       fallbackReason: null,
-      understandings: []
+      summaryMessage: null,
+      userLanguage: "unknown",
+      caseDetailsExtracted: [],
+      attemptedActionsExtracted: [],
+      otherExtracted: []
     };
   }
 
@@ -87,10 +111,13 @@ async function runAnalyzeSupportText(input: AnalyzeSupportTextInput): Promise<An
       return buildFallbackOutput(supportTextFallbackReason.invalidLlmOutput);
     }
 
-    const validatedUnderstandings = validateAnalyzeSupportTextOutput(parsedResponse, supportSegments);
+    const validatedAnalysis = validateAnalyzeSupportTextOutput(
+      parsedResponse,
+      supportSegments
+    );
 
-    if (validatedUnderstandings) {
-      return buildAnalyzedOutput(validatedUnderstandings);
+    if (validatedAnalysis) {
+      return buildAnalyzedOutput(validatedAnalysis);
     }
 
     return buildFallbackOutput(supportTextFallbackReason.invalidLlmOutput);
@@ -109,19 +136,33 @@ function buildFallbackOutput(reason: SupportTextFallbackReason): AnalyzeSupportT
   return {
     status: "fallback",
     fallbackReason: reason,
-    understandings: []
+    summaryMessage: null,
+    userLanguage: "unknown",
+    caseDetailsExtracted: [],
+    attemptedActionsExtracted: [],
+    otherExtracted: []
   };
 }
 
 function buildAnalyzedOutput(
-  understandings: ValidatedSupportTextUnderstanding[]
+  analysis: ValidatedSupportTextAnalysis
 ): AnalyzeSupportTextAnalyzedOutput {
   return {
     status: "analyzed",
     fallbackReason: null,
-    understandings: understandings.map((understanding, index) => ({
-      understandingId: `text_understanding_${index + 1}`,
-      ...understanding
+    summaryMessage: analysis.summaryMessage,
+    userLanguage: analysis.userLanguage,
+    caseDetailsExtracted: analysis.caseDetailsExtracted.map((caseDetail, index) => ({
+      caseDetailId: `case_detail_${index + 1}`,
+      ...caseDetail
+    })),
+    attemptedActionsExtracted: analysis.attemptedActionsExtracted.map((attemptedAction, index) => ({
+      attemptedActionId: `attempted_action_${index + 1}`,
+      ...attemptedAction
+    })),
+    otherExtracted: analysis.otherExtracted.map((other, index) => ({
+      otherId: `other_${index + 1}`,
+      ...other
     }))
   };
 }
@@ -129,7 +170,9 @@ function buildAnalyzedOutput(
 export {runAnalyzeSupportText};
 
 export type {
+  AnalyzeSupportTextAttemptedAction,
+  AnalyzeSupportTextCaseDetail,
   AnalyzeSupportTextInput,
-  AnalyzeSupportTextOutput,
-  AnalyzeSupportTextUnderstanding
+  AnalyzeSupportTextOther,
+  AnalyzeSupportTextOutput
 };

@@ -5,7 +5,11 @@ import {runKnowledgeAnswerBranch, type KnowledgeAnswerBranchOutput} from "./topi
 import {runSupportActionBranch, type SupportActionBranchOutput} from "./topic-treatement/support-action-branch/runSupportActionBranch";
 import {runUnclearTopicBranch, type UnclearTopicBranchOutput} from "./topic-treatement/unclear-topic-branch/runUnclearTopicBranch";
 
-import type {AnalyzeSupportTextUnderstanding} from "../analyze-support-text-optimized/runAnalyzeSupportText";
+import type {
+  AnalyzeSupportTextAttemptedAction,
+  AnalyzeSupportTextCaseDetail,
+  AnalyzeSupportTextOther
+} from "../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {TopicUpdatePlan} from "../propose-topic-updates-optimized/runProposeTopicUpdates";
 import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
@@ -25,10 +29,16 @@ type TopicPlannerOutput = {
   say: string;
 };
 
+type TopicRoutedSupportFacts = {
+  caseDetailsExtracted: AnalyzeSupportTextCaseDetail[];
+  attemptedActionsExtracted: AnalyzeSupportTextAttemptedAction[];
+  otherExtracted: AnalyzeSupportTextOther[];
+};
+
 type RunTopicManagerInput = {
   topicUpdatePlan: TopicUpdatePlan;
   currentTopic: LiveMemoryTopicOptimized | null;
-  sourceUnderstandings: AnalyzeSupportTextUnderstanding[];
+  sourceFacts: TopicRoutedSupportFacts;
   currentUserMessage: CurrentUserMessage;
   previousConversationTurn: PreviousConversationTurn;
 };
@@ -73,37 +83,36 @@ async function runTopicManager(input: RunTopicManagerInput): Promise<RunTopicMan
   try {
     let sourceTopicManager = buildInitialSourceTopicManager(input.currentTopic);
 
-    if (shouldRunSupportNeedResolution(sourceTopicManager)) {
-      const supportNeedResolutionOutput = await runSupportNeedResolution({
-        topicUpdatePlan: input.topicUpdatePlan,
-        currentTopic: input.currentTopic,
-        sourceUnderstandings: input.sourceUnderstandings,
-        currentUserMessage: input.currentUserMessage,
-        previousConversationTurn: input.previousConversationTurn
+    const supportNeedResolutionOutput = await runSupportNeedResolution({
+      topicUpdatePlan: input.topicUpdatePlan,
+      currentUserMessage: input.currentUserMessage,
+      previousSupportNeedResolution:
+        input.currentTopic?.sourceTopicManager.supportNeedResolution ?? null,
+      previousTopicSummary:
+        input.currentTopic?.sourceProposeTopicUpdates.summaryTopic ?? null
+    });
+
+    intermediateOutputs.supportNeedResolutionOutput = supportNeedResolutionOutput;
+
+    if (supportNeedResolutionOutput.status === "fallback") {
+      return buildFallbackOutput({
+        fallbackReason: supportNeedResolutionOutput.fallbackReason,
+        intermediateOutputs
       });
-
-      intermediateOutputs.supportNeedResolutionOutput = supportNeedResolutionOutput;
-
-      if (supportNeedResolutionOutput.status === "fallback") {
-        return buildFallbackOutput({
-          fallbackReason: supportNeedResolutionOutput.fallbackReason,
-          intermediateOutputs
-        });
-      }
-
-      sourceTopicManager = {
-        ...sourceTopicManager,
-        currentStep: "support_need_resolution",
-        supportNeedResolution: supportNeedResolutionOutput.supportNeedResolution,
-        resolutionStatus: {
-          value: "in_progress",
-          reason: "The support need has been classified and the topic is ready for treatment."
-        },
-        idleMode: {
-          isActivated: false
-        }
-      };
     }
+
+    sourceTopicManager = {
+      ...sourceTopicManager,
+      currentStep: "support_need_resolution",
+      supportNeedResolution: supportNeedResolutionOutput.supportNeedResolution,
+      resolutionStatus: {
+        value: "in_progress",
+        reason: "The support need has been reassessed from the latest topic update."
+      },
+      idleMode: {
+        isActivated: false
+      }
+    };
 
     const treatmentOutput = await runTopicTreatment({
       input,
@@ -146,7 +155,7 @@ async function runTopicTreatment(params: {
     const output = await runIssueResolutionBranch({
       topicUpdatePlan: params.input.topicUpdatePlan,
       currentTopic: params.input.currentTopic,
-      sourceUnderstandings: params.input.sourceUnderstandings,
+      sourceFacts: params.input.sourceFacts,
       currentUserMessage: params.input.currentUserMessage,
       previousConversationTurn: params.input.previousConversationTurn,
       sourceTopicManager: params.sourceTopicManager
@@ -193,12 +202,6 @@ async function runTopicTreatment(params: {
 
   params.intermediateOutputs.unclearTopicBranchOutput = output;
   return output;
-}
-
-function shouldRunSupportNeedResolution(
-  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
-): boolean {
-  return sourceTopicManager.supportNeedResolution.supportNeed.value === "unclear";
 }
 
 function buildInitialSourceTopicManager(
@@ -337,5 +340,6 @@ export type {
   PreviousConversationTurn,
   RunTopicManagerInput,
   RunTopicManagerOutput,
+  TopicRoutedSupportFacts,
   TopicPlannerOutput
 };

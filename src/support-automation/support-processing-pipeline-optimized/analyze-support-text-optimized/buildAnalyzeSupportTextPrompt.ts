@@ -45,18 +45,15 @@ function buildAnalyzeSupportTextPrompt(
   input: BuildAnalyzeSupportTextPromptInput
 ): AnalyzeSupportTextLlmRequest {
   const systemPrompt = `
-You are a strict support text understanding engine.
+You extract atomic support facts from the latest user message.
 
-Analyze only the provided support_relevant segments from the latest user message.
-Extract structured support facts for later topic matching and topic handling.
-
+Return structured facts only.
 Do not answer the user.
-Do not create, match, merge, update, or classify topics.
-Do not classify the global support need.
-Do not diagnose root cause.
-Do not propose solutions.
-Do not choose next questions.
-Do not write a user-facing response.
+Do not create topics.
+Do not route facts to topics.
+Extract only atomic facts.
+Do not add subject hints.
+Do not diagnose or propose solutions.
 
 Return only JSON matching the requested schema.
 `.trim();
@@ -89,98 +86,135 @@ ${renderPromptItems(promptCatalogSelection.otherKeys)}
 
 # Task
 
-Create one understanding per coherent support need.
+Extract support information as flat atomic facts.
 
-A user message may contain:
-- an answer to a previously requested detail;
-- extra details for an existing issue;
-- a new independent support subject;
-- several independent support subjects.
+Return:
+- summaryMessage: one short neutral summary of the latest support message;
+- userLanguage: the detected language;
+- caseDetailsExtracted: concrete issue facts;
+- attemptedActionsExtracted: actions the user tried to solve, verify, or work around the issue;
+- otherExtracted: useful support facts that do not fit elsewhere.
 
-Do not merge independent support subjects.
-Create separate understandings when different products, features, actions, symptoms, expected results, objectives, or blocking points are described.
+Do not group facts by subject.
+Do not infer topic ownership.
+The next pipeline step will decide which facts belong to which topic.
+
+# Atomic facts
+
+One extracted item must represent one fact.
+
+If the user gives two different values for the same field, output two separate facts.
+
+Example:
+"it started last week for chat and two weeks ago for drive"
+=> two issue_started_at facts.
+
+If one fact clearly applies to multiple subjects, output it once.
+Do not duplicate shared facts here.
+
+Example:
+"for both issues, I use Firefox"
+=> one browser fact.
 
 # Pending requested items
 
-pending_requested_items are not a filter.
-You must still extract any relevant support information from the latest message.
+pending_requested_items are priority targets, not a filter.
 
-However, pending requested items are priority targets.
+If the latest message answers a pending case detail:
+- reuse exactly the pending field key.
 
-When pending_requested_items.caseDetailsToAsk contains fields with status "asking":
-- interpret the latest user message as a possible answer to those requested fields;
-- reuse exactly the requested field key when the message answers it;
-- prefer the pending requested key over another less specific key;
-- do not ignore a pending field only because the user answered naturally instead of using the field wording.
+If the latest message gives the result of a pending attempted action:
+- reuse exactly the pending action string;
+- choose outcome "success", "failed", "partial", or "unknown".
 
-When pending_requested_items.attemptedActionsToAsk contains actions with status "asking":
-- interpret the latest user message as a possible result for those requested actions;
-- reuse exactly the requested action string;
-- do not translate, shorten, or paraphrase the requested action;
-- use outcome "success", "failed", "partial", or "unknown".
+Still extract other relevant support facts from the latest message.
 
-# Extraction principles
+# Case details
 
-Use caseDetailsExtracted for concrete facts about the issue:
-- what product area is affected;
-- what the user is trying to do;
-- where or when the flow breaks;
-- what actually happens;
-- what should normally happen;
-- exact errors, identifiers, environment, scope, timing, or evidence when provided.
+Use caseDetailsExtracted for facts about:
+- product or service;
+- feature, page, object, or flow;
+- user action;
+- failure step;
+- observed result;
+- expected result;
+- error message;
+- environment;
+- scope;
+- timing;
+- identifiers;
+- evidence availability.
+
+If the user says a requested detail is unavailable, missing, unknown, impossible to provide, or impossible to test:
+- use status "user_declared_unavailable";
+- use value null.
+
+Never use status "obtained" with value null.
+
+expected_result may be inferred only when it is the direct obvious normal outcome of the failed action.
+
+# Attempted actions
 
 Use attemptedActionsExtracted only for actions the user tried to fix, verify, diagnose, recover from, or work around the issue.
 
 Normal product usage is not an attempted action.
-For example, opening, clicking, typing, validating, sending, renaming, reading, uploading, or creating something as part of the normal workflow should be extracted as case details, not as attempted actions.
 
-If the user explicitly says a requested detail does not exist, is unavailable, cannot be accessed, cannot be provided, or cannot be tested:
-- output the requested field or action with status "user_declared_unavailable";
-- use value null for case details;
-- use outcome "unknown" for attempted actions.
+Examples of normal product usage:
+- opening a chat;
+- renaming a file;
+- clicking save;
+- sending a message;
+- uploading a file.
 
-Do not output status "obtained" with value null.
+Examples of attempted actions:
+- refreshing the page;
+- clearing cache;
+- trying another browser;
+- checking connection;
+- renaming with another name after being asked to test it.
 
-expected_result may be inferred only when it is the direct and obvious normal outcome of the failed user action.
+Do not set outcome to "success" if the user mention that he succeeded to do the action, but the issue is still present.
+# Evidence
 
-# Context use
+Each fact must include evidence from the current support segments.
+Evidence should include enough local context when possible.
 
-Use recent_interaction_context only to interpret short contextual replies such as yes/no, same issue, an ID, a version, a date, a browser, a number, or an answer to the previous bot question.
+Prefer:
+- "last week for chat"
 
-For normal detailed messages, extract from the current support segments.
-Never use recent_interaction_context as evidence.
+Over:
+- "last week"
 
-Evidence must always be exact text from the current support segments.
+Prefer:
+- "for both issues, I use Firefox"
 
-# Grounding
+Over:
+- "Firefox"
 
-Every understanding must have sourceSegmentIds.
-Every sourceSegmentIds array must contain known segment ids only, without duplicates, in input order.
-Every provided segment should be referenced by at least one understanding.
+Evidence does not need to be perfect, but it must be grounded in the current user message.
+Do not use recent_interaction_context as evidence.
 
-Every evidence value must be an exact substring of one referenced segment verbatim.
-Never output evidence that spans multiple segments.
-Never normalize, translate, correct, rewrite, shorten, or repair evidence.
+# Context
 
-If useful information does not fit caseDetailsExtracted or attemptedActionsExtracted, put it in other.
-Keep other short.
+Use recent_interaction_context only to understand short replies.
 
-summaryMessage must be a short neutral local understanding.
-No solution, diagnosis, topic decision, support domain, or user-facing answer.
+Examples:
+- "yes";
+- "no";
+- "same";
+- "Firefox";
+- "since last week";
+- "I tried it and it failed".
 
-# Final checks
+Do not extract facts from recent_interaction_context itself.
 
-Before returning JSON, verify:
-1. Every provided segment is referenced by at least one understanding.
-2. Every evidence value is an exact substring of a referenced segment.
-3. caseDetailsExtracted.key, attemptedActionsExtracted.outcome, and other.key use only allowed values.
-4. Empty arrays are used when there are no caseDetailsExtracted, attemptedActionsExtracted, or other entries.
-5. caseDetailsExtracted.status must be "obtained" or "user_declared_unavailable".
-6. attemptedActionsExtracted.status must be "obtained" or "user_declared_unavailable".
-7. Do not output status "obtained" with value null.
-8. When answering a pending case detail, reuse exactly the pending case detail key.
-9. When answering a pending attempted action, reuse exactly the pending action string.
-10. The output contains no topic update, response plan, diagnosis, solution, or user-facing answer.
+# Summary
+
+summaryMessage is global for the latest message.
+It is not a topic summary.
+It must not contain a diagnosis, solution, topic decision, or user-facing answer.
+
+Use null only if the message contains no meaningful support information.
 
 # Output JSON shape
 

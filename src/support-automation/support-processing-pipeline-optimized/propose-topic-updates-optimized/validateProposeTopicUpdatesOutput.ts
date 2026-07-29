@@ -1,11 +1,17 @@
 import {formatCatalogSelection} from "./catalogSelection";
 
-import type {AnalyzeSupportTextUnderstanding} from "../analyze-support-text-optimized/runAnalyzeSupportText";
+import type {
+  AnalyzeSupportTextAttemptedAction,
+  AnalyzeSupportTextCaseDetail,
+  AnalyzeSupportTextOther
+} from "../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type TopicUpdatePlan = {
   topicId: number | null;
-  sourceUnderstandingIds: string[];
+  sourceCaseDetailIds: string[];
+  sourceAttemptedActionIds: string[];
+  sourceOtherIds: string[];
   title: string | null;
   summaryTopic: string | null;
   supportDomain: {
@@ -14,154 +20,184 @@ type TopicUpdatePlan = {
   };
 };
 
-// LLM output validation:
-// Validates the parsed JSON returned by the optimized topic update proposal LLM.
-// This validator intentionally keeps memory-safety checks strict,
-// but does not fail the whole pipeline because of harmless extra keys
-// or because the LLM did not use every extracted understanding.
-//
-// Important:
-// - topicId must still be null or an existing topicId;
-// - sourceUnderstandingIds must still reference real understanding ids;
-// - the same understanding cannot be attached to two different plans;
-// - supportDomain.value must still belong to the catalog or be null.
+type ValidateProposeTopicUpdatesParams = {
+  existingTopics: LiveMemoryTopicOptimized[];
+  caseDetailsExtracted: AnalyzeSupportTextCaseDetail[];
+  attemptedActionsExtracted: AnalyzeSupportTextAttemptedAction[];
+  otherExtracted: AnalyzeSupportTextOther[];
+};
+
+// Validation policy:
+// - malformed top-level JSON returns null;
+// - malformed or useless plans are ignored;
+// - unknown fact ids are ignored;
+// - duplicate ids are deduplicated;
+// - the same fact id may be routed to several topics;
+// - invalid existing topic ids make only that plan invalid;
+// - invalid supportDomain is normalized to null, not a global fallback.
 function validateProposeTopicUpdatesOutput(
   parsedResponse: unknown,
-  params: {
-    existingTopics: LiveMemoryTopicOptimized[];
-    understandings: AnalyzeSupportTextUnderstanding[];
-  }
+  params: ValidateProposeTopicUpdatesParams
 ): TopicUpdatePlan[] | null {
   if (!isRecord(parsedResponse)) return null;
-  if (!Array.isArray(parsedResponse.topicUpdatePlans)) return null;
 
-  const understandingById = new Map(
-    params.understandings.map((understanding) => [
-      understanding.understandingId,
-      understanding
+  const rawPlans = Array.isArray(parsedResponse.topicUpdatePlans)
+    ? parsedResponse.topicUpdatePlans
+    : [];
+
+  const existingTopicById = new Map(
+    params.existingTopics.map((topic) => [
+      topic.sourceProposeTopicUpdates.topicId,
+      topic
     ])
   );
 
-  const existingTopicIds = new Set(
-    params.existingTopics.map((topic) => topic.sourceProposeTopicUpdates.topicId)
+  const validCaseDetailIds = new Set(
+    params.caseDetailsExtracted.map((fact) => fact.caseDetailId)
   );
 
-  const coveredUnderstandingIds = new Set<string>();
-  const plans: TopicUpdatePlan[] = [];
+  const validAttemptedActionIds = new Set(
+    params.attemptedActionsExtracted.map((fact) => fact.attemptedActionId)
+  );
 
-  for (const rawPlan of parsedResponse.topicUpdatePlans) {
+  const validOtherIds = new Set(
+    params.otherExtracted.map((fact) => fact.otherId)
+  );
+
+  const existingTopicPlans = new Map<number, TopicUpdatePlan>();
+  const newTopicPlans: TopicUpdatePlan[] = [];
+
+  for (const rawPlan of rawPlans) {
     const plan = validatePlan({
       rawPlan,
-      understandingById,
-      existingTopicIds,
-      coveredUnderstandingIds
+      existingTopicById,
+      validCaseDetailIds,
+      validAttemptedActionIds,
+      validOtherIds
     });
 
-    if (!plan) return null;
+    if (!plan) continue;
 
-    plans.push(plan);
+    if (typeof plan.topicId === "number") {
+      const existing = existingTopicPlans.get(plan.topicId);
+
+      if (existing) {
+        existingTopicPlans.set(plan.topicId, mergePlans(existing, plan));
+      } else {
+        existingTopicPlans.set(plan.topicId, plan);
+      }
+
+      continue;
+    }
+
+    newTopicPlans.push(plan);
   }
 
-  return plans;
+  return [
+    ...existingTopicPlans.values(),
+    ...newTopicPlans
+  ];
 }
 
 function validatePlan(params: {
   rawPlan: unknown;
-  understandingById: Map<string, AnalyzeSupportTextUnderstanding>;
-  existingTopicIds: Set<number>;
-  coveredUnderstandingIds: Set<string>;
+  existingTopicById: Map<number, LiveMemoryTopicOptimized>;
+  validCaseDetailIds: Set<string>;
+  validAttemptedActionIds: Set<string>;
+  validOtherIds: Set<string>;
 }): TopicUpdatePlan | null {
   if (!isRecord(params.rawPlan)) return null;
 
-  const sourceUnderstandingIds = validateSourceUnderstandingIds({
-    value: params.rawPlan.sourceUnderstandingIds,
-    understandingById: params.understandingById,
-    coveredUnderstandingIds: params.coveredUnderstandingIds
-  });
-
-  if (!sourceUnderstandingIds) return null;
-
   const topicId = validateTopicId(
     params.rawPlan.topicId,
-    params.existingTopicIds
+    params.existingTopicById
   );
 
-  const title = validateNullableText(params.rawPlan.title);
-  const summaryTopic = validateNullableText(params.rawPlan.summaryTopic);
-  const supportDomain = validateSupportDomain(params.rawPlan.supportDomain);
+  if (topicId === undefined) return null;
+
+  const sourceCaseDetailIds = validateSourceIds(
+    params.rawPlan.sourceCaseDetailIds,
+    params.validCaseDetailIds
+  );
+
+  const sourceAttemptedActionIds = validateSourceIds(
+    params.rawPlan.sourceAttemptedActionIds,
+    params.validAttemptedActionIds
+  );
+
+  const sourceOtherIds = validateSourceIds(
+    params.rawPlan.sourceOtherIds,
+    params.validOtherIds
+  );
 
   if (
-    topicId === undefined ||
-    title === undefined ||
-    summaryTopic === undefined ||
-    !supportDomain
+    sourceCaseDetailIds.length === 0 &&
+    sourceAttemptedActionIds.length === 0 &&
+    sourceOtherIds.length === 0
   ) {
     return null;
   }
 
+  const existingTopic = typeof topicId === "number"
+    ? params.existingTopicById.get(topicId) ?? null
+    : null;
+
+  const title = validateNullableText(params.rawPlan.title)
+    ?? existingTopic?.sourceProposeTopicUpdates.title
+    ?? null;
+
+  const summaryTopic = validateNullableText(params.rawPlan.summaryTopic)
+    ?? existingTopic?.sourceProposeTopicUpdates.summaryTopic
+    ?? null;
+
+  const supportDomain = validateSupportDomain(params.rawPlan.supportDomain)
+    ?? existingTopic?.sourceProposeTopicUpdates.supportDomain
+    ?? {value: null, reason: null};
+
   return {
     topicId,
-    sourceUnderstandingIds,
+    sourceCaseDetailIds,
+    sourceAttemptedActionIds,
+    sourceOtherIds,
     title,
     summaryTopic,
     supportDomain
   };
 }
 
-function validateSourceUnderstandingIds(params: {
-  value: unknown;
-  understandingById: Map<string, AnalyzeSupportTextUnderstanding>;
-  coveredUnderstandingIds: Set<string>;
-}): string[] | null {
-  if (!Array.isArray(params.value) || params.value.length === 0) return null;
+function validateSourceIds(
+  value: unknown,
+  validIds: Set<string>
+): string[] {
+  if (!Array.isArray(value)) return [];
 
-  const planSeen = new Set<string>();
-  const sourceUnderstandingIds: string[] = [];
+  const sourceIds: string[] = [];
+  const seen = new Set<string>();
 
-  for (const rawId of params.value) {
-    if (typeof rawId !== "string" || rawId.trim() === "") return null;
-    if (!params.understandingById.has(rawId)) return null;
+  for (const rawId of value) {
+    if (typeof rawId !== "string") continue;
 
-    // Duplicate inside the same plan is harmless.
-    // We deduplicate instead of failing the whole LLM output.
-    if (planSeen.has(rawId)) {
-      continue;
-    }
+    const id = rawId.trim();
 
-    // But the same understanding must not be attached to two different plans,
-    // otherwise memory persistence becomes ambiguous.
-    if (params.coveredUnderstandingIds.has(rawId)) {
-      return null;
-    }
+    if (id === "") continue;
+    if (!validIds.has(id)) continue;
+    if (seen.has(id)) continue;
 
-    planSeen.add(rawId);
-    params.coveredUnderstandingIds.add(rawId);
-    sourceUnderstandingIds.push(rawId);
+    seen.add(id);
+    sourceIds.push(id);
   }
 
-  return sourceUnderstandingIds.length > 0 ? sourceUnderstandingIds : null;
+  return sourceIds;
 }
 
 function validateTopicId(
   value: unknown,
-  existingTopicIds: Set<number>
+  existingTopicById: Map<number, LiveMemoryTopicOptimized>
 ): number | null | undefined {
   if (value === null) return null;
   if (!isPositiveInteger(value)) return undefined;
 
-  return existingTopicIds.has(value) ? value : undefined;
-}
-
-function validateNullableText(value: unknown): string | null | undefined {
-  if (value === null) return null;
-
-  return validateRequiredText(value) ?? undefined;
-}
-
-function validateRequiredText(value: unknown): string | null {
-  return typeof value === "string" && value.trim() !== ""
-    ? value
-    : null;
+  return existingTopicById.has(value) ? value : undefined;
 }
 
 function validateSupportDomain(
@@ -174,32 +210,47 @@ function validateSupportDomain(
     formatCatalogSelection.supportDomains
   );
 
-  const reason = validateNullableText(value.reason);
-
-  if (domainValue === undefined || reason === undefined) return null;
-
   return {
     value: domainValue,
-    reason
+    reason: validateNullableText(value.reason)
   };
 }
 
-function validateEnumValue(
-  value: unknown,
-  allowedValues: readonly string[]
-): string | null {
-  return typeof value === "string" && allowedValues.includes(value)
-    ? value
-    : null;
+function mergePlans(
+  left: TopicUpdatePlan,
+  right: TopicUpdatePlan
+): TopicUpdatePlan {
+  return {
+    topicId: left.topicId,
+    sourceCaseDetailIds: mergeIds(left.sourceCaseDetailIds, right.sourceCaseDetailIds),
+    sourceAttemptedActionIds: mergeIds(left.sourceAttemptedActionIds, right.sourceAttemptedActionIds),
+    sourceOtherIds: mergeIds(left.sourceOtherIds, right.sourceOtherIds),
+    title: right.title ?? left.title,
+    summaryTopic: right.summaryTopic ?? left.summaryTopic,
+    supportDomain: right.supportDomain.value ? right.supportDomain : left.supportDomain
+  };
+}
+
+function mergeIds(left: readonly string[], right: readonly string[]): string[] {
+  return [...new Set([...left, ...right])];
+}
+
+function validateNullableText(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+
+  return trimmed === "" ? null : trimmed;
 }
 
 function validateNullableEnumValue(
   value: unknown,
   allowedValues: readonly string[]
-): string | null | undefined {
+): string | null {
   if (value === null) return null;
+  if (typeof value !== "string") return null;
 
-  return validateEnumValue(value, allowedValues) ?? undefined;
+  return allowedValues.includes(value) ? value : null;
 }
 
 function isPositiveInteger(value: unknown): value is number {
@@ -215,5 +266,6 @@ export {
 };
 
 export type {
-  TopicUpdatePlan
+  TopicUpdatePlan,
+  ValidateProposeTopicUpdatesParams
 };

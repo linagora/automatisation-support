@@ -10,11 +10,7 @@ type BasicQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["basicQ
 type FieldToAsk = BasicQualification["caseDetailsToAskBecauseOfBasicQualification"][number] & {status: "asking"};
 
 export type PlanIssueBasicQualificationAskInput = {
-  currentUserMessage: {content: string; channel?: string};
-  previousConversationTurn: {
-    previousUserMessage: string | null;
-    previousBotMessage: string | null;
-  };
+  summaryTopic: string | null;
   basicQualification: BasicQualification;
 };
 
@@ -24,11 +20,13 @@ export type PlanIssueBasicQualificationAskOutput = {
 
 async function planIssueBasicQualificationAsk(input: PlanIssueBasicQualificationAskInput): Promise<PlanIssueBasicQualificationAskOutput> {
   const fieldsToAsk = selectFieldsToAsk(input.basicQualification);
-  const fallbackSay = buildDeterministicBasicQualificationAsk({fieldsToAsk});
+  const fallbackSay = buildDeterministicBasicQualificationAsk({
+    summaryTopic: input.summaryTopic,
+    fieldsToAsk
+  });
 
   const {messages} = buildIssueBasicQualificationAskPrompt({
-    currentUserMessage: input.currentUserMessage,
-    previousConversationTurn: input.previousConversationTurn,
+    summaryTopic: input.summaryTopic,
     fieldsToAsk
   });
 

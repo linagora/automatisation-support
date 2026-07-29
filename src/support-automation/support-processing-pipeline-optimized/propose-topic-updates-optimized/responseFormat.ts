@@ -17,25 +17,65 @@ const responseFormat = {
           items: {
             type: "object",
             additionalProperties: false,
-            required: ["topicId", "sourceUnderstandingIds", "title", "summaryTopic", "supportDomain"],
+            required: [
+              "topicId",
+              "sourceCaseDetailIds",
+              "sourceAttemptedActionIds",
+              "sourceOtherIds",
+              "title",
+              "summaryTopic",
+              "supportDomain"
+            ],
             properties: {
               topicId: {
-                anyOf: [{type: "integer", minimum: 1}, {type: "null"}]
+                anyOf: [
+                  {type: "integer", minimum: 1},
+                  {type: "null"}
+                ]
               },
-              sourceUnderstandingIds: {type: "array", minItems: 1, items: {type: "string"}},
-              title: {anyOf: [{type: "string"}, {type: "null"}]},
-              summaryTopic: {anyOf: [{type: "string"}, {type: "null"}]},
+              sourceCaseDetailIds: {
+                type: "array",
+                items: {type: "string"}
+              },
+              sourceAttemptedActionIds: {
+                type: "array",
+                items: {type: "string"}
+              },
+              sourceOtherIds: {
+                type: "array",
+                items: {type: "string"}
+              },
+              title: {
+                anyOf: [
+                  {type: "string"},
+                  {type: "null"}
+                ]
+              },
+              summaryTopic: {
+                anyOf: [
+                  {type: "string"},
+                  {type: "null"}
+                ]
+              },
               supportDomain: {
                 type: "object",
                 additionalProperties: false,
                 required: ["value", "reason"],
                 properties: {
                   value: {
-                    anyOf: [{enum: formatCatalogSelection.supportDomains}, {type: "null"}]
+                    anyOf: [
+                      {enum: formatCatalogSelection.supportDomains},
+                      {type: "null"}
+                    ]
                   },
-                  reason: {anyOf: [{type: "string"}, {type: "null"}]}
+                  reason: {
+                    anyOf: [
+                      {type: "string"},
+                      {type: "null"}
+                    ]
+                  }
                 }
-              },
+              }
             }
           }
         }
@@ -50,22 +90,26 @@ function buildOutputJsonShapeForPrompt(): string {
   "topicUpdatePlans": [
     {
       "topicId": 12,
-      "sourceUnderstandingIds": ["text_understanding_1"],
+      "sourceCaseDetailIds": ["case_detail_1"],
+      "sourceAttemptedActionIds": [],
+      "sourceOtherIds": [],
       "title": "Login problem",
       "summaryTopic": "The user has a login problem that is now clarified as happening on Firefox.",
       "supportDomain": {
         "value": "access_security",
-        "reason": "The current understanding and previous topic concern login access."
+        "reason": "The routed facts concern login access."
       }
     },
     {
       "topicId": null,
-      "sourceUnderstandingIds": ["text_understanding_2"],
+      "sourceCaseDetailIds": ["case_detail_2"],
+      "sourceAttemptedActionIds": [],
+      "sourceOtherIds": [],
       "title": "Billing issue",
       "summaryTopic": "The user reports a billing issue that should be tracked as a separate support topic.",
       "supportDomain": {
         "value": "billing",
-        "reason": "The current understanding is about billing."
+        "reason": "The routed facts concern billing."
       }
     }
   ]

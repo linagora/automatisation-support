@@ -59,7 +59,7 @@ import type {
   SupportProcessingProgressEvent
 } from "./progress/typesSupportProgress.types";
 
-const DEFAULT_BUFFER_INACTIVITY_MS = 500;
+const DEFAULT_BUFFER_INACTIVITY_MS = 0;
 const DEFAULT_BUFFER_MAX_WAIT_MS = 30000;
 const DEFAULT_STARTUP_GRACE_MS = 5000;
 

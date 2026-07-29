@@ -6,7 +6,6 @@ import {responseFormat} from "./responseFormat";
 import {validateAssessSupportNeedOutput} from "./validateAssessSupportNeedOutput";
 
 import type {SupportNeedAssessmentFallbackReason} from "../../../support-catalog-optimized/supportFallback.catalog";
-import type {AnalyzeSupportTextUnderstanding} from "../../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {TopicUpdatePlan} from "../../propose-topic-updates-optimized/runProposeTopicUpdates";
 import type {LiveMemoryTopicOptimized} from "../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {SupportNeedAssessment} from "./validateAssessSupportNeedOutput";
@@ -16,34 +15,22 @@ type CurrentUserMessage = {
   channel?: string;
 };
 
-type PreviousConversationTurn = {
-  previousUserMessage: string | null;
-  previousBotMessage: string | null;
-};
-
 type RunSupportNeedResolutionInput = {
   topicUpdatePlan: TopicUpdatePlan;
-  currentTopic: LiveMemoryTopicOptimized | null;
-  sourceUnderstandings: AnalyzeSupportTextUnderstanding[];
   currentUserMessage: CurrentUserMessage;
-  previousConversationTurn: PreviousConversationTurn;
+  previousSupportNeedResolution:
+    | LiveMemoryTopicOptimized["sourceTopicManager"]["supportNeedResolution"]
+    | null;
+  previousTopicSummary: string | null;
 };
 
 type AssessSupportNeedInput = {
-  topic: {
-    title: string | null;
-    summaryTopic: string | null;
-    supportDomain: {
-      value: string | null;
-      reason: string | null;
-    };
-    previousSupportNeedResolution:
-      | LiveMemoryTopicOptimized["sourceTopicManager"]["supportNeedResolution"]
-      | null;
-    sourceUnderstandings: AnalyzeSupportTextUnderstanding[];
-  };
+  topicUpdatePlan: TopicUpdatePlan;
   currentUserMessage: CurrentUserMessage;
-  previousConversationTurn: PreviousConversationTurn;
+  previousSupportNeedResolution:
+    | LiveMemoryTopicOptimized["sourceTopicManager"]["supportNeedResolution"]
+    | null;
+  previousTopicSummary: string | null;
 };
 
 type AssessSupportNeedAnalyzedOutput = {
@@ -120,16 +107,10 @@ function buildAssessSupportNeedInput(
   input: RunSupportNeedResolutionInput
 ): AssessSupportNeedInput {
   return {
-    topic: {
-      title: input.topicUpdatePlan.title,
-      summaryTopic: input.topicUpdatePlan.summaryTopic,
-      supportDomain: input.topicUpdatePlan.supportDomain,
-      previousSupportNeedResolution:
-        input.currentTopic?.sourceTopicManager.supportNeedResolution ?? null,
-      sourceUnderstandings: input.sourceUnderstandings
-    },
+    topicUpdatePlan: input.topicUpdatePlan,
     currentUserMessage: input.currentUserMessage,
-    previousConversationTurn: input.previousConversationTurn
+    previousSupportNeedResolution: input.previousSupportNeedResolution,
+    previousTopicSummary: input.previousTopicSummary
   };
 }
 

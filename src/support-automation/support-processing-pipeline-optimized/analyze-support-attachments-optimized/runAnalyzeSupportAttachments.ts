@@ -10,7 +10,7 @@ type AnalyzeSupportAttachmentsOutput =
   | {
       status: "analyzed";
       fallbackReason: null;
-      understandings: [];
+      extractedFacts: [];
     }
   | {
       status: "fallback";
@@ -30,7 +30,7 @@ function runAnalyzeSupportAttachments(
     return {
       status: "analyzed",
       fallbackReason: null,
-      understandings: []
+      extractedFacts: []
     };
   }
 

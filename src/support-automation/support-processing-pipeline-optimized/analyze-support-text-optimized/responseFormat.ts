@@ -10,103 +10,130 @@ const responseFormat = {
     schema: {
       type: "object",
       additionalProperties: false,
-      required: ["understandings"],
+      required: [
+        "summaryMessage",
+        "userLanguage",
+        "caseDetailsExtracted",
+        "attemptedActionsExtracted",
+        "otherExtracted"
+      ],
       properties: {
-        understandings: {
+        summaryMessage: {
+          anyOf: [
+            {type: "string"},
+            {type: "null"}
+          ]
+        },
+        userLanguage: {
+          type: "string"
+        },
+        caseDetailsExtracted: {
           type: "array",
           items: {
             type: "object",
             additionalProperties: false,
             required: [
-              "sourceSegmentIds",
-              "caseDetailsExtracted",
-              "attemptedActionsExtracted",
-              "other",
-              "summaryMessage"
+              "key",
+              "value",
+              "evidence",
+              "status",
+              "sourceSegmentIds"
             ],
             properties: {
+              key: {
+                enum: formatCatalogSelection.extractableFields
+              },
+              value: {
+                anyOf: [
+                  {type: "string"},
+                  {type: "number"},
+                  {type: "boolean"},
+                  {type: "null"}
+                ]
+              },
+              evidence: {
+                type: "string"
+              },
+              status: {
+                enum: ["obtained", "user_declared_unavailable"]
+              },
               sourceSegmentIds: {
                 type: "array",
                 minItems: 1,
                 items: {
                   type: "string"
                 }
-              },
-              caseDetailsExtracted: {
-                type: "array",
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  required: ["key", "value", "evidence", "status"],
-                  properties: {
-                    key: {
-                      enum: formatCatalogSelection.extractableFields
-                    },
-                    value: {
-                      anyOf: [
-                        {type: "string"},
-                        {type: "number"},
-                        {type: "boolean"},
-                        {type: "null"}
-                      ]
-                    },
-                    evidence: {
-                      type: "string"
-                    },
-                    status: {
-                      enum: ["obtained", "user_declared_unavailable"]
-                    }
-                  }
-                }
-              },
-              attemptedActionsExtracted: {
-                type: "array",
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  required: ["action", "outcome", "evidence", "status"],
-                  properties: {
-                    action: {
-                      type: "string"
-                    },
-                    outcome: {
-                      enum: formatCatalogSelection.attemptedActionOutcomes
-                    },
-                    evidence: {
-                      type: "string"
-                    },
-                    status: {
-                      enum: ["obtained", "user_declared_unavailable"]
-                    }
-                  }
-                }
-              },
-              other: {
-                type: "array",
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  required: ["key", "value", "evidence"],
-                  properties: {
-                    key: {
-                      enum: formatCatalogSelection.otherKeys
-                    },
-                    value: {
-                      anyOf: [
-                        {type: "string"},
-                        {type: "number"},
-                        {type: "boolean"},
-                        {type: "null"}
-                      ]
-                    },
-                    evidence: {
-                      type: "string"
-                    }
-                  }
-                }
-              },
-              summaryMessage: {
+              }
+            }
+          }
+        },
+        attemptedActionsExtracted: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: [
+              "action",
+              "outcome",
+              "evidence",
+              "status",
+              "sourceSegmentIds"
+            ],
+            properties: {
+              action: {
                 type: "string"
+              },
+              outcome: {
+                enum: formatCatalogSelection.attemptedActionOutcomes
+              },
+              evidence: {
+                type: "string"
+              },
+              status: {
+                enum: ["obtained", "user_declared_unavailable"]
+              },
+              sourceSegmentIds: {
+                type: "array",
+                minItems: 1,
+                items: {
+                  type: "string"
+                }
+              }
+            }
+          }
+        },
+        otherExtracted: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: [
+              "key",
+              "value",
+              "evidence",
+              "sourceSegmentIds"
+            ],
+            properties: {
+              key: {
+                enum: formatCatalogSelection.otherKeys
+              },
+              value: {
+                anyOf: [
+                  {type: "string"},
+                  {type: "number"},
+                  {type: "boolean"},
+                  {type: "null"}
+                ]
+              },
+              evidence: {
+                type: "string"
+              },
+              sourceSegmentIds: {
+                type: "array",
+                minItems: 1,
+                items: {
+                  type: "string"
+                }
               }
             }
           }
@@ -119,33 +146,32 @@ const responseFormat = {
 function buildOutputJsonShapeForPrompt(): string {
   return `
 {
-  "understandings": [
+  "summaryMessage": "<short neutral summary of the latest support message, or null>",
+  "userLanguage": "<detected user language, for example fr or en>",
+  "caseDetailsExtracted": [
     {
-      "sourceSegmentIds": ["text_segment_1"],
-      "caseDetailsExtracted": [
-        {
-          "key": "<field key>",
-          "value": "<primitive or null>",
-          "evidence": "<exact substring>",
-          "status": "obtained"
-        }
-      ],
-      "attemptedActionsExtracted": [
-        {
-          "action": "<short user attempted action>",
-          "outcome": "<attempted action outcome>",
-          "evidence": "<exact substring>",
-          "status": "obtained"
-        }
-      ],
-      "other": [
-        {
-          "key": "<fact | limitation | attachment_reference | uncertainty | other>",
-          "value": "<primitive or null>",
-          "evidence": "<exact substring>"
-        }
-      ],
-      "summaryMessage": "<short local understanding of this message/understanding>"
+      "key": "<field key>",
+      "value": "<primitive or null>",
+      "evidence": "<exact substring from one support segment>",
+      "status": "obtained",
+      "sourceSegmentIds": ["text_segment_1"]
+    }
+  ],
+  "attemptedActionsExtracted": [
+    {
+      "action": "<short user attempted action, or exact requested action when answering a pending action>",
+      "outcome": "<success | failed | partial | unknown>",
+      "evidence": "<exact substring from one support segment>",
+      "status": "obtained",
+      "sourceSegmentIds": ["text_segment_1"]
+    }
+  ],
+  "otherExtracted": [
+    {
+      "key": "<fact | limitation | attachment_reference | uncertainty | other>",
+      "value": "<primitive or null>",
+      "evidence": "<exact substring from one support segment>",
+      "sourceSegmentIds": ["text_segment_1"]
     }
   ]
 }

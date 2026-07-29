@@ -1,9 +1,0 @@
-{
-  "runId": "20260708_085250",
-  "scenarioId": "billing_android_multitopic",
-  "providerMessageId": "20260708_085250__billing_android_multitopic__bot_001",
-  "localId": "delivery:matrix:!fake-multitopic:example.org:@fake-multitopic:example.org:20260708_085250__billing_android_multitopic__msg_001:0",
-  "roomId": "!fake-multitopic:example.org",
-  "content": "Merci pour votre message. Je vois que vous signalez une double facturation de 9,99 EUR le 28 juin et des notifications Android manquantes après avoir désactivé l'optimisation de la batterie. Pourriez-vous préciser si la double facturation concerne uniquement une facture/document ou si vous avez été facturé deux fois ? Pourriez-vous également fournir l'ID de référence pertinent ? De plus, pourriez-vous nous indiquer quelle version de l'application vous utilisez et quelle fonctionnalité ou page est affectée par le problème de notification ?",
-  "deliveredAt": "2026-07-08T08:53:53.764Z"
-}

@@ -9,13 +9,9 @@ type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"][
 
 export type RunBasicQualificationInput = {
   supportDomain: string | null;
+  summaryTopic: string | null;
   previousTopic: LiveMemoryTopicOptimized | null;
   currentCaseDetailsExtracted: CaseDetailExtracted[];
-  currentUserMessage: {content: string; channel?: string};
-  previousConversationTurn: {
-    previousUserMessage: string | null;
-    previousBotMessage: string | null;
-  };
 };
 
 export type RunBasicQualificationOutput = {
@@ -47,8 +43,7 @@ async function runBasicQualification(input: RunBasicQualificationInput): Promise
   }
 
   const askPlan = await planIssueBasicQualificationAsk({
-    currentUserMessage: input.currentUserMessage,
-    previousConversationTurn: input.previousConversationTurn,
+    summaryTopic: input.summaryTopic,
     basicQualification
   });
 

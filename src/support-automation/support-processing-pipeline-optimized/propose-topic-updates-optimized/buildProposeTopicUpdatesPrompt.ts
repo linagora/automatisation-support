@@ -5,13 +5,26 @@ import {
 import {promptCatalogSelection} from "./catalogSelection";
 
 import type {LLMMessage} from "../../../infrastructure/llm/llm-client";
-import type {AnalyzeSupportTextUnderstanding} from "../analyze-support-text-optimized/runAnalyzeSupportText";
+import type {
+  AnalyzeSupportTextAttemptedAction,
+  AnalyzeSupportTextCaseDetail,
+  AnalyzeSupportTextOther
+} from "../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RecentInteractionContext} from "../typesPipelineContext";
 
+type CurrentUserMessage = {
+  content: string;
+  channel?: string;
+};
+
 type BuildProposeTopicUpdatesPromptInput = {
   existingTopics: LiveMemoryTopicOptimized[];
-  understandings: AnalyzeSupportTextUnderstanding[];
+  currentUserMessage: CurrentUserMessage;
+  summaryMessage: string | null;
+  caseDetailsExtracted: AnalyzeSupportTextCaseDetail[];
+  attemptedActionsExtracted: AnalyzeSupportTextAttemptedAction[];
+  otherExtracted: AnalyzeSupportTextOther[];
   recentInteractionContext: RecentInteractionContext;
 };
 
@@ -22,35 +35,66 @@ type ProposeTopicUpdatesLlmRequest = {
 
 function buildProposeTopicUpdatesPrompt(input: BuildProposeTopicUpdatesPromptInput): ProposeTopicUpdatesLlmRequest {
   const existingTopicsForPrompt = input.existingTopics.map((topic) => {
+    const pendingBasicFieldKeys = getPendingBasicFieldKeys(topic);
+    const pendingDeepFieldKeys = getPendingDeepFieldKeys(topic);
+
     return {
       topicId: topic.sourceProposeTopicUpdates.topicId,
+      status: topic.status,
       title: topic.sourceProposeTopicUpdates.title,
       summaryTopic: topic.sourceProposeTopicUpdates.summaryTopic,
+      currentStep: topic.sourceTopicManager.currentStep,
+      resolutionStatus: topic.sourceTopicManager.resolutionStatus,
+      handover: topic.sourceTopicManager.handover,
+      idleMode: topic.sourceTopicManager.idleMode,
       supportNeed: topic.sourceTopicManager.supportNeedResolution.supportNeed,
       supportDomain: topic.sourceProposeTopicUpdates.supportDomain,
-      caseDetailsExtracted: topic.sourceAnalyzeSupportText.caseDetailsExtracted,
-      attemptedActionsExtracted: topic.sourceAnalyzeSupportText.attemptedActionsExtracted
+      pendingBasicFieldKeys,
+      pendingDeepFieldKeys,
+      pendingFieldKeys: [...new Set([...pendingBasicFieldKeys, ...pendingDeepFieldKeys])],
+      pendingSolutionActions: getPendingSolutionActions(topic),
+      knownCaseDetails: topic.sourceAnalyzeSupportText.caseDetailsExtracted,
+      knownAttemptedActions: topic.sourceAnalyzeSupportText.attemptedActionsExtracted
     };
   });
 
   const systemPrompt = `
-You are the optimized topic linker and topic identity updater of a customer support pipeline.
+You route extracted support facts to persistent support topics.
 
-Propose topic update plans only.
-Do not build patches, snapshots, response plans, diagnostics, retrieval requests, or final persistence.
+Return topic update plans only.
+Do not answer the user.
+Do not build memory patches.
+Do not diagnose.
+Do not propose solutions.
 Return only JSON matching the requested schema.
 `.trim();
 
   const userPrompt = `
 # Input
 
+<current_user_message>
+${JSON.stringify(input.currentUserMessage)}
+</current_user_message>
+
+<message_summary>
+${JSON.stringify(input.summaryMessage)}
+</message_summary>
+
+<case_details_extracted>
+${JSON.stringify(input.caseDetailsExtracted)}
+</case_details_extracted>
+
+<attempted_actions_extracted>
+${JSON.stringify(input.attemptedActionsExtracted)}
+</attempted_actions_extracted>
+
+<other_extracted>
+${JSON.stringify(input.otherExtracted)}
+</other_extracted>
+
 <existing_topics>
 ${JSON.stringify(existingTopicsForPrompt)}
 </existing_topics>
-
-<understandings>
-${JSON.stringify(input.understandings)}
-</understandings>
 
 <recent_interaction_context>
 ${JSON.stringify(input.recentInteractionContext)}
@@ -61,87 +105,83 @@ ${JSON.stringify(input.recentInteractionContext)}
 Support domains:
 ${renderPromptItems(promptCatalogSelection.supportDomains)}
 
-# Role
+# Task
 
-Propose topic update plans only.
+Decide which extracted facts belong to which persistent support topic.
 
-# Main decision
+A plan with topicId number updates an existing topic.
+A plan with topicId null creates a new topic.
 
-For each support understanding, decide whether it belongs to an existing topic or starts a new topic.
+Route facts by their ids:
+- sourceCaseDetailIds
+- sourceAttemptedActionIds
+- sourceOtherIds
 
-# Grouping
+Do not output fact values inside the plan.
+Do not invent fact ids.
+Do not output memory patches.
 
-Group understandings by persistent support subject before creating plans.
-Do not create one plan per understanding if several understandings belong to the same topic.
-Create multiple plans only for independent support subjects.
+# Routing rules
 
-# Topic id
+Prefer updating an existing topic when the fact clearly:
+- answers one of that topic's pendingFieldKeys;
+- reports the result of one of that topic's pendingSolutionActions;
+- clarifies, confirms, denies, or corrects the same product, feature, symptom, or issue;
+- explicitly refers to that topic.
 
-Do not output a separate create/update field. Use topicId instead:
-- topicId number means updating an existing topic.
-- topicId null means creating a new topic.
+Create a new topic when the facts describe a different product, feature, symptom, request, objective, or issue.
 
-Use an existing topicId when the understanding continues, clarifies, corrects, confirms, denies, answers, or adds detail to an existing topic.
-Use null only when it is a distinct new issue, request, question, feature request, or objective not covered by existing topics.
+Strong new-topic signals:
+- "another problem";
+- "another issue";
+- "also";
+- "by the way";
+- "second issue";
+- "I also have";
+- equivalent wording in the user's language.
 
-Infer update or create from the understanding summaryMessage, caseDetailsExtracted, attemptedActionsExtracted, other notes, the existing topics, and the latest user message context. The deep support contract has no intent-act field.
+Do not attach a new issue to the latest topic only because the latest topic is active.
 
-# sourceUnderstandingIds
+# Shared facts
 
-sourceUnderstandingIds are the only link between the plan and support understandings.
-Every persistable understanding should appear in exactly one topicUpdatePlan.
+The same fact id may appear in several plans when the current user message clearly says the fact applies to several topics.
+
+Examples:
+- "for both issues";
+- "for the two subjects";
+- "same browser";
+- "same environment";
+- "same account";
+- "same workspace";
+- "in both cases".
+
+Only duplicate a fact when the whole fact applies to every selected topic.
+
+# Sticky state guard
+
+A topic in handover, requested support, idle, completed, or escalated must not capture a new subject automatically.
+
+Route to such a topic only when the message explicitly refers to that same topic.
 
 # Topic fields
 
-Always output title, summaryTopic and supportDomain for every plan.
-For existing topics, reuse the previous title/supportDomain unless the new message clearly improves or corrects them.
-Do not set title/supportDomain to null just because the topic already exists.
+Always output title, summaryTopic, and supportDomain.
 
-# title
+For an existing topic:
+- reuse the previous title unless the new facts clearly improve it;
+- reuse the previous supportDomain unless the new facts clearly correct it;
+- update summaryTopic by combining the previous summary with the routed facts.
 
-For an existing topic, reuse the previous title and correct it only if the new message provides a better formulation.
-For a new topic, create a short stable topic title.
-title must be null only when the subject is truly impossible to name.
+For a new topic:
+- create a short stable title;
+- create an initial summaryTopic;
+- choose the best supportDomain from the catalog;
+- use supportDomain.value null only if the domain is genuinely unclear.
 
-# supportDomain
+# Empty routing
 
-supportDomain = the support domain/topic area, not the support need.
-For an existing topic, reuse the previous supportDomain.value unless the new message clearly justifies a correction.
-For a new topic, choose the best possible domain from the catalog.
-supportDomain.value must be one of the available support domains or null when the domain is uncertain.
-supportDomain.reason must briefly justify the selected support domain using the current understanding and, when updating an existing topic, the previous topic context.
-If supportDomain.value is null, supportDomain.reason must explain why the domain is uncertain.
-
-# summaryTopic
-
-summaryTopic is the persistent topic summary.
-For a new topic, it is the initial persistent summary.
-For an existing topic, it should combine the previous topic understanding and the new understanding.
-It is not the same thing as the latest understanding summaryMessage.
-
-# Memory updates
-
-Do not choose extracted fields.
-Do not choose attempted actions.
-Do not choose other notes.
-Do not output memory updates.
-Do not output patches.
-A later deterministic memory step will add or concatenate caseDetailsExtracted, attemptedActionsExtracted, other, values, and evidences from the selected sourceUnderstandingIds.
-
-# Context
-
-Use recent_interaction_context only to interpret short contextual answers.
-Do not use it as source data or evidence.
-
-# Non-goals
-
-No patches in LLM output.
-No snapshots.
-No topic update proposal objects.
-No response planning.
-No diagnosis.
-No retrieval.
-No final persistence.
+If a fact is not useful or cannot be routed safely, omit it from all plans.
+Do not create an empty plan.
 
 # Output JSON shape
 
@@ -159,6 +199,35 @@ Return only JSON.
   };
 }
 
+function getPendingBasicFieldKeys(topic: LiveMemoryTopicOptimized): string[] {
+  return topic.sourceTopicManager.basicQualification.caseDetailsToAskBecauseOfBasicQualification
+    .filter((field) => field.status === "asking")
+    .map((field) => field.key)
+    .filter((key): key is string => typeof key === "string" && key.trim() !== "");
+}
+
+function getPendingDeepFieldKeys(topic: LiveMemoryTopicOptimized): string[] {
+  return topic.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification
+    .filter((field) => field.status === "asking")
+    .map((field) => field.key)
+    .filter((key): key is string => typeof key === "string" && key.trim() !== "");
+}
+
+function getPendingSolutionActions(topic: LiveMemoryTopicOptimized): Array<{
+  action: string;
+  reason: string | null;
+}> {
+  return topic.sourceTopicManager.solution.attemptedActionsToAskBecauseOfSolutionFound
+    .filter((action) => action.status === "asking")
+    .map((action) => ({
+      action: action.action,
+      reason: action.reason
+    }))
+    .filter((action): action is {action: string; reason: string | null} => {
+      return typeof action.action === "string" && action.action.trim() !== "";
+    });
+}
+
 function renderPromptItems(entries: Array<{key: string; extractionGuidance?: string}>): string {
   return entries.map((entry) => buildPromptLine(entry)).join("\n");
 }
@@ -173,5 +242,6 @@ export {buildProposeTopicUpdatesPrompt};
 
 export type {
   BuildProposeTopicUpdatesPromptInput,
+  CurrentUserMessage,
   ProposeTopicUpdatesLlmRequest
 };
