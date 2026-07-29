@@ -1,0 +1,1271 @@
+{
+  "handover": {
+    "isHandover": false,
+    "handoverReason": null
+  },
+  "previousConversationTurn": {
+    "previousUserMessage": "Pour les 2 sujets de messages et de drive voici mes informaitons J’accède à Twake Chat /drivedepuis un navigateur web, sur Firefox, avec un ordinateur sous Ubuntu/Linux. Je ne connais pas la version exacte de Firefox ni le modèle précis de l’ordinateur.Le problème semble m’affecter uniquement moi, et je l’ai surtout remarqué dans une conversation de groupe Twake Chat. Je ne sais pas si cela concerne d’autres conversations ou tout l’espace de travail.Je n’ai pas remarqué que le problème ait commencé après une mise à jour ou un événement particulier. Les messages apparaissaient normalement avant, et maintenant cela arrive seulement parfois.Je n’ai pas de capture d’écran ou de vidéo pour le moment, ni d’identifiant de référence ou d’URL particulière à fournir.",
+    "previousBotMessage": "Technical issue while processing the request. A support team member will take over."
+  },
+  "failedPipelineMessages": [],
+  "securityAlerts": [],
+  "userState": {
+    "status": "normal",
+    "flags": []
+  },
+  "topics": [
+    {
+      "status": "in_progress",
+      "sourceAnalyzeSupportText": {
+        "caseDetailsExtracted": [
+          {
+            "key": "product_or_service",
+            "value": "twake chat",
+            "evidence": "Sur twake chat",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "les messages disparaissent",
+            "evidence": "les messages disparaît",
+            "status": "obtained"
+          },
+          {
+            "key": "frequency",
+            "value": "parfois",
+            "evidence": "parfois les messages disparaît",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "Twake Chat",
+            "evidence": "Cela se produit dans Twake Chat, dans une conversation de groupe.",
+            "status": "obtained"
+          },
+          {
+            "key": "trigger_action",
+            "value": "ouvre la conversation pour lire les derniers messages",
+            "evidence": "J’ouvre la conversation pour lire les derniers messages",
+            "status": "obtained"
+          },
+          {
+            "key": "failure_step",
+            "value": "quand j’entre dans le chat",
+            "evidence": "quand j’entre dans le chat, le message n’apparaît pas ou disparaît presque aussitôt.",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "le message n’apparaît pas ou disparaît presque aussitôt",
+            "evidence": "le message n’apparaît pas ou disparaît presque aussitôt.",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "le message apparaisse normalement dans la conversation et reste visible dans le fil de discussion",
+            "evidence": "Je m’attendais à ce que le message apparaisse normalement dans la conversation et reste visible dans le fil de discussion.",
+            "status": "obtained"
+          },
+          {
+            "key": "product_or_service",
+            "value": "Twake Chat",
+            "evidence": "MESSAGES QUI DISPARAISSENT DANS TWAKE CHAT",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "conversation",
+            "evidence": "dans une conversation de groupe",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "le message n’apparaît pas ou disparaît presque aussitôt",
+            "evidence": "le message n’apparaît pas ou disparaît presque aussitôt",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "le message apparaisse normalement dans la conversation et reste visible dans le fil de discussion",
+            "evidence": "Je m’attendais à ce que le message apparaisse normalement dans la conversation et reste visible dans le fil de discussion",
+            "status": "obtained"
+          },
+          {
+            "key": "error_message",
+            "value": null,
+            "evidence": "Je n’ai pas vu de message d’erreur ni de code affiché lorsque les messages disparaissent",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "chat page",
+            "evidence": "la page de discussion",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "messages n’apparaissent pas ou disparaissent encore dans la conversation de groupe",
+            "evidence": "les messages n’apparaissent pas ou disparaissent encore dans la conversation de groupe",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "messages should appear and stay visible in the group conversation",
+            "evidence": "les messages n’apparaissent pas ou disparaissent encore dans la conversation de groupe",
+            "status": "obtained"
+          },
+          {
+            "key": "platform",
+            "value": "connexion",
+            "evidence": "ma connexion qui fonctionne sans probleme",
+            "status": "obtained"
+          },
+          {
+            "key": "platform",
+            "value": "web",
+            "evidence": "J’accède à Twake Chat /drive depuis un navigateur web",
+            "status": "obtained"
+          },
+          {
+            "key": "browser",
+            "value": "Firefox",
+            "evidence": "sur Firefox",
+            "status": "obtained"
+          },
+          {
+            "key": "operating_system",
+            "value": "Ubuntu/Linux",
+            "evidence": "avec un ordinateur sous Ubuntu/Linux",
+            "status": "obtained"
+          },
+          {
+            "key": "app_version",
+            "value": null,
+            "evidence": "Je ne connais pas la version exacte de Firefox",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "device",
+            "value": null,
+            "evidence": "Je ne connais pas le modèle précis de l’ordinateur",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "affected_scope",
+            "value": "Twake Chat conversation",
+            "evidence": "dans une conversation de groupe Twake Chat",
+            "status": "obtained"
+          },
+          {
+            "key": "affected_users",
+            "value": "only me",
+            "evidence": "Le problème semble m’affecter uniquement moi",
+            "status": "obtained"
+          },
+          {
+            "key": "pre_problem_state",
+            "value": "messages appeared normally before",
+            "evidence": "Les messages apparaissaient normalement avant",
+            "status": "obtained"
+          },
+          {
+            "key": "frequency",
+            "value": "sometimes",
+            "evidence": "maintenant cela arrive seulement parfois",
+            "status": "obtained"
+          },
+          {
+            "key": "visual_evidence",
+            "value": null,
+            "evidence": "Je n’ai pas de capture d’écran ou de vidéo pour le moment",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "reference_id",
+            "value": null,
+            "evidence": "ni d’identifiant de référence",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "provided_url",
+            "value": null,
+            "evidence": "ni d’URL particulière à fournir",
+            "status": "user_declared_unavailable"
+          }
+        ],
+        "attemptedActionsExtracted": [
+          {
+            "action": "Try refreshing the chat page to see if the messages reappear.",
+            "outcome": "failed",
+            "evidence": "J’ai essayé d’actualiser la page de discussion, mais les messages n’apparaissent toujours pas correctement.",
+            "status": "obtained"
+          },
+          {
+            "action": "Clear your browser cache and cookies, then reload the chat.",
+            "outcome": "failed",
+            "evidence": "J’ai aussi essayé de vider le cache et les cookies de mon navigateur puis de recharger Twake Chat, mais le problème persiste",
+            "status": "obtained"
+          },
+          {
+            "action": "Check your internet connection to ensure it is stable.",
+            "outcome": "success",
+            "evidence": "ma connexion qui fonctionne sans probleme",
+            "status": "obtained"
+          }
+        ]
+      },
+      "sourceProposeTopicUpdates": {
+        "topicId": 1,
+        "title": "Messages disappearing in Twake chat",
+        "summaryTopic": "The user reports that messages disappear in Twake chat, specifically in group conversations when opening to read the latest messages. The messages either do not appear or disappear almost immediately. The issue is confirmed to occur without any error message. The user has tried refreshing the chat page, clearing browser cache and cookies, and confirms their internet connection is stable, but the problem persists. The user accesses Twake Chat via Firefox on Ubuntu/Linux, and the issue affects only them. Messages appeared normally before, but now the issue occurs only sometimes. The user does not have any screenshots, videos, reference IDs, or specific URLs to provide.",
+        "supportDomain": {
+          "value": "product_behavior",
+          "reason": "The issue concerns unexpected behavior of the Twake chat product, specifically messages disappearing in group conversations without any error message."
+        }
+      },
+      "sourceTopicManager": {
+        "currentStep": "deep_qualification",
+        "resolutionStatus": {
+          "value": "in_progress",
+          "reason": "The issue-resolution route is still collecting information or waiting for a user action."
+        },
+        "handover": {
+          "isRequested": false,
+          "reason": null
+        },
+        "supportNeedResolution": {
+          "supportNeed": {
+            "value": "issue_resolution",
+            "reason": "The user reports that messages sometimes disappear in Twake chat, which indicates a problem that needs investigation or resolution."
+          }
+        },
+        "basicQualification": {
+          "isBuilt": true,
+          "isCompleted": true,
+          "caseDetailsToAskBecauseOfBasicQualification": [
+            {
+              "key": "product_or_service",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "feature_or_page",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "trigger_action",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "failure_step",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "observed_result",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "expected_result",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "error_message",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            }
+          ]
+        },
+        "retrieveKnowledge": {
+          "isCompleted": true,
+          "rankedSearch": {
+            "isSearched": true,
+            "rawRagKnowledge": {
+              "query": "The user reports that messages disappear in Twake chat, specifically in group conversations when opening to read the latest messages. The messages either do not appear or disappear almost immediately. The issue is confirmed to occur without any error message.",
+              "content": "```json\n{\n  \"candidates\": []\n}\n```",
+              "sources": [
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916506",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916506",
+                  "created_at": "2026-07-03T12:13:09.479Z",
+                  "indexed_at": "2026-07-03T12:13:20.702106+00:00",
+                  "prev_section_id": 1783080800702091800,
+                  "section_id": 1783080800702091800,
+                  "next_section_id": 1783080800702091800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/domain-validation",
+                  "title": "Domain validation",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790143_69dd_docs_twake_b2b_domain_validation.md",
+                  "filename": "docs_twake_b2b_domain_validation.md",
+                  "original_filename": "docs_twake_b2b_domain_validation.md",
+                  "file_size": "7.41 KB",
+                  "file_id": "docs_twake_b2b_domain_validation",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916506"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916528",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916528",
+                  "created_at": "2026-07-03T12:13:10.28Z",
+                  "indexed_at": "2026-07-03T12:13:22.386826+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802386819000,
+                  "next_section_id": 1783080802386819000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat",
+                  "title": "Twake Chat",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080790941_0a01_docs_twake_twake_chat.md",
+                  "filename": "docs_twake_twake_chat.md",
+                  "original_filename": "docs_twake_twake_chat.md",
+                  "file_size": "3.48 KB",
+                  "file_id": "docs_twake_twake_chat",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916528"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916526",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916526",
+                  "created_at": "2026-07-03T12:13:10.377Z",
+                  "indexed_at": "2026-07-03T12:13:22.353585+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802353574000,
+                  "next_section_id": 1783080802353574000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat/features",
+                  "title": "Features",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080791026_0cf9_docs_twake_twake_chat_features.md",
+                  "filename": "docs_twake_twake_chat_features.md",
+                  "original_filename": "docs_twake_twake_chat_features.md",
+                  "file_size": "3.07 KB",
+                  "file_id": "docs_twake_twake_chat_features",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916526"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916491",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916491",
+                  "created_at": "2026-07-03T12:13:09.115Z",
+                  "indexed_at": "2026-07-03T12:13:19.494220+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080799494210000,
+                  "next_section_id": 1783080799494210000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2c/account-deletion",
+                  "title": "Account deletion",
+                  "section": "b2c",
+                  "source": "/app/data/1783080789777_9355_docs_twake_b2c_account_deletion.md",
+                  "filename": "docs_twake_b2c_account_deletion.md",
+                  "original_filename": "docs_twake_b2c_account_deletion.md",
+                  "file_size": "6.04 KB",
+                  "file_id": "docs_twake_b2c_account_deletion",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916491"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916503",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916503",
+                  "created_at": "2026-07-03T12:13:09.479Z",
+                  "indexed_at": "2026-07-03T12:13:20.702106+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080800702091800,
+                  "next_section_id": 1783080800702091800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/domain-validation",
+                  "title": "Domain validation",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790143_69dd_docs_twake_b2b_domain_validation.md",
+                  "filename": "docs_twake_b2b_domain_validation.md",
+                  "original_filename": "docs_twake_b2b_domain_validation.md",
+                  "file_size": "7.41 KB",
+                  "file_id": "docs_twake_b2b_domain_validation",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916503"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916522",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916522",
+                  "created_at": "2026-07-03T12:13:08.802Z",
+                  "indexed_at": "2026-07-03T12:13:21.731527+00:00",
+                  "prev_section_id": 1783080801731511800,
+                  "section_id": 1783080801731511800,
+                  "next_section_id": 1783080801731511800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/overview/ldap-password-policy",
+                  "title": "LDAP Password Policy",
+                  "section": "overview",
+                  "source": "/app/data/1783080789445_d6bc_docs_twake_overview_ldap_password_policy.md",
+                  "filename": "docs_twake_overview_ldap_password_policy.md",
+                  "original_filename": "docs_twake_overview_ldap_password_policy.md",
+                  "file_size": "9.35 KB",
+                  "file_id": "docs_twake_overview_ldap_password_policy",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916522"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916499",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916499",
+                  "created_at": "2026-07-03T12:13:09.299Z",
+                  "indexed_at": "2026-07-03T12:13:19.822852+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080799822841300,
+                  "next_section_id": 1783080799822841300,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/app-provisioning",
+                  "title": "App provisioning",
+                  "section": "b2b",
+                  "source": "/app/data/1783080789956_42e5_docs_twake_b2b_app_provisioning.md",
+                  "filename": "docs_twake_b2b_app_provisioning.md",
+                  "original_filename": "docs_twake_b2b_app_provisioning.md",
+                  "file_size": "7.08 KB",
+                  "file_id": "docs_twake_b2b_app_provisioning",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916499"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916529",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916529",
+                  "created_at": "2026-07-03T12:13:10.28Z",
+                  "indexed_at": "2026-07-03T12:13:22.386826+00:00",
+                  "prev_section_id": 1783080802386819000,
+                  "section_id": 1783080802386819000,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat",
+                  "title": "Twake Chat",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080790941_0a01_docs_twake_twake_chat.md",
+                  "filename": "docs_twake_twake_chat.md",
+                  "original_filename": "docs_twake_twake_chat.md",
+                  "file_size": "3.48 KB",
+                  "file_id": "docs_twake_twake_chat",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916529"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916174",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916174",
+                  "created_at": "2025-05-11T16:24:54Z",
+                  "indexed_at": "2026-07-02T15:13:53.991862+00:00",
+                  "prev_section_id": 1783005233991838500,
+                  "section_id": 1783005233991838500,
+                  "next_section_id": 1783005233991838500,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005155658_3431_github_linagora_tmail_flutter_issue_3717.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 3717,
+                  "issue_state": "closed",
+                  "issue_title": "Unable to access settings in Tmail web",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/3717",
+                  "labels": [
+                    "bug"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2025-08-28T10:30:00Z",
+                  "closed_at": "2025-06-20T02:24:20Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:3717",
+                  "filename": "github_linagora_tmail_flutter_issue_3717.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_3717.md",
+                  "file_size": "19.23 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_3717",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916174"
+                }
+              ],
+              "metadata": {
+                "retriever": "openrag"
+              }
+            }
+          },
+          "filter": {
+            "isFiltered": true,
+            "filteredRagKnowledge": [
+              {
+                "sourceId": "466474858415916528",
+                "title": "Twake Chat",
+                "summary": "Documentation about Twake Chat",
+                "usefulInformation": "This document may contain information about chat functionality and potential issues.",
+                "rawExcerpt": null,
+                "keepReason": "The document is about Twake Chat, which is relevant to the user's issue with disappearing messages in group conversations."
+              },
+              {
+                "sourceId": "466474858415916526",
+                "title": "Features",
+                "summary": "Documentation about Twake Chat features",
+                "usefulInformation": "This document may contain information about chat features and potential issues related to message display.",
+                "rawExcerpt": null,
+                "keepReason": "The document is about Twake Chat features, which may include information about message display issues."
+              },
+              {
+                "sourceId": "466474858415916529",
+                "title": "Twake Chat",
+                "summary": "Documentation about Twake Chat",
+                "usefulInformation": "This document may contain information about chat functionality and potential issues.",
+                "rawExcerpt": null,
+                "keepReason": "The document is about Twake Chat, which is relevant to the user's issue with disappearing messages in group conversations."
+              }
+            ],
+            "filterExplanation": "Removed documents that are unrelated to Twake Chat or message display issues. Kept documents that are about Twake Chat and its features, as they may contain relevant information about the user's issue with disappearing messages."
+          },
+          "selection": {
+            "isClearSelected": true,
+            "clarificationQuestion": null,
+            "selectedfilteredRagKnowledge": [
+              {
+                "sourceId": "466474858415916528",
+                "title": "Twake Chat",
+                "usefulInformation": "This document may contain information about chat functionality and potential issues.",
+                "whySelected": "The document is about Twake Chat, which is relevant to the user's issue with disappearing messages in group conversations."
+              },
+              {
+                "sourceId": "466474858415916526",
+                "title": "Features",
+                "usefulInformation": "This document may contain information about chat features and potential issues related to message display.",
+                "whySelected": "The document is about Twake Chat features, which may include information about message display issues."
+              },
+              {
+                "sourceId": "466474858415916529",
+                "title": "Twake Chat",
+                "usefulInformation": "This document may contain information about chat functionality and potential issues.",
+                "whySelected": "The document is about Twake Chat, which is relevant to the user's issue with disappearing messages in group conversations."
+              }
+            ],
+            "selectionExplanation": "The filtered candidates all describe the same issue type related to Twake Chat and message display issues, so they can be used together to help with the user's problem."
+          },
+          "segmentationKnowledge": {
+            "isSegmented": true,
+            "userFacingInformation": "Messages may disappear in Twake chat group conversations when opening to read the latest messages. This issue occurs without any error message.",
+            "supportFacingInformation": "Check Twake Chat functionality and features documents for potential issues related to message display. Inspect logs related to chat functionality and message display issues."
+          }
+        },
+        "deepQualification": {
+          "isBuilt": true,
+          "isCompleted": false,
+          "caseDetailsToAskBecauseOfDeepQualification": [
+            {
+              "key": "platform",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "operating_system",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "browser",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "app_version",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            },
+            {
+              "key": "device",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            },
+            {
+              "key": "affected_scope",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "affected_users",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "issue_started_at",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "frequency",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "pre_problem_state",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "visual_evidence",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            },
+            {
+              "key": "reference_id",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            },
+            {
+              "key": "provided_url",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            }
+          ]
+        },
+        "solution": {
+          "isActionForUserBuilt": true,
+          "isActionForSupportBuilt": true,
+          "isCompleted": true,
+          "attemptedActionsToAskBecauseOfSolutionFound": [
+            {
+              "action": "Try refreshing the chat page to see if the messages reappear.",
+              "reason": "Sometimes, a simple refresh can resolve temporary display issues.",
+              "status": "failed"
+            },
+            {
+              "action": "Check your internet connection to ensure it is stable.",
+              "reason": "An unstable internet connection might cause messages to disappear.",
+              "status": "succeeded"
+            },
+            {
+              "action": "Clear your browser cache and cookies, then reload the chat.",
+              "reason": "Corrupted cache or cookies can sometimes cause display issues.",
+              "status": "failed"
+            }
+          ],
+          "actionToTakeForSupport": "Inspect logs related to chat functionality and message display issues to identify any anomalies or errors that might cause messages to disappear."
+        },
+        "idleMode": {
+          "isActivated": false
+        }
+      }
+    },
+    {
+      "status": "in_progress",
+      "sourceAnalyzeSupportText": {
+        "caseDetailsExtracted": [
+          {
+            "key": "product_or_service",
+            "value": "drive",
+            "evidence": "Sur le drive",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "renommer un fichier",
+            "evidence": "renommer un fichier",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "ne peut pas renommer un fichier",
+            "evidence": "je n’arrive pas à renommer un fichier",
+            "status": "obtained"
+          },
+          {
+            "key": "pre_problem_state",
+            "value": "une fois qu’il est créé",
+            "evidence": "une fois qu’il est créé",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "Drive",
+            "evidence": "J’essaie de renommer un fichier dans le Drive.",
+            "status": "obtained"
+          },
+          {
+            "key": "trigger_action",
+            "value": "renommer un fichier",
+            "evidence": "J’essaie de renommer un fichier dans le Drive.",
+            "status": "obtained"
+          },
+          {
+            "key": "failure_step",
+            "value": "au moment de valider le nouveau nom",
+            "evidence": "Le problème se produit au moment de valider le nouveau nom",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "le fichier ne semble pas être renommé, ou le changement n’est pas pris en compte",
+            "evidence": "le fichier ne semble pas être renommé, ou le changement n’est pas pris en compte.",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "le fichier soit enregistré avec le nouveau nom dans le Drive",
+            "evidence": "Je m’attendais à ce que le fichier soit enregistré avec le nouveau nom dans le Drive.",
+            "status": "obtained"
+          },
+          {
+            "key": "product_or_service",
+            "value": "Drive",
+            "evidence": "IMPOSSIBLE DE RENOMMER UN FICHIER DANS LE DRIVE",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "renommage",
+            "evidence": "J’essaie de renommer un fichier dans le Drive",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "le fichier ne semble pas être renommé, ou le changement n’est pas pris en compte",
+            "evidence": "le fichier ne semble pas être renommé, ou le changement n’est pas pris en compte",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "le fichier soit enregistré avec le nouveau nom dans le Drive",
+            "evidence": "Je m’attendais à ce que le fichier soit enregistré avec le nouveau nom dans le Drive",
+            "status": "obtained"
+          },
+          {
+            "key": "error_message",
+            "value": null,
+            "evidence": "Je n’ai pas vu de message d’erreur ou de code spécifique non plus lorsque j’essaie d’enregistrer le nouveau nom",
+            "status": "user_declared_unavailable"
+          },
+          {
+            "key": "failure_step",
+            "value": "valider le nouveau nom",
+            "evidence": "Le problème se produit au moment de valider le nouveau nom",
+            "status": "obtained"
+          },
+          {
+            "key": "sync_target",
+            "value": "Drive",
+            "evidence": "dans le Drive",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "file renaming",
+            "evidence": "RENOMMER UN FICHIER",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "le changement n’est toujours pas pris en compte",
+            "evidence": "le changement n’est toujours pas pris en compte",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "file should be renamed",
+            "evidence": "le changement n’est toujours pas pris en compte",
+            "status": "obtained"
+          },
+          {
+            "key": "pre_problem_state",
+            "value": "no other file with the same name exists in the Drive",
+            "evidence": "J’ai vérifié et je n’ai pas trouvé d’autre fichier portant exactement le même nom dans mon Drive",
+            "status": "obtained"
+          }
+        ],
+        "attemptedActionsExtracted": [
+          {
+            "action": "Try renaming the file to a unique name that does not conflict with any existing files",
+            "outcome": "failed",
+            "evidence": "J’ai aussi essayé de renommer le fichier avec un nom complètement unique, mais le changement n’est toujours pas pris en compte",
+            "status": "obtained"
+          }
+        ]
+      },
+      "sourceProposeTopicUpdates": {
+        "topicId": 2,
+        "title": "Unable to rename file in drive",
+        "summaryTopic": "The user is unable to rename a file in the drive once it is created. The issue occurs when validating the new name, and the file does not get renamed or the change is not saved. The problem is confirmed to occur without any error message, and the file in question is a PDF document. The user has tried renaming the file to a unique name, but the change is not taken into account.",
+        "supportDomain": {
+          "value": "product_behavior",
+          "reason": "The issue concerns a specific product behavior related to file management in the drive, specifically the inability to rename files, confirmed to occur without any error message."
+        }
+      },
+      "sourceTopicManager": {
+        "currentStep": "deep_qualification",
+        "resolutionStatus": {
+          "value": "in_progress",
+          "reason": "The issue-resolution route is still collecting information or waiting for a user action."
+        },
+        "handover": {
+          "isRequested": false,
+          "reason": null
+        },
+        "supportNeedResolution": {
+          "supportNeed": {
+            "value": "issue_resolution",
+            "reason": "The user is unable to rename a file in the drive, which is a problem that needs investigation or resolution."
+          }
+        },
+        "basicQualification": {
+          "isBuilt": true,
+          "isCompleted": true,
+          "caseDetailsToAskBecauseOfBasicQualification": [
+            {
+              "key": "product_or_service",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "feature_or_page",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "trigger_action",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "failure_step",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "observed_result",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "expected_result",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "error_message",
+              "reason": "catalogue rules",
+              "status": "user_declared_unavailable"
+            }
+          ]
+        },
+        "retrieveKnowledge": {
+          "isCompleted": true,
+          "rankedSearch": {
+            "isSearched": true,
+            "rawRagKnowledge": {
+              "query": "The user is unable to rename a file in the drive once it is created. The issue occurs when validating the new name, and the file does not get renamed or the change is not saved. The problem is confirmed to occur without any error message, and the file in question is a PDF document.",
+              "content": "```json\n{\n  \"candidates\": [\n    {\n      \"title\": \"File name clash handling in Twake Drive\",\n      \"issueSummary\": \"Describes the current behavior of file name clashes in Twake Drive, where existing files are silently replaced without user prompt.\",\n      \"rawKnowledge\": \"If a file's name already exists in the destination, the existing file is quietly replaced. The row ends up updated rather than created. Re-uploading report.pdf overwrites the existing one without asking. Work is in progress to replace this with a prompt (\\\"Replace\\\", \\\"Keep both\\\", or \\\"Cancel\\\") plus an automatic-rename option.\",\n      \"whyPotentiallyRelevant\": \"The issue involves file naming and potential conflicts, which might be related to the user's problem with renaming files.\",\n      \"sourceHint\": \"Source 1\"\n    },\n    {\n      \"title\": \"Upload states and handling in Twake Drive\",\n      \"issueSummary\": \"Details the upload states and handling mechanisms in Twake Drive, including how files are processed and potential issues during uploads.\",\n      \"rawKnowledge\": \"The tray reads each row's state to decide which icon and progress bar to show. There is also a cancelled state. It is reserved: the tray knows how to draw it, but no current upload path actually puts a row into it, so you won't see it in practice today. The nearest equivalent is clearing the whole queue, which empties it rather than marking individual rows cancelled.\",\n      \"whyPotentiallyRelevant\": \"This might provide insights into how file operations are handled, which could be relevant to the renaming issue.\",\n      \"sourceHint\": \"Source 5\"\n    }\n  ]\n}\n```",
+              "sources": [
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916552",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916552",
+                  "created_at": "2026-07-03T12:13:10.617Z",
+                  "indexed_at": "2026-07-03T12:13:24.769230+00:00",
+                  "prev_section_id": 1783080804769215200,
+                  "section_id": 1783080804769215200,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-drive/drive-upload",
+                  "title": "Drive Upload Mechanism",
+                  "section": "twake-drive",
+                  "source": "/app/data/1783080791270_6343_docs_twake_twake_drive_drive_upload.md",
+                  "filename": "docs_twake_twake_drive_drive_upload.md",
+                  "original_filename": "docs_twake_twake_drive_drive_upload.md",
+                  "file_size": "9.08 KB",
+                  "file_id": "docs_twake_twake_drive_drive_upload",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916552"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916548",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916548",
+                  "created_at": "2026-07-03T12:13:10.617Z",
+                  "indexed_at": "2026-07-03T12:13:24.769230+00:00",
+                  "prev_section_id": 1783080804769215200,
+                  "section_id": 1783080804769215200,
+                  "next_section_id": 1783080804769215200,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-drive/drive-upload",
+                  "title": "Drive Upload Mechanism",
+                  "section": "twake-drive",
+                  "source": "/app/data/1783080791270_6343_docs_twake_twake_drive_drive_upload.md",
+                  "filename": "docs_twake_twake_drive_drive_upload.md",
+                  "original_filename": "docs_twake_twake_drive_drive_upload.md",
+                  "file_size": "9.08 KB",
+                  "file_id": "docs_twake_twake_drive_drive_upload",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916548"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916551",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916551",
+                  "created_at": "2026-07-03T12:13:10.617Z",
+                  "indexed_at": "2026-07-03T12:13:24.769230+00:00",
+                  "prev_section_id": 1783080804769215200,
+                  "section_id": 1783080804769215200,
+                  "next_section_id": 1783080804769215200,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-drive/drive-upload",
+                  "title": "Drive Upload Mechanism",
+                  "section": "twake-drive",
+                  "source": "/app/data/1783080791270_6343_docs_twake_twake_drive_drive_upload.md",
+                  "filename": "docs_twake_twake_drive_drive_upload.md",
+                  "original_filename": "docs_twake_twake_drive_drive_upload.md",
+                  "file_size": "9.08 KB",
+                  "file_id": "docs_twake_twake_drive_drive_upload",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916551"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415915958",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915958",
+                  "created_at": "2021-09-29T01:28:14Z",
+                  "indexed_at": "2026-07-02T15:12:59.916065+00:00",
+                  "prev_section_id": 1783005179916053500,
+                  "section_id": 1783005179916053500,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005158039_eefa_github_linagora_tmail_flutter_issue_128.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 128,
+                  "issue_state": "closed",
+                  "issue_title": "[Bug] Download attachment make the app crash sometimes in iOS",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/128",
+                  "labels": [
+                    "bug",
+                    "Major"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2022-04-15T02:30:45Z",
+                  "closed_at": "2022-04-15T02:30:45Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:128",
+                  "filename": "github_linagora_tmail_flutter_issue_128.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_128.md",
+                  "file_size": "2.37 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_128",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415915958"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916549",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916549",
+                  "created_at": "2026-07-03T12:13:10.617Z",
+                  "indexed_at": "2026-07-03T12:13:24.769230+00:00",
+                  "prev_section_id": 1783080804769215200,
+                  "section_id": 1783080804769215200,
+                  "next_section_id": 1783080804769215200,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-drive/drive-upload",
+                  "title": "Drive Upload Mechanism",
+                  "section": "twake-drive",
+                  "source": "/app/data/1783080791270_6343_docs_twake_twake_drive_drive_upload.md",
+                  "filename": "docs_twake_twake_drive_drive_upload.md",
+                  "original_filename": "docs_twake_twake_drive_drive_upload.md",
+                  "file_size": "9.08 KB",
+                  "file_id": "docs_twake_twake_drive_drive_upload",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916549"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415915962",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415915962",
+                  "created_at": "2025-06-02T08:11:00Z",
+                  "indexed_at": "2026-07-02T15:13:05.683615+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783005185683600400,
+                  "next_section_id": 1783005185683600400,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005158357_65df_github_linagora_tmail_flutter_issue_3782.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 3782,
+                  "issue_state": "closed",
+                  "issue_title": "Bad OIDC error management resulting loosing valid refresh_tokens (mobile app)",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/3782",
+                  "labels": [
+                    "bug",
+                    "customer"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2026-04-06T07:41:02Z",
+                  "closed_at": "2026-04-06T07:41:02Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:3782",
+                  "filename": "github_linagora_tmail_flutter_issue_3782.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_3782.md",
+                  "file_size": "10.10 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_3782",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415915962"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916382",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916382",
+                  "created_at": "2023-02-22T10:49:31Z",
+                  "indexed_at": "2026-07-02T15:14:46.351939+00:00",
+                  "prev_section_id": 1783005286351851800,
+                  "section_id": 1783005286351851800,
+                  "next_section_id": 1783005286351851800,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005156759_77a1_github_linagora_tmail_flutter_issue_1497.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 1497,
+                  "issue_state": "closed",
+                  "issue_title": "[Outbox] Reloading function is not working correctly",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/1497",
+                  "labels": [
+                    "bug",
+                    "Critical"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2023-05-15T03:22:51Z",
+                  "closed_at": "2023-05-15T03:22:51Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:1497",
+                  "filename": "github_linagora_tmail_flutter_issue_1497.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_1497.md",
+                  "file_size": "76.85 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_1497",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916382"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916442",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916442",
+                  "created_at": "2023-02-27T03:39:45Z",
+                  "indexed_at": "2026-07-02T15:14:49.521566+00:00",
+                  "prev_section_id": 1783005289521545500,
+                  "section_id": 1783005289521545500,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005159846_55cc_github_linagora_tmail_flutter_issue_1507.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 1507,
+                  "issue_state": "closed",
+                  "issue_title": "Force Client web app to upgrade with new version",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/1507",
+                  "labels": [
+                    "web",
+                    "Critical"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2023-06-28T09:13:44Z",
+                  "closed_at": "2023-06-28T04:14:50Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:1507",
+                  "filename": "github_linagora_tmail_flutter_issue_1507.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_1507.md",
+                  "file_size": "6.26 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_1507",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916442"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916175",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916175",
+                  "created_at": "2025-05-11T16:24:54Z",
+                  "indexed_at": "2026-07-02T15:13:53.991862+00:00",
+                  "prev_section_id": 1783005233991838500,
+                  "section_id": 1783005233991838500,
+                  "next_section_id": 1783005233991838500,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005155658_3431_github_linagora_tmail_flutter_issue_3717.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 3717,
+                  "issue_state": "closed",
+                  "issue_title": "Unable to access settings in Tmail web",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/3717",
+                  "labels": [
+                    "bug"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2025-08-28T10:30:00Z",
+                  "closed_at": "2025-06-20T02:24:20Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:3717",
+                  "filename": "github_linagora_tmail_flutter_issue_3717.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_3717.md",
+                  "file_size": "19.23 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_3717",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916175"
+                }
+              ],
+              "metadata": {
+                "retriever": "openrag"
+              }
+            }
+          },
+          "filter": {
+            "isFiltered": true,
+            "filteredRagKnowledge": [
+              {
+                "sourceId": "466474858415916552",
+                "title": "File name clash handling in Twake Drive",
+                "summary": "Describes the current behavior of file name clashes in Twake Drive, where existing files are silently replaced without user prompt.",
+                "usefulInformation": "If a file's name already exists in the destination, the existing file is quietly replaced. The row ends up updated rather than created. Re-uploading report.pdf overwrites the existing one without asking. Work is in progress to replace this with a prompt (\"Replace\", \"Keep both\", or \"Cancel\") plus an automatic-rename option.",
+                "rawExcerpt": "If a file's name already exists in the destination, the existing file is quietly replaced. The row ends up updated rather than created. Re-uploading report.pdf overwrites the existing one without asking. Work is in progress to replace this with a prompt (\"Replace\", \"Keep both\", or \"Cancel\") plus an automatic-rename option.",
+                "keepReason": "The issue involves file naming and potential conflicts, which might be related to the user's problem with renaming files."
+              }
+            ],
+            "filterExplanation": "Removed candidates that are unrelated to file renaming issues in Twake Drive, specifically those related to upload states and handling mechanisms, as well as issues from other product areas like Tmail Flutter."
+          },
+          "selection": {
+            "isClearSelected": true,
+            "clarificationQuestion": null,
+            "selectedfilteredRagKnowledge": [
+              {
+                "sourceId": "466474858415916552",
+                "title": "File name clash handling in Twake Drive",
+                "usefulInformation": "If a file's name already exists in the destination, the existing file is quietly replaced. The row ends up updated rather than created. Re-uploading report.pdf overwrites the existing one without asking. Work is in progress to replace this with a prompt (\"Replace\", \"Keep both\", or \"Cancel\") plus an automatic-rename option.",
+                "whySelected": "The issue involves file naming and potential conflicts, which might be related to the user's problem with renaming files."
+              }
+            ],
+            "selectionExplanation": "The filtered RAG knowledge describes the current behavior of file name clashes in Twake Drive, which is relevant to the user's problem with renaming files. The issue involves file naming and potential conflicts, making this the most appropriate selection."
+          },
+          "segmentationKnowledge": {
+            "isSegmented": true,
+            "userFacingInformation": "The file may be getting overwritten without a prompt due to a name conflict. A prompt for \"Replace\", \"Keep both\", or \"Cancel\" is in development.",
+            "supportFacingInformation": "Check if the file is being overwritten due to a name conflict. The issue might be related to the handling of file name clashes in Twake Drive. The existing file is quietly replaced without a prompt, and work is in progress to implement a better solution."
+          }
+        },
+        "deepQualification": {
+          "isBuilt": true,
+          "isCompleted": false,
+          "caseDetailsToAskBecauseOfDeepQualification": [
+            {
+              "key": "platform",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "operating_system",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "browser",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "app_version",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "device",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "affected_scope",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "affected_users",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "issue_started_at",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "frequency",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "pre_problem_state",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "visual_evidence",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "reference_id",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "provided_url",
+              "reason": "catalogue rules",
+              "status": "asking"
+            }
+          ]
+        },
+        "solution": {
+          "isActionForUserBuilt": true,
+          "isActionForSupportBuilt": true,
+          "isCompleted": true,
+          "attemptedActionsToAskBecauseOfSolutionFound": [
+            {
+              "action": "Check if there is another file with the same name in the Drive",
+              "reason": "To ensure there is no name conflict that might cause the file to be overwritten without a prompt",
+              "status": "failed"
+            },
+            {
+              "action": "Try renaming the file to a unique name that does not conflict with any existing files",
+              "reason": "To see if the issue is resolved by avoiding a potential name conflict",
+              "status": "failed"
+            }
+          ],
+          "actionToTakeForSupport": "Check if the file is being overwritten due to a name conflict, as the issue might be related to the handling of file name clashes in Twake Drive. The existing file is quietly replaced without a prompt, and work is in progress to implement a better solution."
+        },
+        "idleMode": {
+          "isActivated": false
+        }
+      }
+    }
+  ]
+}

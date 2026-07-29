@@ -4,7 +4,7 @@
     "handoverReason": "detected_by_system"
   },
   "previousConversationTurn": {
-    "previousUserMessage": "ah là ça vient de fonctionne un peu mais parfois le bug revient, ça dépend il semblerait de l'odinateur que j'utilsie",
+    "previousUserMessage": "Je voudrais ausi faire remonter un probleme avec le drive",
     "previousBotMessage": "Merci. Je garderai cette mise à jour avec le sujet et je la transmettrai à l'équipe de support si nécessaire."
   },
   "failedPipelineMessages": [],
@@ -179,6 +179,12 @@
             "value": "ordinateur",
             "evidence": "ça dépend il semblerait de l'odinateur que j'utilsie",
             "status": "obtained"
+          },
+          {
+            "key": "product_or_service",
+            "value": "drive",
+            "evidence": "probleme avec le drive",
+            "status": "obtained"
           }
         ],
         "attemptedActionsExtracted": [
@@ -193,10 +199,10 @@
       "sourceProposeTopicUpdates": {
         "topicId": 1,
         "title": "Messages disappearing on Twake",
-        "summaryTopic": "User reports that messages on Twake sometimes disappear, particularly in Twake Chat when entering a conversation. The issue affects only the user in a group conversation and depends on the computer used. The problem started without a specific trigger and occurs sometimes. The user does not know the exact version of Firefox they are using. The user updated Firefox but the issue persists. The bug sometimes returns and seems to depend on the computer being used.",
+        "summaryTopic": "User reports that messages on Twake sometimes disappear, particularly in Twake Chat when entering a conversation. The issue affects only the user in a group conversation and depends on the computer used. The problem started without a specific trigger and occurs sometimes. The user does not know the exact version of Firefox they are using. The user updated Firefox but the issue persists. The bug sometimes returns and seems to depend on the computer being used. Additionally, the user reports a problem with the drive.",
         "supportDomain": {
           "value": "product_behavior",
-          "reason": "The issue concerns unexpected behavior of the product where messages disappear, specifically in Twake Chat."
+          "reason": "The issue concerns unexpected behavior of the product where messages disappear, specifically in Twake Chat, and includes a report of a problem with the drive."
         }
       },
       "sourceTopicManager": {

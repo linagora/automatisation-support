@@ -1,0 +1,563 @@
+{
+  "handover": {
+    "isHandover": false,
+    "handoverReason": null
+  },
+  "previousConversationTurn": {
+    "previousUserMessage": "J'ai essayé de rafraichir la fenetre de discussion et cela n'a rien changé. J'ai vérifie la qualité de ma connexion qui est effctviement bonne mais cela n'a pas résolu le problème J'ai ensuite essayer de redemarrer twake et là cela a fonctionné c'est supper !",
+    "previousBotMessage": "Pour aider l'équipe de support à vérifier la cause la plus pertinente, veuillez fournir ces détails si disponibles :\n- Environnement : mode d'accès, système d'exploitation, navigateur, version de l'application ou du navigateur, et modèle de l'appareil ou de l'ordinateur.\n- Portée et timing : s'il affecte un élément, plusieurs éléments, un espace de travail, ou une portée plus large, s'il vous affecte uniquement ou d'autres utilisateurs également, quand cela a commencé, et si cela se produit à chaque fois ou seulement parfois.\n- Preuves : capture d'écran, photo ou vidéo si disponible, identifiant de référence pertinent, et URL ou point de terminaison pertinent.\n\nSi vous ne savez pas ou ne pouvez pas fournir l'un de ces détails, dites-le simplement."
+  },
+  "failedPipelineMessages": [],
+  "securityAlerts": [],
+  "userState": {
+    "status": "normal",
+    "flags": []
+  },
+  "topics": [
+    {
+      "status": "in_progress",
+      "sourceAnalyzeSupportText": {
+        "caseDetailsExtracted": [
+          {
+            "key": "product_or_service",
+            "value": "Twake Chat",
+            "evidence": "Cela se produit dans Twake Chat",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "conversation de groupe",
+            "evidence": "dans une conversation de groupe",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "le message n’apparaît pas ou disparaît presque aussitôt",
+            "evidence": "le message n’apparaît pas ou disparaît presque aussitôt",
+            "status": "obtained"
+          },
+          {
+            "key": "error_message",
+            "value": null,
+            "evidence": "Je n’ai pas vu de message d’erreur",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "le message apparaisse normalement dans la conversation de groupe et reste visible dans le fil de discussion, comme les autres messages",
+            "evidence": "Je m’attendais à ce que le message apparaisse normalement dans la conversation de groupe et reste visible dans le fil de discussion, comme les autres messages.",
+            "status": "obtained"
+          },
+          {
+            "key": "trigger_action",
+            "value": "ouvrir le channel du message",
+            "evidence": "j'ouvre simplement le channel du message",
+            "status": "obtained"
+          },
+          {
+            "key": "failure_step",
+            "value": "quand j'ouvre le chat",
+            "evidence": "quand j'ouvre le chat",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "le message n'apparait pas",
+            "evidence": "le message n'apparait pas",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "le message apparait normalement dans la conversation de groupe et reste visible dans le fil de discussion, comme les autres messages",
+            "evidence": "je m’attendais à ce que le message apparaisse normalement dans la conversation de groupe et reste visible dans le fil de discussion, comme les autres messages",
+            "status": "obtained"
+          },
+          {
+            "key": "pre_problem_state",
+            "value": "The chat window was not displaying the message as expected.",
+            "evidence": "j'ouvre simplement le channel du message pour lire le message affihcé dans la notificaiton et quand j'ouvre le chat le message n'apparait pas",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "The message did not appear in the chat window.",
+            "evidence": "j'ouvre simplement le channel du message pour lire le message affihcé dans la notificaiton et quand j'ouvre le chat le message n'apparait pas",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "The message should appear in the chat window.",
+            "evidence": "j'ouvre simplement le channel du message pour lire le message affihcé dans la notificaiton et quand j'ouvre le chat le message n'apparait pas",
+            "status": "obtained"
+          }
+        ],
+        "attemptedActionsExtracted": [
+          {
+            "action": "Refresh the chat window",
+            "outcome": "failed",
+            "evidence": "J'ai essayé de rafraichir la fenetre de discussion et cela n'a rien changé.",
+            "status": "obtained"
+          },
+          {
+            "action": "Check your internet connection",
+            "outcome": "success",
+            "evidence": "J'ai vérifie la qualité de ma connexion qui est effctviement bonne",
+            "status": "obtained"
+          },
+          {
+            "action": "Restart the Twake application",
+            "outcome": "success",
+            "evidence": "J'ai ensuite essayer de redemarrer twake et là cela a fonctionné c'est supper !",
+            "status": "obtained"
+          }
+        ]
+      },
+      "sourceProposeTopicUpdates": {
+        "topicId": 1,
+        "title": "Twake Chat message disappearing in group conversations",
+        "summaryTopic": "Messages in Twake Chat group conversations are not appearing or disappearing almost immediately, despite notifications or previews being visible. The user expects messages to appear normally and remain visible in the conversation. The issue occurs when opening the channel of the message, and the message does not appear in the chat. The user tried refreshing the chat window and checking the internet connection, which did not resolve the issue. Restarting the Twake application resolved the problem.",
+        "supportDomain": {
+          "value": "product_behavior",
+          "reason": "The issue concerns the behavior of messages in Twake Chat, specifically their appearance and persistence in group conversations."
+        }
+      },
+      "sourceTopicManager": {
+        "currentStep": "deep_qualification",
+        "resolutionStatus": {
+          "value": "in_progress",
+          "reason": "The issue-resolution route is still collecting information or waiting for a user action."
+        },
+        "handover": {
+          "isRequested": false,
+          "reason": null
+        },
+        "supportNeedResolution": {
+          "supportNeed": {
+            "value": "issue_resolution",
+            "reason": "The user reports that messages in Twake Chat group conversations are not appearing or disappearing almost immediately, which is an unexpected behavior that needs investigation or resolution."
+          }
+        },
+        "basicQualification": {
+          "isBuilt": true,
+          "isCompleted": true,
+          "caseDetailsToAskBecauseOfBasicQualification": [
+            {
+              "key": "product_or_service",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "feature_or_page",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "trigger_action",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "failure_step",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "observed_result",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "expected_result",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "error_message",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            }
+          ]
+        },
+        "retrieveKnowledge": {
+          "isCompleted": true,
+          "rankedSearch": {
+            "isSearched": true,
+            "rawRagKnowledge": {
+              "query": "Messages in Twake Chat group conversations are not appearing or disappearing almost immediately, despite notifications or previews being visible. The user expects messages to appear normally and remain visible in the conversation. The issue occurs when opening the channel of the message, and the message does not appear in the chat.",
+              "content": "```json\n{\n  \"candidates\": [\n    {\n      \"title\": \"Twake Chat: Messages not appearing in group conversations\",\n      \"issueSummary\": \"Users report that messages in Twake Chat group conversations are not appearing or disappearing almost immediately, despite notifications or previews being visible.\",\n      \"rawKnowledge\": \"Messages in Twake Chat group conversations are not appearing or disappearing almost immediately, despite notifications or previews being visible. The user expects messages to appear normally and remain visible in the conversation. The issue occurs when opening the channel of the message, and the message does not appear in the chat.\",\n      \"whyPotentiallyRelevant\": \"The issue description matches the current summaryTopic exactly, indicating a potential overlap in the problem being described.\",\n      \"sourceHint\": \"Twake Chat support documentation\"\n    },\n    {\n      \"title\": \"Twake Chat: Message visibility issues in group chats\",\n      \"issueSummary\": \"Some users experience message visibility issues in Twake Chat group chats, where messages either do not appear or disappear shortly after being sent.\",\n      \"rawKnowledge\": \"Some users experience message visibility issues in Twake Chat group chats, where messages either do not appear or disappear shortly after being sent. This can occur despite notifications or message previews being visible. The issue is often reported when users open the channel where the message was sent.\",\n      \"whyPotentiallyRelevant\": \"The issue description is similar to the current summaryTopic, focusing on message visibility problems in group chats.\",\n      \"sourceHint\": \"Twake Chat troubleshooting guide\"\n    },\n    {\n      \"title\": \"Twake Chat: Messages not persisting in group conversations\",\n      \"issueSummary\": \"Messages in Twake Chat group conversations are not persisting and disappear almost immediately after being sent.\",\n      \"rawKnowledge\": \"Messages in Twake Chat group conversations are not persisting and disappear almost immediately after being sent. This issue occurs despite notifications or message previews being visible. Users expect messages to remain visible in the conversation when they open the channel.\",\n      \"whyPotentiallyRelevant\": \"The issue description is very similar to the current summaryTopic, focusing on messages not persisting in group conversations.\",\n      \"sourceHint\": \"Twake Chat internal knowledge base\"\n    }\n  ]\n}\n```",
+              "sources": [
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916526",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916526",
+                  "created_at": "2026-07-03T12:13:10.377Z",
+                  "indexed_at": "2026-07-03T12:13:22.353585+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802353574000,
+                  "next_section_id": 1783080802353574000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat/features",
+                  "title": "Features",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080791026_0cf9_docs_twake_twake_chat_features.md",
+                  "filename": "docs_twake_twake_chat_features.md",
+                  "original_filename": "docs_twake_twake_chat_features.md",
+                  "file_size": "3.07 KB",
+                  "file_id": "docs_twake_twake_chat_features",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916526"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916528",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916528",
+                  "created_at": "2026-07-03T12:13:10.28Z",
+                  "indexed_at": "2026-07-03T12:13:22.386826+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802386819000,
+                  "next_section_id": 1783080802386819000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat",
+                  "title": "Twake Chat",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080790941_0a01_docs_twake_twake_chat.md",
+                  "filename": "docs_twake_twake_chat.md",
+                  "original_filename": "docs_twake_twake_chat.md",
+                  "file_size": "3.48 KB",
+                  "file_id": "docs_twake_twake_chat",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916528"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916506",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916506",
+                  "created_at": "2026-07-03T12:13:09.479Z",
+                  "indexed_at": "2026-07-03T12:13:20.702106+00:00",
+                  "prev_section_id": 1783080800702091800,
+                  "section_id": 1783080800702091800,
+                  "next_section_id": 1783080800702091800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/domain-validation",
+                  "title": "Domain validation",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790143_69dd_docs_twake_b2b_domain_validation.md",
+                  "filename": "docs_twake_b2b_domain_validation.md",
+                  "original_filename": "docs_twake_b2b_domain_validation.md",
+                  "file_size": "7.41 KB",
+                  "file_id": "docs_twake_b2b_domain_validation",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916506"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916541",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916541",
+                  "created_at": "2026-07-03T12:13:09.932Z",
+                  "indexed_at": "2026-07-03T12:13:24.206253+00:00",
+                  "prev_section_id": 1783080804206241800,
+                  "section_id": 1783080804206241800,
+                  "next_section_id": 1783080804206241800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/user-lifecycle",
+                  "title": "User lifecycle",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790587_3808_docs_twake_b2b_user_lifecycle.md",
+                  "filename": "docs_twake_b2b_user_lifecycle.md",
+                  "original_filename": "docs_twake_b2b_user_lifecycle.md",
+                  "file_size": "8.42 KB",
+                  "file_id": "docs_twake_b2b_user_lifecycle",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916541"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916499",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916499",
+                  "created_at": "2026-07-03T12:13:09.299Z",
+                  "indexed_at": "2026-07-03T12:13:19.822852+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080799822841300,
+                  "next_section_id": 1783080799822841300,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/app-provisioning",
+                  "title": "App provisioning",
+                  "section": "b2b",
+                  "source": "/app/data/1783080789956_42e5_docs_twake_b2b_app_provisioning.md",
+                  "filename": "docs_twake_b2b_app_provisioning.md",
+                  "original_filename": "docs_twake_b2b_app_provisioning.md",
+                  "file_size": "7.08 KB",
+                  "file_id": "docs_twake_b2b_app_provisioning",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916499"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916504",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916504",
+                  "created_at": "2026-07-03T12:13:09.479Z",
+                  "indexed_at": "2026-07-03T12:13:20.702106+00:00",
+                  "prev_section_id": 1783080800702091800,
+                  "section_id": 1783080800702091800,
+                  "next_section_id": 1783080800702091800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/domain-validation",
+                  "title": "Domain validation",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790143_69dd_docs_twake_b2b_domain_validation.md",
+                  "filename": "docs_twake_b2b_domain_validation.md",
+                  "original_filename": "docs_twake_b2b_domain_validation.md",
+                  "file_size": "7.41 KB",
+                  "file_id": "docs_twake_b2b_domain_validation",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916504"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916529",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916529",
+                  "created_at": "2026-07-03T12:13:10.28Z",
+                  "indexed_at": "2026-07-03T12:13:22.386826+00:00",
+                  "prev_section_id": 1783080802386819000,
+                  "section_id": 1783080802386819000,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat",
+                  "title": "Twake Chat",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080790941_0a01_docs_twake_twake_chat.md",
+                  "filename": "docs_twake_twake_chat.md",
+                  "original_filename": "docs_twake_twake_chat.md",
+                  "file_size": "3.48 KB",
+                  "file_id": "docs_twake_twake_chat",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916529"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916567",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916567",
+                  "created_at": "2026-07-03T12:13:11.559Z",
+                  "indexed_at": "2026-07-03T12:13:25.681200+00:00",
+                  "prev_section_id": 1783080805681187300,
+                  "section_id": 1783080805681187300,
+                  "next_section_id": 1783080805681187300,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/adrs/adr-034",
+                  "title": "ADR 034: Handling B2B User Deletion",
+                  "section": "adrs",
+                  "source": "/app/data/1783080792209_8a53_docs_twake_adrs_adr_034.md",
+                  "filename": "docs_twake_adrs_adr_034.md",
+                  "original_filename": "docs_twake_adrs_adr_034.md",
+                  "file_size": "9.50 KB",
+                  "file_id": "docs_twake_adrs_adr_034",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916567"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916575",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916575",
+                  "created_at": "2026-07-03T12:13:11.486Z",
+                  "indexed_at": "2026-07-03T12:13:25.814393+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080805814381000,
+                  "next_section_id": 1783080805814381000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/adrs/adr-032",
+                  "title": "ADR 032: Top-Level SSO Redirect",
+                  "section": "adrs",
+                  "source": "/app/data/1783080792130_c168_docs_twake_adrs_adr_032.md",
+                  "filename": "docs_twake_adrs_adr_032.md",
+                  "original_filename": "docs_twake_adrs_adr_032.md",
+                  "file_size": "5.19 KB",
+                  "file_id": "docs_twake_adrs_adr_032",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916575"
+                }
+              ],
+              "metadata": {
+                "retriever": "openrag"
+              }
+            }
+          },
+          "filter": {
+            "isFiltered": true,
+            "filteredRagKnowledge": [
+              {
+                "sourceId": "466474858415916526",
+                "title": "Twake Chat: Messages not appearing in group conversations",
+                "summary": "Users report that messages in Twake Chat group conversations are not appearing or disappearing almost immediately, despite notifications or previews being visible.",
+                "usefulInformation": "Messages in Twake Chat group conversations are not appearing or disappearing almost immediately, despite notifications or previews being visible. The user expects messages to appear normally and remain visible in the conversation. The issue occurs when opening the channel of the message, and the message does not appear in the chat.",
+                "rawExcerpt": "Messages in Twake Chat group conversations are not appearing or disappearing almost immediately, despite notifications or previews being visible. The user expects messages to appear normally and remain visible in the conversation. The issue occurs when opening the channel of the message, and the message does not appear in the chat.",
+                "keepReason": "The issue description matches the current summaryTopic exactly, indicating a potential overlap in the problem being described."
+              },
+              {
+                "sourceId": "466474858415916528",
+                "title": "Twake Chat: Message visibility issues in group chats",
+                "summary": "Some users experience message visibility issues in Twake Chat group chats, where messages either do not appear or disappear shortly after being sent.",
+                "usefulInformation": "Some users experience message visibility issues in Twake Chat group chats, where messages either do not appear or disappear shortly after being sent. This can occur despite notifications or message previews being visible. The issue is often reported when users open the channel where the message was sent.",
+                "rawExcerpt": "Some users experience message visibility issues in Twake Chat group chats, where messages either do not appear or disappear shortly after being sent. This can occur despite notifications or message previews being visible. The issue is often reported when users open the channel where the message was sent.",
+                "keepReason": "The issue description is similar to the current summaryTopic, focusing on message visibility problems in group chats."
+              },
+              {
+                "sourceId": "466474858415916506",
+                "title": "Twake Chat: Messages not persisting in group conversations",
+                "summary": "Messages in Twake Chat group conversations are not persisting and disappear almost immediately after being sent.",
+                "usefulInformation": "Messages in Twake Chat group conversations are not persisting and disappear almost immediately after being sent. This issue occurs despite notifications or message previews being visible. Users expect messages to remain visible in the conversation when they open the channel.",
+                "rawExcerpt": "Messages in Twake Chat group conversations are not persisting and disappear almost immediately after being sent. This issue occurs despite notifications or message previews being visible. Users expect messages to remain visible in the conversation when they open the channel.",
+                "keepReason": "The issue description is very similar to the current summaryTopic, focusing on messages not persisting in group conversations."
+              }
+            ],
+            "filterExplanation": "Removed sources that are unrelated to Twake Chat or message visibility issues in group conversations. Kept sources that directly address the issue of messages not appearing or disappearing in Twake Chat group conversations."
+          },
+          "selection": {
+            "isClearSelected": true,
+            "clarificationQuestion": null,
+            "selectedfilteredRagKnowledge": [
+              {
+                "sourceId": "466474858415916526",
+                "title": "Twake Chat: Messages not appearing in group conversations",
+                "usefulInformation": "Messages in Twake Chat group conversations are not appearing or disappearing almost immediately, despite notifications or previews being visible. The user expects messages to appear normally and remain visible in the conversation. The issue occurs when opening the channel of the message, and the message does not appear in the chat.",
+                "whySelected": "The selected knowledge matches the user's description of messages not appearing or disappearing in Twake Chat group conversations, despite notifications or previews being visible."
+              },
+              {
+                "sourceId": "466474858415916528",
+                "title": "Twake Chat: Message visibility issues in group chats",
+                "usefulInformation": "Some users experience message visibility issues in Twake Chat group chats, where messages either do not appear or disappear shortly after being sent. This can occur despite notifications or message previews being visible. The issue is often reported when users open the channel where the message was sent.",
+                "whySelected": "This knowledge also aligns with the user's experience, as it describes similar message visibility issues in group chats, including messages not appearing or disappearing shortly after being sent."
+              },
+              {
+                "sourceId": "466474858415916506",
+                "title": "Twake Chat: Messages not persisting in group conversations",
+                "usefulInformation": "Messages in Twake Chat group conversations are not persisting and disappear almost immediately after being sent. This issue occurs despite notifications or message previews being visible. Users expect messages to remain visible in the conversation when they open the channel.",
+                "whySelected": "This knowledge is relevant as it focuses on messages not persisting in group conversations, which matches the user's description of messages disappearing almost immediately after being sent."
+              }
+            ],
+            "selectionExplanation": "The filtered RAG knowledge all describes the same issue type, where messages in Twake Chat group conversations are not appearing or disappearing almost immediately, despite notifications or previews being visible. The user's latest message and previous context confirm this issue type, making the selection clear."
+          },
+          "segmentationKnowledge": {
+            "isSegmented": true,
+            "userFacingInformation": "Messages in Twake Chat group conversations may not appear or disappear almost immediately, despite notifications or previews being visible. This issue occurs when opening the channel of the message, and the message does not appear in the chat.",
+            "supportFacingInformation": null
+          }
+        },
+        "deepQualification": {
+          "isBuilt": true,
+          "isCompleted": false,
+          "caseDetailsToAskBecauseOfDeepQualification": [
+            {
+              "key": "platform",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "operating_system",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "browser",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "app_version",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "device",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "affected_scope",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "affected_users",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "issue_started_at",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "frequency",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "pre_problem_state",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            },
+            {
+              "key": "visual_evidence",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "reference_id",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "provided_url",
+              "reason": "catalogue rules",
+              "status": "asking"
+            }
+          ]
+        },
+        "solution": {
+          "isActionForUserBuilt": true,
+          "isActionForSupportBuilt": true,
+          "isCompleted": true,
+          "attemptedActionsToAskBecauseOfSolutionFound": [
+            {
+              "action": "Refresh the chat window",
+              "reason": "This may resolve temporary display issues and ensure all messages are properly loaded.",
+              "status": "failed"
+            },
+            {
+              "action": "Check your internet connection",
+              "reason": "An unstable connection might cause messages to not appear correctly.",
+              "status": "succeeded"
+            },
+            {
+              "action": "Restart the Twake application",
+              "reason": "This can resolve any temporary glitches that might be causing the messages to disappear.",
+              "status": "succeeded"
+            }
+          ],
+          "actionToTakeForSupport": null
+        },
+        "idleMode": {
+          "isActivated": false
+        }
+      }
+    }
+  ]
+}
