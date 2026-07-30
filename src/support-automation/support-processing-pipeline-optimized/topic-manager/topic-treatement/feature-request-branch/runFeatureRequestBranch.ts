@@ -31,8 +31,8 @@ async function runFeatureRequestBranch(
         reason: "The topic is a feature request. The automated issue-resolution route does not treat this branch yet."
       },
       handover: {
-        isRequested: false,
-        reason: null
+        isRequested: true,
+        reason: "feature_request_received: topic finished as feature request and needs support review"
       },
       idleMode: {
         isActivated: true

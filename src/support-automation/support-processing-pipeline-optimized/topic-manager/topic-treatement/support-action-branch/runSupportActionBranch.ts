@@ -32,7 +32,7 @@ async function runSupportActionBranch(
       },
       handover: {
         isRequested: true,
-        reason: "A support team member must take or review the requested action."
+        reason: "support_action_requested: topic finished as support action request and needs support review"
       },
       idleMode: {
         isActivated: true

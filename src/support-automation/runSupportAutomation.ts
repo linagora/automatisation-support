@@ -228,6 +228,7 @@ function buildSupportProcessingInput(params: {
     latestUserMessage: buildLatestUserMessage(params.bufferedMessages),
     latestUserAttachments: buildLatestUserAttachments(params.bufferedMessages),
     liveMemory: {
+      handover: params.liveMemoryContext.handover,
       topics: params.liveMemoryContext.topics ?? [],
       previousConversationTurn: params.liveMemoryContext.previousConversationTurn,
       userState: params.liveMemoryContext.userState,

@@ -49,6 +49,11 @@ type RunSupportProcessingPipelineV3OptimizedInput = {
 };
 
 type SupportLiveMemoryInput = {
+  handover: {
+    isHandover: boolean;
+    handoverReason: string | null;
+  };
+
   topics: LiveMemoryTopicOptimized[];
 
   previousConversationTurn: {
@@ -294,6 +299,7 @@ async function runSupportProcessingPipelineV3Optimized(
         buildLiveMemoryPatches({
           latestUserMessage: input.latestUserMessage,
           latestUserAttachments: input.latestUserAttachments,
+          liveMemory: input.liveMemory,
           intermOutputs
         });
 
@@ -485,6 +491,7 @@ async function runSupportProcessingPipelineV3Optimized(
       buildLiveMemoryPatches({
         latestUserMessage: input.latestUserMessage,
         latestUserAttachments: input.latestUserAttachments,
+        liveMemory: input.liveMemory,
         intermOutputs
       });
 

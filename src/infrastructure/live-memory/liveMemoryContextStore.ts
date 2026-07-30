@@ -62,14 +62,9 @@ function normalizeHandover(value: unknown): LiveMemoryContextOptimized["handover
     return createEmptyLiveMemoryContextOptimized().handover;
   }
 
-  const handoverReason = value.handoverReason === "asked_by_user" ||
-    value.handoverReason === "detected_by_system"
-    ? value.handoverReason
-    : null;
-
   return {
     isHandover: value.isHandover === true,
-    handoverReason
+    handoverReason: nullableString(value.handoverReason)
   };
 }
 

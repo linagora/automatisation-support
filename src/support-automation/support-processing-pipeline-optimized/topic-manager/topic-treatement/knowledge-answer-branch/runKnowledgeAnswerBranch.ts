@@ -31,8 +31,8 @@ async function runKnowledgeAnswerBranch(
         reason: "The topic is a knowledge question. The dedicated knowledge-answer route is not implemented yet."
       },
       handover: {
-        isRequested: false,
-        reason: null
+        isRequested: true,
+        reason: "knowledge_question_received: topic finished as knowledge question and needs support review"
       },
       idleMode: {
         isActivated: true

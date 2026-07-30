@@ -1,7 +1,7 @@
 export type LiveMemoryContextOptimized = {
   handover: {
     isHandover: boolean;
-    handoverReason: "asked_by_user" | "detected_by_system" | null;
+    handoverReason: string | null;
   };
 
   previousConversationTurn: {

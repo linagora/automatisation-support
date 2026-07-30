@@ -78,6 +78,7 @@ async function runIssueResolutionBranch(
     if (sourceTopicManager.idleMode.isActivated === true) {
       const idleModeOutput = await runIdleMode({
         mode: "reevaluate_existing_idle",
+        topicId: input.topicUpdatePlan.topicId ?? null,
         currentUserMessage: input.currentUserMessage,
         summaryTopic,
         sourceTopicManager
@@ -208,6 +209,7 @@ async function runIssueResolutionBranch(
 
     const idleModeOutput = await runIdleMode({
       mode: "finalize_after_solution",
+      topicId: input.topicUpdatePlan.topicId ?? null,
       currentUserMessage: input.currentUserMessage,
       summaryTopic,
       sourceTopicManager

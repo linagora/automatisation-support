@@ -14,13 +14,19 @@ export type BuildLiveMemoryPatchesInput = {
 
   latestUserAttachments: unknown[];
 
+  liveMemory: {
+    handover: {
+      handoverReason: string | null;
+    };
+  };
+
   intermOutputs: RunSupportProcessingPipelineV3OptimizedIntermOutputs;
 };
 
 export type BuildLiveMemoryPatchesOutput = {
   handover: {
     isHandover: boolean;
-    handoverReason: "asked_by_user" | "detected_by_system" | null;
+    handoverReason: string | null;
   } | null;
 
   previousConversationTurn: {
@@ -135,7 +141,10 @@ function buildGlobalLiveMemoryPatch(
   if (hasHandoverRequestedSurface(input.intermOutputs.analyzeTextSurfaceOutput)) {
     patch.handover = {
       isHandover: true,
-      handoverReason: "asked_by_user"
+      handoverReason: buildMergedHandoverReason({
+        existingReason: input.liveMemory.handover.handoverReason,
+        newReasons: ["asked_by_user"]
+      })
     };
   }
 
@@ -301,13 +310,76 @@ function buildTopicLiveMemoryPatch(
   patch.topics = topicPatches.length > 0 ? topicPatches : null;
 
   if (topicPatches.some((topicPatch) => topicPatch.sourceTopicManager.handover.isRequested)) {
+    const newHandoverReasons = [
+      ...collectTopicHandoverReasons(topicPatches),
+      ...(surfaceHandoverRequested ? ["asked_by_user"] : [])
+    ];
+
     patch.handover = {
       isHandover: true,
-      handoverReason: surfaceHandoverRequested ? "asked_by_user" : "detected_by_system"
+      handoverReason: buildMergedHandoverReason({
+        existingReason: input.liveMemory.handover.handoverReason,
+        newReasons: newHandoverReasons
+      })
     };
   }
 
   return patch;
+}
+
+function collectTopicHandoverReasons(
+  topicPatches: BuildLiveMemoryTopicPatch[]
+): string[] {
+  return topicPatches
+    .map((topic) => topic.sourceTopicManager.handover)
+    .filter((handover) => handover.isRequested)
+    .map((handover) => handover.reason)
+    .filter((reason): reason is string => {
+      return typeof reason === "string" && reason.trim() !== "";
+    })
+    .map((reason) => reason.trim());
+}
+
+function buildMergedHandoverReason(input: {
+  existingReason: string | null | undefined;
+  newReasons: string[];
+}): string {
+  return mergeHandoverReasons(input) ?? "detected_by_system";
+}
+
+function mergeHandoverReasons(input: {
+  existingReason: string | null | undefined;
+  newReasons: string[];
+}): string | null {
+  const mergedReasons: string[] = [];
+
+  for (const reason of [
+    ...splitHandoverReason(input.existingReason),
+    ...input.newReasons.flatMap((reason) => splitHandoverReason(reason))
+  ]) {
+    const trimmedReason = reason.trim();
+
+    if (trimmedReason.length === 0) {
+      continue;
+    }
+
+    if (!mergedReasons.includes(trimmedReason)) {
+      mergedReasons.push(trimmedReason);
+    }
+  }
+
+  return mergedReasons.length > 0 ? mergedReasons.join("; ") : null;
+}
+
+function splitHandoverReason(reason: string | null | undefined): string[] {
+  if (typeof reason !== "string") {
+    return [];
+  }
+
+  return reason
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
 }
 
 function resolveTopicStatus(
@@ -348,11 +420,15 @@ function applySurfaceHandoverIfNeeded(
     return sourceTopicManager;
   }
 
+  if (sourceTopicManager.handover.isRequested) {
+    return sourceTopicManager;
+  }
+
   return {
     ...sourceTopicManager,
     handover: {
       isRequested: true,
-      reason: "The user explicitly requested a human handover in the surface analysis."
+      reason: "asked_by_user"
     }
   };
 }
