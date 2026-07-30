@@ -9,7 +9,6 @@ import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure
 type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
 
 export type PlanIssueSolutionAskInput = {
-  currentUserMessage: {content: string; channel?: string};
   previousConversationTurn: {
     previousUserMessage: string | null;
     previousBotMessage: string | null;
@@ -18,11 +17,16 @@ export type PlanIssueSolutionAskInput = {
 };
 
 export type PlanIssueSolutionAskOutput = {
-  say: string;
+  say: string | null;
 };
 
 async function planIssueSolutionAsk(input: PlanIssueSolutionAskInput): Promise<PlanIssueSolutionAskOutput> {
   const fallbackSay = buildDeterministicIssueSolutionAsk(input);
+
+  if (fallbackSay === null) {
+    return {say: null};
+  }
+
   const {messages} = buildIssueSolutionAskPrompt(input);
 
   try {

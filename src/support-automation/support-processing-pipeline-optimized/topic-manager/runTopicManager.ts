@@ -255,19 +255,18 @@ function buildEmptyRetrieveKnowledge(): LiveMemoryTopicOptimized["sourceTopicMan
     },
     filter: {
       isFiltered: false,
-      filteredRagKnowledge: null,
+      keptRawKnowledgeIds: [],
       filterExplanation: null
     },
     selection: {
       isClearSelected: false,
       clarificationQuestion: null,
-      selectedfilteredRagKnowledge: null,
+      selectedRawKnowledgeIds: [],
       selectionExplanation: null
     },
     segmentationKnowledge: {
       isSegmented: false,
-      userFacingInformation: null,
-      supportFacingInformation: null
+      segmentedKnowledge: []
     }
   };
 }
@@ -284,8 +283,10 @@ function buildEmptySolution(): LiveMemoryTopicOptimized["sourceTopicManager"]["s
   return {
     isActionForUserBuilt: false,
     isActionForSupportBuilt: false,
+    isCaseDetailsForSolutionBuilt: false,
     isCompleted: false,
     attemptedActionsToAskBecauseOfSolutionFound: [],
+    caseDetailsToAskBecauseOfSolutionFound: [],
     actionToTakeForSupport: null
   };
 }

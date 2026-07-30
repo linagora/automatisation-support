@@ -1,37 +1,43 @@
 import {outputJsonShapeForPrompt} from "./responseFormat";
 
 import type {LLMMessage} from "../../../../../../../infrastructure/llm/llm-client";
-import type {RunSegmentationKnowledgeInput} from "./runSegmentationKnowledge--oneShotStep";
+import type {RawKnowledgeCandidate} from "../ranked-search/runRankedSearch--oneShotStep";
+
+export type SegmentationKnowledgePromptInput = {
+  summaryTopic: string;
+  rawKnowledgeCandidates: RawKnowledgeCandidate[];
+  selectedRawKnowledgeIds: string[];
+};
 
 function buildSegmentationKnowledgePrompt(
-  input: RunSegmentationKnowledgeInput
+  input: SegmentationKnowledgePromptInput
 ): {messages: LLMMessage[]} {
   return {
     messages: [
       {
         role: "system",
-        content: `You segment selected internal RAG knowledge for a support automation pipeline.
+        content: `You segment selected raw knowledge for one support topic.
 
-You do not answer the user.
-You do not ask clarification questions.
-You only split selected knowledge into two safe memory fields.
+Use only candidates whose rawKnowledgeId is in selectedRawKnowledgeIds.
+Return only segmentedKnowledge items for selected IDs.
+Do not invent IDs, source spans, facts, or solutions.
 
-Definitions:
-- userFacingInformation: information that may help the assistant ask better follow-up questions or later explain a user-safe workaround, known behavior, limitation, or procedure.
-- supportFacingInformation: internal support notes that should not be sent directly to the user, such as logs to inspect, admin-side checks, internal service names, escalation hints, or debugging context.
+Split faithful excerpts/paraphrases into:
+- userFacingKnowledge: safe information usable with the user.
+- supportFacingKnowledge: internal/support-only information.
 
-Rules:
-- Do not invent facts not present in selectedfilteredRagKnowledge.
-- If no user-facing information is present, use null.
-- If no support-facing information is present, use null.
-- Keep both fields concise.
-- Return only JSON.`
+Use candidate sourceHint when available.
+Use sourceSpan only when explicitly available, otherwise null.
+Omit selected candidates with no useful pieces.
+
+Return only JSON matching the response schema.`
       },
       {
         role: "user",
         content: JSON.stringify({
           summaryTopic: input.summaryTopic,
-          selectedfilteredRagKnowledge: input.selectedfilteredRagKnowledge,
+          selectedRawKnowledgeIds: input.selectedRawKnowledgeIds,
+          rawKnowledgeCandidates: input.rawKnowledgeCandidates,
           outputShape: outputJsonShapeForPrompt
         }, null, 2)
       }

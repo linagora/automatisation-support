@@ -47,21 +47,20 @@ function createEmptySourceTopicManager(): LiveMemoryTopicOptimized["sourceTopicM
 
       filter: {
         isFiltered: false,
-        filteredRagKnowledge: null,
+        keptRawKnowledgeIds: [],
         filterExplanation: null
       },
 
       selection: {
         isClearSelected: false,
         clarificationQuestion: null,
-        selectedfilteredRagKnowledge: null,
+        selectedRawKnowledgeIds: [],
         selectionExplanation: null
       },
 
       segmentationKnowledge: {
         isSegmented: false,
-        userFacingInformation: null,
-        supportFacingInformation: null
+        segmentedKnowledge: []
       }
     },
 
@@ -74,8 +73,10 @@ function createEmptySourceTopicManager(): LiveMemoryTopicOptimized["sourceTopicM
     solution: {
       isActionForUserBuilt: false,
       isActionForSupportBuilt: false,
+      isCaseDetailsForSolutionBuilt: false,
       isCompleted: false,
       attemptedActionsToAskBecauseOfSolutionFound: [],
+      caseDetailsToAskBecauseOfSolutionFound: [],
       actionToTakeForSupport: null
     },
 

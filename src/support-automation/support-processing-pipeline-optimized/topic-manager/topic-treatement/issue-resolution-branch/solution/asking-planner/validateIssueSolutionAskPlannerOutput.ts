@@ -8,7 +8,7 @@ function validateIssueSolutionAskPlannerOutput(parsedResponse: unknown): IssueSo
   if (typeof parsedResponse.say !== "string" || parsedResponse.say.trim() === "") return null;
 
   return {
-    say: parsedResponse.say
+    say: parsedResponse.say.trim()
   };
 }
 

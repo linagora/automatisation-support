@@ -4,8 +4,8 @@
     "handoverReason": null
   },
   "previousConversationTurn": {
-    "previousUserMessage": "J’ai 2 problèmes Sur twake chat j’ai l’impression que parfois les messages disparaît Sur le drive je n’arrive pas à renommer un fichier une fois qu’il est créé",
-    "previousBotMessage": "MESSAGES QUI DISPARAISSENT DANS TWAKE CHAT\nPour mieux comprendre et vous aider avec les problèmes que vous rencontrez, pourriez-vous décrire le flux exact pour chaque problème ? Pour le problème de chat, faites-moi savoir où dans la fonctionnalité de chat les messages semblent disparaître, ce que vous essayez de faire lorsque cela se produit, et ce que vous attendiez qu'il se passe à la place. Pour le problème de drive, précisez où dans la fonctionnalité de drive vous essayez de renommer un fichier, l'étape exacte où le problème se produit, et ce que vous attendiez qu'il se passe. Si un message d'erreur ou un code apparaît, veuillez le partager également.\nPROBLÈME DE RENOMMAGE DE FICHIER DANS TWAKE DRIVE\nPour mieux comprendre et vous aider avec vos problèmes, pourriez-vous décrire le flux exact de ce que vous essayez de faire ? Plus précisément, faites-nous savoir quelle action vous essayez d'effectuer lorsque le problème se produit, à quelle étape cela se produit, et ce que vous attendiez qu'il se passe à la place. De plus, si un message d'erreur ou un code apparaît, veuillez partager cette information également."
+    "previousUserMessage": "J ai un problème avec les messages sur twake chat J’ai remarqué que lorsque je clique sur la notification quand je reçois un message alors celui ci disparaîtPrécisément ce qu’uni se passe c’était que je reçois un message depuis mon téléphone, je clique sur la notification qui s’affiche Cela ouvre twake chat puis ouvre le Channel de messageAlors la message qui était affiché dans la notification n’apparaît pas dans le Channel et le Channel reste donc vide Je m’attendais à voir le message Aucun message d’erreur affiché à ce moment",
+    "previousBotMessage": "Pour aider l'équipe de support à enquêter, veuillez fournir ces détails si disponibles :\n- Environnement : mode d'accès, système d'exploitation, navigateur, version de l'application ou du navigateur, et modèle de l'appareil ou de l'ordinateur.\n- Portée et timing : s'il affecte un élément, plusieurs éléments, un espace de travail, ou une portée plus large, s'il affecte uniquement vous ou d'autres utilisateurs également, quand cela a commencé, s'il se produit à chaque fois ou seulement parfois, et ce qui fonctionnait avant le début du problème.\n- Preuves : capture d'écran, photo ou vidéo si disponible, identifiant de référence pertinent, et URL ou point de terminaison pertinent.\n\nSi vous ne savez pas ou ne pouvez pas fournir l'un de ces détails, dites-le simplement."
   },
   "failedPipelineMessages": [],
   "securityAlerts": [],
@@ -20,14 +20,44 @@
         "caseDetailsExtracted": [
           {
             "key": "product_or_service",
-            "value": "Twake chat",
-            "evidence": "Sur twake chat",
+            "value": "Twake Chat",
+            "evidence": "J’ai un problème avec les messages sur twake chat",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "notification",
+            "evidence": "lorsque je clique sur la notification",
+            "status": "obtained"
+          },
+          {
+            "key": "trigger_action",
+            "value": "clique sur la notification",
+            "evidence": "je clique sur la notification qui s’affiche",
+            "status": "obtained"
+          },
+          {
+            "key": "failure_step",
+            "value": "après avoir ouvert le Channel de message",
+            "evidence": "Cela ouvre twake chat puis ouvre le Channel de message",
             "status": "obtained"
           },
           {
             "key": "observed_result",
-            "value": "messages disappear",
-            "evidence": "les messages disparaît",
+            "value": "le message n’apparaît pas dans le Channel et le Channel reste donc vide",
+            "evidence": "la message qui était affiché dans la notification n’apparaît pas dans le Channel et le Channel reste donc vide",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "voir le message",
+            "evidence": "Je m’attendais à voir le message",
+            "status": "obtained"
+          },
+          {
+            "key": "error_message",
+            "value": "Aucun message d’erreur affiché",
+            "evidence": "Aucun message d’erreur affiché à ce moment",
             "status": "obtained"
           }
         ],
@@ -35,15 +65,15 @@
       },
       "sourceProposeTopicUpdates": {
         "topicId": 1,
-        "title": "Twake Chat Messages Disappearing",
-        "summaryTopic": "User reports that messages sometimes disappear in Twake chat.",
+        "title": "Twake Chat Notification Issue",
+        "summaryTopic": "Messages disappear when clicking on notifications in Twake Chat, leaving the channel empty.",
         "supportDomain": {
           "value": "product_behavior",
-          "reason": "The routed facts concern unexpected behavior in Twake chat."
+          "reason": "The routed facts concern unexpected behavior in Twake Chat notifications."
         }
       },
       "sourceTopicManager": {
-        "currentStep": "basic_qualification",
+        "currentStep": "deep_qualification",
         "resolutionStatus": {
           "value": "in_progress",
           "reason": "The issue-resolution route is still collecting information or waiting for a user action."
@@ -55,143 +85,12 @@
         "supportNeedResolution": {
           "supportNeed": {
             "value": "issue_resolution",
-            "reason": "The user reports that messages disappear in Twake chat, which indicates a problem that needs investigation or resolution."
+            "reason": "The user reports a malfunction where messages disappear when clicking notifications in Twake Chat, describing unexpected behavior and a mismatch between observed and expected results."
           }
         },
         "basicQualification": {
           "isBuilt": true,
-          "isCompleted": false,
-          "caseDetailsToAskBecauseOfBasicQualification": [
-            {
-              "key": "product_or_service",
-              "reason": "catalogue rules",
-              "status": "obtained"
-            },
-            {
-              "key": "feature_or_page",
-              "reason": "catalogue rules",
-              "status": "asking"
-            },
-            {
-              "key": "trigger_action",
-              "reason": "catalogue rules",
-              "status": "asking"
-            },
-            {
-              "key": "failure_step",
-              "reason": "catalogue rules",
-              "status": "asking"
-            },
-            {
-              "key": "observed_result",
-              "reason": "catalogue rules",
-              "status": "obtained"
-            },
-            {
-              "key": "expected_result",
-              "reason": "catalogue rules",
-              "status": "asking"
-            },
-            {
-              "key": "error_message",
-              "reason": "catalogue rules",
-              "status": "asking"
-            }
-          ]
-        },
-        "retrieveKnowledge": {
-          "isCompleted": false,
-          "rankedSearch": {
-            "isSearched": false,
-            "rawRagKnowledge": null
-          },
-          "filter": {
-            "isFiltered": false,
-            "filteredRagKnowledge": null,
-            "filterExplanation": null
-          },
-          "selection": {
-            "isClearSelected": false,
-            "clarificationQuestion": null,
-            "selectedfilteredRagKnowledge": null,
-            "selectionExplanation": null
-          },
-          "segmentationKnowledge": {
-            "isSegmented": false,
-            "userFacingInformation": null,
-            "supportFacingInformation": null
-          }
-        },
-        "deepQualification": {
-          "isBuilt": false,
-          "isCompleted": false,
-          "caseDetailsToAskBecauseOfDeepQualification": []
-        },
-        "solution": {
-          "isActionForUserBuilt": false,
-          "isActionForSupportBuilt": false,
-          "isCompleted": false,
-          "attemptedActionsToAskBecauseOfSolutionFound": [],
-          "actionToTakeForSupport": null
-        },
-        "idleMode": {
-          "isActivated": false
-        }
-      }
-    },
-    {
-      "status": "in_progress",
-      "sourceAnalyzeSupportText": {
-        "caseDetailsExtracted": [
-          {
-            "key": "product_or_service",
-            "value": "Twake drive",
-            "evidence": "Sur le drive",
-            "status": "obtained"
-          },
-          {
-            "key": "feature_or_page",
-            "value": "file renaming",
-            "evidence": "renommer un fichier",
-            "status": "obtained"
-          },
-          {
-            "key": "observed_result",
-            "value": "cannot rename a file",
-            "evidence": "je n’arrive pas à renommer un fichier",
-            "status": "obtained"
-          }
-        ],
-        "attemptedActionsExtracted": []
-      },
-      "sourceProposeTopicUpdates": {
-        "topicId": 2,
-        "title": "Twake Drive File Renaming Issue",
-        "summaryTopic": "User cannot rename files in Twake drive after creation.",
-        "supportDomain": {
-          "value": "product_behavior",
-          "reason": "The routed facts concern a malfunction in Twake drive's file renaming feature."
-        }
-      },
-      "sourceTopicManager": {
-        "currentStep": "basic_qualification",
-        "resolutionStatus": {
-          "value": "in_progress",
-          "reason": "The issue-resolution route is still collecting information or waiting for a user action."
-        },
-        "handover": {
-          "isRequested": false,
-          "reason": null
-        },
-        "supportNeedResolution": {
-          "supportNeed": {
-            "value": "issue_resolution",
-            "reason": "The user reports a malfunction in Twake drive's file renaming feature, stating they cannot rename a file after creation."
-          }
-        },
-        "basicQualification": {
-          "isBuilt": true,
-          "isCompleted": false,
+          "isCompleted": true,
           "caseDetailsToAskBecauseOfBasicQualification": [
             {
               "key": "product_or_service",
@@ -206,12 +105,12 @@
             {
               "key": "trigger_action",
               "reason": "catalogue rules",
-              "status": "asking"
+              "status": "obtained"
             },
             {
               "key": "failure_step",
               "reason": "catalogue rules",
-              "status": "asking"
+              "status": "obtained"
             },
             {
               "key": "observed_result",
@@ -221,48 +120,382 @@
             {
               "key": "expected_result",
               "reason": "catalogue rules",
-              "status": "asking"
+              "status": "obtained"
             },
             {
               "key": "error_message",
+              "reason": "catalogue rules",
+              "status": "obtained"
+            }
+          ]
+        },
+        "retrieveKnowledge": {
+          "isCompleted": true,
+          "rankedSearch": {
+            "isSearched": true,
+            "rawRagKnowledge": {
+              "query": "Messages disappear when clicking on notifications in Twake Chat, leaving the channel empty.",
+              "content": "```json\n{\n  \"candidates\": [\n    {\n      \"rawKnowledge\": \"This GitHub issue details a bug in the Tmail Flutter app where deleted emails persist on the mobile app until a manual refresh, while the web app behaves correctly; the issue was resolved by updating the sync mechanism to handle deleted messages via `/changes` and push notifications.\\n\\n## Metadata\\nRepository: linagora/tmail-flutter\\nIssue number: 2453\\nState: closed\\nAuthor: guimard\\nCreated at: 2024-01-14T12:22:08Z\\nUpdated at: 2025-05-07T20:08:48Z\\nClosed at: 2024-04-03T07:51:26Z\\nLabels: bug\\nAssignees:\\nURL: https://github.com/linagora/tmail-flutter/issues/2453\\n\\n## Issue body\\n\\n### Description\\n\\nWhen deleting mails with another mail client, Tmail app still shoes this deleted messages\\n\\n### Expected result\\n\\nSynchronization should detect that mail were modified/deleted. The app should never show a deleted email when it is online and able to detect this deletion\\n\\n### Current behavior\\n\\nMessage deleted are still present in mobile app (not web app)\\n\\n### Context\\n\\nThunderbird on desktop, Tmail on Android\\n\\n## Comments\\n\\n### Comment by chibenwa at 2024-01-15T07:30:48Z\\n\\nThanks for the remark Xavier.\\n\\nOn a technical standpoint `Email/changes` returns `destroyed` mail ids. Those can be dropped straight away from the cache. We can detect the need to call `/changes` by relying on push notifications.\\n\\n### Comment by QuangHoang1210 at 2024-01-15T08:45:27Z\\n\\nHi @guimard and @chibenwa cc @hoangdat\\n\\nI have reproduce this case.\\n\\nStep:\\n1, I removed one email from Samsung email\\n2, I have check again that email in Twake Mail (Samsung app, IOS app)\\n\\nActual: The email is removed\\n--> So it catch our expectation\\n\\n**Noted:**\\n- But we should do one refresh action (scroll to reload, refresh) then the email will be disappeared\\n- I have tried to removed the 1st email, 23th email, 52th emails -> Same\\n\\n**Video**\\n\\nhttps://github.com/linagora/tmail-flutter/assets/124866146/19690622-499c-4985-a3e7-f745bb19e20c\",\n      \"whyPotentiallyRelevant\": \"This issue involves synchronization problems in the Twake Mail app, where deleted messages persist until a manual refresh. Although it pertains to email messages rather than chat messages, the underlying synchronization mechanism might be relevant to the chat notification issue.\",\n      \"sourceHint\": \"github_linagora_tmail_flutter_issue_2453.md\"\n    }\n  ]\n}\n```",
+              "candidates": [
+                {
+                  "rawKnowledgeId": "raw_knowledge_1",
+                  "rawKnowledge": "This GitHub issue details a bug in the Tmail Flutter app where deleted emails persist on the mobile app until a manual refresh, while the web app behaves correctly; the issue was resolved by updating the sync mechanism to handle deleted messages via `/changes` and push notifications.\n\n## Metadata\nRepository: linagora/tmail-flutter\nIssue number: 2453\nState: closed\nAuthor: guimard\nCreated at: 2024-01-14T12:22:08Z\nUpdated at: 2025-05-07T20:08:48Z\nClosed at: 2024-04-03T07:51:26Z\nLabels: bug\nAssignees:\nURL: https://github.com/linagora/tmail-flutter/issues/2453\n\n## Issue body\n\n### Description\n\nWhen deleting mails with another mail client, Tmail app still shoes this deleted messages\n\n### Expected result\n\nSynchronization should detect that mail were modified/deleted. The app should never show a deleted email when it is online and able to detect this deletion\n\n### Current behavior\n\nMessage deleted are still present in mobile app (not web app)\n\n### Context\n\nThunderbird on desktop, Tmail on Android\n\n## Comments\n\n### Comment by chibenwa at 2024-01-15T07:30:48Z\n\nThanks for the remark Xavier.\n\nOn a technical standpoint `Email/changes` returns `destroyed` mail ids. Those can be dropped straight away from the cache. We can detect the need to call `/changes` by relying on push notifications.\n\n### Comment by QuangHoang1210 at 2024-01-15T08:45:27Z\n\nHi @guimard and @chibenwa cc @hoangdat\n\nI have reproduce this case.\n\nStep:\n1, I removed one email from Samsung email\n2, I have check again that email in Twake Mail (Samsung app, IOS app)\n\nActual: The email is removed\n--> So it catch our expectation\n\n**Noted:**\n- But we should do one refresh action (scroll to reload, refresh) then the email will be disappeared\n- I have tried to removed the 1st email, 23th email, 52th emails -> Same\n\n**Video**\n\nhttps://github.com/linagora/tmail-flutter/assets/124866146/19690622-499c-4985-a3e7-f745bb19e20c",
+                  "whyPotentiallyRelevant": "This issue involves synchronization problems in the Twake Mail app, where deleted messages persist until a manual refresh. Although it pertains to email messages rather than chat messages, the underlying synchronization mechanism might be relevant to the chat notification issue.",
+                  "sourceHint": "github_linagora_tmail_flutter_issue_2453.md"
+                }
+              ],
+              "sources": [
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916526",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916526",
+                  "created_at": "2026-07-03T12:13:10.377Z",
+                  "indexed_at": "2026-07-03T12:13:22.353585+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802353574000,
+                  "next_section_id": 1783080802353574000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat/features",
+                  "title": "Features",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080791026_0cf9_docs_twake_twake_chat_features.md",
+                  "filename": "docs_twake_twake_chat_features.md",
+                  "original_filename": "docs_twake_twake_chat_features.md",
+                  "file_size": "3.07 KB",
+                  "file_id": "docs_twake_twake_chat_features",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916526"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916528",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916528",
+                  "created_at": "2026-07-03T12:13:10.28Z",
+                  "indexed_at": "2026-07-03T12:13:22.386826+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802386819000,
+                  "next_section_id": 1783080802386819000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat",
+                  "title": "Twake Chat",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080790941_0a01_docs_twake_twake_chat.md",
+                  "filename": "docs_twake_twake_chat.md",
+                  "original_filename": "docs_twake_twake_chat.md",
+                  "file_size": "3.48 KB",
+                  "file_id": "docs_twake_twake_chat",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916528"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916527",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916527",
+                  "created_at": "2026-07-03T12:13:10.377Z",
+                  "indexed_at": "2026-07-03T12:13:22.353585+00:00",
+                  "prev_section_id": 1783080802353574000,
+                  "section_id": 1783080802353574000,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat/features",
+                  "title": "Features",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080791026_0cf9_docs_twake_twake_chat_features.md",
+                  "filename": "docs_twake_twake_chat_features.md",
+                  "original_filename": "docs_twake_twake_chat_features.md",
+                  "file_size": "3.07 KB",
+                  "file_id": "docs_twake_twake_chat_features",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916527"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916541",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916541",
+                  "created_at": "2026-07-03T12:13:09.932Z",
+                  "indexed_at": "2026-07-03T12:13:24.206253+00:00",
+                  "prev_section_id": 1783080804206241800,
+                  "section_id": 1783080804206241800,
+                  "next_section_id": 1783080804206241800,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/user-lifecycle",
+                  "title": "User lifecycle",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790587_3808_docs_twake_b2b_user_lifecycle.md",
+                  "filename": "docs_twake_b2b_user_lifecycle.md",
+                  "original_filename": "docs_twake_b2b_user_lifecycle.md",
+                  "file_size": "8.42 KB",
+                  "file_id": "docs_twake_b2b_user_lifecycle",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916541"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916530",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916530",
+                  "created_at": "2026-07-03T12:13:10.457Z",
+                  "indexed_at": "2026-07-03T12:13:22.471625+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080802471615000,
+                  "next_section_id": 1783080802471615000,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat/security",
+                  "title": "Security",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080791107_d92e_docs_twake_twake_chat_security.md",
+                  "filename": "docs_twake_twake_chat_security.md",
+                  "original_filename": "docs_twake_twake_chat_security.md",
+                  "file_size": "2.35 KB",
+                  "file_id": "docs_twake_twake_chat_security",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916530"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916190",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916190",
+                  "created_at": "2023-03-06T05:54:13Z",
+                  "indexed_at": "2026-07-02T15:13:54.548180+00:00",
+                  "prev_section_id": 1783005234548141000,
+                  "section_id": 1783005234548141000,
+                  "next_section_id": 1783005234548141000,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005157871_153b_github_linagora_tmail_flutter_issue_1533.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 1533,
+                  "issue_state": "closed",
+                  "issue_title": "[EmailSearching] Logic of searching function is not correctly",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/1533",
+                  "labels": [
+                    "bug",
+                    "back-end implementing"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2023-03-15T06:53:29Z",
+                  "closed_at": "2023-03-15T06:53:28Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:1533",
+                  "filename": "github_linagora_tmail_flutter_issue_1533.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_1533.md",
+                  "file_size": "41.29 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_1533",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916190"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916529",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916529",
+                  "created_at": "2026-07-03T12:13:10.28Z",
+                  "indexed_at": "2026-07-03T12:13:22.386826+00:00",
+                  "prev_section_id": 1783080802386819000,
+                  "section_id": 1783080802386819000,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat",
+                  "title": "Twake Chat",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080790941_0a01_docs_twake_twake_chat.md",
+                  "filename": "docs_twake_twake_chat.md",
+                  "original_filename": "docs_twake_twake_chat.md",
+                  "file_size": "3.48 KB",
+                  "file_id": "docs_twake_twake_chat",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916529"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916531",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916531",
+                  "created_at": "2026-07-03T12:13:10.457Z",
+                  "indexed_at": "2026-07-03T12:13:22.471625+00:00",
+                  "prev_section_id": 1783080802471615000,
+                  "section_id": 1783080802471615000,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat/security",
+                  "title": "Security",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080791107_d92e_docs_twake_twake_chat_security.md",
+                  "filename": "docs_twake_twake_chat_security.md",
+                  "original_filename": "docs_twake_twake_chat_security.md",
+                  "file_size": "2.35 KB",
+                  "file_id": "docs_twake_twake_chat_security",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916531"
+                },
+                {
+                  "source_type": "document",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916115",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916115",
+                  "created_at": "2024-01-14T12:22:08Z",
+                  "indexed_at": "2026-07-02T15:13:45.464986+00:00",
+                  "prev_section_id": 1783005225464973600,
+                  "section_id": 1783005225464973600,
+                  "next_section_id": 1783005225464973600,
+                  "mimetype": "text/markdown",
+                  "source": "/app/data/1783005160278_5b8b_github_linagora_tmail_flutter_issue_2453.md",
+                  "repository": "linagora/tmail-flutter",
+                  "issue_number": 2453,
+                  "issue_state": "closed",
+                  "issue_title": "Trouble with cache on mobile app",
+                  "github_url": "https://github.com/linagora/tmail-flutter/issues/2453",
+                  "labels": [
+                    "bug"
+                  ],
+                  "assignees": [],
+                  "updated_at": "2025-05-07T20:08:48Z",
+                  "closed_at": "2024-04-03T07:51:26Z",
+                  "relationship_id": "github:linagora/tmail-flutter:issue:2453",
+                  "filename": "github_linagora_tmail_flutter_issue_2453.md",
+                  "original_filename": "github_linagora_tmail-flutter_issue_2453.md",
+                  "file_size": "5.81 KB",
+                  "file_id": "github_linagora_tmail-flutter_issue_2453",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916115"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916573",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916573",
+                  "created_at": "2026-07-03T12:13:11.396Z",
+                  "indexed_at": "2026-07-03T12:13:25.761449+00:00",
+                  "prev_section_id": 1783080805761436700,
+                  "section_id": 1783080805761436700,
+                  "next_section_id": 1783080805761436700,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/adrs/adr-028",
+                  "title": "ADR 028: Antivirus in Twake Drive",
+                  "section": "adrs",
+                  "source": "/app/data/1783080792056_4c12_docs_twake_adrs_adr_028.md",
+                  "filename": "docs_twake_adrs_adr_028.md",
+                  "original_filename": "docs_twake_adrs_adr_028.md",
+                  "file_size": "3.71 KB",
+                  "file_id": "docs_twake_adrs_adr_028",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916573"
+                }
+              ],
+              "metadata": {
+                "retriever": "openrag"
+              }
+            }
+          },
+          "filter": {
+            "isFiltered": true,
+            "keptRawKnowledgeIds": [
+              "raw_knowledge_1"
+            ],
+            "filterExplanation": "The candidate involves synchronization problems in the Twake Mail app, which might be relevant to the chat notification issue due to potential similarities in the underlying synchronization mechanism."
+          },
+          "selection": {
+            "isClearSelected": true,
+            "clarificationQuestion": null,
+            "selectedRawKnowledgeIds": [],
+            "selectionExplanation": "No candidate is sufficiently applicable to the current support topic."
+          },
+          "segmentationKnowledge": {
+            "isSegmented": true,
+            "segmentedKnowledge": []
+          }
+        },
+        "deepQualification": {
+          "isBuilt": true,
+          "isCompleted": false,
+          "caseDetailsToAskBecauseOfDeepQualification": [
+            {
+              "key": "platform",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "operating_system",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "browser",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "app_version",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "device",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "affected_scope",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "affected_users",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "issue_started_at",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "frequency",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "pre_problem_state",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "visual_evidence",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "reference_id",
+              "reason": "catalogue rules",
+              "status": "asking"
+            },
+            {
+              "key": "provided_url",
               "reason": "catalogue rules",
               "status": "asking"
             }
           ]
         },
-        "retrieveKnowledge": {
-          "isCompleted": false,
-          "rankedSearch": {
-            "isSearched": false,
-            "rawRagKnowledge": null
-          },
-          "filter": {
-            "isFiltered": false,
-            "filteredRagKnowledge": null,
-            "filterExplanation": null
-          },
-          "selection": {
-            "isClearSelected": false,
-            "clarificationQuestion": null,
-            "selectedfilteredRagKnowledge": null,
-            "selectionExplanation": null
-          },
-          "segmentationKnowledge": {
-            "isSegmented": false,
-            "userFacingInformation": null,
-            "supportFacingInformation": null
-          }
-        },
-        "deepQualification": {
-          "isBuilt": false,
-          "isCompleted": false,
-          "caseDetailsToAskBecauseOfDeepQualification": []
-        },
         "solution": {
-          "isActionForUserBuilt": false,
-          "isActionForSupportBuilt": false,
-          "isCompleted": false,
+          "isActionForUserBuilt": true,
+          "isActionForSupportBuilt": true,
+          "isCaseDetailsForSolutionBuilt": true,
+          "isCompleted": true,
           "attemptedActionsToAskBecauseOfSolutionFound": [],
+          "caseDetailsToAskBecauseOfSolutionFound": [],
           "actionToTakeForSupport": null
         },
         "idleMode": {

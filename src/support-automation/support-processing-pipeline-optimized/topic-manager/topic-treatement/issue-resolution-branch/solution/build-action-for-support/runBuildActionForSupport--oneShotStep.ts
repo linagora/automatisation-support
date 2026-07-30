@@ -6,8 +6,7 @@ import {validateBuildActionForSupportOutput} from "./validateBuildActionForSuppo
 
 export type RunBuildActionForSupportInput = {
   summaryTopic: string | null;
-  supportFacingInformation: string | null;
-  currentUserMessage: {content: string; channel?: string};
+  supportFacingKnowledgeText: string | null;
 };
 
 export type RunBuildActionForSupportOutput = {
@@ -17,10 +16,10 @@ export type RunBuildActionForSupportOutput = {
 async function runBuildActionForSupport(
   input: RunBuildActionForSupportInput
 ): Promise<RunBuildActionForSupportOutput> {
-  const fallback = buildFallbackActionForSupport(input.supportFacingInformation);
+  const fallback = buildFallbackActionForSupport();
 
-  if (!hasUsableText(input.supportFacingInformation)) {
-    return {actionToTakeForSupport: null};
+  if (!hasUsableText(input.supportFacingKnowledgeText)) {
+    return fallback;
   }
 
   const {messages} = buildActionForSupportPrompt(input);
@@ -47,13 +46,9 @@ async function runBuildActionForSupport(
   }
 }
 
-function buildFallbackActionForSupport(supportFacingInformation: string | null): RunBuildActionForSupportOutput {
-  if (!hasUsableText(supportFacingInformation)) {
-    return {actionToTakeForSupport: null};
-  }
-
+function buildFallbackActionForSupport(): RunBuildActionForSupportOutput {
   return {
-    actionToTakeForSupport: supportFacingInformation
+    actionToTakeForSupport: null
   };
 }
 

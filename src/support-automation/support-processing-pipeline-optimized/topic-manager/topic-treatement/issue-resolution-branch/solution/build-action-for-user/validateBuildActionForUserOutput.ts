@@ -16,8 +16,9 @@ function validateBuildActionForUserOutput(parsedResponse: unknown): BuildActionF
 
   for (const rawAction of parsedResponse.attemptedActionsToAskBecauseOfSolutionFound) {
     const action = validateAttemptedActionToAsk(rawAction);
-    if (!action) return null;
+    if (!action) continue;
     attemptedActionsToAskBecauseOfSolutionFound.push(action);
+    if (attemptedActionsToAskBecauseOfSolutionFound.length >= 3) break;
   }
 
   return {attemptedActionsToAskBecauseOfSolutionFound};
@@ -28,16 +29,25 @@ function validateAttemptedActionToAsk(value: unknown): AttemptedActionToAsk | nu
   if (!hasOnlyKeys(value, ["action", "reason", "status"])) return null;
   if (value.status !== "asking") return null;
 
+  const action = validateRequiredString(value.action);
+  if (action === null) return null;
+
   return {
-    action: validateNullableString(value.action),
+    action,
     reason: validateNullableString(value.reason),
     status: "asking"
   };
 }
 
+function validateRequiredString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmedValue = value.trim();
+  return trimmedValue === "" ? null : trimmedValue;
+}
+
 function validateNullableString(value: unknown): string | null {
   if (value === null) return null;
-  if (typeof value === "string") return value.trim() === "" ? null : value;
+  if (typeof value === "string") return value.trim() === "" ? null : value.trim();
   return null;
 }
 

@@ -133,7 +133,7 @@ const caseDetailFieldCatalog = {
   },
 
   platform: {
-    extractionGuidance: "Extract this when the user mentions web, browser, mobile, Android, iPhone, iOS, desktop app, Windows app, macOS app, or a similar access context.",
+    extractionGuidance: "Extract this when the user mentions web, browser, mobile, mobile app, phone, smartphone, téléphone, Android, iPhone, iOS, desktop app, Windows app, macOS app, or a similar access context. For a generic phone/téléphone mention, prefer platform = mobile.",
     askGuidance: "How do you access the service: web browser, mobile app, or desktop app?"
   },
   operating_system: {
@@ -149,7 +149,7 @@ const caseDetailFieldCatalog = {
     askGuidance: "Which app, client, plugin, or connector version are you using?"
   },
   device: {
-    extractionGuidance: "Extract when the user mentions a device model or category such as iPhone 13, Samsung Galaxy, laptop, tablet, or workstation.",
+    extractionGuidance: "Extract when the user mentions a device model or hardware category such as iPhone 13, Samsung Galaxy, phone, smartphone, téléphone, laptop, tablet, or workstation.",
     askGuidance: "Which device are you using? Include the model if available."
   },
   notification_permission_status: {
@@ -166,19 +166,19 @@ const caseDetailFieldCatalog = {
     askGuidance: "What was working before the issue started?"
   },
   trigger_action: {
-    extractionGuidance: "Extract the normal product action or event that reveals the issue, not troubleshooting attempts.",
-    askGuidance: "What action are you trying to perform when the issue appears?"
+    extractionGuidance: "Extract the normal product action or event that reveals the issue, not a troubleshooting attempt. Examples: clicking a notification, opening a channel, sending a message, saving a file, starting login.",
+    askGuidance: "What normal action or event makes the issue appear?"
   },
   failure_step: {
-    extractionGuidance: "Extract when the user identifies where in the flow the problem appears, such as after clicking, during login, at upload, or on a specific step.",
-    askGuidance: "At which exact step does the issue appear or block you?"
+    extractionGuidance: "Extract the moment, screen, or step in the user flow where the mismatch or failure becomes visible, such as after clicking, during login, after redirect, when the channel opens, or at upload. Do not use failure_step for the incorrect result itself.",
+    askGuidance: "At which step, screen, or moment does the issue become visible or block you?"
   },
   error_message: {
     extractionGuidance: "Extract only when the user explicitly provides the exact message, error code, or a very close paraphrase.",
     askGuidance: "What exact error message or code is shown on screen?"
   },
   observed_result: {
-    extractionGuidance: "Extract the concrete behavior the user observes, including failures, unexpected results, missing results, or current state.",
+    extractionGuidance: "Extract the concrete incorrect result, missing state, failure, unexpected behavior, or current state observed by the user. Do not use observed_result for the flow step itself.",
     askGuidance: "What happens exactly when you try the action?"
   },
   expected_result: {

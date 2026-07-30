@@ -1,6 +1,23 @@
 const outputJsonShapeForPrompt = {
-  userFacingInformation: "string or null",
-  supportFacingInformation: "string or null"
+  segmentedKnowledge: [
+    {
+      rawKnowledgeId: "raw_knowledge_1",
+      userFacingKnowledge: [
+        {
+          text: "A faithful user-facing excerpt or detail.",
+          sourceHint: "github_issue_123.md",
+          sourceSpan: "lines 10-18"
+        }
+      ],
+      supportFacingKnowledge: [
+        {
+          text: "A faithful support-facing excerpt or detail.",
+          sourceHint: "github_issue_123.md",
+          sourceSpan: "lines 19-28"
+        }
+      ]
+    }
+  ]
 };
 
 const segmentationKnowledgeResponseFormat = {
@@ -11,10 +28,45 @@ const segmentationKnowledgeResponseFormat = {
     schema: {
       type: "object",
       additionalProperties: false,
-      required: ["userFacingInformation", "supportFacingInformation"],
+      required: ["segmentedKnowledge"],
       properties: {
-        userFacingInformation: {type: ["string", "null"]},
-        supportFacingInformation: {type: ["string", "null"]}
+        segmentedKnowledge: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["rawKnowledgeId", "userFacingKnowledge", "supportFacingKnowledge"],
+            properties: {
+              rawKnowledgeId: {type: "string"},
+              userFacingKnowledge: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["text", "sourceHint", "sourceSpan"],
+                  properties: {
+                    text: {type: "string"},
+                    sourceHint: {type: ["string", "null"]},
+                    sourceSpan: {type: ["string", "null"]}
+                  }
+                }
+              },
+              supportFacingKnowledge: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["text", "sourceHint", "sourceSpan"],
+                  properties: {
+                    text: {type: "string"},
+                    sourceHint: {type: ["string", "null"]},
+                    sourceSpan: {type: ["string", "null"]}
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

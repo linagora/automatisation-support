@@ -9,6 +9,7 @@ import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/li
 type DeepQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["deepQualification"];
 type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
 type RetrieveKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"];
+type SegmentationKnowledge = RetrieveKnowledge["segmentationKnowledge"];
 
 export type RunDeepQualificationInput = {
   supportDomain: string | null;
@@ -57,11 +58,55 @@ async function runDeepQualification(input: RunDeepQualificationInput): Promise<R
   return {
     say: buildDeepQualificationAsk({
       deepQualification,
-      userFacingInformation: input.retrieveKnowledge?.segmentationKnowledge.userFacingInformation ?? null,
+      userFacingKnowledgeText: buildUserFacingKnowledgeText(input.retrieveKnowledge?.segmentationKnowledge),
       supportDomain: input.supportDomain
     }),
     deepQualification
   };
+}
+
+function buildUserFacingKnowledgeText(
+  segmentationKnowledge: SegmentationKnowledge | null | undefined
+): string | null {
+  const pieces = segmentationKnowledge?.segmentedKnowledge.flatMap((source) => {
+    return source.userFacingKnowledge.map((piece) => {
+      return formatKnowledgePiece(
+        source.rawKnowledgeId,
+        piece.text,
+        piece.sourceHint,
+        piece.sourceSpan
+      );
+    });
+  }) ?? [];
+
+  const cleaned = pieces
+    .map((piece) => piece.trim())
+    .filter((piece) => piece !== "");
+
+  if (cleaned.length === 0) {
+    return null;
+  }
+
+  return cleaned.join("\n\n");
+}
+
+function formatKnowledgePiece(
+  rawKnowledgeId: string,
+  text: string,
+  sourceHint: string | null,
+  sourceSpan: string | null
+): string {
+  const sourceParts = [
+    rawKnowledgeId,
+    sourceHint,
+    sourceSpan
+  ].filter((value): value is string => {
+    return typeof value === "string" && value.trim() !== "";
+  });
+
+  return sourceParts.length > 0
+    ? `[${sourceParts.join(" | ")}] ${text}`
+    : text;
 }
 
 export {runDeepQualification};

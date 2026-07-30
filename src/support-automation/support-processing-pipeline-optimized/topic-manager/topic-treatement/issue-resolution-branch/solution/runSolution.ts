@@ -1,5 +1,6 @@
 import {runBuildActionForUser} from "./build-action-for-user/runBuildActionForUser--oneShotStep";
 import {runBuildActionForSupport} from "./build-action-for-support/runBuildActionForSupport--oneShotStep";
+import {runBuildCaseDetailsForSolution} from "./build-case-details-for-solution/runBuildCaseDetailsForSolution--oneShotStep";
 import {isSolutionCompleted} from "./isSolutionCompleted--blockingStep";
 import {planIssueSolutionAsk} from "./asking-planner/planIssueSolutionAsk";
 
@@ -7,12 +8,17 @@ import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/li
 
 type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
 type RetrieveKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"];
+type SourceTopicManager = LiveMemoryTopicOptimized["sourceTopicManager"];
+type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
 type AttemptedActionExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["attemptedActionsExtracted"][number];
+type SegmentationKnowledge = RetrieveKnowledge["segmentationKnowledge"];
 
 export type RunSolutionInput = {
   previousTopic: LiveMemoryTopicOptimized | null;
   retrieveKnowledge: RetrieveKnowledge | null;
   summaryTopic: string | null;
+  sourceTopicManager: SourceTopicManager;
+  currentCaseDetailsExtracted: CaseDetailExtracted[];
   currentAttemptedActionsExtracted: AttemptedActionExtracted[];
   currentUserMessage: {content: string; channel?: string};
   previousConversationTurn: {
@@ -30,14 +36,29 @@ async function runSolution(input: RunSolutionInput): Promise<RunSolutionOutput> 
   let solution = input.previousTopic?.sourceTopicManager.solution ?? buildEmptySolution();
 
   const retrieveKnowledge = input.retrieveKnowledge ?? input.previousTopic?.sourceTopicManager.retrieveKnowledge ?? null;
-  const userFacingInformation = retrieveKnowledge?.segmentationKnowledge.userFacingInformation ?? null;
-  const supportFacingInformation = retrieveKnowledge?.segmentationKnowledge.supportFacingInformation ?? null;
+  const userFacingKnowledgeText = buildUserFacingKnowledgeText(retrieveKnowledge?.segmentationKnowledge);
+  const supportFacingKnowledgeText = buildSupportFacingKnowledgeText(retrieveKnowledge?.segmentationKnowledge);
+
+  if (userFacingKnowledgeText === null && supportFacingKnowledgeText === null) {
+    return {
+      say: null,
+      solution: {
+        ...solution,
+        isActionForUserBuilt: true,
+        isActionForSupportBuilt: true,
+        isCaseDetailsForSolutionBuilt: true,
+        isCompleted: true,
+        attemptedActionsToAskBecauseOfSolutionFound: [],
+        caseDetailsToAskBecauseOfSolutionFound: [],
+        actionToTakeForSupport: null
+      }
+    };
+  }
 
   if (!solution.isActionForUserBuilt) {
     const actionForUser = await runBuildActionForUser({
       summaryTopic: input.summaryTopic,
-      userFacingInformation,
-      currentUserMessage: input.currentUserMessage
+      userFacingKnowledgeText
     });
 
     solution = {
@@ -50,8 +71,7 @@ async function runSolution(input: RunSolutionInput): Promise<RunSolutionOutput> 
   if (!solution.isActionForSupportBuilt) {
     const actionForSupport = await runBuildActionForSupport({
       summaryTopic: input.summaryTopic,
-      supportFacingInformation,
-      currentUserMessage: input.currentUserMessage
+      supportFacingKnowledgeText
     });
 
     solution = {
@@ -61,6 +81,31 @@ async function runSolution(input: RunSolutionInput): Promise<RunSolutionOutput> 
     };
   }
 
+  if (!solution.isCaseDetailsForSolutionBuilt) {
+    const knownCaseDetailsExtracted = buildKnownCaseDetailsExtracted(input);
+    const caseDetailsForSolution = await runBuildCaseDetailsForSolution({
+      summaryTopic: input.summaryTopic,
+      userFacingKnowledgeText,
+      supportFacingKnowledgeText,
+      knownCaseDetailsExtracted,
+      alreadyRequestedCaseDetailKeys: buildAlreadyRequestedCaseDetailKeys({
+        sourceTopicManager: input.sourceTopicManager,
+        solution
+      }),
+      alreadyRequestedCaseDetailQuestions: buildAlreadyRequestedCaseDetailQuestions({
+        sourceTopicManager: input.sourceTopicManager,
+        solution
+      })
+    });
+
+    solution = {
+      ...solution,
+      isCaseDetailsForSolutionBuilt: true,
+      caseDetailsToAskBecauseOfSolutionFound: caseDetailsForSolution.caseDetailsToAskBecauseOfSolutionFound
+    };
+  }
+
+  const knownCaseDetailsExtracted = buildKnownCaseDetailsExtracted(input);
   const knownAttemptedActionsExtracted = [
     ...(input.previousTopic?.sourceAnalyzeSupportText.attemptedActionsExtracted ?? []),
     ...input.currentAttemptedActionsExtracted
@@ -68,6 +113,7 @@ async function runSolution(input: RunSolutionInput): Promise<RunSolutionOutput> 
 
   const completedCheck = isSolutionCompleted({
     solution,
+    caseDetailsExtracted: knownCaseDetailsExtracted,
     attemptedActionsExtracted: knownAttemptedActionsExtracted
   });
 
@@ -78,7 +124,6 @@ async function runSolution(input: RunSolutionInput): Promise<RunSolutionOutput> 
   }
 
   const askPlan = await planIssueSolutionAsk({
-    currentUserMessage: input.currentUserMessage,
     previousConversationTurn: input.previousConversationTurn,
     solution
   });
@@ -93,10 +138,110 @@ function buildEmptySolution(): Solution {
   return {
     isActionForUserBuilt: false,
     isActionForSupportBuilt: false,
+    isCaseDetailsForSolutionBuilt: false,
     isCompleted: false,
     attemptedActionsToAskBecauseOfSolutionFound: [],
+    caseDetailsToAskBecauseOfSolutionFound: [],
     actionToTakeForSupport: null
   };
+}
+
+function buildKnownCaseDetailsExtracted(input: RunSolutionInput): CaseDetailExtracted[] {
+  return [
+    ...(input.previousTopic?.sourceAnalyzeSupportText.caseDetailsExtracted ?? []),
+    ...input.currentCaseDetailsExtracted
+  ];
+}
+
+function buildAlreadyRequestedCaseDetailKeys(input: {
+  sourceTopicManager: SourceTopicManager;
+  solution: Solution;
+}): string[] {
+  return [
+    ...input.sourceTopicManager.basicQualification.caseDetailsToAskBecauseOfBasicQualification,
+    ...input.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification,
+    ...input.sourceTopicManager.solution.caseDetailsToAskBecauseOfSolutionFound,
+    ...input.solution.caseDetailsToAskBecauseOfSolutionFound
+  ]
+    .map((caseDetail) => caseDetail.key)
+    .filter((key): key is string => typeof key === "string" && key.trim() !== "");
+}
+
+function buildAlreadyRequestedCaseDetailQuestions(input: {
+  sourceTopicManager: SourceTopicManager;
+  solution: Solution;
+}): string[] {
+  return [
+    ...input.sourceTopicManager.solution.caseDetailsToAskBecauseOfSolutionFound,
+    ...input.solution.caseDetailsToAskBecauseOfSolutionFound
+  ]
+    .map((caseDetail) => caseDetail.question)
+    .filter((question): question is string => typeof question === "string" && question.trim() !== "");
+}
+
+function buildUserFacingKnowledgeText(
+  segmentationKnowledge: SegmentationKnowledge | null | undefined
+): string | null {
+  const pieces = segmentationKnowledge?.segmentedKnowledge.flatMap((source) => {
+    return source.userFacingKnowledge.map((piece) => {
+      return formatKnowledgePiece(
+        source.rawKnowledgeId,
+        piece.text,
+        piece.sourceHint,
+        piece.sourceSpan
+      );
+    });
+  }) ?? [];
+
+  return joinKnowledgePieces(pieces);
+}
+
+function buildSupportFacingKnowledgeText(
+  segmentationKnowledge: SegmentationKnowledge | null | undefined
+): string | null {
+  const pieces = segmentationKnowledge?.segmentedKnowledge.flatMap((source) => {
+    return source.supportFacingKnowledge.map((piece) => {
+      return formatKnowledgePiece(
+        source.rawKnowledgeId,
+        piece.text,
+        piece.sourceHint,
+        piece.sourceSpan
+      );
+    });
+  }) ?? [];
+
+  return joinKnowledgePieces(pieces);
+}
+
+function formatKnowledgePiece(
+  rawKnowledgeId: string,
+  text: string,
+  sourceHint: string | null,
+  sourceSpan: string | null
+): string {
+  const sourceParts = [
+    rawKnowledgeId,
+    sourceHint,
+    sourceSpan
+  ].filter((value): value is string => {
+    return typeof value === "string" && value.trim() !== "";
+  });
+
+  return sourceParts.length > 0
+    ? `[${sourceParts.join(" | ")}] ${text}`
+    : text;
+}
+
+function joinKnowledgePieces(pieces: string[]): string | null {
+  const cleaned = pieces
+    .map((piece) => piece.trim())
+    .filter((piece) => piece !== "");
+
+  if (cleaned.length === 0) {
+    return null;
+  }
+
+  return cleaned.join("\n\n");
 }
 
 export {

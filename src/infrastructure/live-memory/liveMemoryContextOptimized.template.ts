@@ -112,21 +112,32 @@ export type LiveMemoryTopicOptimized = {
 
       filter: {
         isFiltered: boolean;
-        filteredRagKnowledge: unknown;
+        keptRawKnowledgeIds: string[];
         filterExplanation: string | null;
       };
 
       selection: {
         isClearSelected: boolean;
         clarificationQuestion: string | null;
-        selectedfilteredRagKnowledge: unknown;
+        selectedRawKnowledgeIds: string[];
         selectionExplanation: string | null;
       };
 
       segmentationKnowledge: {
         isSegmented: boolean;
-        userFacingInformation: string | null;
-        supportFacingInformation: string | null;
+        segmentedKnowledge: Array<{
+          rawKnowledgeId: string;
+          userFacingKnowledge: Array<{
+            text: string;
+            sourceHint: string | null;
+            sourceSpan: string | null;
+          }>;
+          supportFacingKnowledge: Array<{
+            text: string;
+            sourceHint: string | null;
+            sourceSpan: string | null;
+          }>;
+        }>;
       };
     };
 
@@ -144,12 +155,20 @@ export type LiveMemoryTopicOptimized = {
     solution: {
       isActionForUserBuilt: boolean;
       isActionForSupportBuilt: boolean;
+      isCaseDetailsForSolutionBuilt: boolean;
       isCompleted: boolean;
 
       attemptedActionsToAskBecauseOfSolutionFound: Array<{
         action: string | null;
         reason: string | null;
         status: "asking" | "succeeded" | "failed" | "user_declared_unavailable";
+      }>;
+
+      caseDetailsToAskBecauseOfSolutionFound: Array<{
+        key: string;
+        question: string;
+        reason: string | null;
+        status: "asking" | "obtained" | "user_declared_unavailable";
       }>;
 
       actionToTakeForSupport: string | null;

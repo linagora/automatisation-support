@@ -5,12 +5,26 @@ import {segmentationKnowledgeResponseFormat} from "./responseFormat";
 import {validateSegmentationKnowledgeOutput} from "./validateSegmentationKnowledgeOutput";
 
 import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {RawKnowledgeCandidate} from "../ranked-search/runRankedSearch--oneShotStep";
 
 type SegmentationKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"];
 
+export type SegmentedKnowledgePiece = {
+  text: string;
+  sourceHint: string | null;
+  sourceSpan: string | null;
+};
+
+export type SegmentedKnowledgeBySource = {
+  rawKnowledgeId: string;
+  userFacingKnowledge: SegmentedKnowledgePiece[];
+  supportFacingKnowledge: SegmentedKnowledgePiece[];
+};
+
 export type RunSegmentationKnowledgeInput = {
   summaryTopic: string;
-  selectedfilteredRagKnowledge: unknown;
+  rawKnowledgeCandidates: RawKnowledgeCandidate[];
+  selectedRawKnowledgeIds: string[];
 };
 
 async function runSegmentationKnowledge(
@@ -33,7 +47,10 @@ async function runSegmentationKnowledge(
     }
 
     const parsed = parseLLMResponse(result.content);
-    const validated = validateSegmentationKnowledgeOutput(parsed);
+    const validated = validateSegmentationKnowledgeOutput(
+      parsed,
+      input.selectedRawKnowledgeIds
+    );
 
     return validated ?? fallback;
   } catch {
@@ -44,8 +61,7 @@ async function runSegmentationKnowledge(
 function buildFallbackSegmentation(): SegmentationKnowledge {
   return {
     isSegmented: true,
-    userFacingInformation: null,
-    supportFacingInformation: null
+    segmentedKnowledge: []
   };
 }
 

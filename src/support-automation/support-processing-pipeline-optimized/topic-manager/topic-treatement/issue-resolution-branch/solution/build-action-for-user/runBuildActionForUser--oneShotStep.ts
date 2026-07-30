@@ -10,8 +10,7 @@ type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
 
 export type RunBuildActionForUserInput = {
   summaryTopic: string | null;
-  userFacingInformation: string | null;
-  currentUserMessage: {content: string; channel?: string};
+  userFacingKnowledgeText: string | null;
 };
 
 export type RunBuildActionForUserOutput = {
@@ -21,10 +20,10 @@ export type RunBuildActionForUserOutput = {
 async function runBuildActionForUser(
   input: RunBuildActionForUserInput
 ): Promise<RunBuildActionForUserOutput> {
-  const fallback = buildFallbackActionForUser(input.userFacingInformation);
+  const fallback = buildFallbackActionForUser();
 
-  if (!hasUsableText(input.userFacingInformation)) {
-    return {attemptedActionsToAskBecauseOfSolutionFound: []};
+  if (!hasUsableText(input.userFacingKnowledgeText)) {
+    return fallback;
   }
 
   const {messages} = buildActionForUserPrompt(input);
@@ -51,19 +50,9 @@ async function runBuildActionForUser(
   }
 }
 
-function buildFallbackActionForUser(userFacingInformation: string | null): RunBuildActionForUserOutput {
-  if (!hasUsableText(userFacingInformation)) {
-    return {attemptedActionsToAskBecauseOfSolutionFound: []};
-  }
-
+function buildFallbackActionForUser(): RunBuildActionForUserOutput {
   return {
-    attemptedActionsToAskBecauseOfSolutionFound: [
-      {
-        action: "Try the user-facing troubleshooting step described in the selected knowledge.",
-        reason: userFacingInformation,
-        status: "asking"
-      }
-    ]
+    attemptedActionsToAskBecauseOfSolutionFound: []
   };
 }
 

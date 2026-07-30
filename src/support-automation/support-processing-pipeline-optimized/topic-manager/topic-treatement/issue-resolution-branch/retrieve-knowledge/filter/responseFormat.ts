@@ -1,14 +1,5 @@
 const outputJsonShapeForPrompt = {
-  filteredRagKnowledge: [
-    {
-      sourceId: "string or null",
-      title: "string or null",
-      summary: "string or null",
-      usefulInformation: "string or null",
-      rawExcerpt: "string or null",
-      keepReason: "why this candidate may help"
-    }
-  ],
+  keptRawKnowledgeIds: ["raw_knowledge_1"],
   filterExplanation: "brief explanation of what was kept or removed"
 };
 
@@ -20,26 +11,14 @@ const retrieveKnowledgeFilterResponseFormat = {
     schema: {
       type: "object",
       additionalProperties: false,
-      required: ["filteredRagKnowledge", "filterExplanation"],
+      required: ["keptRawKnowledgeIds", "filterExplanation"],
       properties: {
-        filteredRagKnowledge: {
+        keptRawKnowledgeIds: {
           type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            required: ["sourceId", "title", "summary", "usefulInformation", "rawExcerpt", "keepReason"],
-            properties: {
-              sourceId: {type: ["string", "null"]},
-              title: {type: ["string", "null"]},
-              summary: {type: ["string", "null"]},
-              usefulInformation: {type: ["string", "null"]},
-              rawExcerpt: {type: ["string", "null"]},
-              keepReason: {type: "string"}
-            }
-          }
+          items: {type: "string"}
         },
         filterExplanation: {
-          type: "string"
+          type: ["string", "null"]
         }
       }
     }

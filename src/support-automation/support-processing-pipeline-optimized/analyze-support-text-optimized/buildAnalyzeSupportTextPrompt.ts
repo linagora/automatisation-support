@@ -15,6 +15,7 @@ type SupportTextPromptSegment = {
 type AnalyzeSupportTextPendingRequestedItems = {
   caseDetailsToAsk: Array<{
     key: string;
+    question?: string | null;
     reason: string | null;
     status: string;
   }>;
@@ -49,12 +50,9 @@ You extract atomic support facts from the latest user message.
 
 Return structured facts only.
 Do not answer the user.
-Do not create topics.
-Do not route facts to topics.
-Extract only atomic facts.
-Do not add subject hints.
-Do not diagnose or propose solutions.
-
+Do not create or route topics.
+Do not diagnose.
+Do not propose solutions.
 Return only JSON matching the requested schema.
 `.trim();
 
@@ -86,35 +84,40 @@ ${renderPromptItems(promptCatalogSelection.otherKeys)}
 
 # Task
 
-Extract support information as flat atomic facts.
+Extract support information from the latest user message as flat atomic facts.
 
 Return:
 - summaryMessage: one short neutral summary of the latest support message;
 - userLanguage: the detected language;
-- caseDetailsExtracted: concrete issue facts;
-- attemptedActionsExtracted: actions the user tried to solve, verify, or work around the issue;
+- caseDetailsExtracted: concrete support facts;
+- attemptedActionsExtracted: actions the user tried to fix, verify, diagnose, recover from, or work around the issue;
 - otherExtracted: useful support facts that do not fit elsewhere.
 
-Do not group facts by subject.
-Do not infer topic ownership.
-The next pipeline step will decide which facts belong to which topic.
+Do not group facts by topic.
+Do not decide which topic owns a fact.
+The next pipeline step will route facts to topics.
 
-# Atomic facts
+# Core extraction rules
+
+Extract all explicit support facts from the latest message.
 
 One extracted item must represent one fact.
-
 If the user gives two different values for the same field, output two separate facts.
+If one fact clearly applies to multiple subjects, output it once.
+
+The same sentence or sequence may support several different fields.
+Overlapping evidence is allowed when the fields are different.
+Do not skip a precise field just because another field was already extracted from the same words.
 
 Example:
-"it started last week for chat and two weeks ago for drive"
+"The issue started last week for chat and two weeks ago for drive."
 => two issue_started_at facts.
 
-If one fact clearly applies to multiple subjects, output it once.
-Do not duplicate shared facts here.
-
 Example:
-"for both issues, I use Firefox"
-=> one browser fact.
+"I click a notification, the app opens the channel, but the message is missing."
+=> trigger_action: "click a notification"
+=> failure_step: "after the app opens the channel"
+=> observed_result: "the message is missing"
 
 # Pending requested items
 
@@ -129,39 +132,37 @@ If the latest message gives the result of a pending attempted action:
 
 Still extract other relevant support facts from the latest message.
 
-# Case details
-
-Use caseDetailsExtracted for facts about:
-- product or service;
-- feature, page, object, or flow;
-- user action;
-- failure step;
-- observed result;
-- expected result;
-- error message;
-- environment;
-- scope;
-- timing;
-- identifiers;
-- evidence availability.
-
 If the user says a requested detail is unavailable, missing, unknown, impossible to provide, or impossible to test:
 - use status "user_declared_unavailable";
 - use value null.
 
 Never use status "obtained" with value null.
 
-expected_result may be inferred only when it is the direct obvious normal outcome of the failed action.
+# Case details
+
+Use caseDetailsExtracted for concrete facts about the product, feature, user flow, failure, environment, scope, timing, identifiers, impact, or evidence availability.
+
+For issue-resolution flow details:
+- trigger_action is the normal product action or event that reveals the issue;
+- failure_step is where or when the flow fails;
+- failure_step describes the moment, screen, or step where the mismatch appears, not the incorrect result itself;
+- observed_result is the concrete unexpected result or missing state;
+- observed_result describes the incorrect result or missing state, not the flow step;
+- expected_result is what the user expected, or the direct obvious normal outcome of the failed action;
+- error_message is the exact error/code, or an explicit absence such as "no error message".
+
+When the user describes action -> step -> unexpected result, extract each available field separately.
+Do not ignore trigger_action or failure_step just because observed_result was extracted.
 
 # Attempted actions
 
-Use attemptedActionsExtracted only for actions the user tried to fix, verify, diagnose, recover from, or work around the issue.
+Use attemptedActionsExtracted only for troubleshooting, verification, recovery, or workaround attempts.
 
 Normal product usage is not an attempted action.
+Normal product usage can be a trigger_action.
 
 Examples of normal product usage:
 - opening a chat;
-- renaming a file;
 - clicking save;
 - sending a message;
 - uploading a file.
@@ -170,35 +171,19 @@ Examples of attempted actions:
 - refreshing the page;
 - clearing cache;
 - trying another browser;
-- checking connection;
-- renaming with another name after being asked to test it.
+- checking the connection;
+- retrying with different settings after the issue happened.
 
-Do not set outcome to "success" if the user mention that he succeeded to do the action, but the issue is still present.
+Do not set outcome to "success" only because the user completed the attempted action.
+Use "success" only when the issue was solved or the attempted action achieved the requested diagnostic goal.
+
 # Evidence
 
-Each fact must include evidence from the current support segments.
+Each extracted fact must include evidence from the current support segments.
 Evidence should include enough local context when possible.
 
-Prefer:
-- "last week for chat"
-
-Over:
-- "last week"
-
-Prefer:
-- "for both issues, I use Firefox"
-
-Over:
-- "Firefox"
-
-Evidence does not need to be perfect, but it must be grounded in the current user message.
 Do not use recent_interaction_context as evidence.
-
-# Context
-
-Use recent_interaction_context only to understand short replies.
-
-Examples:
+Use recent_interaction_context only to understand short replies such as:
 - "yes";
 - "no";
 - "same";
@@ -213,7 +198,6 @@ Do not extract facts from recent_interaction_context itself.
 summaryMessage is global for the latest message.
 It is not a topic summary.
 It must not contain a diagnosis, solution, topic decision, or user-facing answer.
-
 Use null only if the message contains no meaningful support information.
 
 # Output JSON shape

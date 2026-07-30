@@ -1,16 +1,18 @@
 import {callLLM} from "../../../../../../../infrastructure/llm/llm-client";
 import {parseLLMResponse} from "../../../../../../../infrastructure/llm/parseLLMResponse";
-import {buildDeterministicRetrieveKnowledgeSelectionQuestion, buildRetrieveKnowledgeSelectionPrompt} from "./buildRetrieveKnowledgeSelectionPrompt";
+import {buildRetrieveKnowledgeSelectionPrompt} from "./buildRetrieveKnowledgeSelectionPrompt";
 import {retrieveKnowledgeSelectionResponseFormat} from "./responseFormat";
 import {validateRetrieveKnowledgeSelectionOutput} from "./validateRetrieveKnowledgeSelectionOutput";
 
 import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {RawKnowledgeCandidate} from "../ranked-search/runRankedSearch--oneShotStep";
 
 type RetrieveKnowledgeSelection = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["selection"];
 
 export type RunRetrieveKnowledgeSelectionInput = {
   summaryTopic: string;
-  filteredRagKnowledge: unknown;
+  rawKnowledgeCandidates: RawKnowledgeCandidate[];
+  keptRawKnowledgeIds: string[];
   previousSelection: RetrieveKnowledgeSelection;
   currentUserMessage: {content: string; channel?: string};
   previousConversationTurn: {
@@ -22,7 +24,7 @@ export type RunRetrieveKnowledgeSelectionInput = {
 async function runRetrieveKnowledgeSelection(
   input: RunRetrieveKnowledgeSelectionInput
 ): Promise<RetrieveKnowledgeSelection> {
-  const fallbackQuestion = buildDeterministicRetrieveKnowledgeSelectionQuestion(input);
+  const fallback = buildFallbackSelection(input);
   const {messages} = buildRetrieveKnowledgeSelectionPrompt(input);
 
   try {
@@ -35,27 +37,36 @@ async function runRetrieveKnowledgeSelection(
     });
 
     if (!result.success || !result.content) {
-      return buildUnclearSelection(fallbackQuestion, "Fallback selection: the selection step could not produce a validated output.");
+      return fallback;
     }
 
     const parsed = parseLLMResponse(result.content);
-    const validated = validateRetrieveKnowledgeSelectionOutput(parsed);
+    const validated = validateRetrieveKnowledgeSelectionOutput(
+      parsed,
+      input.keptRawKnowledgeIds
+    );
 
-    return validated ?? buildUnclearSelection(fallbackQuestion, "Fallback selection: invalid selection output.");
+    return validated ?? fallback;
   } catch {
-    return buildUnclearSelection(fallbackQuestion, "Fallback selection: LLM call failed.");
+    return fallback;
   }
 }
 
-function buildUnclearSelection(
-  clarificationQuestion: string,
-  selectionExplanation: string
-): RetrieveKnowledgeSelection {
+function buildFallbackSelection(input: RunRetrieveKnowledgeSelectionInput): RetrieveKnowledgeSelection {
+  if (input.keptRawKnowledgeIds.length === 0) {
+    return {
+      isClearSelected: false,
+      selectedRawKnowledgeIds: [],
+      clarificationQuestion: "Could you clarify which part of the issue you want help with?",
+      selectionExplanation: "Fallback selection: no filtered raw knowledge IDs were available."
+    };
+  }
+
   return {
-    isClearSelected: false,
-    clarificationQuestion,
-    selectedfilteredRagKnowledge: null,
-    selectionExplanation
+    isClearSelected: true,
+    selectedRawKnowledgeIds: input.keptRawKnowledgeIds,
+    clarificationQuestion: null,
+    selectionExplanation: "Fallback selection: kept all filtered raw knowledge IDs because the selection step could not produce a validated output."
   };
 }
 

@@ -1,14 +1,8 @@
 const outputJsonShapeForPrompt = {
   isClearSelected: true,
+  selectedRawKnowledgeIds: ["raw_knowledge_1"],
   clarificationQuestion: null,
-  selectedfilteredRagKnowledge: [
-    {
-      sourceId: "string or null",
-      title: "string or null",
-      usefulInformation: "string or null"
-    }
-  ],
-  selectionExplanation: "brief explanation of why the selected knowledge is clear or why clarification is needed"
+  selectionExplanation: "The selected candidates clearly match the user's issue."
 };
 
 const retrieveKnowledgeSelectionResponseFormat = {
@@ -19,30 +13,15 @@ const retrieveKnowledgeSelectionResponseFormat = {
     schema: {
       type: "object",
       additionalProperties: false,
-      required: ["isClearSelected", "clarificationQuestion", "selectedfilteredRagKnowledge", "selectionExplanation"],
+      required: ["isClearSelected", "selectedRawKnowledgeIds", "clarificationQuestion", "selectionExplanation"],
       properties: {
         isClearSelected: {type: "boolean"},
-        clarificationQuestion: {type: ["string", "null"]},
-        selectedfilteredRagKnowledge: {
-          anyOf: [
-            {type: "null"},
-            {
-              type: "array",
-              items: {
-                type: "object",
-                additionalProperties: false,
-                required: ["sourceId", "title", "usefulInformation", "whySelected"],
-                properties: {
-                  sourceId: {type: ["string", "null"]},
-                  title: {type: ["string", "null"]},
-                  usefulInformation: {type: ["string", "null"]},
-                  whySelected: {type: "string"}
-                }
-              }
-            }
-          ]
+        selectedRawKnowledgeIds: {
+          type: "array",
+          items: {type: "string"}
         },
-        selectionExplanation: {type: "string"}
+        clarificationQuestion: {type: ["string", "null"]},
+        selectionExplanation: {type: ["string", "null"]}
       }
     }
   }

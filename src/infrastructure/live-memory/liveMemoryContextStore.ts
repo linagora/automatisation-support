@@ -441,23 +441,72 @@ function normalizeRetrieveKnowledge(
 
     filter: {
       isFiltered: filter.isFiltered === true,
-      filteredRagKnowledge: filter.filteredRagKnowledge ?? null,
+      keptRawKnowledgeIds: stringArray(filter.keptRawKnowledgeIds),
       filterExplanation: nullableString(filter.filterExplanation)
     },
 
     selection: {
       isClearSelected: selection.isClearSelected === true,
       clarificationQuestion: nullableString(selection.clarificationQuestion),
-      selectedfilteredRagKnowledge: selection.selectedfilteredRagKnowledge ?? null,
+      selectedRawKnowledgeIds: stringArray(selection.selectedRawKnowledgeIds),
       selectionExplanation: nullableString(selection.selectionExplanation)
     },
 
     segmentationKnowledge: {
       isSegmented: segmentationKnowledge.isSegmented === true,
-      userFacingInformation: nullableString(segmentationKnowledge.userFacingInformation),
-      supportFacingInformation: nullableString(segmentationKnowledge.supportFacingInformation)
+      segmentedKnowledge: normalizeSegmentedKnowledge(segmentationKnowledge.segmentedKnowledge)
     }
   };
+}
+
+function normalizeSegmentedKnowledge(
+  value: unknown
+): LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"]["segmentedKnowledge"] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seenRawKnowledgeIds = new Set<string>();
+  const segmentedKnowledge: LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"]["segmentedKnowledge"] = [];
+
+  for (const rawSource of value) {
+    if (!isRecord(rawSource)) continue;
+
+    const rawKnowledgeId = nullableString(rawSource.rawKnowledgeId);
+    if (!rawKnowledgeId || seenRawKnowledgeIds.has(rawKnowledgeId)) continue;
+
+    seenRawKnowledgeIds.add(rawKnowledgeId);
+    segmentedKnowledge.push({
+      rawKnowledgeId,
+      userFacingKnowledge: normalizeSegmentedKnowledgePieces(rawSource.userFacingKnowledge),
+      supportFacingKnowledge: normalizeSegmentedKnowledgePieces(rawSource.supportFacingKnowledge)
+    });
+  }
+
+  return segmentedKnowledge;
+}
+
+function normalizeSegmentedKnowledgePieces(
+  value: unknown
+): LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"]["segmentedKnowledge"][number]["userFacingKnowledge"] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((rawPiece) => {
+    if (!isRecord(rawPiece)) return [];
+
+    const text = nullableString(rawPiece.text);
+    if (!text) return [];
+
+    return [
+      {
+        text,
+        sourceHint: nullableString(rawPiece.sourceHint),
+        sourceSpan: nullableString(rawPiece.sourceSpan)
+      }
+    ];
+  });
 }
 
 function normalizeRetrieveKnowledgeCompletionStatus(
@@ -476,6 +525,16 @@ function normalizeSolutionActionStatus(
   return value === "asking" ||
     value === "succeeded" ||
     value === "failed" ||
+    value === "user_declared_unavailable"
+    ? value
+    : null;
+}
+
+function normalizeSolutionCaseDetailStatus(
+  value: unknown
+): "asking" | "obtained" | "user_declared_unavailable" | null {
+  return value === "asking" ||
+    value === "obtained" ||
     value === "user_declared_unavailable"
     ? value
     : null;
@@ -507,6 +566,35 @@ function normalizeSolutionActions(
   });
 }
 
+function normalizeSolutionCaseDetails(
+  value: unknown
+): LiveMemoryTopicOptimized["sourceTopicManager"]["solution"]["caseDetailsToAskBecauseOfSolutionFound"] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (!isRecord(item)) {
+      return [];
+    }
+
+    const key = nullableString(item.key);
+    const question = nullableString(item.question);
+    const status = normalizeSolutionCaseDetailStatus(item.status);
+
+    if (!key || !question || !status) {
+      return [];
+    }
+
+    return [{
+      key,
+      question,
+      reason: nullableString(item.reason),
+      status
+    }];
+  });
+}
+
 function normalizeSolution(
   value: unknown
 ): LiveMemoryTopicOptimized["sourceTopicManager"]["solution"] {
@@ -517,9 +605,13 @@ function normalizeSolution(
   return {
     isActionForUserBuilt: value.isActionForUserBuilt === true,
     isActionForSupportBuilt: value.isActionForSupportBuilt === true,
+    isCaseDetailsForSolutionBuilt: value.isCaseDetailsForSolutionBuilt === true,
     isCompleted: value.isCompleted === true,
     attemptedActionsToAskBecauseOfSolutionFound: normalizeSolutionActions(
       value.attemptedActionsToAskBecauseOfSolutionFound
+    ),
+    caseDetailsToAskBecauseOfSolutionFound: normalizeSolutionCaseDetails(
+      value.caseDetailsToAskBecauseOfSolutionFound
     ),
     actionToTakeForSupport: nullableString(value.actionToTakeForSupport)
   };

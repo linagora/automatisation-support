@@ -78,7 +78,7 @@ class HttpSupportRagClient implements SupportRagClient {
     this.baseUrl = options.baseUrl.replace(/\/+$/, "");
     this.apiKey = options.apiKey;
     this.model = options.model;
-    this.timeoutMs = options.timeoutMs ?? 30_000;
+    this.timeoutMs = options.timeoutMs ?? 60_000;
   }
 
   async call(input: SupportRagCallInput): Promise<SupportRagCallOutput> {
@@ -179,7 +179,7 @@ class HttpSupportRagClient implements SupportRagClient {
       model: this.model,
       messages: input.messages,
       temperature: input.temperature ?? 0.1,
-      max_tokens: input.maxTokens ?? 1200,
+      max_tokens: input.maxTokens ?? 2000,
       stream: false,
       metadata: {
         use_map_reduce: false,

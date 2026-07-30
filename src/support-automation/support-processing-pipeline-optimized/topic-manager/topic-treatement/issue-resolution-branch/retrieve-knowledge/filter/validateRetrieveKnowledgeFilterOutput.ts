@@ -2,61 +2,43 @@ import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure
 
 type RetrieveKnowledgeFilter = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["filter"];
 
-type FilteredCandidate = {
-  sourceId: string | null;
-  title: string | null;
-  summary: string | null;
-  usefulInformation: string | null;
-  rawExcerpt: string | null;
-  keepReason: string;
-};
-
-function validateRetrieveKnowledgeFilterOutput(parsedResponse: unknown): RetrieveKnowledgeFilter | null {
+function validateRetrieveKnowledgeFilterOutput(
+  parsedResponse: unknown,
+  validRawKnowledgeIds: string[]
+): RetrieveKnowledgeFilter | null {
   if (!isRecord(parsedResponse)) return null;
-  if (!hasOnlyKeys(parsedResponse, ["filteredRagKnowledge", "filterExplanation"])) return null;
-  if (!Array.isArray(parsedResponse.filteredRagKnowledge)) return null;
-
-  const filteredRagKnowledge: FilteredCandidate[] = [];
-
-  for (const rawCandidate of parsedResponse.filteredRagKnowledge) {
-    const candidate = validateFilteredCandidate(rawCandidate);
-    if (!candidate) return null;
-    filteredRagKnowledge.push(candidate);
-  }
-
-  const filterExplanation = validateString(parsedResponse.filterExplanation);
-  if (!filterExplanation) return null;
+  if (!hasOnlyKeys(parsedResponse, ["keptRawKnowledgeIds", "filterExplanation"])) return null;
+  if (!Array.isArray(parsedResponse.keptRawKnowledgeIds)) return null;
 
   return {
     isFiltered: true,
-    filteredRagKnowledge,
-    filterExplanation
+    keptRawKnowledgeIds: validateKeptRawKnowledgeIds(
+      parsedResponse.keptRawKnowledgeIds,
+      validRawKnowledgeIds
+    ),
+    filterExplanation: validateNullableString(parsedResponse.filterExplanation)
   };
 }
 
-function validateFilteredCandidate(value: unknown): FilteredCandidate | null {
-  if (!isRecord(value)) return null;
-  if (!hasOnlyKeys(value, ["sourceId", "title", "summary", "usefulInformation", "rawExcerpt", "keepReason"])) return null;
+function validateKeptRawKnowledgeIds(
+  rawIds: unknown[],
+  validRawKnowledgeIds: string[]
+): string[] {
+  const validIdSet = new Set(validRawKnowledgeIds);
+  const keptRawKnowledgeIds: string[] = [];
 
-  const keepReason = validateString(value.keepReason);
-  if (!keepReason) return null;
+  for (const rawId of rawIds) {
+    if (typeof rawId !== "string") continue;
+    if (!validIdSet.has(rawId)) continue;
+    if (keptRawKnowledgeIds.includes(rawId)) continue;
+    keptRawKnowledgeIds.push(rawId);
+  }
 
-  return {
-    sourceId: validateNullableString(value.sourceId),
-    title: validateNullableString(value.title),
-    summary: validateNullableString(value.summary),
-    usefulInformation: validateNullableString(value.usefulInformation),
-    rawExcerpt: validateNullableString(value.rawExcerpt),
-    keepReason
-  };
+  return keptRawKnowledgeIds;
 }
 
 function validateNullableString(value: unknown): string | null {
   return typeof value === "string" ? value : null;
-}
-
-function validateString(value: unknown): string | null {
-  return typeof value === "string" && value.trim() !== "" ? value : null;
 }
 
 function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: string[]): boolean {

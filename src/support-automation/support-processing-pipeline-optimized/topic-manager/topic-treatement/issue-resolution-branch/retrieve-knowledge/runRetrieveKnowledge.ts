@@ -4,7 +4,7 @@ import {runRetrieveKnowledgeSelection} from "./selection/runRetrieveKnowledgeSel
 import {runSegmentationKnowledge} from "./segmentation-knowledge/runSegmentationKnowledge--oneShotStep";
 
 import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
-import type {SearchSimilarIssueTopics} from "./ranked-search/runRankedSearch--oneShotStep";
+import type {RawRagKnowledge, SearchSimilarIssueTopics} from "./ranked-search/runRankedSearch--oneShotStep";
 
 type RetrieveKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"];
 
@@ -76,7 +76,9 @@ async function runRetrieveKnowledge(input: RunRetrieveKnowledgeInput): Promise<R
     };
   }
 
-  if (!hasUsableKnowledge(retrieveKnowledge.rankedSearch.rawRagKnowledge)) {
+  const rawRagKnowledge = retrieveKnowledge.rankedSearch.rawRagKnowledge;
+
+  if (!isRawRagKnowledge(rawRagKnowledge) || rawRagKnowledge.candidates.length === 0) {
     return {
       say: null,
       retrieveKnowledge: markRetrieveKnowledgeCompleted(retrieveKnowledge)
@@ -86,7 +88,7 @@ async function runRetrieveKnowledge(input: RunRetrieveKnowledgeInput): Promise<R
   if (!retrieveKnowledge.filter.isFiltered) {
     const filter = await runRetrieveKnowledgeFilter({
       summaryTopic,
-      rawRagKnowledge: retrieveKnowledge.rankedSearch.rawRagKnowledge
+      rawKnowledgeCandidates: rawRagKnowledge.candidates
     });
 
     retrieveKnowledge = {
@@ -95,7 +97,7 @@ async function runRetrieveKnowledge(input: RunRetrieveKnowledgeInput): Promise<R
     };
   }
 
-  if (!hasUsableKnowledge(retrieveKnowledge.filter.filteredRagKnowledge)) {
+  if (retrieveKnowledge.filter.keptRawKnowledgeIds.length === 0) {
     return {
       say: null,
       retrieveKnowledge: markRetrieveKnowledgeCompleted(retrieveKnowledge)
@@ -105,7 +107,8 @@ async function runRetrieveKnowledge(input: RunRetrieveKnowledgeInput): Promise<R
   if (!retrieveKnowledge.selection.isClearSelected) {
     const selection = await runRetrieveKnowledgeSelection({
       summaryTopic,
-      filteredRagKnowledge: retrieveKnowledge.filter.filteredRagKnowledge,
+      rawKnowledgeCandidates: rawRagKnowledge.candidates,
+      keptRawKnowledgeIds: retrieveKnowledge.filter.keptRawKnowledgeIds,
       previousSelection: retrieveKnowledge.selection,
       currentUserMessage: input.currentUserMessage,
       previousConversationTurn: input.previousConversationTurn
@@ -124,10 +127,23 @@ async function runRetrieveKnowledge(input: RunRetrieveKnowledgeInput): Promise<R
     }
   }
 
+  if (retrieveKnowledge.selection.isClearSelected && retrieveKnowledge.selection.selectedRawKnowledgeIds.length === 0) {
+    retrieveKnowledge = {
+      ...retrieveKnowledge,
+      segmentationKnowledge: buildEmptyCompletedSegmentationKnowledge()
+    };
+
+    return {
+      say: null,
+      retrieveKnowledge: markRetrieveKnowledgeCompleted(retrieveKnowledge)
+    };
+  }
+
   if (!retrieveKnowledge.segmentationKnowledge.isSegmented) {
     const segmentationKnowledge = await runSegmentationKnowledge({
       summaryTopic,
-      selectedfilteredRagKnowledge: retrieveKnowledge.selection.selectedfilteredRagKnowledge
+      rawKnowledgeCandidates: rawRagKnowledge.candidates,
+      selectedRawKnowledgeIds: retrieveKnowledge.selection.selectedRawKnowledgeIds
     });
 
     retrieveKnowledge = {
@@ -153,22 +169,28 @@ function buildEmptyRetrieveKnowledge(): RetrieveKnowledge {
 
     filter: {
       isFiltered: false,
-      filteredRagKnowledge: null,
+      keptRawKnowledgeIds: [],
       filterExplanation: null
     },
 
     selection: {
       isClearSelected: false,
       clarificationQuestion: null,
-      selectedfilteredRagKnowledge: null,
+      selectedRawKnowledgeIds: [],
       selectionExplanation: null
     },
 
     segmentationKnowledge: {
       isSegmented: false,
-      userFacingInformation: null,
-      supportFacingInformation: null
+      segmentedKnowledge: []
     }
+  };
+}
+
+function buildEmptyCompletedSegmentationKnowledge(): RetrieveKnowledge["segmentationKnowledge"] {
+  return {
+    isSegmented: true,
+    segmentedKnowledge: []
   };
 }
 
@@ -190,21 +212,20 @@ function markRetrieveKnowledgeFailed(): LiveMemoryTopicOptimized["sourceTopicMan
 
     filter: {
       isFiltered: false,
-      filteredRagKnowledge: null,
+      keptRawKnowledgeIds: [],
       filterExplanation: null
     },
 
     selection: {
       isClearSelected: false,
       clarificationQuestion: null,
-      selectedfilteredRagKnowledge: null,
+      selectedRawKnowledgeIds: [],
       selectionExplanation: null
     },
 
     segmentationKnowledge: {
       isSegmented: false,
-      userFacingInformation: null,
-      supportFacingInformation: null
+      segmentedKnowledge: []
     }
   };
 }
@@ -223,12 +244,14 @@ function buildRagFailure(error: unknown): {
   };
 }
 
-function hasUsableKnowledge(value: unknown): boolean {
-  if (value === null || value === undefined) return false;
-  if (typeof value === "string") return value.trim() !== "";
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "object") return Object.keys(value).length > 0;
-  return true;
+function isRawRagKnowledge(value: unknown): value is RawRagKnowledge {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const rawRagKnowledge = value as Partial<RawRagKnowledge>;
+
+  return Array.isArray(rawRagKnowledge.candidates);
 }
 
 function normalizeSummaryTopic(summaryTopic: string | null): string | null {
@@ -239,6 +262,5 @@ function normalizeSummaryTopic(summaryTopic: string | null): string | null {
 
 export {
   buildEmptyRetrieveKnowledge,
-  hasUsableKnowledge,
   runRetrieveKnowledge
 };

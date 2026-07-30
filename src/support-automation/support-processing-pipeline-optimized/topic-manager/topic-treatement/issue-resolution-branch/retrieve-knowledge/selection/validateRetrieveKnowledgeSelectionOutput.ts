@@ -2,74 +2,62 @@ import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure
 
 type RetrieveKnowledgeSelection = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["selection"];
 
-type SelectedCandidate = {
-  sourceId: string | null;
-  title: string | null;
-  usefulInformation: string | null;
-  whySelected: string;
-};
-
-function validateRetrieveKnowledgeSelectionOutput(parsedResponse: unknown): RetrieveKnowledgeSelection | null {
+function validateRetrieveKnowledgeSelectionOutput(
+  parsedResponse: unknown,
+  validRawKnowledgeIds: string[]
+): RetrieveKnowledgeSelection | null {
   if (!isRecord(parsedResponse)) return null;
-  if (!hasOnlyKeys(parsedResponse, ["isClearSelected", "clarificationQuestion", "selectedfilteredRagKnowledge", "selectionExplanation"])) return null;
+  if (!hasOnlyKeys(parsedResponse, ["isClearSelected", "selectedRawKnowledgeIds", "clarificationQuestion", "selectionExplanation"])) return null;
   if (typeof parsedResponse.isClearSelected !== "boolean") return null;
+  if (!Array.isArray(parsedResponse.selectedRawKnowledgeIds)) return null;
 
-  const selectionExplanation = validateNonEmptyString(parsedResponse.selectionExplanation);
-  if (!selectionExplanation) return null;
+  const selectedRawKnowledgeIds = validateSelectedRawKnowledgeIds(
+    parsedResponse.selectedRawKnowledgeIds,
+    validRawKnowledgeIds
+  );
+  const clarificationQuestion = validateNullableNonEmptyString(parsedResponse.clarificationQuestion);
+  const selectionExplanation = validateNullableNonEmptyString(parsedResponse.selectionExplanation);
 
   if (!parsedResponse.isClearSelected) {
-    const clarificationQuestion = validateNonEmptyString(parsedResponse.clarificationQuestion);
     if (!clarificationQuestion) return null;
-    if (parsedResponse.selectedfilteredRagKnowledge !== null) return null;
 
     return {
       isClearSelected: false,
+      selectedRawKnowledgeIds,
       clarificationQuestion,
-      selectedfilteredRagKnowledge: null,
       selectionExplanation
     };
   }
 
   if (parsedResponse.clarificationQuestion !== null) return null;
-  if (!Array.isArray(parsedResponse.selectedfilteredRagKnowledge)) return null;
-  if (parsedResponse.selectedfilteredRagKnowledge.length === 0) return null;
-
-  const selectedfilteredRagKnowledge: SelectedCandidate[] = [];
-
-  for (const rawCandidate of parsedResponse.selectedfilteredRagKnowledge) {
-    const candidate = validateSelectedCandidate(rawCandidate);
-    if (!candidate) return null;
-    selectedfilteredRagKnowledge.push(candidate);
-  }
 
   return {
     isClearSelected: true,
+    selectedRawKnowledgeIds,
     clarificationQuestion: null,
-    selectedfilteredRagKnowledge,
     selectionExplanation
   };
 }
 
-function validateSelectedCandidate(value: unknown): SelectedCandidate | null {
-  if (!isRecord(value)) return null;
-  if (!hasOnlyKeys(value, ["sourceId", "title", "usefulInformation", "whySelected"])) return null;
+function validateSelectedRawKnowledgeIds(
+  rawIds: unknown[],
+  validRawKnowledgeIds: string[]
+): string[] {
+  const validIdSet = new Set(validRawKnowledgeIds);
+  const selectedRawKnowledgeIds: string[] = [];
 
-  const whySelected = validateNonEmptyString(value.whySelected);
-  if (!whySelected) return null;
+  for (const rawId of rawIds) {
+    if (typeof rawId !== "string") continue;
+    if (!validIdSet.has(rawId)) continue;
+    if (selectedRawKnowledgeIds.includes(rawId)) continue;
+    selectedRawKnowledgeIds.push(rawId);
+  }
 
-  return {
-    sourceId: validateNullableString(value.sourceId),
-    title: validateNullableString(value.title),
-    usefulInformation: validateNullableString(value.usefulInformation),
-    whySelected
-  };
+  return selectedRawKnowledgeIds;
 }
 
-function validateNullableString(value: unknown): string | null {
-  return typeof value === "string" ? value : null;
-}
-
-function validateNonEmptyString(value: unknown): string | null {
+function validateNullableNonEmptyString(value: unknown): string | null {
+  if (value === null) return null;
   return typeof value === "string" && value.trim() !== "" ? value : null;
 }
 

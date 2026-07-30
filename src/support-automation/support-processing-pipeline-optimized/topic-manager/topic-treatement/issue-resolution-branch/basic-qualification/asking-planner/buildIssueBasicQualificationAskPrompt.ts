@@ -4,7 +4,9 @@ import type {LLMMessage} from "../../../../../../../infrastructure/llm/llm-clien
 import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type BasicQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["basicQualification"];
-type FieldToAsk = BasicQualification["caseDetailsToAskBecauseOfBasicQualification"][number] & {status: "asking"};
+type FieldToAsk = BasicQualification["caseDetailsToAskBecauseOfBasicQualification"][number] & {
+  status: "asking";
+};
 
 type PromptField = {
   key: string | null;
@@ -17,66 +19,74 @@ export type IssueBasicQualificationAskPromptInput = {
   fieldsToAsk: FieldToAsk[];
 };
 
-function buildIssueBasicQualificationAskPrompt(input: IssueBasicQualificationAskPromptInput): {messages: LLMMessage[]} {
+function buildIssueBasicQualificationAskPrompt(
+  input: IssueBasicQualificationAskPromptInput
+): {messages: LLMMessage[]} {
   const missingFields = input.fieldsToAsk.map(formatFieldForPrompt);
 
   return {
     messages: [
       {
         role: "system",
-        content: `You write an English customer-facing clarification message for one support issue.
+        content: `Write one short English customer-facing support message.
 
 The message will be translated later, so write English only.
 
 You are given:
-- supportTopicSummary: a short summary of the single support topic;
-- missingFields: the missing basic qualification fields for this topic.
+- supportTopicSummary: a summary of one specific support issue;
+- missingFields: the details still needed to understand and reproduce this issue.
 
 Your goal:
-Ask for the missing basic qualification details in a natural way, for this topic only.
+Ask for the missing details needed to reproduce the bug.
 
-Basic qualification is about understanding the user's flow:
-- where the issue happens;
-- what the user is trying to do;
-- where the flow fails;
-- what happens;
-- what the user expected instead;
-- whether an error message or code appears, only if that field is missing.
+Instructions:
+- Start with: "To help us to reconstitue the steps that led to this issue...""
+- Use supportTopicSummary to make the question specific to the reported issue.
+- Ask only for details represented in missingFields.
+- Do not ask again for information already present in supportTopicSummary.
+- Use askGuidance to understand what to ask, but do not copy it directly.
+- When several flow details are missing, ask for one chronological description of the user's actions.
+- Guide the user to explain, when missing:
+  - the steps they follow;
+  - the precise step where it fails;
+  - what happens at that moment;
+  - what they expected instead;
+  - any error message or code, if one appears.
+- If only one detail is missing, ask one focused question.
 
 Rules:
-- Ask only about the single topic described by supportTopicSummary.
-- Never mention other issues, other problems, or several problems.
-- Never say "each problem", "both issues", "these issues", or "your issues".
-- Ask only for fields present in missingFields.
-- Cover all missing fields, but do not turn them into a raw checklist.
-- Prefer one compact paragraph over bullets.
-- When several flow details are missing, ask the user to describe the exact flow in one message.
-- Use askGuidance to understand each field, not as final wording.
-- Do not expose internal field keys.
-- Do not ask technical environment questions unless those fields are present.
-- Do not ask for screenshots, references, URLs, file type, file extension, or document type unless the matching field is present.
-- Do not suggest troubleshooting steps.
-- Do not ask the user to try anything.
-- Do not claim the issue is solved.
-- Allow the user to say they do not know or cannot provide a detail.
+- Discuss this issue only.
+- Never expose internal field names, keys, reasons, or qualification logic.
+- Do not ask for details that are not in missingFields.
+- Do not suggest troubleshooting or ask the user to try anything.
+- Do not ask for screenshots, URLs, references, file types, or technical environment details unless the matching field is present.
+- Treat an error message as optional.
+- Allow the user to say they do not know.
 
 Style:
-- Sound like a support agent, not a form.
-- Use singular wording: "this issue", not "these issues".
-- Avoid bullet lists unless the missing fields are unrelated and cannot be naturally combined.
-- If error_message is missing, phrase it as optional: "if one appears" or "if any".
-- Do not imply there must be an error message.
+- One concise paragraph.
+- Natural and specific.
+- No greeting, apology, bullet list, or unnecessary closing.
+- Do not produce a disconnected list of questions.
 
 Return only JSON matching the response schema.`
       },
       {
         role: "user",
-        content: JSON.stringify({
-          supportTopicSummary: input.summaryTopic,
-          missingFields,
-          missingFieldKeys: missingFields.map((field) => normalizeKey(field.key ?? "")),
-          outputShape: {say: "<English customer-facing message>"}
-        }, null, 2)
+        content: JSON.stringify(
+          {
+            supportTopicSummary: input.summaryTopic,
+            missingFields,
+            missingFieldKeys: missingFields.map((field) =>
+              normalizeKey(field.key ?? "")
+            ),
+            outputShape: {
+              say: "<English customer-facing message>"
+            }
+          },
+          null,
+          2
+        )
       }
     ]
   };
@@ -87,91 +97,100 @@ function buildDeterministicBasicQualificationAsk(input: {
   fieldsToAsk: FieldToAsk[];
 }): string {
   const missingFields = input.fieldsToAsk.map(formatFieldForPrompt);
-  const suffix = "If you do not know or cannot provide one of these details, just say so.";
-  const topicPrefix = input.summaryTopic
-    ? `About this issue: ${input.summaryTopic}. `
-    : "";
+  const suffix =
+    "If you do not know or cannot provide one of these details, just say so.";
 
   if (missingFields.length === 0) {
-    return `${topicPrefix}Could you share a few more details about what happened so I can understand the issue properly? ${suffix}`;
+    return `To help us reproduce this bug, could you describe exactly what you did and what happened? ${suffix}`;
   }
 
   const hasProduct = hasMissingField(missingFields, "product_or_service");
-  const flowFields = missingFields.filter((field) => {
-    return FLOW_FIELD_KEYS.has(normalizeKey(field.key ?? ""));
-  });
+
+  const flowFields = missingFields.filter((field) =>
+    FLOW_FIELD_KEYS.has(normalizeKey(field.key ?? ""))
+  );
+
   const nonFlowFields = missingFields.filter((field) => {
     const key = normalizeKey(field.key ?? "");
+
     return key !== "product_or_service" && !FLOW_FIELD_KEYS.has(key);
   });
 
-  const questions: string[] = [];
+  const requests: string[] = [];
 
   if (hasProduct) {
-    questions.push("Which product or service is affected?");
+    requests.push("which product or service is affected");
   }
 
-  if (flowFields.length >= 3) {
-    questions.push(buildCompactFlowQuestion(flowFields));
-  } else if (flowFields.length > 0) {
-    questions.push(`Could you clarify ${joinWithCommasAnd(flowFields.map(buildFlowFieldLabel))}?`);
+  if (flowFields.length > 0) {
+    requests.push(buildFlowRequest(flowFields));
   }
 
   if (nonFlowFields.length > 0) {
-    questions.push(`Could you also clarify ${joinWithCommasAnd(nonFlowFields.map(buildGenericFieldLabel))}?`);
+    requests.push(
+      ...nonFlowFields.map((field) =>
+        normalizeAskGuidance(field.askGuidance)
+      )
+    );
   }
 
-  if (questions.length === 0) {
-    return `${topicPrefix}Could you share the missing details about this issue? ${suffix}`;
+  if (requests.length === 0) {
+    return `To help us reproduce this bug, could you provide a little more detail about what happened? ${suffix}`;
   }
 
-  return `${topicPrefix}${questions.join(" ")} ${suffix}`;
+  const topicContext = input.summaryTopic?.trim()
+    ? ` regarding ${removeTrailingPunctuation(input.summaryTopic.trim())}`
+    : "";
+
+  return `To help us reproduce this bug${topicContext}, could you clarify ${joinWithCommasAnd(
+    requests
+  )}? ${suffix}`;
 }
 
-function buildCompactFlowQuestion(fields: PromptField[]): string {
-  const labels = fields.map(buildFlowFieldLabel);
-  const hasErrorMessage = fields.some((field) => {
-    return normalizeKey(field.key ?? "") === "error_message";
-  });
+function buildFlowRequest(fields: PromptField[]): string {
+  const keys = new Set(
+    fields.map((field) => normalizeKey(field.key ?? ""))
+  );
 
-  const labelsWithoutError = labels.filter((label) => {
-    return label !== "whether any error message or code appears";
-  });
+  const parts: string[] = [];
 
-  if (labelsWithoutError.length === 0) {
-    return "Could you tell me whether any error message or code appears?";
+  if (keys.has("feature_or_page")) {
+    parts.push("where you perform the action");
   }
 
-  const flowQuestion = `Could you describe the exact flow for this issue: ${joinWithCommasAnd(labelsWithoutError)}?`;
-
-  if (!hasErrorMessage) {
-    return flowQuestion;
+  if (keys.has("trigger_action")) {
+    parts.push("the exact steps you follow");
   }
 
-  return `${flowQuestion} Please also mention whether any error message or code appears, if any.`;
-}
+  if (keys.has("failure_step")) {
+    parts.push("the precise step where it fails");
+  }
 
-function buildFlowFieldLabel(field: PromptField): string {
-  const key = normalizeKey(field.key ?? "");
+  if (keys.has("observed_result")) {
+    parts.push("what happens at that moment");
+  }
 
-  if (key === "feature_or_page") return "where it happens";
-  if (key === "trigger_action") return "what you do just before the problem";
-  if (key === "failure_step") return "the exact step where it fails";
-  if (key === "observed_result") return "what happens";
-  if (key === "expected_result") return "what you expected instead";
-  if (key === "error_message") return "whether any error message or code appears";
+  if (keys.has("expected_result")) {
+    parts.push("what you expected instead");
+  }
 
-  return buildGenericFieldLabel(field);
-}
+  if (keys.has("error_message")) {
+    parts.push("any error message or code that appears, if any");
+  }
 
-function buildGenericFieldLabel(field: PromptField): string {
-  return normalizeAskGuidance(field.askGuidance);
+  if (parts.length === 0) {
+    return "the exact sequence of events";
+  }
+
+  return parts.length === 1
+    ? parts[0]
+    : `the flow step by step, including ${joinWithCommasAnd(parts)}`;
 }
 
 function hasMissingField(fields: PromptField[], key: string): boolean {
-  return fields.some((field) => {
-    return normalizeKey(field.key ?? "") === key;
-  });
+  return fields.some(
+    (field) => normalizeKey(field.key ?? "") === key
+  );
 }
 
 function formatFieldForPrompt(field: FieldToAsk): PromptField {
@@ -183,21 +202,36 @@ function formatFieldForPrompt(field: FieldToAsk): PromptField {
 }
 
 function normalizeAskGuidance(value: string): string {
-  return value.trim().replace(/[?.!]+$/g, "");
+  return removeTrailingPunctuation(value.trim());
+}
+
+function removeTrailingPunctuation(value: string): string {
+  return value.replace(/[?.!]+$/g, "");
 }
 
 function normalizeKey(value: string): string {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 function joinWithCommasAnd(values: readonly string[]): string {
-  const uniqueValues = [...new Set(values.filter((value) => value.trim() !== ""))];
+  const uniqueValues = [
+    ...new Set(values.filter((value) => value.trim() !== ""))
+  ];
 
   if (uniqueValues.length === 0) return "";
   if (uniqueValues.length === 1) return uniqueValues[0];
-  if (uniqueValues.length === 2) return `${uniqueValues[0]} and ${uniqueValues[1]}`;
 
-  return `${uniqueValues.slice(0, -1).join(", ")}, and ${uniqueValues[uniqueValues.length - 1]}`;
+  if (uniqueValues.length === 2) {
+    return `${uniqueValues[0]} and ${uniqueValues[1]}`;
+  }
+
+  return `${uniqueValues.slice(0, -1).join(", ")}, and ${
+    uniqueValues[uniqueValues.length - 1]
+  }`;
 }
 
 const FLOW_FIELD_KEYS = new Set([

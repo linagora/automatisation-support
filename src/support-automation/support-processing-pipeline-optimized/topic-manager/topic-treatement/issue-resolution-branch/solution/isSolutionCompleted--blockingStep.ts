@@ -2,10 +2,13 @@ import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/li
 
 type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
 type AttemptedActionToAsk = Solution["attemptedActionsToAskBecauseOfSolutionFound"][number];
+type CaseDetailToAsk = Solution["caseDetailsToAskBecauseOfSolutionFound"][number];
+type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
 type AttemptedActionExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["attemptedActionsExtracted"][number];
 
 export type IsSolutionCompletedInput = {
   solution: Solution;
+  caseDetailsExtracted: CaseDetailExtracted[];
   attemptedActionsExtracted: AttemptedActionExtracted[];
 };
 
@@ -14,6 +17,18 @@ export type IsSolutionCompletedOutput = {
 };
 
 function isSolutionCompleted(input: IsSolutionCompletedInput): IsSolutionCompletedOutput {
+  const caseDetailsToAskBecauseOfSolutionFound = input.solution.caseDetailsToAskBecauseOfSolutionFound.map((caseDetailToAsk) => {
+    if (caseDetailToAsk.status !== "asking") return caseDetailToAsk;
+
+    const matchingCaseDetail = findMatchingExtractedCaseDetail(caseDetailToAsk, input.caseDetailsExtracted);
+    if (!matchingCaseDetail) return caseDetailToAsk;
+
+    return {
+      ...caseDetailToAsk,
+      status: matchingCaseDetail.status
+    } satisfies CaseDetailToAsk;
+  });
+
   const attemptedActionsToAskBecauseOfSolutionFound = input.solution.attemptedActionsToAskBecauseOfSolutionFound.map((actionToAsk) => {
     if (actionToAsk.status !== "asking") return actionToAsk;
 
@@ -31,15 +46,33 @@ function isSolutionCompleted(input: IsSolutionCompletedInput): IsSolutionComplet
 
   const isCompleted = input.solution.isActionForUserBuilt &&
     input.solution.isActionForSupportBuilt &&
-    attemptedActionsToAskBecauseOfSolutionFound.every((actionToAsk) => actionToAsk.status !== "asking");
+    input.solution.isCaseDetailsForSolutionBuilt &&
+    attemptedActionsToAskBecauseOfSolutionFound.every((actionToAsk) => actionToAsk.status !== "asking") &&
+    caseDetailsToAskBecauseOfSolutionFound.every((caseDetailToAsk) => caseDetailToAsk.status !== "asking");
 
   return {
     solution: {
       ...input.solution,
       isCompleted,
+      caseDetailsToAskBecauseOfSolutionFound,
       attemptedActionsToAskBecauseOfSolutionFound
     }
   };
+}
+
+function findMatchingExtractedCaseDetail(
+  caseDetailToAsk: CaseDetailToAsk,
+  caseDetailsExtracted: CaseDetailExtracted[]
+): CaseDetailExtracted | null {
+  const expectedKey = normalizeKey(caseDetailToAsk.key);
+
+  for (const caseDetail of caseDetailsExtracted) {
+    if (normalizeKey(caseDetail.key) === expectedKey) {
+      return caseDetail;
+    }
+  }
+
+  return null;
 }
 
 function findMatchingExtractedAction(
@@ -159,6 +192,10 @@ function normalizeText(value: string): string {
 
 function containsAny(value: string, needles: string[]): boolean {
   return needles.some((needle) => value.includes(normalizeText(needle)));
+}
+
+function normalizeKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 }
 
 export {isSolutionCompleted};

@@ -12,7 +12,7 @@ type FieldToAsk = DeepQualification["caseDetailsToAskBecauseOfDeepQualification"
 
 type BuildDeepQualificationAskInput = {
   deepQualification: DeepQualification;
-  userFacingInformation: string | null;
+  userFacingKnowledgeText: string | null;
   supportDomain: string | null;
 };
 
@@ -41,7 +41,7 @@ function buildDeepQualificationAsk(input: BuildDeepQualificationAskInput): strin
     return "Could you share any remaining detail that may help support investigate this issue?";
   }
 
-  const intro = input.userFacingInformation
+  const intro = input.userFacingKnowledgeText
     ? "To help the support team check the most relevant cause, please provide these details if available:"
     : "To help the support team investigate, please provide these details if available:";
 

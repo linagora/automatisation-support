@@ -1,7 +1,7 @@
 const outputJsonShapeForPrompt = {
   attemptedActionsToAskBecauseOfSolutionFound: [
     {
-      action: "short atomic action the user should try, or null",
+      action: "concrete, detailed, atomic action the user should try",
       reason: "why this action may help, or null",
       status: "asking"
     }
@@ -25,7 +25,7 @@ const buildActionForUserResponseFormat = {
             additionalProperties: false,
             required: ["action", "reason", "status"],
             properties: {
-              action: {type: ["string", "null"]},
+              action: {type: "string"},
               reason: {type: ["string", "null"]},
               status: {enum: ["asking"]}
             }

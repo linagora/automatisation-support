@@ -37,6 +37,7 @@ function buildProposeTopicUpdatesPrompt(input: BuildProposeTopicUpdatesPromptInp
   const existingTopicsForPrompt = input.existingTopics.map((topic) => {
     const pendingBasicFieldKeys = getPendingBasicFieldKeys(topic);
     const pendingDeepFieldKeys = getPendingDeepFieldKeys(topic);
+    const pendingSolutionFieldKeys = getPendingSolutionFieldKeys(topic);
 
     return {
       topicId: topic.sourceProposeTopicUpdates.topicId,
@@ -51,7 +52,8 @@ function buildProposeTopicUpdatesPrompt(input: BuildProposeTopicUpdatesPromptInp
       supportDomain: topic.sourceProposeTopicUpdates.supportDomain,
       pendingBasicFieldKeys,
       pendingDeepFieldKeys,
-      pendingFieldKeys: [...new Set([...pendingBasicFieldKeys, ...pendingDeepFieldKeys])],
+      pendingSolutionFieldKeys,
+      pendingFieldKeys: [...new Set([...pendingBasicFieldKeys, ...pendingDeepFieldKeys, ...pendingSolutionFieldKeys])],
       pendingSolutionActions: getPendingSolutionActions(topic),
       knownCaseDetails: topic.sourceAnalyzeSupportText.caseDetailsExtracted,
       knownAttemptedActions: topic.sourceAnalyzeSupportText.attemptedActionsExtracted
@@ -125,6 +127,7 @@ Do not output memory patches.
 
 Prefer updating an existing topic when the fact clearly:
 - answers one of that topic's pendingFieldKeys;
+- answers one of that topic's pendingSolutionFieldKeys;
 - reports the result of one of that topic's pendingSolutionActions;
 - clarifies, confirms, denies, or corrects the same product, feature, symptom, or issue;
 - explicitly refers to that topic.
@@ -208,6 +211,13 @@ function getPendingBasicFieldKeys(topic: LiveMemoryTopicOptimized): string[] {
 
 function getPendingDeepFieldKeys(topic: LiveMemoryTopicOptimized): string[] {
   return topic.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification
+    .filter((field) => field.status === "asking")
+    .map((field) => field.key)
+    .filter((key): key is string => typeof key === "string" && key.trim() !== "");
+}
+
+function getPendingSolutionFieldKeys(topic: LiveMemoryTopicOptimized): string[] {
+  return topic.sourceTopicManager.solution.caseDetailsToAskBecauseOfSolutionFound
     .filter((field) => field.status === "asking")
     .map((field) => field.key)
     .filter((key): key is string => typeof key === "string" && key.trim() !== "");

@@ -535,6 +535,7 @@ function buildAnalyzeSupportTextPendingRequestedItems(
 ): {
   caseDetailsToAsk: Array<{
     key: string;
+    question?: string | null;
     reason: string | null;
     status: string;
   }>;
@@ -548,7 +549,8 @@ function buildAnalyzeSupportTextPendingRequestedItems(
     caseDetailsToAsk: topics.flatMap((topic) => {
       return [
         ...topic.sourceTopicManager.basicQualification.caseDetailsToAskBecauseOfBasicQualification,
-        ...topic.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification
+        ...topic.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification,
+        ...topic.sourceTopicManager.solution.caseDetailsToAskBecauseOfSolutionFound
       ]
         .filter((field) => {
           return field.status === "asking" &&
@@ -557,6 +559,7 @@ function buildAnalyzeSupportTextPendingRequestedItems(
         })
         .map((field) => ({
           key: field.key as string,
+          question: getPendingCaseDetailQuestion(field),
           reason: field.reason,
           status: field.status
         }));
@@ -575,6 +578,18 @@ function buildAnalyzeSupportTextPendingRequestedItems(
         }));
     })
   };
+}
+
+function getPendingCaseDetailQuestion(field: unknown): string | null {
+  if (typeof field !== "object" || field === null || !("question" in field)) {
+    return null;
+  }
+
+  const question = (field as {question?: unknown}).question;
+
+  return typeof question === "string" && question.trim() !== ""
+    ? question.trim()
+    : null;
 }
 
 function selectCurrentTopic(

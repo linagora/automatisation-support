@@ -154,6 +154,8 @@ async function runIssueResolutionBranch(
       previousTopic: input.currentTopic,
       retrieveKnowledge: sourceTopicManager.retrieveKnowledge,
       summaryTopic,
+      sourceTopicManager,
+      currentCaseDetailsExtracted,
       currentAttemptedActionsExtracted,
       currentUserMessage: input.currentUserMessage,
       previousConversationTurn: input.previousConversationTurn

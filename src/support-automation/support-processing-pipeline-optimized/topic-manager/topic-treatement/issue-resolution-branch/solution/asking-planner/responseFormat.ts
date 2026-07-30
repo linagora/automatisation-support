@@ -1,5 +1,5 @@
 const outputJsonShapeForPrompt = {
-  say: "English message asking the user to try the pending solution action(s) and report the result"
+  say: "English message asking the user to try pending solution action(s) and/or answer specific case-detail question(s)"
 };
 
 const issueSolutionAskResponseFormat = {

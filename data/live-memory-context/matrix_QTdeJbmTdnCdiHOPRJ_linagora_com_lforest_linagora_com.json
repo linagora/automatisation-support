@@ -4,8 +4,8 @@
     "handoverReason": null
   },
   "previousConversationTurn": {
-    "previousUserMessage": "Bonjour mon ami ! Qui es tu ?J’ai 2 problèmes Sur twake chat j’ai l’impression que parfois les messages disparaît Sur le drive je n’arrive pas à renommer un fichier une fois qu’il est créé",
-    "previousBotMessage": "Bonjour. Comment puis-je vous aider avec votre demande de support ?\n\nJe suis l'assistant de support. Je peux vous aider à collecter et à acheminer votre demande de support.\n\nMESSAGES QUI DISPARAISSENT DANS TWAKE CHAT\nPour mieux vous aider, pourriez-vous s'il vous plaît fournir les détails suivants ? Où rencontrez-vous le problème (par exemple, fonctionnalité, page, écran, bouton ou action) ? Quelle action essayiez-vous d'effectuer lorsque le problème est apparu ? À quelle étape exacte le problème s'est-il produit ou vous a-t-il bloqué ? Que vous attendiez-vous à ce qu'il se passe à la place ? Si vous avez vu un message ou un code d'erreur, quel était-il ?\n\nPROBLÈME DE RENOMMAGE DE FICHIER DANS TWAKE DRIVE\nPour mieux vous aider, pourriez-vous s'il vous plaît fournir les détails suivants :\n- Quelle action essayez-vous d'effectuer lorsque le problème apparaît ?\n- À quelle étape exacte le problème apparaît-il ou vous bloque-t-il ?\n- Que vous attendiez-vous à ce qu'il se passe à la place ?\n- Quel message ou code d'erreur exact est affiché à l'écran ?\nSi vous ne savez pas ou ne pouvez pas fournir l'un de ces éléments, veuillez m'en informer."
+    "previousUserMessage": "demande au support qui est l'architecte de la solution",
+    "previousBotMessage": "L'équipe de support peut examiner votre demande lorsque cela est nécessaire.\n\nJ’ai compris cela comme une question pour l'équipe de support. L'équipe de support l'examinera.\n\nEn attendant, je peux recueillir les informations les plus utiles pour les aider à répondre précisément.\n\nN'hésitez pas à partager autant d'informations que possible sur :\n- Ce que vous aimeriez comprendre ou réaliser, et où vous êtes actuellement bloqué.\n- Quel produit, page, fonctionnalité ou situation votre question concerne, et ce que vous avez déjà essayé."
   },
   "failedPipelineMessages": [],
   "securityAlerts": [],
@@ -19,15 +19,51 @@
       "sourceAnalyzeSupportText": {
         "caseDetailsExtracted": [
           {
-            "key": "product_or_service",
-            "value": "Twake chat",
-            "evidence": "Sur twake chat",
+            "key": "platform",
+            "value": "mobile",
+            "evidence": "mobile app",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "file download",
+            "evidence": "download files",
             "status": "obtained"
           },
           {
             "key": "observed_result",
-            "value": "messages disappear",
-            "evidence": "les messages disparaît",
+            "value": "cannot download files",
+            "evidence": "I cannot download files",
+            "status": "obtained"
+          },
+          {
+            "key": "product_or_service",
+            "value": "mobile app",
+            "evidence": "I open it through the app",
+            "status": "obtained"
+          },
+          {
+            "key": "trigger_action",
+            "value": "click to download",
+            "evidence": "I click to download",
+            "status": "obtained"
+          },
+          {
+            "key": "failure_step",
+            "value": "after clicking to download",
+            "evidence": "I click to download but no actions appear",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "no actions appear and no file is downloaded",
+            "evidence": "no actions appear and no file is download",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "file is downloaded",
+            "evidence": "no file is download",
             "status": "obtained"
           }
         ],
@@ -35,11 +71,11 @@
       },
       "sourceProposeTopicUpdates": {
         "topicId": 1,
-        "title": "Twake chat messages disappearing",
-        "summaryTopic": "The user reports that messages sometimes disappear in Twake chat.",
+        "title": "File download issue on mobile app",
+        "summaryTopic": "User cannot download files sent on the chat from the mobile app. The file is opened through the app, but after clicking to download, no actions appear and no file is downloaded.",
         "supportDomain": {
           "value": "product_behavior",
-          "reason": "The routed facts concern unexpected product behavior."
+          "reason": "The routed facts concern a product behavior issue related to file downloads on the mobile app."
         }
       },
       "sourceTopicManager": {
@@ -55,7 +91,7 @@
         "supportNeedResolution": {
           "supportNeed": {
             "value": "issue_resolution",
-            "reason": "The user reports that messages disappear in Twake chat, which indicates a problem that needs investigation or resolution."
+            "reason": "User reports a problem with downloading files from the mobile app, indicating a malfunction or error."
           }
         },
         "basicQualification": {
@@ -70,17 +106,17 @@
             {
               "key": "feature_or_page",
               "reason": "catalogue rules",
-              "status": "asking"
+              "status": "obtained"
             },
             {
               "key": "trigger_action",
               "reason": "catalogue rules",
-              "status": "asking"
+              "status": "obtained"
             },
             {
               "key": "failure_step",
               "reason": "catalogue rules",
-              "status": "asking"
+              "status": "obtained"
             },
             {
               "key": "observed_result",
@@ -90,7 +126,7 @@
             {
               "key": "expected_result",
               "reason": "catalogue rules",
-              "status": "asking"
+              "status": "obtained"
             },
             {
               "key": "error_message",
@@ -107,19 +143,18 @@
           },
           "filter": {
             "isFiltered": false,
-            "filteredRagKnowledge": null,
+            "keptRawKnowledgeIds": [],
             "filterExplanation": null
           },
           "selection": {
             "isClearSelected": false,
             "clarificationQuestion": null,
-            "selectedfilteredRagKnowledge": null,
+            "selectedRawKnowledgeIds": [],
             "selectionExplanation": null
           },
           "segmentationKnowledge": {
             "isSegmented": false,
-            "userFacingInformation": null,
-            "supportFacingInformation": null
+            "segmentedKnowledge": []
           }
         },
         "deepQualification": {
@@ -130,8 +165,10 @@
         "solution": {
           "isActionForUserBuilt": false,
           "isActionForSupportBuilt": false,
+          "isCaseDetailsForSolutionBuilt": false,
           "isCompleted": false,
           "attemptedActionsToAskBecauseOfSolutionFound": [],
+          "caseDetailsToAskBecauseOfSolutionFound": [],
           "actionToTakeForSupport": null
         },
         "idleMode": {
@@ -140,25 +177,13 @@
       }
     },
     {
-      "status": "in_progress",
+      "status": "unsolved",
       "sourceAnalyzeSupportText": {
         "caseDetailsExtracted": [
           {
             "key": "product_or_service",
-            "value": "Twake drive",
-            "evidence": "Sur le drive",
-            "status": "obtained"
-          },
-          {
-            "key": "feature_or_page",
-            "value": "file renaming",
-            "evidence": "renommer un fichier",
-            "status": "obtained"
-          },
-          {
-            "key": "observed_result",
-            "value": "cannot rename a file",
-            "evidence": "je n’arrive pas à renommer un fichier",
+            "value": "la solution",
+            "evidence": "qui est l'architecte de la solution",
             "status": "obtained"
           }
         ],
@@ -166,18 +191,18 @@
       },
       "sourceProposeTopicUpdates": {
         "topicId": 2,
-        "title": "Twake drive file renaming issue",
-        "summaryTopic": "The user cannot rename files in Twake drive after creation.",
+        "title": "Architecte de la solution",
+        "summaryTopic": "L'utilisateur demande qui est l'architecte de la solution.",
         "supportDomain": {
-          "value": "product_behavior",
-          "reason": "The routed facts concern a product feature not working as expected."
+          "value": "other",
+          "reason": "The routed facts concern a general inquiry about the architect of the solution."
         }
       },
       "sourceTopicManager": {
-        "currentStep": "basic_qualification",
+        "currentStep": "idle",
         "resolutionStatus": {
-          "value": "in_progress",
-          "reason": "The issue-resolution route is still collecting information or waiting for a user action."
+          "value": "unsolved",
+          "reason": "The topic is a knowledge question. The dedicated knowledge-answer route is not implemented yet."
         },
         "handover": {
           "isRequested": false,
@@ -185,50 +210,14 @@
         },
         "supportNeedResolution": {
           "supportNeed": {
-            "value": "issue_resolution",
-            "reason": "The user reports a problem with renaming files in Twake drive, which is a malfunction that needs investigation or resolution."
+            "value": "knowledge_answer",
+            "reason": "The user is asking for information about the architect of the solution, which is a request for knowledge."
           }
         },
         "basicQualification": {
-          "isBuilt": true,
+          "isBuilt": false,
           "isCompleted": false,
-          "caseDetailsToAskBecauseOfBasicQualification": [
-            {
-              "key": "product_or_service",
-              "reason": "catalogue rules",
-              "status": "obtained"
-            },
-            {
-              "key": "feature_or_page",
-              "reason": "catalogue rules",
-              "status": "obtained"
-            },
-            {
-              "key": "trigger_action",
-              "reason": "catalogue rules",
-              "status": "asking"
-            },
-            {
-              "key": "failure_step",
-              "reason": "catalogue rules",
-              "status": "asking"
-            },
-            {
-              "key": "observed_result",
-              "reason": "catalogue rules",
-              "status": "obtained"
-            },
-            {
-              "key": "expected_result",
-              "reason": "catalogue rules",
-              "status": "asking"
-            },
-            {
-              "key": "error_message",
-              "reason": "catalogue rules",
-              "status": "asking"
-            }
-          ]
+          "caseDetailsToAskBecauseOfBasicQualification": []
         },
         "retrieveKnowledge": {
           "isCompleted": false,
@@ -238,19 +227,18 @@
           },
           "filter": {
             "isFiltered": false,
-            "filteredRagKnowledge": null,
+            "keptRawKnowledgeIds": [],
             "filterExplanation": null
           },
           "selection": {
             "isClearSelected": false,
             "clarificationQuestion": null,
-            "selectedfilteredRagKnowledge": null,
+            "selectedRawKnowledgeIds": [],
             "selectionExplanation": null
           },
           "segmentationKnowledge": {
             "isSegmented": false,
-            "userFacingInformation": null,
-            "supportFacingInformation": null
+            "segmentedKnowledge": []
           }
         },
         "deepQualification": {
@@ -261,12 +249,14 @@
         "solution": {
           "isActionForUserBuilt": false,
           "isActionForSupportBuilt": false,
+          "isCaseDetailsForSolutionBuilt": false,
           "isCompleted": false,
           "attemptedActionsToAskBecauseOfSolutionFound": [],
+          "caseDetailsToAskBecauseOfSolutionFound": [],
           "actionToTakeForSupport": null
         },
         "idleMode": {
-          "isActivated": false
+          "isActivated": true
         }
       }
     }
