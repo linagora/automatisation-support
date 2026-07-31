@@ -1,0 +1,417 @@
+{
+  "handover": {
+    "isHandover": true,
+    "handoverReason": "knowledge_answer_finished_unhelpful_need_review: topic finished but FAQ answer did not help or no useful FAQ answer was found"
+  },
+  "previousConversationTurn": {
+    "previousUserMessage": "Comment renommer un fichier dans Twake Drive ?",
+    "previousBotMessage": "Technical issue while processing the request. A support team member will take over."
+  },
+  "failedPipelineMessages": [],
+  "securityAlerts": [],
+  "userState": {
+    "status": "normal",
+    "flags": []
+  },
+  "topics": [
+    {
+      "status": "unsolved",
+      "sourceAnalyzeSupportText": {
+        "caseDetailsExtracted": [
+          {
+            "key": "product_or_service",
+            "value": "Twake Drive",
+            "evidence": "Twake Drive",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "file renaming",
+            "evidence": "renommer un fichier",
+            "status": "obtained"
+          },
+          {
+            "key": "requested_information",
+            "value": "how to rename a file",
+            "evidence": "Comment renommer un fichier",
+            "status": "obtained"
+          }
+        ],
+        "attemptedActionsExtracted": []
+      },
+      "sourceProposeTopicUpdates": {
+        "topicId": 1,
+        "title": "File Renaming in Twake Drive",
+        "summaryTopic": "The user is asking how to rename a file in Twake Drive.",
+        "supportDomain": {
+          "value": "product_behavior",
+          "reason": "The routed facts concern a feature's behavior in Twake Drive."
+        }
+      },
+      "sourceTopicManager": {
+        "currentStep": "idle",
+        "resolutionStatus": {
+          "value": "unsolved",
+          "reason": "No FAQ answer was confirmed helpful by the user."
+        },
+        "handover": {
+          "isRequested": true,
+          "reason": "knowledge_answer_finished_unhelpful_need_review: topic finished but FAQ answer did not help or no useful FAQ answer was found"
+        },
+        "supportNeedResolution": {
+          "supportNeed": {
+            "value": "knowledge_answer",
+            "reason": "The user is asking how to rename a file in Twake Drive, which is a request for instructions."
+          }
+        },
+        "basicQualification": {
+          "isBuilt": false,
+          "isCompleted": false,
+          "caseDetailsToAskBecauseOfBasicQualification": []
+        },
+        "retrieveKnowledge": {
+          "isCompleted": false,
+          "rankedSearch": {
+            "isSearched": false,
+            "rawRagKnowledge": null
+          },
+          "filter": {
+            "isFiltered": false,
+            "keptRawKnowledgeIds": [],
+            "filterExplanation": null
+          },
+          "selection": {
+            "isClearSelected": false,
+            "clarificationQuestion": null,
+            "selectedRawKnowledgeIds": [],
+            "selectionExplanation": null
+          },
+          "segmentationKnowledge": {
+            "isSegmented": false,
+            "segmentedKnowledge": []
+          }
+        },
+        "basicQualificationFAQ": {
+          "isBuilt": true,
+          "isCompleted": true,
+          "caseDetailsToAskBecauseOfBasicQualificationFAQ": [
+            {
+              "key": "product_or_service",
+              "reason": "The FAQ search needs the product or service to search the right documentation.",
+              "status": "obtained"
+            },
+            {
+              "key": "feature_or_page",
+              "reason": "The FAQ search needs the feature, page, or action to narrow the documentation.",
+              "status": "obtained"
+            },
+            {
+              "key": "requested_information",
+              "reason": "The FAQ search needs to know what the user wants to know or do.",
+              "status": "obtained"
+            }
+          ]
+        },
+        "retrieveKnowledgeFAQ": {
+          "isCompleted": true,
+          "rankedSearchFAQ": {
+            "isSearched": true,
+            "rawRagKnowledgeFAQ": {
+              "query": "The user is asking how to rename a file in Twake Drive.",
+              "content": "```json\n{\n  \"candidates\": [\n    {\n      \"rawFAQKnowledge\": \"If a file's name already exists in the destination, the existing file is quietly replaced. The row ends up updated rather than created. Re-uploading `report.pdf` overwrites the existing one without asking. Work is in progress to replace this with a prompt (\\\"Replace\\\", \\\"Keep both\\\", or \\\"Cancel\\\") plus an automatic-rename option. The rename logic has a known rough edge: because it bumps a trailing number, a photo named `IMG_4521.jpg` would become `IMG_4522.jpg` (likely the next photo's name) instead of something safe like `IMG_4521 (1).jpg`.\",\n      \"whyPotentiallyRelevant\": \"This explains the current behavior of file name conflicts and mentions an upcoming feature for renaming files, which is relevant to the user's question about renaming a file in Twake Drive.\",\n      \"sourceHint\": \"docs_twake_twake_drive_drive_upload.md\"\n    }\n  ]\n}\n```",
+              "candidates": [
+                {
+                  "rawFAQKnowledgeId": "raw_faq_knowledge_1",
+                  "rawFAQKnowledge": "If a file's name already exists in the destination, the existing file is quietly replaced. The row ends up updated rather than created. Re-uploading `report.pdf` overwrites the existing one without asking. Work is in progress to replace this with a prompt (\"Replace\", \"Keep both\", or \"Cancel\") plus an automatic-rename option. The rename logic has a known rough edge: because it bumps a trailing number, a photo named `IMG_4521.jpg` would become `IMG_4522.jpg` (likely the next photo's name) instead of something safe like `IMG_4521 (1).jpg`.",
+                  "whyPotentiallyRelevant": "This explains the current behavior of file name conflicts and mentions an upcoming feature for renaming files, which is relevant to the user's question about renaming a file in Twake Drive.",
+                  "sourceHint": "docs_twake_twake_drive_drive_upload.md"
+                }
+              ],
+              "sources": [
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916552",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916552",
+                  "created_at": "2026-07-03T12:13:10.617Z",
+                  "indexed_at": "2026-07-03T12:13:24.769230+00:00",
+                  "prev_section_id": 1783080804769215200,
+                  "section_id": 1783080804769215200,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-drive/drive-upload",
+                  "title": "Drive Upload Mechanism",
+                  "section": "twake-drive",
+                  "source": "/app/data/1783080791270_6343_docs_twake_twake_drive_drive_upload.md",
+                  "filename": "docs_twake_twake_drive_drive_upload.md",
+                  "original_filename": "docs_twake_twake_drive_drive_upload.md",
+                  "file_size": "9.08 KB",
+                  "file_id": "docs_twake_twake_drive_drive_upload",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916552"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916468",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916468",
+                  "created_at": "2026-07-03T12:13:08.639Z",
+                  "indexed_at": "2026-07-03T12:13:13.417558+00:00",
+                  "prev_section_id": 1783080793417543000,
+                  "section_id": 1783080793417543000,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/overview/security",
+                  "title": "Security",
+                  "section": "overview",
+                  "source": "/app/data/1783080789292_898b_docs_twake_overview_security.md",
+                  "filename": "docs_twake_overview_security.md",
+                  "original_filename": "docs_twake_overview_security.md",
+                  "file_size": "11.25 KB",
+                  "file_id": "docs_twake_overview_security",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916468"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916561",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916561",
+                  "created_at": "2026-07-03T12:13:10.537Z",
+                  "indexed_at": "2026-07-03T12:13:25.217727+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080805217718300,
+                  "next_section_id": 1783080805217718300,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-drive",
+                  "title": "Twake Drive",
+                  "section": "twake-drive",
+                  "source": "/app/data/1783080791186_f929_docs_twake_twake_drive.md",
+                  "filename": "docs_twake_twake_drive.md",
+                  "original_filename": "docs_twake_twake_drive.md",
+                  "file_size": "2.44 KB",
+                  "file_id": "docs_twake_twake_drive",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916561"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916527",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916527",
+                  "created_at": "2026-07-03T12:13:10.377Z",
+                  "indexed_at": "2026-07-03T12:13:22.353585+00:00",
+                  "prev_section_id": 1783080802353574000,
+                  "section_id": 1783080802353574000,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-chat/features",
+                  "title": "Features",
+                  "section": "twake-chat",
+                  "source": "/app/data/1783080791026_0cf9_docs_twake_twake_chat_features.md",
+                  "filename": "docs_twake_twake_chat_features.md",
+                  "original_filename": "docs_twake_twake_chat_features.md",
+                  "file_size": "3.07 KB",
+                  "file_id": "docs_twake_twake_chat_features",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916527"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916551",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916551",
+                  "created_at": "2026-07-03T12:13:10.617Z",
+                  "indexed_at": "2026-07-03T12:13:24.769230+00:00",
+                  "prev_section_id": 1783080804769215200,
+                  "section_id": 1783080804769215200,
+                  "next_section_id": 1783080804769215200,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/twake-drive/drive-upload",
+                  "title": "Drive Upload Mechanism",
+                  "section": "twake-drive",
+                  "source": "/app/data/1783080791270_6343_docs_twake_twake_drive_drive_upload.md",
+                  "filename": "docs_twake_twake_drive_drive_upload.md",
+                  "original_filename": "docs_twake_twake_drive_drive_upload.md",
+                  "file_size": "9.08 KB",
+                  "file_id": "docs_twake_twake_drive_drive_upload",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916551"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916509",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916509",
+                  "created_at": "2026-07-03T12:13:09.753Z",
+                  "indexed_at": "2026-07-03T12:13:21.272053+00:00",
+                  "prev_section_id": 1783080801272044300,
+                  "section_id": 1783080801272044300,
+                  "next_section_id": 1783080801272044300,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2b/services",
+                  "title": "Services involved in B2B",
+                  "section": "b2b",
+                  "source": "/app/data/1783080790408_031b_docs_twake_b2b_services.md",
+                  "filename": "docs_twake_b2b_services.md",
+                  "original_filename": "docs_twake_b2b_services.md",
+                  "file_size": "4.34 KB",
+                  "file_id": "docs_twake_b2b_services",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916509"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916535",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916535",
+                  "created_at": "2026-07-03T12:13:10.108Z",
+                  "indexed_at": "2026-07-03T12:13:23.399988+00:00",
+                  "prev_section_id": 1783080803399978000,
+                  "section_id": 1783080803399978000,
+                  "next_section_id": null,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/tmail/features",
+                  "title": "Features",
+                  "section": "tmail",
+                  "source": "/app/data/1783080790763_58a1_docs_twake_tmail_features.md",
+                  "filename": "docs_twake_tmail_features.md",
+                  "original_filename": "docs_twake_tmail_features.md",
+                  "file_size": "3.47 KB",
+                  "file_id": "docs_twake_tmail_features",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916535"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916460",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916460",
+                  "created_at": "2026-07-03T12:13:08.459Z",
+                  "indexed_at": "2026-07-03T12:13:12.020066+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080792020055600,
+                  "next_section_id": 1783080792020055600,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/overview/glossary",
+                  "title": "Glossary",
+                  "section": "overview",
+                  "source": "/app/data/1783080789112_3126_docs_twake_overview_glossary.md",
+                  "filename": "docs_twake_overview_glossary.md",
+                  "original_filename": "docs_twake_overview_glossary.md",
+                  "file_size": "6.27 KB",
+                  "file_id": "docs_twake_overview_glossary",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916460"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916469",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916469",
+                  "created_at": "2026-07-03T12:13:08.543Z",
+                  "indexed_at": "2026-07-03T12:13:18.838369+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080798838360600,
+                  "next_section_id": 1783080798838360600,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/overview/authentication",
+                  "title": "Authentication",
+                  "section": "overview",
+                  "source": "/app/data/1783080789206_8f41_docs_twake_overview_authentication.md",
+                  "filename": "docs_twake_overview_authentication.md",
+                  "original_filename": "docs_twake_overview_authentication.md",
+                  "file_size": "3.33 KB",
+                  "file_id": "docs_twake_overview_authentication",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916469"
+                },
+                {
+                  "source_type": "twake_docs",
+                  "file_url": "http://demo.open-rag.ai/static/466474858415916482",
+                  "chunk_url": "http://demo.open-rag.ai/extract/466474858415916482",
+                  "created_at": "2026-07-03T12:13:09.042Z",
+                  "indexed_at": "2026-07-03T12:13:18.975207+00:00",
+                  "prev_section_id": null,
+                  "section_id": 1783080798975198500,
+                  "next_section_id": 1783080798975198500,
+                  "mimetype": "text/markdown",
+                  "source_url": "https://twake-docs.stg.lin-saas.com/b2c/two-factor-auth",
+                  "title": "Two-factor authentication",
+                  "section": "b2c",
+                  "source": "/app/data/1783080789683_1a9d_docs_twake_b2c_two_factor_auth.md",
+                  "filename": "docs_twake_b2c_two_factor_auth.md",
+                  "original_filename": "docs_twake_b2c_two_factor_auth.md",
+                  "file_size": "4.44 KB",
+                  "file_id": "docs_twake_b2c_two_factor_auth",
+                  "partition": "automatisation_support",
+                  "page": 1,
+                  "chunk_type": "text",
+                  "_id": "466474858415916482"
+                }
+              ],
+              "metadata": {
+                "retriever": "openrag"
+              }
+            }
+          },
+          "filterFAQ": {
+            "isFiltered": true,
+            "keptRawFAQKnowledgeIds": [
+              "raw_faq_knowledge_1"
+            ],
+            "filterExplanation": "Candidate raw_faq_knowledge_1 can help answer the qualified FAQ question."
+          },
+          "selectionFAQ": {
+            "isClearSelected": true,
+            "selectedRawFAQKnowledgeIds": [],
+            "clarificationQuestion": null,
+            "selectionExplanation": "The provided FAQ candidate does not directly answer the user's question about how to rename a file in Twake Drive. It discusses file name conflicts and future features but does not provide the steps or instructions for renaming a file."
+          },
+          "segmentationKnowledgeFAQ": {
+            "isSegmented": true,
+            "segmentedFAQKnowledge": []
+          }
+        },
+        "deepQualification": {
+          "isBuilt": false,
+          "isCompleted": false,
+          "caseDetailsToAskBecauseOfDeepQualification": []
+        },
+        "solution": {
+          "isActionForUserBuilt": false,
+          "isActionForSupportBuilt": false,
+          "isCaseDetailsForSolutionBuilt": false,
+          "isCompleted": false,
+          "attemptedActionsToAskBecauseOfSolutionFound": [],
+          "caseDetailsToAskBecauseOfSolutionFound": [],
+          "actionToTakeForSupport": null
+        },
+        "solutionFAQ": {
+          "isActionForUserFAQBuilt": true,
+          "isCompleted": true,
+          "retrievalAttemptCount": 0,
+          "lastRetrievalRelaunchReason": null,
+          "retrievalGuidanceHistory": [],
+          "askedActionsToDoBecauseOfRagFAQ": [],
+          "actionToTakeForSupportFAQ": null
+        },
+        "idleMode": {
+          "isActivated": false
+        },
+        "idleFAQ": {
+          "isActivated": true
+        }
+      }
+    }
+  ]
+}
