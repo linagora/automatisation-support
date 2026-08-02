@@ -57,6 +57,10 @@ function stringArray(value: unknown): string[] {
   return output;
 }
 
+function normalizeIsBotActive(value: unknown): boolean {
+  return typeof value === "boolean" ? value : true;
+}
+
 function normalizeHandover(value: unknown): LiveMemoryContextOptimized["handover"] {
   if (!isRecord(value)) {
     return createEmptyLiveMemoryContextOptimized().handover;
@@ -681,6 +685,42 @@ function normalizeTopics(value: unknown): LiveMemoryContextOptimized["topics"] {
   return topics.length > 0 ? topics : null;
 }
 
+function buildTopicsSummary(
+  topics: LiveMemoryTopicOptimized[] | null
+): LiveMemoryContextOptimized["topicsSummary"] {
+  const normalizedTopics = [...(topics ?? [])].sort((first, second) => {
+    return first.sourceProposeTopicUpdates.topicId -
+      second.sourceProposeTopicUpdates.topicId;
+  });
+
+  const byStatus = {
+    in_progress: 0,
+    solved_by_bot: 0,
+    unsolved: 0
+  };
+
+  for (const topic of normalizedTopics) {
+    byStatus[topic.status] += 1;
+  }
+
+  return {
+    total: normalizedTopics.length,
+    byStatus,
+    topics: normalizedTopics.map((topic) => {
+      const supportNeed = topic.sourceTopicManager.supportNeedResolution.supportNeed.value;
+
+      return {
+        topicId: topic.sourceProposeTopicUpdates.topicId,
+        title: topic.sourceProposeTopicUpdates.title,
+        status: topic.status,
+        supportNeed: typeof supportNeed === "string" && supportNeed.trim() !== ""
+          ? supportNeed
+          : null
+      };
+    })
+  };
+}
+
 function normalizeLiveMemoryContextOptimized(
   value: unknown
 ): LiveMemoryContextOptimized {
@@ -688,7 +728,11 @@ function normalizeLiveMemoryContextOptimized(
     return createEmptyLiveMemoryContextOptimized();
   }
 
+  const topics = normalizeTopics(value.topics);
+
   return {
+    isBotActive: normalizeIsBotActive(value.isBotActive),
+    topicsSummary: buildTopicsSummary(topics),
     handover: normalizeHandover(value.handover),
     previousConversationTurn: normalizePreviousConversationTurn(
       value.previousConversationTurn
@@ -698,7 +742,7 @@ function normalizeLiveMemoryContextOptimized(
     ),
     securityAlerts: normalizeSecurityAlerts(value.securityAlerts),
     userState: normalizeUserState(value.userState),
-    topics: normalizeTopics(value.topics)
+    topics
   };
 }
 
@@ -745,6 +789,7 @@ async function writeLiveMemoryContext(
 }
 
 export {
+  buildTopicsSummary,
   buildLiveMemoryContextPath,
   getLiveMemoryContextDirectory,
   normalizeLiveMemoryContextOptimized,

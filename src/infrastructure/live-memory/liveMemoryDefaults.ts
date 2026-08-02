@@ -110,6 +110,18 @@ function createEmptyLiveMemoryTopicOptimized(
 
 function createEmptyLiveMemoryContextOptimized(): LiveMemoryContextOptimized {
   return {
+    isBotActive: true,
+
+    topicsSummary: {
+      total: 0,
+      byStatus: {
+        in_progress: 0,
+        solved_by_bot: 0,
+        unsolved: 0
+      },
+      topics: []
+    },
+
     handover: {
       isHandover: false,
       handoverReason: null

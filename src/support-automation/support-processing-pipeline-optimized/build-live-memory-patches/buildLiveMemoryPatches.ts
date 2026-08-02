@@ -6,6 +6,14 @@ import type {
   AnalyzeSupportTextOther
 } from "../analyze-support-text-optimized/runAnalyzeSupportText";
 
+/**
+ * Entrées nécessaires pour transformer les sorties du pipeline
+ * en instructions de mise à jour de la live memory.
+ *
+ * Ce fichier ne lit et n'écrit pas la mémoire persistée.
+ * Il produit uniquement un patch qui sera ensuite appliqué
+ * par applyLiveMemoryPatch.
+ */
 export type BuildLiveMemoryPatchesInput = {
   latestUserMessage: {
     content: string;
@@ -14,15 +22,33 @@ export type BuildLiveMemoryPatchesInput = {
 
   latestUserAttachments: unknown[];
 
+  /**
+   * Seule la raison de handover existante est nécessaire ici.
+   * Elle sert à fusionner les nouvelles raisons sans perdre
+   * celles déjà enregistrées.
+   */
   liveMemory: {
     handover: {
       handoverReason: string | null;
     };
   };
 
+  /**
+   * Ensemble des sorties intermédiaires produites pendant
+   * l'exécution du pipeline courant.
+   */
   intermOutputs: RunSupportProcessingPipelineV3OptimizedIntermOutputs;
 };
 
+/**
+ * Patch global de la live memory.
+ *
+ * Dans cette structure, null signifie généralement :
+ * "aucune modification à appliquer pour cette section".
+ *
+ * Cette convention doit être distinguée des nulls métier
+ * qui peuvent exister à l'intérieur des objets.
+ */
 export type BuildLiveMemoryPatchesOutput = {
   handover: {
     isHandover: boolean;
@@ -54,6 +80,12 @@ export type BuildLiveMemoryPatchesOutput = {
   topics: BuildLiveMemoryTopicPatch[] | null;
 };
 
+/**
+ * Représentation normalisée d'un échec RAG non bloquant.
+ *
+ * Ces erreurs sont conservées dans failedPipelineMessages,
+ * sans nécessairement faire échouer tout le pipeline.
+ */
 type RagFailure = {
   source: "rag";
   reason: "rag_failed";
@@ -61,12 +93,25 @@ type RagFailure = {
   errorMessage: string;
 };
 
+/**
+ * Ensemble des facts atomiques produits par analyzeSupportText.
+ *
+ * Ils seront ensuite filtrés topic par topic selon les identifiants
+ * retournés par proposeTopicUpdates.
+ */
 type AtomicSupportFacts = {
   caseDetailsExtracted: AnalyzeSupportTextCaseDetail[];
   attemptedActionsExtracted: AnalyzeSupportTextAttemptedAction[];
   otherExtracted: AnalyzeSupportTextOther[];
 };
 
+/**
+ * Patch d'un topic.
+ *
+ * topicId peut être null lorsque proposeTopicUpdates demande
+ * la création d'un nouveau topic. L'identifiant définitif sera
+ * attribué lors de l'application du patch.
+ */
 export type BuildLiveMemoryTopicPatch = {
   status: LiveMemoryTopicOptimized["status"];
 
@@ -82,6 +127,15 @@ export type BuildLiveMemoryTopicPatch = {
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
 };
 
+/**
+ * Point d'entrée principal.
+ *
+ * Étapes :
+ * 1. Initialiser un patch vide.
+ * 2. Construire les mises à jour globales.
+ * 3. Construire les mises à jour de topics si proposeTopicUpdates
+ *    a effectivement été exécuté.
+ */
 export function buildLiveMemoryPatches(
   input: BuildLiveMemoryPatchesInput
 ): BuildLiveMemoryPatchesOutput {
@@ -96,6 +150,13 @@ export function buildLiveMemoryPatches(
 
   buildGlobalLiveMemoryPatch(input, patch);
 
+  /**
+   * Les topics ne peuvent être construits que si le pipeline
+   * possède une sortie de proposeTopicUpdates.
+   *
+   * Le contrôle du statut "analyzed" est effectué plus bas
+   * dans buildTopicLiveMemoryPatch.
+   */
   if (
     input.intermOutputs.proposeTopicUpdatesOutput !== null &&
     input.intermOutputs.proposeTopicUpdatesOutput !== undefined
@@ -106,18 +167,36 @@ export function buildLiveMemoryPatches(
   return patch;
 }
 
+/**
+ * Construit les parties globales du patch :
+ * - previousConversationTurn ;
+ * - handover demandé directement par l'utilisateur ;
+ * - alertes de sécurité ;
+ * - userState ;
+ * - échecs RAG non bloquants.
+ *
+ * Cette fonction modifie l'objet patch reçu en paramètre.
+ */
 function buildGlobalLiveMemoryPatch(
   input: BuildLiveMemoryPatchesInput,
   patch: BuildLiveMemoryPatchesOutput
 ): BuildLiveMemoryPatchesOutput {
   const flags: string[] = [];
 
+  /**
+   * Première source de flags :
+   * les patterns suspects détectés avant l'analyse de surface.
+   */
   if (input.intermOutputs.detectSuspiciousPromptPatternsOutput) {
     flags.push(
       ...input.intermOutputs.detectSuspiciousPromptPatternsOutput.matchedPatternIds
     );
   }
 
+  /**
+   * Deuxième source de flags :
+   * les segments classés safety_sensitive par analyzeTextSurface.
+   */
   if (input.intermOutputs.analyzeTextSurfaceOutput?.status === "analyzed") {
     for (const segment of input.intermOutputs.analyzeTextSurfaceOutput.segments) {
       if (
@@ -129,8 +208,19 @@ function buildGlobalLiveMemoryPatch(
     }
   }
 
+  /**
+   * Un même signal peut être produit par plusieurs briques.
+   * On ne conserve donc chaque flag qu'une seule fois.
+   */
   const dedupedFlags = [...new Set(flags)];
 
+  /**
+   * Le tour précédent n'est enregistré que lorsqu'un message final
+   * a été traité par translateMessage.
+   *
+   * Le message réellement livré pourra ensuite remplacer
+   * previousBotMessage dans applyLiveMemoryPatch.
+   */
   if (input.intermOutputs.translateMessageOutput?.status === "processed") {
     patch.previousConversationTurn = {
       previousUserMessage: input.latestUserMessage.content,
@@ -138,6 +228,10 @@ function buildGlobalLiveMemoryPatch(
     };
   }
 
+  /**
+   * Un handover demandé explicitement dans le message utilisateur
+   * est enregistré au niveau global.
+   */
   if (hasHandoverRequestedSurface(input.intermOutputs.analyzeTextSurfaceOutput)) {
     patch.handover = {
       isHandover: true,
@@ -148,6 +242,11 @@ function buildGlobalLiveMemoryPatch(
     };
   }
 
+  /**
+   * Les signaux de sécurité mettent à jour :
+   * - l'état utilisateur ;
+   * - l'historique des alertes de sécurité.
+   */
   if (dedupedFlags.length > 0) {
     patch.userState = {
       status: null,
@@ -163,11 +262,19 @@ function buildGlobalLiveMemoryPatch(
     ];
   }
 
+  /**
+   * Certains échecs techniques, notamment RAG, sont enregistrés
+   * sans nécessairement interrompre l'ensemble du traitement.
+   */
   patch.failedPipelineMessages = buildNonBlockingFailedPipelineMessages(input);
 
   return patch;
 }
 
+/**
+ * Transforme les échecs RAG trouvés dans les outputs de topics
+ * en entrées failedPipelineMessages.
+ */
 function buildNonBlockingFailedPipelineMessages(
   input: BuildLiveMemoryPatchesInput
 ): Array<{
@@ -190,6 +297,10 @@ function buildNonBlockingFailedPipelineMessages(
   });
 }
 
+/**
+ * Parcourt tous les outputs des topic managers et récupère
+ * les éventuels échecs RAG de la branche issue-resolution.
+ */
 function collectRagFailures(
   input: BuildLiveMemoryPatchesInput
 ): RagFailure[] {
@@ -205,6 +316,12 @@ function collectRagFailures(
   });
 }
 
+/**
+ * Accès défensif à un sous-objet profond du topic manager.
+ *
+ * Le paramètre est unknown afin de ne pas dépendre directement
+ * de l'ensemble du type interne du topic manager.
+ */
 function extractRetrieveKnowledgeOutput(
   topicManagerOutput: unknown
 ): {
@@ -232,6 +349,20 @@ function extractRetrieveKnowledgeOutput(
     ?.retrieveKnowledgeOutput ?? null;
 }
 
+/**
+ * Construit les patches de topics.
+ *
+ * Étapes :
+ * 1. Vérifier que proposeTopicUpdates a réussi.
+ * 2. Collecter les facts atomiques du message.
+ * 3. Pour chaque plan de topic :
+ *    - retrouver le topicManagerOutput correspondant ;
+ *    - sélectionner les facts associés ;
+ *    - appliquer un éventuel handover de surface ;
+ *    - résoudre le statut du topic ;
+ *    - construire le patch final.
+ * 4. Propager les handovers topic au niveau global.
+ */
 function buildTopicLiveMemoryPatch(
   input: BuildLiveMemoryPatchesInput,
   patch: BuildLiveMemoryPatchesOutput
@@ -243,6 +374,7 @@ function buildTopicLiveMemoryPatch(
   }
 
   const topicManagerOutputs = input.intermOutputs.topicManagerOutputs ?? [];
+
   const supportTextFacts = collectAnalyzeSupportTextFacts(
     input.intermOutputs.analyzeSupportTextOutput
   );
@@ -253,18 +385,34 @@ function buildTopicLiveMemoryPatch(
 
   const topicPatches: BuildLiveMemoryTopicPatch[] = [];
 
-  for (const [topicIndex, topicUpdatePlan] of proposeTopicUpdatesOutput.topicUpdatePlans.entries()) {
+  /**
+   * Invariant important :
+   * topicUpdatePlans et topicManagerOutputs doivent avoir
+   * le même ordre et la même cardinalité.
+   */
+  for (
+    const [topicIndex, topicUpdatePlan]
+    of proposeTopicUpdatesOutput.topicUpdatePlans.entries()
+  ) {
     const topicManagerOutput = topicManagerOutputs[topicIndex];
 
     if (!topicManagerOutput || topicManagerOutput.status !== "processed") {
       throw new Error("Missing processed topicManagerOutput for topic patch");
     }
 
+    /**
+     * Ne conserve dans ce topic que les facts explicitement
+     * référencés par le plan de routing.
+     */
     const relatedFacts = selectSourceFacts({
       facts: supportTextFacts,
       topicUpdatePlan
     });
 
+    /**
+     * Une demande de handover détectée au niveau du message
+     * est également propagée dans l'état du topic.
+     */
     const sourceTopicManager = applySurfaceHandoverIfNeeded(
       topicManagerOutput.sourceTopicManager,
       surfaceHandoverRequested
@@ -273,26 +421,38 @@ function buildTopicLiveMemoryPatch(
     topicPatches.push({
       status: resolveTopicStatus(sourceTopicManager),
 
+      /**
+       * Les identifiants techniques des facts sont retirés avant
+       * leur stockage dans la live memory.
+       */
       sourceAnalyzeSupportText: {
-        caseDetailsExtracted: relatedFacts.caseDetailsExtracted.map((caseDetail) => {
-          return {
-            key: caseDetail.key,
-            value: caseDetail.value,
-            evidence: caseDetail.evidence,
-            status: caseDetail.status
-          };
-        }),
+        caseDetailsExtracted: relatedFacts.caseDetailsExtracted.map(
+          (caseDetail) => {
+            return {
+              key: caseDetail.key,
+              value: caseDetail.value,
+              evidence: caseDetail.evidence,
+              status: caseDetail.status
+            };
+          }
+        ),
 
-        attemptedActionsExtracted: relatedFacts.attemptedActionsExtracted.map((attemptedAction) => {
-          return {
-            action: attemptedAction.action,
-            outcome: attemptedAction.outcome,
-            evidence: attemptedAction.evidence,
-            status: attemptedAction.status
-          };
-        })
+        attemptedActionsExtracted: relatedFacts.attemptedActionsExtracted.map(
+          (attemptedAction) => {
+            return {
+              action: attemptedAction.action,
+              outcome: attemptedAction.outcome,
+              evidence: attemptedAction.evidence,
+              status: attemptedAction.status
+            };
+          }
+        )
       },
 
+      /**
+       * topicId reste null pour un nouveau topic.
+       * Il sera attribué lors de l'application du patch.
+       */
       sourceProposeTopicUpdates: {
         topicId: topicUpdatePlan.topicId,
         title: topicUpdatePlan.title,
@@ -303,13 +463,25 @@ function buildTopicLiveMemoryPatch(
         }
       },
 
+      /**
+       * L'état complet du topic manager est enregistré tel quel,
+       * après éventuelle application du handover de surface.
+       */
       sourceTopicManager
     });
   }
 
   patch.topics = topicPatches.length > 0 ? topicPatches : null;
 
-  if (topicPatches.some((topicPatch) => topicPatch.sourceTopicManager.handover.isRequested)) {
+  /**
+   * Si au moins un topic demande un handover, le handover global
+   * est également activé et toutes les raisons sont fusionnées.
+   */
+  if (
+    topicPatches.some(
+      (topicPatch) => topicPatch.sourceTopicManager.handover.isRequested
+    )
+  ) {
     const newHandoverReasons = [
       ...collectTopicHandoverReasons(topicPatches),
       ...(surfaceHandoverRequested ? ["asked_by_user"] : [])
@@ -327,6 +499,10 @@ function buildTopicLiveMemoryPatch(
   return patch;
 }
 
+/**
+ * Récupère les raisons de handover non vides
+ * dans les patches de topics.
+ */
 function collectTopicHandoverReasons(
   topicPatches: BuildLiveMemoryTopicPatch[]
 ): string[] {
@@ -340,6 +516,12 @@ function collectTopicHandoverReasons(
     .map((reason) => reason.trim());
 }
 
+/**
+ * Fusionne les anciennes et nouvelles raisons de handover.
+ *
+ * Une raison par défaut est utilisée si aucune raison exploitable
+ * n'est disponible.
+ */
 function buildMergedHandoverReason(input: {
   existingReason: string | null | undefined;
   newReasons: string[];
@@ -347,6 +529,10 @@ function buildMergedHandoverReason(input: {
   return mergeHandoverReasons(input) ?? "detected_by_system";
 }
 
+/**
+ * Déduplique les raisons de handover et les concatène
+ * dans une chaîne séparée par des points-virgules.
+ */
 function mergeHandoverReasons(input: {
   existingReason: string | null | undefined;
   newReasons: string[];
@@ -371,7 +557,13 @@ function mergeHandoverReasons(input: {
   return mergedReasons.length > 0 ? mergedReasons.join("; ") : null;
 }
 
-function splitHandoverReason(reason: string | null | undefined): string[] {
+/**
+ * Une chaîne de raisons peut déjà contenir plusieurs raisons
+ * séparées par des points-virgules.
+ */
+function splitHandoverReason(
+  reason: string | null | undefined
+): string[] {
   if (typeof reason !== "string") {
     return [];
   }
@@ -382,6 +574,13 @@ function splitHandoverReason(reason: string | null | undefined): string[] {
     .filter((part) => part.length > 0);
 }
 
+/**
+ * Convertit l'état interne du topic manager en statut global de topic.
+ *
+ * - Toute étape non idle signifie que le topic est encore en cours.
+ * - En idle, solved_by_bot est conservé.
+ * - Les autres cas idle deviennent unsolved.
+ */
 function resolveTopicStatus(
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
 ): LiveMemoryTopicOptimized["status"] {
@@ -393,10 +592,16 @@ function resolveTopicStatus(
     return "solved_by_bot";
   }
 
-
   return "unsolved";
 }
 
+/**
+ * Détecte une demande de transfert au support humain
+ * dans la sortie de l'analyse de surface.
+ *
+ * Le code accepte deux propriétés pour compatibilité :
+ * standardSubcategory ou standardAction.
+ */
 function hasHandoverRequestedSurface(
   output: RunSupportProcessingPipelineV3OptimizedIntermOutputs["analyzeTextSurfaceOutput"]
 ): boolean {
@@ -412,6 +617,12 @@ function hasHandoverRequestedSurface(
     });
 }
 
+/**
+ * Propage une demande de handover détectée en surface
+ * dans l'état du topic manager.
+ *
+ * Si le topic demande déjà un handover, son état existant est conservé.
+ */
 function applySurfaceHandoverIfNeeded(
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"],
   surfaceHandoverRequested: boolean
@@ -433,6 +644,11 @@ function applySurfaceHandoverIfNeeded(
   };
 }
 
+/**
+ * Normalise la sortie analyzeSupportText.
+ *
+ * En cas d'absence ou de fallback, aucun fact n'est disponible.
+ */
 function collectAnalyzeSupportTextFacts(
   output: RunSupportProcessingPipelineV3OptimizedIntermOutputs["analyzeSupportTextOutput"]
 ): AtomicSupportFacts {
@@ -451,6 +667,13 @@ function collectAnalyzeSupportTextFacts(
   };
 }
 
+/**
+ * Sélectionne les facts attribués à un topic donné.
+ *
+ * proposeTopicUpdates ne renvoie pas les facts complets :
+ * il renvoie leurs identifiants. Cette fonction effectue
+ * le rapprochement avec les facts produits par analyzeSupportText.
+ */
 function selectSourceFacts(params: {
   facts: AtomicSupportFacts;
   topicUpdatePlan: {
@@ -459,17 +682,28 @@ function selectSourceFacts(params: {
     sourceOtherIds: string[];
   };
 }): AtomicSupportFacts {
-  const caseDetailIdSet = new Set(params.topicUpdatePlan.sourceCaseDetailIds);
-  const attemptedActionIdSet = new Set(params.topicUpdatePlan.sourceAttemptedActionIds);
-  const otherIdSet = new Set(params.topicUpdatePlan.sourceOtherIds);
+  const caseDetailIdSet = new Set(
+    params.topicUpdatePlan.sourceCaseDetailIds
+  );
+
+  const attemptedActionIdSet = new Set(
+    params.topicUpdatePlan.sourceAttemptedActionIds
+  );
+
+  const otherIdSet = new Set(
+    params.topicUpdatePlan.sourceOtherIds
+  );
 
   return {
     caseDetailsExtracted: params.facts.caseDetailsExtracted.filter((fact) => {
       return caseDetailIdSet.has(fact.caseDetailId);
     }),
-    attemptedActionsExtracted: params.facts.attemptedActionsExtracted.filter((fact) => {
-      return attemptedActionIdSet.has(fact.attemptedActionId);
-    }),
+
+    attemptedActionsExtracted:
+      params.facts.attemptedActionsExtracted.filter((fact) => {
+        return attemptedActionIdSet.has(fact.attemptedActionId);
+      }),
+
     otherExtracted: params.facts.otherExtracted.filter((fact) => {
       return otherIdSet.has(fact.otherId);
     })

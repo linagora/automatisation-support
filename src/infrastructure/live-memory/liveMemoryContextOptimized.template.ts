@@ -1,4 +1,23 @@
 export type LiveMemoryContextOptimized = {
+  isBotActive: boolean;
+
+  topicsSummary: {
+    total: number;
+
+    byStatus: {
+      in_progress: number;
+      solved_by_bot: number;
+      unsolved: number;
+    };
+
+    topics: Array<{
+      topicId: number;
+      title: string | null;
+      status: LiveMemoryTopicOptimized["status"];
+      supportNeed: string | null;
+    }>;
+  };
+
   handover: {
     isHandover: boolean;
     handoverReason: string | null;
