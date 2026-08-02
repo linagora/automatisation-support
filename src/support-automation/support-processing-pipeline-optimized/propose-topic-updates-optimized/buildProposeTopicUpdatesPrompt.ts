@@ -10,7 +10,10 @@ import type {
   AnalyzeSupportTextCaseDetail,
   AnalyzeSupportTextOther
 } from "../analyze-support-text-optimized/runAnalyzeSupportText";
-import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {
+  LiveMemoryIssueIdle,
+  LiveMemoryTopicOptimized
+} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RecentInteractionContext} from "../typesPipelineContext";
 
 type CurrentUserMessage = {
@@ -33,6 +36,15 @@ type ProposeTopicUpdatesLlmRequest = {
   responseFormat: typeof responseFormat;
 };
 
+type DerivedTopicCurrentStep =
+  | "support_need_resolution"
+  | "basic_qualification"
+  | "retrieve_knowledge"
+  | "deep_qualification"
+  | "solution"
+  | "idle"
+  | null;
+
 function buildProposeTopicUpdatesPrompt(input: BuildProposeTopicUpdatesPromptInput): ProposeTopicUpdatesLlmRequest {
   const existingTopicsForPrompt = input.existingTopics.map((topic) => {
     const pendingBasicFieldKeys = getPendingBasicFieldKeys(topic);
@@ -42,12 +54,10 @@ function buildProposeTopicUpdatesPrompt(input: BuildProposeTopicUpdatesPromptInp
     return {
       topicId: topic.sourceProposeTopicUpdates.topicId,
       status: topic.status,
+      currentStep: deriveTopicCurrentStep(topic.sourceTopicManager),
       title: topic.sourceProposeTopicUpdates.title,
       summaryTopic: topic.sourceProposeTopicUpdates.summaryTopic,
-      currentStep: topic.sourceTopicManager.currentStep,
-      resolutionStatus: topic.sourceTopicManager.resolutionStatus,
-      handover: topic.sourceTopicManager.handover,
-      idleMode: topic.sourceTopicManager.idleMode,
+      idleMode: getActiveWorkflowIdle(topic.sourceTopicManager),
       supportNeed: topic.sourceTopicManager.supportNeedResolution.supportNeed,
       supportDomain: topic.sourceProposeTopicUpdates.supportDomain,
       pendingBasicFieldKeys,
@@ -162,7 +172,7 @@ Only duplicate a fact when the whole fact applies to every selected topic.
 
 # Sticky state guard
 
-A topic in handover, requested support, idle, completed, or escalated must not capture a new subject automatically.
+A topic that is idle, completed, or escalated must not capture a new subject automatically.
 
 Route to such a topic only when the message explicitly refers to that same topic.
 
@@ -203,21 +213,21 @@ Return only JSON.
 }
 
 function getPendingBasicFieldKeys(topic: LiveMemoryTopicOptimized): string[] {
-  return topic.sourceTopicManager.basicQualification.caseDetailsToAskBecauseOfBasicQualification
+  return topic.sourceTopicManager.workflows.issueResolution.basicQualification.caseDetailsToAskBecauseOfBasicQualification
     .filter((field) => field.status === "asking")
     .map((field) => field.key)
     .filter((key): key is string => typeof key === "string" && key.trim() !== "");
 }
 
 function getPendingDeepFieldKeys(topic: LiveMemoryTopicOptimized): string[] {
-  return topic.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification
+  return topic.sourceTopicManager.workflows.issueResolution.deepQualification.caseDetailsToAskBecauseOfDeepQualification
     .filter((field) => field.status === "asking")
     .map((field) => field.key)
     .filter((key): key is string => typeof key === "string" && key.trim() !== "");
 }
 
 function getPendingSolutionFieldKeys(topic: LiveMemoryTopicOptimized): string[] {
-  return topic.sourceTopicManager.solution.caseDetailsToAskBecauseOfSolutionFound
+  return topic.sourceTopicManager.workflows.issueResolution.solution.caseDetailsToAskBecauseOfSolutionFound
     .filter((field) => field.status === "asking")
     .map((field) => field.key)
     .filter((key): key is string => typeof key === "string" && key.trim() !== "");
@@ -227,7 +237,7 @@ function getPendingSolutionActions(topic: LiveMemoryTopicOptimized): Array<{
   action: string;
   reason: string | null;
 }> {
-  return topic.sourceTopicManager.solution.attemptedActionsToAskBecauseOfSolutionFound
+  return topic.sourceTopicManager.workflows.issueResolution.solution.attemptedActionsToAskBecauseOfSolutionFound
     .filter((action) => action.status === "asking")
     .map((action) => ({
       action: action.action,
@@ -236,6 +246,80 @@ function getPendingSolutionActions(topic: LiveMemoryTopicOptimized): Array<{
     .filter((action): action is {action: string; reason: string | null} => {
       return typeof action.action === "string" && action.action.trim() !== "";
     });
+}
+
+function getActiveWorkflowIdle(
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
+): LiveMemoryIssueIdle {
+  const supportNeed = sourceTopicManager.supportNeedResolution.supportNeed.value;
+
+  if (supportNeed === "issue_resolution") {
+    return sourceTopicManager.workflows.issueResolution.idle;
+  }
+
+  if (supportNeed === "knowledge_answer") {
+    return sourceTopicManager.workflows.knowledgeAnswer.idle;
+  }
+
+  if (supportNeed === "support_action") {
+    return sourceTopicManager.workflows.supportAction.idle;
+  }
+
+  if (supportNeed === "feature_request") {
+    return sourceTopicManager.workflows.featureRequest.idle;
+  }
+
+  return {isActivated: false};
+}
+
+function deriveTopicCurrentStep(
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
+): DerivedTopicCurrentStep {
+  const supportNeed = sourceTopicManager.supportNeedResolution.supportNeed.value;
+
+  if (supportNeed === "issue_resolution") {
+    return deriveIssueResolutionCurrentStep(sourceTopicManager.workflows.issueResolution);
+  }
+
+  if (supportNeed === "knowledge_answer") {
+    return sourceTopicManager.workflows.knowledgeAnswer.idle.isActivated ? "idle" : null;
+  }
+
+  if (supportNeed === "support_action") {
+    return sourceTopicManager.workflows.supportAction.idle.isActivated ? "idle" : null;
+  }
+
+  if (supportNeed === "feature_request") {
+    return sourceTopicManager.workflows.featureRequest.idle.isActivated ? "idle" : null;
+  }
+
+  return "support_need_resolution";
+}
+
+function deriveIssueResolutionCurrentStep(
+  workflow: LiveMemoryTopicOptimized["sourceTopicManager"]["workflows"]["issueResolution"]
+): DerivedTopicCurrentStep {
+  if (workflow.idle.isActivated === true) {
+    return "idle";
+  }
+
+  if (workflow.basicQualification.isCompleted !== true) {
+    return "basic_qualification";
+  }
+
+  if (workflow.retrieveKnowledge.isCompleted === false) {
+    return "retrieve_knowledge";
+  }
+
+  if (workflow.solution.isCompleted !== true) {
+    return "solution";
+  }
+
+  if (workflow.deepQualification.isCompleted !== true) {
+    return "deep_qualification";
+  }
+
+  return "idle";
 }
 
 function renderPromptItems(entries: Array<{key: string; extractionGuidance?: string}>): string {
@@ -248,10 +332,15 @@ function buildPromptLine(entry: {key: string; extractionGuidance?: string}): str
     : `* "${entry.key}"`;
 }
 
-export {buildProposeTopicUpdatesPrompt};
+export {
+  buildProposeTopicUpdatesPrompt,
+  deriveIssueResolutionCurrentStep,
+  deriveTopicCurrentStep
+};
 
 export type {
   BuildProposeTopicUpdatesPromptInput,
   CurrentUserMessage,
+  DerivedTopicCurrentStep,
   ProposeTopicUpdatesLlmRequest
 };

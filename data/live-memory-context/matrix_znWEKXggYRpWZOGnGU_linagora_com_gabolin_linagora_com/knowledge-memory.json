@@ -1,0 +1,11 @@
+{
+  "retrievals": [
+    {
+      "retrievalId": "retrieval_8aa76b96-5cf1-4699-ab9d-c03d36f694dc",
+      "topicId": 1,
+      "workflow": "issueResolution",
+      "rawRagKnowledge": null,
+      "segmentedKnowledge": []
+    }
+  ]
+}

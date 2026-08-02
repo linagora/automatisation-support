@@ -4,10 +4,10 @@ import {
   getDeepIssueQualificationGroupLabel
 } from "../qualificationRules.catalog";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryIssueDeepQualification} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {DeepQualificationGroupKey} from "../qualificationRules.catalog";
 
-type DeepQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["deepQualification"];
+type DeepQualification = LiveMemoryIssueDeepQualification;
 type FieldToAsk = DeepQualification["caseDetailsToAskBecauseOfDeepQualification"][number] & {status: "asking"};
 
 type BuildDeepQualificationAskInput = {

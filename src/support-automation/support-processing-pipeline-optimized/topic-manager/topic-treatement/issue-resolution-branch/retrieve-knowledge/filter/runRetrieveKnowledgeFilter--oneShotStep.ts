@@ -4,10 +4,10 @@ import {buildRetrieveKnowledgeFilterPrompt} from "./buildRetrieveKnowledgeFilter
 import {retrieveKnowledgeFilterResponseFormat} from "./responseFormat";
 import {validateRetrieveKnowledgeFilterOutput} from "./validateRetrieveKnowledgeFilterOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryIssueRetrieveKnowledge} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RawKnowledgeCandidate} from "../ranked-search/runRankedSearch--oneShotStep";
 
-type RetrieveKnowledgeFilter = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["filter"];
+type RetrieveKnowledgeFilter = LiveMemoryIssueRetrieveKnowledge["filter"];
 
 export type RunRetrieveKnowledgeFilterInput = {
   summaryTopic: string;

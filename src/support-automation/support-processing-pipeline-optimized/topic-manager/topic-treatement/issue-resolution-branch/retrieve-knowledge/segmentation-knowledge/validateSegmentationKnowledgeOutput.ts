@@ -1,6 +1,4 @@
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
-
-type SegmentationKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"];
+import type {SegmentationKnowledge} from "./runSegmentationKnowledge--oneShotStep";
 type SegmentedKnowledgeBySource = SegmentationKnowledge["segmentedKnowledge"][number];
 type SegmentedKnowledgePiece = SegmentedKnowledgeBySource["userFacingKnowledge"][number];
 

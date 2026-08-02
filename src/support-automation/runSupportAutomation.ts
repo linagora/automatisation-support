@@ -20,11 +20,20 @@ import {
   createEmptyLiveMemoryContextOptimized
 } from "../infrastructure/live-memory/liveMemoryDefaults";
 import {
-  readLiveMemoryContext
+  consumeLegacyKnowledgeRetrievals,
+  readLiveMemoryContext,
+  writeLiveMemoryContext
 } from "../infrastructure/live-memory/liveMemoryContextStore";
 import {
-  applyLiveMemoryPatch
+  applyLiveMemoryPatch,
+  applyLiveMemoryPatchesToContext
 } from "./patch-live-memory/applyLiveMemoryPatch";
+import {
+  applyKnowledgeMemoryPatch,
+  attachKnowledgeRetrievalTopicIds,
+  readKnowledgeMemory,
+  writeKnowledgeMemory
+} from "../infrastructure/live-memory/knowledgeMemoryStore";
 import {
   runSupportProcessingPipelineV3Optimized as runSupportProcessingPipelineOptimized
 } from "./support-processing-pipeline-optimized/runSupportProcessingPipelineOptimized";
@@ -51,6 +60,7 @@ import type {
 import type {
   LiveMemoryContextOptimized
 } from "../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {KnowledgeMemory} from "../infrastructure/live-memory/knowledgeMemory.template";
 import type {
   RunSupportProcessingPipelineV3OptimizedInput,
   RunSupportProcessingPipelineV3OptimizedOutput
@@ -70,6 +80,9 @@ type RunSupportProcessingPipelineFunction = (
 type ListenMatrixEventsFunction = typeof listenMatrixEvents;
 type SendMatrixDeliveryMessagesFunction = typeof sendMatrixDeliveryMessages;
 type ReadLiveMemoryContextFunction = typeof readLiveMemoryContext;
+type ReadKnowledgeMemoryFunction = typeof readKnowledgeMemory;
+type WriteKnowledgeMemoryFunction = typeof writeKnowledgeMemory;
+type WriteLiveMemoryContextFunction = typeof writeLiveMemoryContext;
 type ApplyLiveMemoryPatchFunction = typeof applyLiveMemoryPatch;
 
 type SupportAutomationStage =
@@ -115,6 +128,9 @@ type SupportAutomationDependencies = {
   sendMatrixDeliveryMessages?: SendMatrixDeliveryMessagesFunction;
   runSupportProcessingPipeline?: RunSupportProcessingPipelineFunction;
   readLiveMemoryContext?: ReadLiveMemoryContextFunction;
+  readKnowledgeMemory?: ReadKnowledgeMemoryFunction;
+  writeKnowledgeMemory?: WriteKnowledgeMemoryFunction;
+  writeLiveMemoryContext?: WriteLiveMemoryContextFunction;
   applyLiveMemoryPatch?: ApplyLiveMemoryPatchFunction;
 };
 
@@ -151,6 +167,14 @@ type LiveMemoryPatchDeliveryResult = {
   deliveredMessages: Array<{
     content: string;
   }>;
+};
+
+type PersistSupportMemoriesInput = {
+  conversationKey: string;
+  knowledgeMemory: KnowledgeMemory;
+  liveMemoryContext: LiveMemoryContextOptimized;
+  writeKnowledgeMemory?: WriteKnowledgeMemoryFunction;
+  writeLiveMemoryContext?: WriteLiveMemoryContextFunction;
 };
 
 const noopProgressReporter: Required<SupportAutomationProgressReporter> = {
@@ -223,6 +247,7 @@ function buildConversationKey(bufferedMessages: BufferedMessages): string {
 function buildSupportProcessingInput(params: {
   bufferedMessages: BufferedMessages;
   liveMemoryContext: LiveMemoryContextOptimized;
+  knowledgeMemory: KnowledgeMemory;
 }): RunSupportProcessingPipelineV3OptimizedInput {
   return {
     latestUserMessage: buildLatestUserMessage(params.bufferedMessages),
@@ -234,7 +259,8 @@ function buildSupportProcessingInput(params: {
       userState: params.liveMemoryContext.userState,
       securityAlerts: params.liveMemoryContext.securityAlerts,
       failedPipelineMessages: params.liveMemoryContext.failedPipelineMessages
-    }
+    },
+    knowledgeMemory: params.knowledgeMemory
   };
 }
 
@@ -320,6 +346,16 @@ function toLiveMemoryPatchDeliveryResult(
   };
 }
 
+async function persistSupportMemories(
+  input: PersistSupportMemoriesInput
+): Promise<void> {
+  const writeKnowledge = input.writeKnowledgeMemory ?? writeKnowledgeMemory;
+  const writeStateMemory = input.writeLiveMemoryContext ?? writeLiveMemoryContext;
+
+  await writeKnowledge(input.conversationKey, input.knowledgeMemory);
+  await writeStateMemory(input.conversationKey, input.liveMemoryContext);
+}
+
 function shouldIgnoreHistoricalMessage(params: {
   event: MessagingEvent;
   runnerStartedAt: Date;
@@ -371,8 +407,12 @@ async function runSupportAutomation(
     runSupportProcessingPipelineOptimized;
   const readMemory =
     params.dependencies?.readLiveMemoryContext ?? readLiveMemoryContext;
-  const patchMemory =
-    params.dependencies?.applyLiveMemoryPatch ?? applyLiveMemoryPatch;
+  const readKnowledge =
+    params.dependencies?.readKnowledgeMemory ?? readKnowledgeMemory;
+  const writeKnowledge =
+    params.dependencies?.writeKnowledgeMemory ?? writeKnowledgeMemory;
+  const writeStateMemory =
+    params.dependencies?.writeLiveMemoryContext ?? writeLiveMemoryContext;
 
   const activeBufferTurnIdsByKey = new Map<string, string>();
   const activeProcessingScopeKeys = new Set<string>();
@@ -431,10 +471,18 @@ async function runSupportAutomation(
 
     const liveMemoryContext =
       await readMemory(conversationKey) ?? createEmptyLiveMemoryContextOptimized();
+    const storedKnowledgeMemory = await readKnowledge(conversationKey);
+    const knowledgeMemory = applyKnowledgeMemoryPatch(
+      storedKnowledgeMemory,
+      {
+        upsertRetrievals: consumeLegacyKnowledgeRetrievals(liveMemoryContext)
+      }
+    );
     const supportProcessingInput = {
       ...buildSupportProcessingInput({
         bufferedMessages,
-        liveMemoryContext
+        liveMemoryContext,
+        knowledgeMemory
       }),
       progress: {
         report: async (event: SupportProcessingProgressEvent): Promise<void> => {
@@ -566,10 +614,25 @@ async function runSupportAutomation(
     try {
       await progressReporter.stage(progressContext, "patching_live_memory");
 
-      await patchMemory({
-        conversationKey,
+      const updatedLiveMemoryContext = applyLiveMemoryPatchesToContext({
+        previousContext: liveMemoryContext,
         patches: supportProcessingOutput.patches,
         deliveryResult: toLiveMemoryPatchDeliveryResult(matrixDeliveryResults)
+      });
+      const updatedKnowledgeMemory = attachKnowledgeRetrievalTopicIds({
+        knowledgeMemory: applyKnowledgeMemoryPatch(
+          knowledgeMemory,
+          supportProcessingOutput.knowledgeMemoryPatch
+        ),
+        topics: updatedLiveMemoryContext.topics
+      });
+
+      await persistSupportMemories({
+        conversationKey,
+        knowledgeMemory: updatedKnowledgeMemory,
+        liveMemoryContext: updatedLiveMemoryContext,
+        writeKnowledgeMemory: writeKnowledge,
+        writeLiveMemoryContext: writeStateMemory
       });
 
       liveMemoryPatchStatus = "applied";
@@ -916,10 +979,12 @@ export {
   DEFAULT_BUFFER_INACTIVITY_MS,
   DEFAULT_BUFFER_MAX_WAIT_MS,
   DEFAULT_STARTUP_GRACE_MS,
+  persistSupportMemories,
   runSupportAutomation
 };
 
 export type {
+  PersistSupportMemoriesInput,
   RunSupportAutomationParams,
   SupportAutomationDependencies,
   SupportAutomationHandle,

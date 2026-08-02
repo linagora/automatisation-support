@@ -358,10 +358,9 @@ function extractRetrieveKnowledgeOutput(
  * 3. Pour chaque plan de topic :
  *    - retrouver le topicManagerOutput correspondant ;
  *    - sélectionner les facts associés ;
- *    - appliquer un éventuel handover de surface ;
- *    - résoudre le statut du topic ;
+ *    - reprendre le statut produit par le topic manager ;
  *    - construire le patch final.
- * 4. Propager les handovers topic au niveau global.
+ * 4. Propager les demandes temporaires de handover au niveau global.
  */
 function buildTopicLiveMemoryPatch(
   input: BuildLiveMemoryPatchesInput,
@@ -384,6 +383,10 @@ function buildTopicLiveMemoryPatch(
   );
 
   const topicPatches: BuildLiveMemoryTopicPatch[] = [];
+  const topicHandoverRequests: Array<{
+    isRequested: boolean;
+    reason: string | null;
+  }> = [];
 
   /**
    * Invariant important :
@@ -409,17 +412,11 @@ function buildTopicLiveMemoryPatch(
       topicUpdatePlan
     });
 
-    /**
-     * Une demande de handover détectée au niveau du message
-     * est également propagée dans l'état du topic.
-     */
-    const sourceTopicManager = applySurfaceHandoverIfNeeded(
-      topicManagerOutput.sourceTopicManager,
-      surfaceHandoverRequested
-    );
+    const sourceTopicManager = topicManagerOutput.sourceTopicManager;
+    topicHandoverRequests.push(topicManagerOutput.topicHandoverRequest);
 
     topicPatches.push({
-      status: resolveTopicStatus(sourceTopicManager),
+      status: topicManagerOutput.topicStatus,
 
       /**
        * Les identifiants techniques des facts sont retirés avant
@@ -464,8 +461,7 @@ function buildTopicLiveMemoryPatch(
       },
 
       /**
-       * L'état complet du topic manager est enregistré tel quel,
-       * après éventuelle application du handover de surface.
+       * L'état complet du topic manager est enregistré tel quel.
        */
       sourceTopicManager
     });
@@ -478,12 +474,10 @@ function buildTopicLiveMemoryPatch(
    * est également activé et toutes les raisons sont fusionnées.
    */
   if (
-    topicPatches.some(
-      (topicPatch) => topicPatch.sourceTopicManager.handover.isRequested
-    )
+    topicHandoverRequests.some((handoverRequest) => handoverRequest.isRequested)
   ) {
     const newHandoverReasons = [
-      ...collectTopicHandoverReasons(topicPatches),
+      ...collectTopicHandoverReasons(topicHandoverRequests),
       ...(surfaceHandoverRequested ? ["asked_by_user"] : [])
     ];
 
@@ -504,10 +498,12 @@ function buildTopicLiveMemoryPatch(
  * dans les patches de topics.
  */
 function collectTopicHandoverReasons(
-  topicPatches: BuildLiveMemoryTopicPatch[]
+  topicHandoverRequests: Array<{
+    isRequested: boolean;
+    reason: string | null;
+  }>
 ): string[] {
-  return topicPatches
-    .map((topic) => topic.sourceTopicManager.handover)
+  return topicHandoverRequests
     .filter((handover) => handover.isRequested)
     .map((handover) => handover.reason)
     .filter((reason): reason is string => {
@@ -575,27 +571,6 @@ function splitHandoverReason(
 }
 
 /**
- * Convertit l'état interne du topic manager en statut global de topic.
- *
- * - Toute étape non idle signifie que le topic est encore en cours.
- * - En idle, solved_by_bot est conservé.
- * - Les autres cas idle deviennent unsolved.
- */
-function resolveTopicStatus(
-  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
-): LiveMemoryTopicOptimized["status"] {
-  if (sourceTopicManager.currentStep !== "idle") {
-    return "in_progress";
-  }
-
-  if (sourceTopicManager.resolutionStatus.value === "solved_by_bot") {
-    return "solved_by_bot";
-  }
-
-  return "unsolved";
-}
-
-/**
  * Détecte une demande de transfert au support humain
  * dans la sortie de l'analyse de surface.
  *
@@ -615,33 +590,6 @@ function hasHandoverRequestedSurface(
       return candidate.standardSubcategory === "handover_request" ||
         candidate.standardAction === "handover_request";
     });
-}
-
-/**
- * Propage une demande de handover détectée en surface
- * dans l'état du topic manager.
- *
- * Si le topic demande déjà un handover, son état existant est conservé.
- */
-function applySurfaceHandoverIfNeeded(
-  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"],
-  surfaceHandoverRequested: boolean
-): LiveMemoryTopicOptimized["sourceTopicManager"] {
-  if (!surfaceHandoverRequested) {
-    return sourceTopicManager;
-  }
-
-  if (sourceTopicManager.handover.isRequested) {
-    return sourceTopicManager;
-  }
-
-  return {
-    ...sourceTopicManager,
-    handover: {
-      isRequested: true,
-      reason: "asked_by_user"
-    }
-  };
 }
 
 /**

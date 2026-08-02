@@ -655,7 +655,11 @@ function applyOnePatch(params: {
 }
 
 /**
- * Point d'entrée principal de la persistance.
+ * @deprecated Runtime orchestration now applies patches with
+ * applyLiveMemoryPatchesToContext and persists from runSupportAutomation so
+ * knowledge memory can be written before state memory.
+ *
+ * Point d'entrée historique de la persistance.
  *
  * Étapes :
  * 1. Lire la mémoire existante.
@@ -671,22 +675,11 @@ async function applyLiveMemoryPatch(
     await readLiveMemoryContext(input.conversationKey) ??
     createEmptyLiveMemoryContextOptimized();
 
-  /**
-   * Les patches sont appliqués dans leur ordre d'entrée.
-   * Chaque patch voit le résultat du patch précédent.
-   */
-  const updatedContext =
-    normalizePatches(input.patches)
-      .reduce<LiveMemoryContextOptimized>(
-        (currentContext, patch) => {
-          return applyOnePatch({
-            previousContext: currentContext,
-            patch,
-            deliveryResult: input.deliveryResult
-          });
-        },
-        previousContext
-      );
+  const updatedContext = applyLiveMemoryPatchesToContext({
+    previousContext,
+    patches: input.patches,
+    deliveryResult: input.deliveryResult
+  });
 
   await writeLiveMemoryContext(
     input.conversationKey,
@@ -696,8 +689,31 @@ async function applyLiveMemoryPatch(
   return updatedContext;
 }
 
+function applyLiveMemoryPatchesToContext(input: {
+  previousContext: LiveMemoryContextOptimized;
+  patches: unknown[];
+  deliveryResult?: ApplyLiveMemoryPatchDeliveryResult;
+}): LiveMemoryContextOptimized {
+  /**
+   * Les patches sont appliqués dans leur ordre d'entrée.
+   * Chaque patch voit le résultat du patch précédent.
+   */
+  return normalizePatches(input.patches)
+    .reduce<LiveMemoryContextOptimized>(
+      (currentContext, patch) => {
+        return applyOnePatch({
+          previousContext: currentContext,
+          patch,
+          deliveryResult: input.deliveryResult
+        });
+      },
+      input.previousContext
+    );
+}
+
 export {
-  applyLiveMemoryPatch
+  applyLiveMemoryPatch,
+  applyLiveMemoryPatchesToContext
 };
 
 export type {

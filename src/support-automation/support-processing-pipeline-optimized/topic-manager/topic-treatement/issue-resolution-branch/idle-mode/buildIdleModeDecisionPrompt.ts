@@ -34,23 +34,20 @@ function buildIdleModeDecisionPrompt(
     input.currentUserMessage.content,
     "",
     "Decision rules:",
-    "- Output only solved_by_bot or unsolved as resolutionStatus.value.",
+    "- Output only solved_by_bot or unsolved as topicStatus.",
     "- Use solved_by_bot only when the user clearly says the issue is fixed, resolved, working now, or that the assistant's proposed action worked.",
     "- Use unsolved when the user says the previous action failed, did not help, cannot be done, asks for a human, or adds diagnostic information without confirming resolution.",
     "- Use unsolved when the automated route reached idle with an internal support action to take.",
     "- Never output in_progress from idle-mode. Idle-mode does not restart the automated route.",
-    "- Never output solved_by_human from idle-mode. Human resolution is not confirmed here; use unsolved plus handover instead.",
-    "- If resolutionStatus.value is solved_by_bot, handover.isRequested must be false.",
-    "- If resolutionStatus.value is unsolved and the user asked for a human, an internal support action exists, or the latest message adds useful unresolved information, handover.isRequested should be true.",
+    "- Never output solved_by_human from idle-mode. Human resolution is not confirmed here; use unsolved plus topicHandoverRequest instead.",
+    "- topicHandoverRequest is a temporary pipeline decision, not a persisted topic manager field.",
+    "- If support should keep a record or review the topic, topicHandoverRequest.isRequested should be true.",
     "- say must be English and user-facing. It can be null only when no acknowledgement is useful.",
     "",
     "JSON shape:",
     JSON.stringify({
-      resolutionStatus: {
-        value: "solved_by_bot | unsolved",
-        reason: "short internal reason or null"
-      },
-      handover: {
+      topicStatus: "solved_by_bot | unsolved",
+      topicHandoverRequest: {
         isRequested: true,
         reason: "short internal reason or null"
       },

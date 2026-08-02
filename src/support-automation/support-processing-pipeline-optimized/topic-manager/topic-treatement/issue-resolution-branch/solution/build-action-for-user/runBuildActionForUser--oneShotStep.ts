@@ -4,9 +4,9 @@ import {buildActionForUserPrompt} from "./buildActionForUserPrompt";
 import {buildActionForUserResponseFormat} from "./responseFormat";
 import {validateBuildActionForUserOutput} from "./validateBuildActionForUserOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryIssueSolution} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
+type Solution = LiveMemoryIssueSolution;
 
 export type RunBuildActionForUserInput = {
   summaryTopic: string | null;

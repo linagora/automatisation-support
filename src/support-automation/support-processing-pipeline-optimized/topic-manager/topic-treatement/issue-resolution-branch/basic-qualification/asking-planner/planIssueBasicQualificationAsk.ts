@@ -4,9 +4,9 @@ import {buildDeterministicBasicQualificationAsk, buildIssueBasicQualificationAsk
 import {issueQualificationAskPlannerResponseFormat} from "./responseFormat";
 import {validateIssueBasicQualificationAskPlannerOutput} from "./validateIssueBasicQualificationAskPlannerOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryIssueBasicQualification} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type BasicQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["basicQualification"];
+type BasicQualification = LiveMemoryIssueBasicQualification;
 type FieldToAsk = BasicQualification["caseDetailsToAskBecauseOfBasicQualification"][number] & {status: "asking"};
 
 export type PlanIssueBasicQualificationAskInput = {

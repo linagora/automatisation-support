@@ -10,19 +10,62 @@ import {parseLiveMemoryTopicId} from "./normalizeLiveMemoryTopicId";
 
 import type {
   LiveMemoryContextOptimized,
+  LiveMemoryIssueBasicQualification,
+  LiveMemoryIssueDeepQualification,
+  LiveMemoryIssueIdle,
+  LiveMemoryIssueRetrieveKnowledge,
+  LiveMemoryIssueSolution,
   LiveMemoryTopicOptimized
 } from "./liveMemoryContextOptimized.template";
+import type {KnowledgeMemoryRetrieval} from "./knowledgeMemory.template";
+import type {RawRagKnowledge} from "../../support-automation/support-processing-pipeline-optimized/topic-manager/topic-treatement/issue-resolution-branch/retrieve-knowledge/ranked-search/runRankedSearch--oneShotStep";
 
 const DEFAULT_LIVE_MEMORY_CONTEXT_DIR = path.resolve("data/live-memory-context");
 
 type JsonRecord = Record<string, unknown>;
+type NormalizeRetrieveKnowledgeResult = {
+  retrieveKnowledge: LiveMemoryIssueRetrieveKnowledge;
+  legacyRetrieval: KnowledgeMemoryRetrieval | null;
+};
+
+const legacyKnowledgeRetrievalsByContext =
+  new WeakMap<LiveMemoryContextOptimized, KnowledgeMemoryRetrieval[]>();
 
 function getLiveMemoryContextDirectory(): string {
   return process.env.LIVE_MEMORY_CONTEXT_DIR ?? DEFAULT_LIVE_MEMORY_CONTEXT_DIR;
 }
 
-function buildLiveMemoryContextPath(conversationKey: string): string {
+function getLegacyLiveMemoryFilePath(conversationKey: string): string {
   return path.join(getLiveMemoryContextDirectory(), `${conversationKey}.json`);
+}
+
+function getConversationMemoryDirectoryPath(conversationKey: string): string {
+  return path.join(getLiveMemoryContextDirectory(), conversationKey);
+}
+
+function getStateMemoryFilePath(conversationKey: string): string {
+  return path.join(
+    getConversationMemoryDirectoryPath(conversationKey),
+    "state-memory.json"
+  );
+}
+
+function getConversationMemoryFilePath(conversationKey: string): string {
+  return path.join(
+    getConversationMemoryDirectoryPath(conversationKey),
+    "conversation-memory.json"
+  );
+}
+
+function getKnowledgeMemoryFilePath(conversationKey: string): string {
+  return path.join(
+    getConversationMemoryDirectoryPath(conversationKey),
+    "knowledge-memory.json"
+  );
+}
+
+function buildLiveMemoryContextPath(conversationKey: string): string {
+  return getStateMemoryFilePath(conversationKey);
 }
 
 function isRecord(value: unknown): value is JsonRecord {
@@ -266,54 +309,6 @@ function normalizeSourceProposeTopicUpdates(
   };
 }
 
-function normalizeCurrentStep(
-  value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["currentStep"] {
-  if (
-    value === "support_need_resolution" ||
-    value === "basic_qualification" ||
-    value === "retrieve_knowledge" ||
-    value === "deep_qualification" ||
-    value === "solution" ||
-    value === "idle" ||
-    value === null
-  ) {
-    return value;
-  }
-
-  return null;
-}
-
-function normalizeResolutionStatus(
-  value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["resolutionStatus"] {
-  if (!isRecord(value)) {
-    return createEmptySourceTopicManager().resolutionStatus;
-  }
-
-  const statusValue = value.value === "solved_by_bot" || value.value === "unsolved"
-    ? value.value
-    : "in_progress";
-
-  return {
-    value: statusValue,
-    reason: nullableString(value.reason)
-  };
-}
-
-function normalizeTopicHandover(
-  value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["handover"] {
-  if (!isRecord(value)) {
-    return createEmptySourceTopicManager().handover;
-  }
-
-  return {
-    isRequested: value.isRequested === true,
-    reason: nullableString(value.reason)
-  };
-}
-
 function normalizeSupportNeed(
   value: unknown
 ): LiveMemoryTopicOptimized["sourceTopicManager"]["supportNeedResolution"] {
@@ -384,9 +379,9 @@ function normalizeQualificationItems(
 
 function normalizeBasicQualification(
   value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["basicQualification"] {
+): LiveMemoryIssueBasicQualification {
   if (!isRecord(value)) {
-    return createEmptySourceTopicManager().basicQualification;
+    return createEmptySourceTopicManager().workflows.issueResolution.basicQualification;
   }
 
   return {
@@ -400,9 +395,9 @@ function normalizeBasicQualification(
 
 function normalizeDeepQualification(
   value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["deepQualification"] {
+): LiveMemoryIssueDeepQualification {
   if (!isRecord(value)) {
-    return createEmptySourceTopicManager().deepQualification;
+    return createEmptySourceTopicManager().workflows.issueResolution.deepQualification;
   }
 
   return {
@@ -415,12 +410,16 @@ function normalizeDeepQualification(
 }
 
 function normalizeRetrieveKnowledge(
-  value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"] {
-  const fallback = createEmptySourceTopicManager().retrieveKnowledge;
+  value: unknown,
+  topicId: number
+): NormalizeRetrieveKnowledgeResult {
+  const fallback = createEmptySourceTopicManager().workflows.issueResolution.retrieveKnowledge;
 
   if (!isRecord(value)) {
-    return fallback;
+    return {
+      retrieveKnowledge: fallback,
+      legacyRetrieval: null
+    };
   }
 
   const rankedSearch = isRecord(value.rankedSearch) ? value.rankedSearch : {};
@@ -429,13 +428,29 @@ function normalizeRetrieveKnowledge(
   const segmentationKnowledge = isRecord(value.segmentationKnowledge)
     ? value.segmentationKnowledge
     : {};
+  const legacyRawRagKnowledge = normalizeLegacyRawRagKnowledge(
+    rankedSearch.rawRagKnowledge
+  );
+  const legacySegmentedKnowledge = normalizeSegmentedKnowledge(
+    segmentationKnowledge.segmentedKnowledge
+  );
+  const hasLegacyKnowledge =
+    legacyRawRagKnowledge !== null || legacySegmentedKnowledge.length > 0;
+  const legacyRetrievalId = hasLegacyKnowledge
+    ? `retrieval_${randomUUID()}`
+    : null;
 
   return {
+    retrieveKnowledge: {
     isCompleted: normalizeRetrieveKnowledgeCompletionStatus(value.isCompleted),
+    activeRetrievalId: nullableString(value.activeRetrievalId) ?? legacyRetrievalId,
+    retrievalIds: normalizeRetrievalIds(
+      value.retrievalIds,
+      legacyRetrievalId
+    ),
 
     rankedSearch: {
-      isSearched: rankedSearch.isSearched === true,
-      rawRagKnowledge: rankedSearch.rawRagKnowledge ?? null
+      isSearched: rankedSearch.isSearched === true
     },
 
     filter: {
@@ -452,21 +467,30 @@ function normalizeRetrieveKnowledge(
     },
 
     segmentationKnowledge: {
-      isSegmented: segmentationKnowledge.isSegmented === true,
-      segmentedKnowledge: normalizeSegmentedKnowledge(segmentationKnowledge.segmentedKnowledge)
+      isSegmented: segmentationKnowledge.isSegmented === true
     }
+    },
+    legacyRetrieval: legacyRetrievalId === null
+      ? null
+      : {
+        retrievalId: legacyRetrievalId,
+        topicId,
+        workflow: "issueResolution",
+        rawRagKnowledge: legacyRawRagKnowledge,
+        segmentedKnowledge: legacySegmentedKnowledge
+      }
   };
 }
 
 function normalizeSegmentedKnowledge(
   value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"]["segmentedKnowledge"] {
+): KnowledgeMemoryRetrieval["segmentedKnowledge"] {
   if (!Array.isArray(value)) {
     return [];
   }
 
   const seenRawKnowledgeIds = new Set<string>();
-  const segmentedKnowledge: LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"]["segmentedKnowledge"] = [];
+  const segmentedKnowledge: KnowledgeMemoryRetrieval["segmentedKnowledge"] = [];
 
   for (const rawSource of value) {
     if (!isRecord(rawSource)) continue;
@@ -487,7 +511,7 @@ function normalizeSegmentedKnowledge(
 
 function normalizeSegmentedKnowledgePieces(
   value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"]["segmentedKnowledge"][number]["userFacingKnowledge"] {
+): KnowledgeMemoryRetrieval["segmentedKnowledge"][number]["userFacingKnowledge"] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -505,6 +529,71 @@ function normalizeSegmentedKnowledgePieces(
         sourceSpan: nullableString(rawPiece.sourceSpan)
       }
     ];
+  });
+}
+
+function normalizeRetrievalIds(
+  value: unknown,
+  legacyRetrievalId: string | null
+): string[] {
+  const retrievalIds = stringArray(value);
+
+  if (legacyRetrievalId && !retrievalIds.includes(legacyRetrievalId)) {
+    return [...retrievalIds, legacyRetrievalId];
+  }
+
+  return retrievalIds;
+}
+
+function normalizeLegacyRawRagKnowledge(value: unknown): RawRagKnowledge | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const query = nullableString(value.query);
+  const content = nullableString(value.content);
+  const metadata = isRecord(value.metadata) && value.metadata.retriever === "openrag"
+    ? {retriever: "openrag" as const}
+    : null;
+
+  if (!query || !content || !metadata) {
+    return null;
+  }
+
+  return {
+    query,
+    content,
+    candidates: normalizeLegacyRawKnowledgeCandidates(value.candidates),
+    sources: Array.isArray(value.sources) ? value.sources : [],
+    metadata
+  };
+}
+
+function normalizeLegacyRawKnowledgeCandidates(
+  value: unknown
+): RawRagKnowledge["candidates"] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((candidate) => {
+    if (!isRecord(candidate)) {
+      return [];
+    }
+
+    const rawKnowledgeId = nullableString(candidate.rawKnowledgeId);
+    const rawKnowledge = nullableString(candidate.rawKnowledge);
+
+    if (!rawKnowledgeId || !rawKnowledge) {
+      return [];
+    }
+
+    return [{
+      rawKnowledgeId,
+      rawKnowledge,
+      whyPotentiallyRelevant: nullableString(candidate.whyPotentiallyRelevant),
+      sourceHint: nullableString(candidate.sourceHint)
+    }];
   });
 }
 
@@ -541,7 +630,7 @@ function normalizeSolutionCaseDetailStatus(
 
 function normalizeSolutionActions(
   value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["solution"]["attemptedActionsToAskBecauseOfSolutionFound"] {
+): LiveMemoryIssueSolution["attemptedActionsToAskBecauseOfSolutionFound"] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -567,7 +656,7 @@ function normalizeSolutionActions(
 
 function normalizeSolutionCaseDetails(
   value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["solution"]["caseDetailsToAskBecauseOfSolutionFound"] {
+): LiveMemoryIssueSolution["caseDetailsToAskBecauseOfSolutionFound"] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -596,9 +685,9 @@ function normalizeSolutionCaseDetails(
 
 function normalizeSolution(
   value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["solution"] {
+): LiveMemoryIssueSolution {
   if (!isRecord(value)) {
-    return createEmptySourceTopicManager().solution;
+    return createEmptySourceTopicManager().workflows.issueResolution.solution;
   }
 
   return {
@@ -616,11 +705,11 @@ function normalizeSolution(
   };
 }
 
-function normalizeIdleMode(
+function normalizeIdle(
   value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"]["idleMode"] {
+): LiveMemoryIssueIdle {
   if (!isRecord(value)) {
-    return createEmptySourceTopicManager().idleMode;
+    return createEmptySourceTopicManager().workflows.issueResolution.idle;
   }
 
   return {
@@ -628,27 +717,97 @@ function normalizeIdleMode(
   };
 }
 
-function normalizeSourceTopicManager(
-  value: unknown
-): LiveMemoryTopicOptimized["sourceTopicManager"] {
-  if (!isRecord(value)) {
-    return createEmptySourceTopicManager();
-  }
+function normalizeWorkflows(
+  value: unknown,
+  legacySourceTopicManager: JsonRecord,
+  topicId: number
+): {
+  workflows: LiveMemoryTopicOptimized["sourceTopicManager"]["workflows"];
+  legacyRetrievals: KnowledgeMemoryRetrieval[];
+} {
+  const workflows = isRecord(value) ? value : {};
+  const issueResolution = isRecord(workflows.issueResolution)
+    ? workflows.issueResolution
+    : {};
+  const knowledgeAnswer = isRecord(workflows.knowledgeAnswer)
+    ? workflows.knowledgeAnswer
+    : {};
+  const supportAction = isRecord(workflows.supportAction)
+    ? workflows.supportAction
+    : {};
+  const featureRequest = isRecord(workflows.featureRequest)
+    ? workflows.featureRequest
+    : {};
+  const retrieveKnowledgeResult = normalizeRetrieveKnowledge(
+    pickNewFieldOrLegacy(issueResolution.retrieveKnowledge, legacySourceTopicManager.retrieveKnowledge),
+    topicId
+  );
 
   return {
-    currentStep: normalizeCurrentStep(value.currentStep),
-    resolutionStatus: normalizeResolutionStatus(value.resolutionStatus),
-    handover: normalizeTopicHandover(value.handover),
-    supportNeedResolution: normalizeSupportNeed(value.supportNeedResolution),
-    basicQualification: normalizeBasicQualification(value.basicQualification),
-    retrieveKnowledge: normalizeRetrieveKnowledge(value.retrieveKnowledge),
-    deepQualification: normalizeDeepQualification(value.deepQualification),
-    solution: normalizeSolution(value.solution),
-    idleMode: normalizeIdleMode(value.idleMode)
+    workflows: {
+    issueResolution: {
+      basicQualification: normalizeBasicQualification(
+        pickNewFieldOrLegacy(issueResolution.basicQualification, legacySourceTopicManager.basicQualification)
+      ),
+      retrieveKnowledge: retrieveKnowledgeResult.retrieveKnowledge,
+      solution: normalizeSolution(
+        pickNewFieldOrLegacy(issueResolution.solution, legacySourceTopicManager.solution)
+      ),
+      deepQualification: normalizeDeepQualification(
+        pickNewFieldOrLegacy(issueResolution.deepQualification, legacySourceTopicManager.deepQualification)
+      ),
+      idle: normalizeIdle(
+        pickNewFieldOrLegacy(issueResolution.idle, legacySourceTopicManager.idleMode)
+      )
+    },
+    knowledgeAnswer: {
+      idle: normalizeIdle(knowledgeAnswer.idle)
+    },
+    supportAction: {
+      idle: normalizeIdle(supportAction.idle)
+    },
+    featureRequest: {
+      idle: normalizeIdle(featureRequest.idle)
+    }
+    },
+    legacyRetrievals: retrieveKnowledgeResult.legacyRetrieval
+      ? [retrieveKnowledgeResult.legacyRetrieval]
+      : []
   };
 }
 
-function normalizeTopic(value: unknown): LiveMemoryTopicOptimized | null {
+function pickNewFieldOrLegacy(newValue: unknown, legacyValue: unknown): unknown {
+  return isRecord(newValue) ? newValue : legacyValue;
+}
+
+function normalizeSourceTopicManager(
+  value: unknown,
+  topicId: number
+): {
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
+  legacyRetrievals: KnowledgeMemoryRetrieval[];
+} {
+  if (!isRecord(value)) {
+    return {
+      sourceTopicManager: createEmptySourceTopicManager(),
+      legacyRetrievals: []
+    };
+  }
+  const workflowResult = normalizeWorkflows(value.workflows, value, topicId);
+
+  return {
+    sourceTopicManager: {
+      supportNeedResolution: normalizeSupportNeed(value.supportNeedResolution),
+      workflows: workflowResult.workflows
+    },
+    legacyRetrievals: workflowResult.legacyRetrievals
+  };
+}
+
+function normalizeTopic(value: unknown): {
+  topic: LiveMemoryTopicOptimized;
+  legacyRetrievals: KnowledgeMemoryRetrieval[];
+} | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -660,29 +819,48 @@ function normalizeTopic(value: unknown): LiveMemoryTopicOptimized | null {
   if (!sourceProposeTopicUpdates) {
     return null;
   }
+  const sourceTopicManagerResult = normalizeSourceTopicManager(
+    value.sourceTopicManager,
+    sourceProposeTopicUpdates.topicId
+  );
 
   return {
-    status: normalizeTopicStatus(value.status),
-    sourceAnalyzeSupportText: normalizeSourceAnalyzeSupportText(
-      value.sourceAnalyzeSupportText
-    ),
-    sourceProposeTopicUpdates,
-    sourceTopicManager: normalizeSourceTopicManager(value.sourceTopicManager)
-  } satisfies LiveMemoryTopicOptimized;
+    topic: {
+      status: normalizeTopicStatus(value.status),
+      sourceAnalyzeSupportText: normalizeSourceAnalyzeSupportText(
+        value.sourceAnalyzeSupportText
+      ),
+      sourceProposeTopicUpdates,
+      sourceTopicManager: sourceTopicManagerResult.sourceTopicManager
+    } satisfies LiveMemoryTopicOptimized,
+    legacyRetrievals: sourceTopicManagerResult.legacyRetrievals
+  };
 }
 
-function normalizeTopics(value: unknown): LiveMemoryContextOptimized["topics"] {
+function normalizeTopics(value: unknown): {
+  topics: LiveMemoryContextOptimized["topics"];
+  legacyRetrievals: KnowledgeMemoryRetrieval[];
+} {
   if (!Array.isArray(value)) {
-    return null;
+    return {
+      topics: null,
+      legacyRetrievals: []
+    };
   }
 
-  const topics = value.flatMap((item) => {
+  const normalizedTopics = value.flatMap((item) => {
     const normalized = normalizeTopic(item);
 
     return normalized ? [normalized] : [];
   });
+  const topics = normalizedTopics.map((normalized) => normalized.topic);
 
-  return topics.length > 0 ? topics : null;
+  return {
+    topics: topics.length > 0 ? topics : null,
+    legacyRetrievals: normalizedTopics.flatMap((normalized) => {
+      return normalized.legacyRetrievals;
+    })
+  };
 }
 
 function buildTopicsSummary(
@@ -728,11 +906,11 @@ function normalizeLiveMemoryContextOptimized(
     return createEmptyLiveMemoryContextOptimized();
   }
 
-  const topics = normalizeTopics(value.topics);
+  const topicsResult = normalizeTopics(value.topics);
 
-  return {
+  const context = {
     isBotActive: normalizeIsBotActive(value.isBotActive),
-    topicsSummary: buildTopicsSummary(topics),
+    topicsSummary: buildTopicsSummary(topicsResult.topics),
     handover: normalizeHandover(value.handover),
     previousConversationTurn: normalizePreviousConversationTurn(
       value.previousConversationTurn
@@ -742,19 +920,24 @@ function normalizeLiveMemoryContextOptimized(
     ),
     securityAlerts: normalizeSecurityAlerts(value.securityAlerts),
     userState: normalizeUserState(value.userState),
-    topics
+    topics: topicsResult.topics
   };
+
+  if (topicsResult.legacyRetrievals.length > 0) {
+    legacyKnowledgeRetrievalsByContext.set(
+      context,
+      topicsResult.legacyRetrievals
+    );
+  }
+
+  return context;
 }
 
-async function readLiveMemoryContext(
-  conversationKey: string
-): Promise<LiveMemoryContextOptimized | null> {
-  const filePath = buildLiveMemoryContextPath(conversationKey);
-
+async function readJsonFileIfExists(filePath: string): Promise<unknown | null> {
   try {
     const rawContent = await fs.readFile(filePath, "utf8");
 
-    return normalizeLiveMemoryContextOptimized(JSON.parse(rawContent));
+    return JSON.parse(rawContent);
   } catch (error) {
     if (
       typeof error === "object" &&
@@ -768,18 +951,84 @@ async function readLiveMemoryContext(
   }
 }
 
+async function ensureJsonFile(filePath: string, value: unknown): Promise<void> {
+  try {
+    await fs.writeFile(
+      filePath,
+      `${JSON.stringify(value, null, 2)}\n`,
+      {
+        encoding: "utf8",
+        flag: "wx"
+      }
+    );
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      (error as {code?: unknown}).code === "EEXIST"
+    ) {
+      return;
+    }
+
+    throw error;
+  }
+}
+
+async function ensureConversationMemoryFile(
+  conversationKey: string
+): Promise<void> {
+  await ensureJsonFile(
+    getConversationMemoryFilePath(conversationKey),
+    {messages: []}
+  );
+}
+
+async function ensureKnowledgeMemoryFile(
+  conversationKey: string
+): Promise<void> {
+  await ensureJsonFile(
+    getKnowledgeMemoryFilePath(conversationKey),
+    {retrievals: []}
+  );
+}
+
+async function readLiveMemoryContext(
+  conversationKey: string
+): Promise<LiveMemoryContextOptimized | null> {
+  const stateMemory = await readJsonFileIfExists(
+    getStateMemoryFilePath(conversationKey)
+  );
+
+  if (stateMemory !== null) {
+    return normalizeLiveMemoryContextOptimized(stateMemory);
+  }
+
+  const legacyMemory = await readJsonFileIfExists(
+    getLegacyLiveMemoryFilePath(conversationKey)
+  );
+
+  if (legacyMemory !== null) {
+    return normalizeLiveMemoryContextOptimized(legacyMemory);
+  }
+
+  return null;
+}
+
 async function writeLiveMemoryContext(
   conversationKey: string,
   context: LiveMemoryContextOptimized
 ): Promise<void> {
-  const filePath = buildLiveMemoryContextPath(conversationKey);
-  const directory = path.dirname(filePath);
+  const conversationDirectory =
+    getConversationMemoryDirectoryPath(conversationKey);
+  const filePath = getStateMemoryFilePath(conversationKey);
   const temporaryFilePath = path.join(
-    directory,
+    conversationDirectory,
     `.${path.basename(filePath)}.${process.pid}.${randomUUID()}.tmp`
   );
 
-  await fs.mkdir(directory, {recursive: true});
+  await fs.mkdir(conversationDirectory, {recursive: true});
+  await ensureConversationMemoryFile(conversationKey);
+  await ensureKnowledgeMemoryFile(conversationKey);
   await fs.writeFile(
     temporaryFilePath,
     `${JSON.stringify(normalizeLiveMemoryContextOptimized(context), null, 2)}\n`,
@@ -788,10 +1037,25 @@ async function writeLiveMemoryContext(
   await fs.rename(temporaryFilePath, filePath);
 }
 
+function consumeLegacyKnowledgeRetrievals(
+  context: LiveMemoryContextOptimized
+): KnowledgeMemoryRetrieval[] {
+  const retrievals = legacyKnowledgeRetrievalsByContext.get(context) ?? [];
+  legacyKnowledgeRetrievalsByContext.delete(context);
+
+  return retrievals;
+}
+
 export {
   buildTopicsSummary,
   buildLiveMemoryContextPath,
+  consumeLegacyKnowledgeRetrievals,
+  getConversationMemoryDirectoryPath,
+  getConversationMemoryFilePath,
   getLiveMemoryContextDirectory,
+  getKnowledgeMemoryFilePath,
+  getLegacyLiveMemoryFilePath,
+  getStateMemoryFilePath,
   normalizeLiveMemoryContextOptimized,
   readLiveMemoryContext,
   writeLiveMemoryContext

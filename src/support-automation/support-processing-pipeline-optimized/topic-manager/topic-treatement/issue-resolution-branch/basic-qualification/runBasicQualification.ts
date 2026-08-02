@@ -2,9 +2,12 @@ import {buildTopicQualification} from "./buildTopicQualification--oneShotStep";
 import {isTopicQualified} from "./isTopicQualified--blockingStep";
 import {planIssueBasicQualificationAsk} from "./asking-planner/planIssueBasicQualificationAsk";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {
+  LiveMemoryIssueBasicQualification,
+  LiveMemoryTopicOptimized
+} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type BasicQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["basicQualification"];
+type BasicQualification = LiveMemoryIssueBasicQualification;
 type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
 
 export type RunBasicQualificationInput = {
@@ -25,7 +28,8 @@ async function runBasicQualification(input: RunBasicQualificationInput): Promise
     ...input.currentCaseDetailsExtracted
   ];
 
-  const previousBasicQualification = input.previousTopic?.sourceTopicManager.basicQualification ?? null;
+  const previousBasicQualification =
+    input.previousTopic?.sourceTopicManager.workflows.issueResolution.basicQualification ?? null;
   const baseBasicQualification = previousBasicQualification?.isBuilt === true
     ? previousBasicQualification
     : buildInitialBasicQualification({

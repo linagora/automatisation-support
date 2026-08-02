@@ -10,6 +10,11 @@ import {
 } from "../../src/infrastructure/live-memory/liveMemoryDefaults";
 import {
   buildLiveMemoryContextPath,
+  getConversationMemoryDirectoryPath,
+  getConversationMemoryFilePath,
+  getKnowledgeMemoryFilePath,
+  getLegacyLiveMemoryFilePath,
+  getStateMemoryFilePath,
   readLiveMemoryContext,
   writeLiveMemoryContext
 } from "../../src/infrastructure/live-memory/liveMemoryContextStore";
@@ -69,14 +74,51 @@ function buildThreeTopics(): LiveMemoryTopicOptimized[] {
   ];
 }
 
-async function writeRawMemory(conversationKey: string, value: unknown): Promise<void> {
-  const filePath = buildLiveMemoryContextPath(conversationKey);
-
+async function writeRawJsonFile(filePath: string, value: unknown): Promise<void> {
   await fs.mkdir(path.dirname(filePath), {recursive: true});
   await fs.writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
-describe("live memory optimized first migration fields", function () {
+async function readJsonFile(filePath: string): Promise<unknown> {
+  return JSON.parse(await fs.readFile(filePath, "utf8"));
+}
+
+function buildLegacyMemory(topics: LiveMemoryTopicOptimized[] = buildThreeTopics()): unknown {
+  return {
+    handover: {
+      isHandover: false,
+      handoverReason: null
+    },
+    previousConversationTurn: {
+      previousUserMessage: null,
+      previousBotMessage: null
+    },
+    failedPipelineMessages: [],
+    securityAlerts: [],
+    userState: {
+      status: "normal",
+      flags: []
+    },
+    topics
+  };
+}
+
+function buildContext(params: {
+  isBotActive?: boolean;
+  topics?: LiveMemoryTopicOptimized[];
+} = {}): LiveMemoryContextOptimized {
+  return {
+    ...createEmptyLiveMemoryContextOptimized(),
+    isBotActive: params.isBotActive ?? true,
+    topics: params.topics ?? buildThreeTopics()
+  };
+}
+
+async function expectFileExists(filePath: string): Promise<void> {
+  await expect(fs.access(filePath)).resolves.toBeUndefined();
+}
+
+describe("live memory optimized storage migration", function () {
   let tempDir: string;
   let previousDirectory: string | undefined;
 
@@ -113,23 +155,10 @@ describe("live memory optimized first migration fields", function () {
   it("normalizes an old memory without new fields with a recalculated topics summary", async function () {
     const topics = buildThreeTopics();
 
-    await writeRawMemory("old-memory", {
-      handover: {
-        isHandover: false,
-        handoverReason: null
-      },
-      previousConversationTurn: {
-        previousUserMessage: null,
-        previousBotMessage: null
-      },
-      failedPipelineMessages: [],
-      securityAlerts: [],
-      userState: {
-        status: "normal",
-        flags: []
-      },
-      topics
-    });
+    await writeRawJsonFile(
+      getLegacyLiveMemoryFilePath("old-memory"),
+      buildLegacyMemory(topics)
+    );
 
     const context = await readLiveMemoryContext("old-memory");
 
@@ -217,5 +246,193 @@ describe("live memory optimized first migration fields", function () {
         supportNeed: "support_action"
       }
     ]);
+  });
+
+  it("creates the new conversation directory with state, conversation, and knowledge files", async function () {
+    await writeLiveMemoryContext("first-write", buildContext());
+
+    const stateMemoryPath = getStateMemoryFilePath("first-write");
+    const conversationMemoryPath = getConversationMemoryFilePath("first-write");
+    const knowledgeMemoryPath = getKnowledgeMemoryFilePath("first-write");
+
+    await expectFileExists(stateMemoryPath);
+    await expectFileExists(conversationMemoryPath);
+    await expectFileExists(knowledgeMemoryPath);
+    expect(buildLiveMemoryContextPath("first-write")).toBe(stateMemoryPath);
+    expect(await readJsonFile(conversationMemoryPath)).toEqual({
+      messages: []
+    });
+    expect(await readJsonFile(knowledgeMemoryPath)).toEqual({
+      retrievals: []
+    });
+  });
+
+  it("writes the current state memory shape and recalculates topicsSummary", async function () {
+    await writeLiveMemoryContext("state-shape", {
+      ...buildContext(),
+      topicsSummary: {
+        total: 42,
+        byStatus: {
+          in_progress: 42,
+          solved_by_bot: 42,
+          unsolved: 42
+        },
+        topics: []
+      }
+    });
+
+    const stateMemory = await readJsonFile(
+      getStateMemoryFilePath("state-shape")
+    ) as Record<string, unknown>;
+
+    expect(Object.keys(stateMemory)).toEqual([
+      "isBotActive",
+      "topicsSummary",
+      "handover",
+      "previousConversationTurn",
+      "failedPipelineMessages",
+      "securityAlerts",
+      "userState",
+      "topics"
+    ]);
+    expect((stateMemory.topicsSummary as {total: number}).total).toBe(3);
+  });
+
+  it("reads the new state-memory.json format", async function () {
+    await writeRawJsonFile(
+      getStateMemoryFilePath("new-format"),
+      {
+        ...buildLegacyMemory(),
+        isBotActive: false,
+        topicsSummary: {
+          total: 999,
+          byStatus: {
+            in_progress: 999,
+            solved_by_bot: 999,
+            unsolved: 999
+          },
+          topics: []
+        }
+      }
+    );
+
+    const context = await readLiveMemoryContext("new-format");
+
+    expect(context?.isBotActive).toBe(false);
+    expect(context?.topicsSummary.total).toBe(3);
+  });
+
+  it("prioritizes state-memory.json over the legacy file", async function () {
+    await writeRawJsonFile(
+      getLegacyLiveMemoryFilePath("both-formats"),
+      {
+        ...buildLegacyMemory([
+          buildTopic({
+            topicId: 9,
+            title: "Legacy topic",
+            status: "unsolved",
+            supportNeed: "support_action"
+          })
+        ]),
+        isBotActive: true
+      }
+    );
+    await writeRawJsonFile(
+      getStateMemoryFilePath("both-formats"),
+      {
+        ...buildLegacyMemory([
+          buildTopic({
+            topicId: 1,
+            title: "New topic",
+            status: "solved_by_bot",
+            supportNeed: "knowledge_answer"
+          })
+        ]),
+        isBotActive: false
+      }
+    );
+
+    const context = await readLiveMemoryContext("both-formats");
+
+    expect(context?.isBotActive).toBe(false);
+    expect(context?.topicsSummary.topics).toEqual([
+      {
+        topicId: 1,
+        title: "New topic",
+        status: "solved_by_bot",
+        supportNeed: "knowledge_answer"
+      }
+    ]);
+  });
+
+  it("migrates progressively from the legacy file on the next write", async function () {
+    const legacyPath = getLegacyLiveMemoryFilePath("progressive");
+
+    await writeRawJsonFile(legacyPath, buildLegacyMemory([
+      buildTopic({
+        topicId: 1,
+        title: "Legacy before write",
+        status: "in_progress",
+        supportNeed: "issue_resolution"
+      })
+    ]));
+
+    const context = await readLiveMemoryContext("progressive");
+    expect(context?.topicsSummary.topics[0]?.title).toBe("Legacy before write");
+
+    await writeLiveMemoryContext("progressive", {
+      ...context,
+      isBotActive: false,
+      topics: [
+        buildTopic({
+          topicId: 1,
+          title: "New after write",
+          status: "solved_by_bot",
+          supportNeed: "knowledge_answer"
+        })
+      ]
+    } as LiveMemoryContextOptimized);
+
+    await expectFileExists(getConversationMemoryDirectoryPath("progressive"));
+    await expectFileExists(getStateMemoryFilePath("progressive"));
+    await expectFileExists(getConversationMemoryFilePath("progressive"));
+    await expectFileExists(getKnowledgeMemoryFilePath("progressive"));
+    await expectFileExists(legacyPath);
+
+    const reread = await readLiveMemoryContext("progressive");
+
+    expect(reread?.isBotActive).toBe(false);
+    expect(reread?.topicsSummary.topics[0]?.title).toBe("New after write");
+  });
+
+  it("does not overwrite existing conversation or knowledge memory files", async function () {
+    await writeLiveMemoryContext("auxiliary-files", buildContext());
+
+    const conversationMemoryPath =
+      getConversationMemoryFilePath("auxiliary-files");
+    const knowledgeMemoryPath = getKnowledgeMemoryFilePath("auxiliary-files");
+    const conversationMemory = {
+      messages: [{role: "user", content: "Already stored"}]
+    };
+    const knowledgeMemory = {
+      retrievals: [{id: "retrieval_1"}]
+    };
+
+    await writeRawJsonFile(conversationMemoryPath, conversationMemory);
+    await writeRawJsonFile(knowledgeMemoryPath, knowledgeMemory);
+    await writeLiveMemoryContext("auxiliary-files", buildContext({
+      isBotActive: false,
+      topics: [
+        buildTopic({
+          topicId: 1,
+          title: "Updated state only",
+          status: "unsolved",
+          supportNeed: "support_action"
+        })
+      ]
+    }));
+
+    expect(await readJsonFile(conversationMemoryPath)).toEqual(conversationMemory);
+    expect(await readJsonFile(knowledgeMemoryPath)).toEqual(knowledgeMemory);
   });
 });

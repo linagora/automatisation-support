@@ -1,5 +1,10 @@
 import type {
   LiveMemoryContextOptimized,
+  LiveMemoryIssueBasicQualification,
+  LiveMemoryIssueDeepQualification,
+  LiveMemoryIssueIdle,
+  LiveMemoryIssueRetrieveKnowledge,
+  LiveMemoryIssueSolution,
   LiveMemoryTopicOptimized
 } from "./liveMemoryContextOptimized.template";
 
@@ -12,18 +17,6 @@ function createEmptySourceAnalyzeSupportText(): LiveMemoryTopicOptimized["source
 
 function createEmptySourceTopicManager(): LiveMemoryTopicOptimized["sourceTopicManager"] {
   return {
-    currentStep: null,
-
-    resolutionStatus: {
-      value: "in_progress",
-      reason: null
-    },
-
-    handover: {
-      isRequested: false,
-      reason: null
-    },
-
     supportNeedResolution: {
       supportNeed: {
         value: "unclear",
@@ -31,58 +24,87 @@ function createEmptySourceTopicManager(): LiveMemoryTopicOptimized["sourceTopicM
       }
     },
 
-    basicQualification: {
-      isBuilt: false,
-      isCompleted: false,
-      caseDetailsToAskBecauseOfBasicQualification: []
-    },
-
-    retrieveKnowledge: {
-      isCompleted: false,
-
-      rankedSearch: {
-        isSearched: false,
-        rawRagKnowledge: null
+    workflows: {
+      issueResolution: {
+        basicQualification: createEmptyBasicQualification(),
+        retrieveKnowledge: createEmptyRetrieveKnowledge(),
+        solution: createEmptySolution(),
+        deepQualification: createEmptyDeepQualification(),
+        idle: createEmptyIdle()
       },
-
-      filter: {
-        isFiltered: false,
-        keptRawKnowledgeIds: [],
-        filterExplanation: null
+      knowledgeAnswer: {
+        idle: createEmptyIdle()
       },
-
-      selection: {
-        isClearSelected: false,
-        clarificationQuestion: null,
-        selectedRawKnowledgeIds: [],
-        selectionExplanation: null
+      supportAction: {
+        idle: createEmptyIdle()
       },
-
-      segmentationKnowledge: {
-        isSegmented: false,
-        segmentedKnowledge: []
+      featureRequest: {
+        idle: createEmptyIdle()
       }
-    },
-
-    deepQualification: {
-      isBuilt: false,
-      isCompleted: false,
-      caseDetailsToAskBecauseOfDeepQualification: []
-    },
-
-    solution: {
-      isActionForUserBuilt: false,
-      isActionForSupportBuilt: false,
-      isCaseDetailsForSolutionBuilt: false,
-      isCompleted: false,
-      attemptedActionsToAskBecauseOfSolutionFound: [],
-      caseDetailsToAskBecauseOfSolutionFound: [],
-      actionToTakeForSupport: null
-    },
-
-    idleMode: {
-      isActivated: false
     }
+  };
+}
+
+function createEmptyBasicQualification(): LiveMemoryIssueBasicQualification {
+  return {
+    isBuilt: false,
+    isCompleted: false,
+    caseDetailsToAskBecauseOfBasicQualification: []
+  };
+}
+
+function createEmptyRetrieveKnowledge(): LiveMemoryIssueRetrieveKnowledge {
+  return {
+    isCompleted: false,
+    activeRetrievalId: null,
+    retrievalIds: [],
+
+    rankedSearch: {
+      isSearched: false
+    },
+
+    filter: {
+      isFiltered: false,
+      keptRawKnowledgeIds: [],
+      filterExplanation: null
+    },
+
+    selection: {
+      isClearSelected: false,
+      clarificationQuestion: null,
+      selectedRawKnowledgeIds: [],
+      selectionExplanation: null
+    },
+
+    segmentationKnowledge: {
+      isSegmented: false
+    }
+  };
+}
+
+function createEmptySolution(): LiveMemoryIssueSolution {
+  return {
+    isActionForUserBuilt: false,
+    isActionForSupportBuilt: false,
+    isCaseDetailsForSolutionBuilt: false,
+    isCompleted: false,
+    attemptedActionsToAskBecauseOfSolutionFound: [],
+    caseDetailsToAskBecauseOfSolutionFound: [],
+    actionToTakeForSupport: null
+  };
+}
+
+function createEmptyDeepQualification(): LiveMemoryIssueDeepQualification {
+  return {
+    isBuilt: false,
+    isCompleted: false,
+    caseDetailsToAskBecauseOfDeepQualification: []
+  };
+}
+
+function createEmptyIdle(): LiveMemoryIssueIdle {
+  return {
+    isActivated: false
   };
 }
 

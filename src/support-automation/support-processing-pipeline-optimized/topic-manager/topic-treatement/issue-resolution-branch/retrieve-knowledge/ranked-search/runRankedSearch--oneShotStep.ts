@@ -2,10 +2,7 @@ import {createDefaultSupportRagClient} from "../../../../../../../infrastructure
 import {parseLLMResponse} from "../../../../../../../infrastructure/llm/parseLLMResponse";
 import {buildRankedSearchPrompt} from "./buildRankedSearchPrompt";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {SupportRagClient} from "../../../../../../../infrastructure/rag/supportRagClient";
-
-type RankedSearch = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["rankedSearch"];
 
 export type RawKnowledgeCandidate = {
   rawKnowledgeId: string;
@@ -37,6 +34,11 @@ export type RunRankedSearchInput = {
   summaryTopic: string;
   ragClient?: SupportRagClient;
   searchSimilarIssueTopics?: SearchSimilarIssueTopics;
+};
+
+export type RankedSearchOutput = {
+  isSearched: boolean;
+  rawRagKnowledge: RawRagKnowledge | null;
 };
 
 async function searchSimilarIssueTopics(
@@ -82,7 +84,7 @@ async function searchSimilarIssueTopics(
   };
 }
 
-async function runRankedSearch(input: RunRankedSearchInput): Promise<RankedSearch> {
+async function runRankedSearch(input: RunRankedSearchInput): Promise<RankedSearchOutput> {
   const rawRagKnowledge = await (input.searchSimilarIssueTopics ?? searchSimilarIssueTopics)({
     summaryTopic: input.summaryTopic,
     ragClient: input.ragClient
@@ -90,7 +92,9 @@ async function runRankedSearch(input: RunRankedSearchInput): Promise<RankedSearc
 
   return {
     isSearched: true,
-    rawRagKnowledge: rawRagKnowledge ?? null
+    rawRagKnowledge: isRawRagKnowledge(rawRagKnowledge)
+      ? rawRagKnowledge
+      : null
   };
 }
 
@@ -152,6 +156,19 @@ function validateNonEmptyString(value: unknown): string | null {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isRawRagKnowledge(value: unknown): value is RawRagKnowledge {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return typeof value.query === "string" &&
+    typeof value.content === "string" &&
+    Array.isArray(value.candidates) &&
+    Array.isArray(value.sources) &&
+    isRecord(value.metadata) &&
+    value.metadata.retriever === "openrag";
 }
 
 export {

@@ -4,18 +4,20 @@ import {
   updateDeepQualificationWithExtractedDetails
 } from "./deepQualificationState";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {
+  LiveMemoryIssueDeepQualification,
+  LiveMemoryTopicOptimized
+} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {SegmentedKnowledgeBySource} from "../retrieve-knowledge/segmentation-knowledge/runSegmentationKnowledge--oneShotStep";
 
-type DeepQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["deepQualification"];
+type DeepQualification = LiveMemoryIssueDeepQualification;
 type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
-type RetrieveKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"];
-type SegmentationKnowledge = RetrieveKnowledge["segmentationKnowledge"];
 
 export type RunDeepQualificationInput = {
   supportDomain: string | null;
   previousTopic: LiveMemoryTopicOptimized | null;
   currentCaseDetailsExtracted: CaseDetailExtracted[];
-  retrieveKnowledge: RetrieveKnowledge | null;
+  segmentedKnowledge: SegmentedKnowledgeBySource[] | null;
   currentUserMessage: {content: string; channel?: string};
   previousConversationTurn: {
     previousUserMessage: string | null;
@@ -34,7 +36,8 @@ async function runDeepQualification(input: RunDeepQualificationInput): Promise<R
     ...input.currentCaseDetailsExtracted
   ];
 
-  const previousDeepQualification = input.previousTopic?.sourceTopicManager.deepQualification ?? null;
+  const previousDeepQualification =
+    input.previousTopic?.sourceTopicManager.workflows.issueResolution.deepQualification ?? null;
 
   const baseDeepQualification = previousDeepQualification?.isBuilt === true
     ? previousDeepQualification
@@ -58,7 +61,7 @@ async function runDeepQualification(input: RunDeepQualificationInput): Promise<R
   return {
     say: buildDeepQualificationAsk({
       deepQualification,
-      userFacingKnowledgeText: buildUserFacingKnowledgeText(input.retrieveKnowledge?.segmentationKnowledge),
+      userFacingKnowledgeText: buildUserFacingKnowledgeText(input.segmentedKnowledge),
       supportDomain: input.supportDomain
     }),
     deepQualification
@@ -66,9 +69,9 @@ async function runDeepQualification(input: RunDeepQualificationInput): Promise<R
 }
 
 function buildUserFacingKnowledgeText(
-  segmentationKnowledge: SegmentationKnowledge | null | undefined
+  segmentedKnowledge: SegmentedKnowledgeBySource[] | null | undefined
 ): string | null {
-  const pieces = segmentationKnowledge?.segmentedKnowledge.flatMap((source) => {
+  const pieces = segmentedKnowledge?.flatMap((source) => {
     return source.userFacingKnowledge.map((piece) => {
       return formatKnowledgePiece(
         source.rawKnowledgeId,

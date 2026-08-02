@@ -1,0 +1,454 @@
+{
+  "isBotActive": true,
+  "topicsSummary": {
+    "total": 2,
+    "byStatus": {
+      "in_progress": 2,
+      "solved_by_bot": 0,
+      "unsolved": 0
+    },
+    "topics": [
+      {
+        "topicId": 1,
+        "title": "Twake Group Creation Issue",
+        "status": "in_progress",
+        "supportNeed": "issue_resolution"
+      },
+      {
+        "topicId": 2,
+        "title": "Drive File Renaming Issue",
+        "status": "in_progress",
+        "supportNeed": "issue_resolution"
+      }
+    ]
+  },
+  "handover": {
+    "isHandover": false,
+    "handoverReason": null
+  },
+  "previousConversationTurn": {
+    "previousUserMessage": "Guten tag mein freunde",
+    "previousBotMessage": "Hallo. Wie kann ich Ihnen mit Ihrer Supportanfrage helfen?"
+  },
+  "failedPipelineMessages": [
+    {
+      "concernedUserMessage": [
+        "Il n'y a pas de message d'erreur,"
+      ],
+      "concernedAttachment": [],
+      "fallbackReason": {
+        "source": "rag",
+        "reason": "rag_failed",
+        "errorName": "AbortError",
+        "errorMessage": "This operation was aborted"
+      }
+    }
+  ],
+  "securityAlerts": [],
+  "userState": {
+    "status": "normal",
+    "flags": []
+  },
+  "topics": [
+    {
+      "status": "in_progress",
+      "sourceAnalyzeSupportText": {
+        "caseDetailsExtracted": [
+          {
+            "key": "product_or_service",
+            "value": "Twake",
+            "evidence": "Twake chat",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "group creation",
+            "evidence": "créer un groupe de discussion",
+            "status": "obtained"
+          },
+          {
+            "key": "pre_problem_state",
+            "value": "User was able to create groups before",
+            "evidence": "alors que avant j’y arrivais",
+            "status": "obtained"
+          },
+          {
+            "key": "trigger_action",
+            "value": "clicking to name the group",
+            "evidence": "quand je clique pour nommer le groupe",
+            "status": "obtained"
+          },
+          {
+            "key": "failure_step",
+            "value": "naming the group",
+            "evidence": "alors c’est impossible d’écrire",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "cannot write the group name",
+            "evidence": "alors c’est impossible d’écrire",
+            "status": "obtained"
+          },
+          {
+            "key": "expected_result",
+            "value": "be able to name and create the group",
+            "evidence": "créer normalnt un groupe de discussion",
+            "status": "obtained"
+          },
+          {
+            "key": "product_or_service",
+            "value": "Twake chat",
+            "evidence": "Twake chat",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "group creation",
+            "evidence": "créer un groupe",
+            "status": "obtained"
+          },
+          {
+            "key": "observed_result",
+            "value": "The group name field is grayed out, making it impossible to type.",
+            "evidence": "le nom est simplement grisé ce qui rend impossible l'écriture",
+            "status": "obtained"
+          },
+          {
+            "key": "error_message",
+            "value": "no error message",
+            "evidence": "Il n'y a pas de message d'erreur",
+            "status": "obtained"
+          },
+          {
+            "key": "operating_system",
+            "value": "Windows 10",
+            "evidence": "windows 10",
+            "status": "obtained"
+          }
+        ],
+        "attemptedActionsExtracted": []
+      },
+      "sourceProposeTopicUpdates": {
+        "topicId": 1,
+        "title": "Twake Group Creation Issue",
+        "summaryTopic": "User is unable to name and create a chat group in Twake, despite previously being able to do so. The issue occurs when trying to name the group. The group name field is grayed out, making it impossible to type. The user reports no error message. The operating system is Windows 10.",
+        "supportDomain": {
+          "value": "product_behavior",
+          "reason": "The routed facts concern a product behavior issue related to group creation in Twake."
+        }
+      },
+      "sourceTopicManager": {
+        "supportNeedResolution": {
+          "supportNeed": {
+            "value": "issue_resolution",
+            "reason": "The user reports a specific malfunction in the group creation process, indicating a problem that needs investigation and resolution."
+          }
+        },
+        "workflows": {
+          "issueResolution": {
+            "basicQualification": {
+              "isBuilt": true,
+              "isCompleted": true,
+              "caseDetailsToAskBecauseOfBasicQualification": [
+                {
+                  "key": "product_or_service",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "feature_or_page",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "trigger_action",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "failure_step",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "observed_result",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "expected_result",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "error_message",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                }
+              ]
+            },
+            "retrieveKnowledge": {
+              "isCompleted": "failed",
+              "activeRetrievalId": "retrieval_8aa76b96-5cf1-4699-ab9d-c03d36f694dc",
+              "retrievalIds": [
+                "retrieval_8aa76b96-5cf1-4699-ab9d-c03d36f694dc"
+              ],
+              "rankedSearch": {
+                "isSearched": true
+              },
+              "filter": {
+                "isFiltered": false,
+                "keptRawKnowledgeIds": [],
+                "filterExplanation": null
+              },
+              "selection": {
+                "isClearSelected": false,
+                "clarificationQuestion": null,
+                "selectedRawKnowledgeIds": [],
+                "selectionExplanation": null
+              },
+              "segmentationKnowledge": {
+                "isSegmented": false
+              }
+            },
+            "solution": {
+              "isActionForUserBuilt": true,
+              "isActionForSupportBuilt": true,
+              "isCaseDetailsForSolutionBuilt": true,
+              "isCompleted": true,
+              "attemptedActionsToAskBecauseOfSolutionFound": [],
+              "caseDetailsToAskBecauseOfSolutionFound": [],
+              "actionToTakeForSupport": null
+            },
+            "deepQualification": {
+              "isBuilt": true,
+              "isCompleted": false,
+              "caseDetailsToAskBecauseOfDeepQualification": [
+                {
+                  "key": "platform",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "operating_system",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "browser",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "app_version",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "device",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "affected_scope",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "affected_users",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "issue_started_at",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "frequency",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "pre_problem_state",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "visual_evidence",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "reference_id",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "provided_url",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                }
+              ]
+            },
+            "idle": {
+              "isActivated": false
+            }
+          },
+          "knowledgeAnswer": {
+            "idle": {
+              "isActivated": false
+            }
+          },
+          "supportAction": {
+            "idle": {
+              "isActivated": false
+            }
+          },
+          "featureRequest": {
+            "idle": {
+              "isActivated": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "status": "in_progress",
+      "sourceAnalyzeSupportText": {
+        "caseDetailsExtracted": [
+          {
+            "key": "product_or_service",
+            "value": "drive",
+            "evidence": "drive",
+            "status": "obtained"
+          },
+          {
+            "key": "feature_or_page",
+            "value": "file renaming",
+            "evidence": "renommer les fichiers",
+            "status": "obtained"
+          }
+        ],
+        "attemptedActionsExtracted": []
+      },
+      "sourceProposeTopicUpdates": {
+        "topicId": 2,
+        "title": "Drive File Renaming Issue",
+        "summaryTopic": "User reports a problem renaming files in Drive.",
+        "supportDomain": {
+          "value": "product_behavior",
+          "reason": "The routed facts concern a product behavior issue related to file renaming in Drive."
+        }
+      },
+      "sourceTopicManager": {
+        "supportNeedResolution": {
+          "supportNeed": {
+            "value": "issue_resolution",
+            "reason": "The user reports a problem renaming files in Drive, indicating a malfunction or unexpected behavior."
+          }
+        },
+        "workflows": {
+          "issueResolution": {
+            "basicQualification": {
+              "isBuilt": true,
+              "isCompleted": false,
+              "caseDetailsToAskBecauseOfBasicQualification": [
+                {
+                  "key": "product_or_service",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "feature_or_page",
+                  "reason": "catalogue rules",
+                  "status": "obtained"
+                },
+                {
+                  "key": "trigger_action",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "failure_step",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "observed_result",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "expected_result",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                },
+                {
+                  "key": "error_message",
+                  "reason": "catalogue rules",
+                  "status": "asking"
+                }
+              ]
+            },
+            "retrieveKnowledge": {
+              "isCompleted": false,
+              "activeRetrievalId": null,
+              "retrievalIds": [],
+              "rankedSearch": {
+                "isSearched": false
+              },
+              "filter": {
+                "isFiltered": false,
+                "keptRawKnowledgeIds": [],
+                "filterExplanation": null
+              },
+              "selection": {
+                "isClearSelected": false,
+                "clarificationQuestion": null,
+                "selectedRawKnowledgeIds": [],
+                "selectionExplanation": null
+              },
+              "segmentationKnowledge": {
+                "isSegmented": false
+              }
+            },
+            "solution": {
+              "isActionForUserBuilt": false,
+              "isActionForSupportBuilt": false,
+              "isCaseDetailsForSolutionBuilt": false,
+              "isCompleted": false,
+              "attemptedActionsToAskBecauseOfSolutionFound": [],
+              "caseDetailsToAskBecauseOfSolutionFound": [],
+              "actionToTakeForSupport": null
+            },
+            "deepQualification": {
+              "isBuilt": false,
+              "isCompleted": false,
+              "caseDetailsToAskBecauseOfDeepQualification": []
+            },
+            "idle": {
+              "isActivated": false
+            }
+          },
+          "knowledgeAnswer": {
+            "idle": {
+              "isActivated": false
+            }
+          },
+          "supportAction": {
+            "idle": {
+              "isActivated": false
+            }
+          },
+          "featureRequest": {
+            "idle": {
+              "isActivated": false
+            }
+          }
+        }
+      }
+    }
+  ]
+}

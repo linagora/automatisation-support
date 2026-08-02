@@ -4,9 +4,12 @@ import {buildCaseDetailsForSolutionPrompt} from "./buildCaseDetailsForSolutionPr
 import {buildCaseDetailsForSolutionResponseFormat} from "./responseFormat";
 import {validateBuildCaseDetailsForSolutionOutput} from "./validateBuildCaseDetailsForSolutionOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {
+  LiveMemoryIssueSolution,
+  LiveMemoryTopicOptimized
+} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
+type Solution = LiveMemoryIssueSolution;
 type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
 
 export type RunBuildCaseDetailsForSolutionInput = {

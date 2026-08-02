@@ -10,6 +10,11 @@ type FeatureRequestBranchOutput = {
   status: "processed";
   fallbackReason: null;
   say: string;
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: {
+    isRequested: boolean;
+    reason: string | null;
+  };
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
   internalOutputs: {
     branch: "feature_request";
@@ -23,19 +28,21 @@ async function runFeatureRequestBranch(
     status: "processed",
     fallbackReason: null,
     say: buildFeatureRequestMessage(),
+    topicStatus: "unsolved",
+    topicHandoverRequest: {
+      isRequested: true,
+      reason: "feature_request_received: topic finished as feature request and needs support review"
+    },
     sourceTopicManager: {
       ...input.sourceTopicManager,
-      currentStep: "idle",
-      resolutionStatus: {
-        value: "unsolved",
-        reason: "The topic is a feature request. The automated issue-resolution route does not treat this branch yet."
-      },
-      handover: {
-        isRequested: true,
-        reason: "feature_request_received: topic finished as feature request and needs support review"
-      },
-      idleMode: {
-        isActivated: true
+      workflows: {
+        ...input.sourceTopicManager.workflows,
+        featureRequest: {
+          ...input.sourceTopicManager.workflows.featureRequest,
+          idle: {
+            isActivated: true
+          }
+        }
       }
     },
     internalOutputs: {

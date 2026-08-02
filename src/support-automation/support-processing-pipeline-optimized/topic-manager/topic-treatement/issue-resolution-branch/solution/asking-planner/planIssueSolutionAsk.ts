@@ -4,9 +4,9 @@ import {buildDeterministicIssueSolutionAsk, buildIssueSolutionAskPrompt} from ".
 import {issueSolutionAskResponseFormat} from "./responseFormat";
 import {validateIssueSolutionAskPlannerOutput} from "./validateIssueSolutionAskPlannerOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryIssueSolution} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
+type Solution = LiveMemoryIssueSolution;
 
 export type PlanIssueSolutionAskInput = {
   previousConversationTurn: {

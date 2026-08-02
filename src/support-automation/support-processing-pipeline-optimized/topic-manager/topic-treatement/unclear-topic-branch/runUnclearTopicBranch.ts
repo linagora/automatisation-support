@@ -10,6 +10,11 @@ type UnclearTopicBranchOutput = {
   status: "processed";
   fallbackReason: null;
   say: string;
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: {
+    isRequested: boolean;
+    reason: string | null;
+  };
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
   internalOutputs: {
     branch: "unclear";
@@ -23,20 +28,13 @@ async function runUnclearTopicBranch(
     status: "processed",
     fallbackReason: null,
     say: buildUnclearTopicMessage(),
+    topicStatus: "in_progress",
+    topicHandoverRequest: {
+      isRequested: false,
+      reason: null
+    },
     sourceTopicManager: {
-      ...input.sourceTopicManager,
-      currentStep: "support_need_resolution",
-      resolutionStatus: {
-        value: "in_progress",
-        reason: "The system needs the user to clarify the kind of support needed."
-      },
-      handover: {
-        isRequested: false,
-        reason: null
-      },
-      idleMode: {
-        isActivated: false
-      }
+      ...input.sourceTopicManager
     },
     internalOutputs: {
       branch: "unclear"

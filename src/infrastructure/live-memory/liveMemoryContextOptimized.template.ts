@@ -79,25 +79,6 @@ export type LiveMemoryTopicOptimized = {
   };
 
   sourceTopicManager: {
-    currentStep:
-      | "support_need_resolution"
-      | "basic_qualification"
-      | "retrieve_knowledge"
-      | "deep_qualification"
-      | "solution"
-      | "idle"
-      | null;
-
-    resolutionStatus: {
-      value: "in_progress" | "solved_by_bot" | "unsolved";
-      reason: string | null;
-    };
-
-    handover: {
-      isRequested: boolean;
-      reason: string | null;
-    };
-
     supportNeedResolution: {
       supportNeed: {
         value:
@@ -110,91 +91,121 @@ export type LiveMemoryTopicOptimized = {
       };
     };
 
-    basicQualification: {
-      isBuilt: boolean;
-      isCompleted: boolean;
+    workflows: {
+      issueResolution: {
+        basicQualification: {
+          isBuilt: boolean;
+          isCompleted: boolean;
 
-      caseDetailsToAskBecauseOfBasicQualification: Array<{
-        key: string | null;
-        reason: string | null;
-        status: "asking" | "obtained" | "user_declared_unavailable";
-      }>;
-    };
-
-    retrieveKnowledge: {
-      isCompleted: boolean | "failed";
-
-      rankedSearch: {
-        isSearched: boolean;
-        rawRagKnowledge: unknown;
-      };
-
-      filter: {
-        isFiltered: boolean;
-        keptRawKnowledgeIds: string[];
-        filterExplanation: string | null;
-      };
-
-      selection: {
-        isClearSelected: boolean;
-        clarificationQuestion: string | null;
-        selectedRawKnowledgeIds: string[];
-        selectionExplanation: string | null;
-      };
-
-      segmentationKnowledge: {
-        isSegmented: boolean;
-        segmentedKnowledge: Array<{
-          rawKnowledgeId: string;
-          userFacingKnowledge: Array<{
-            text: string;
-            sourceHint: string | null;
-            sourceSpan: string | null;
+          caseDetailsToAskBecauseOfBasicQualification: Array<{
+            key: string | null;
+            reason: string | null;
+            status: "asking" | "obtained" | "user_declared_unavailable";
           }>;
-          supportFacingKnowledge: Array<{
-            text: string;
-            sourceHint: string | null;
-            sourceSpan: string | null;
+        };
+
+        retrieveKnowledge: {
+          isCompleted: boolean | "failed";
+          activeRetrievalId: string | null;
+          retrievalIds: string[];
+
+          rankedSearch: {
+            isSearched: boolean;
+          };
+
+          filter: {
+            isFiltered: boolean;
+            keptRawKnowledgeIds: string[];
+            filterExplanation: string | null;
+          };
+
+          selection: {
+            isClearSelected: boolean;
+            clarificationQuestion: string | null;
+            selectedRawKnowledgeIds: string[];
+            selectionExplanation: string | null;
+          };
+
+          segmentationKnowledge: {
+            isSegmented: boolean;
+          };
+        };
+
+        solution: {
+          isActionForUserBuilt: boolean;
+          isActionForSupportBuilt: boolean;
+          isCaseDetailsForSolutionBuilt: boolean;
+          isCompleted: boolean;
+
+          attemptedActionsToAskBecauseOfSolutionFound: Array<{
+            action: string | null;
+            reason: string | null;
+            status: "asking" | "succeeded" | "failed" | "user_declared_unavailable";
           }>;
-        }>;
+
+          caseDetailsToAskBecauseOfSolutionFound: Array<{
+            key: string;
+            question: string;
+            reason: string | null;
+            status: "asking" | "obtained" | "user_declared_unavailable";
+          }>;
+
+          actionToTakeForSupport: string | null;
+        };
+
+        deepQualification: {
+          isBuilt: boolean;
+          isCompleted: boolean;
+
+          caseDetailsToAskBecauseOfDeepQualification: Array<{
+            key: string | null;
+            reason: string | null;
+            status: "asking" | "obtained" | "user_declared_unavailable";
+          }>;
+        };
+
+        idle: {
+          isActivated: boolean;
+        };
       };
-    };
 
-    deepQualification: {
-      isBuilt: boolean;
-      isCompleted: boolean;
+      knowledgeAnswer: {
+        idle: {
+          isActivated: boolean;
+        };
+      };
 
-      caseDetailsToAskBecauseOfDeepQualification: Array<{
-        key: string | null;
-        reason: string | null;
-        status: "asking" | "obtained" | "user_declared_unavailable";
-      }>;
-    };
+      supportAction: {
+        idle: {
+          isActivated: boolean;
+        };
+      };
 
-    solution: {
-      isActionForUserBuilt: boolean;
-      isActionForSupportBuilt: boolean;
-      isCaseDetailsForSolutionBuilt: boolean;
-      isCompleted: boolean;
-
-      attemptedActionsToAskBecauseOfSolutionFound: Array<{
-        action: string | null;
-        reason: string | null;
-        status: "asking" | "succeeded" | "failed" | "user_declared_unavailable";
-      }>;
-
-      caseDetailsToAskBecauseOfSolutionFound: Array<{
-        key: string;
-        question: string;
-        reason: string | null;
-        status: "asking" | "obtained" | "user_declared_unavailable";
-      }>;
-
-      actionToTakeForSupport: string | null;
-    };
-
-    idleMode: {
-      isActivated: boolean;
+      featureRequest: {
+        idle: {
+          isActivated: boolean;
+        };
+      };
     };
   };
 };
+
+export type LiveMemoryIssueResolutionWorkflow =
+  LiveMemoryTopicOptimized[
+    "sourceTopicManager"
+  ]["workflows"]["issueResolution"];
+
+export type LiveMemoryIssueBasicQualification =
+  LiveMemoryIssueResolutionWorkflow["basicQualification"];
+
+export type LiveMemoryIssueRetrieveKnowledge =
+  LiveMemoryIssueResolutionWorkflow["retrieveKnowledge"];
+
+export type LiveMemoryIssueSolution =
+  LiveMemoryIssueResolutionWorkflow["solution"];
+
+export type LiveMemoryIssueDeepQualification =
+  LiveMemoryIssueResolutionWorkflow["deepQualification"];
+
+export type LiveMemoryIssueIdle =
+  LiveMemoryIssueResolutionWorkflow["idle"];

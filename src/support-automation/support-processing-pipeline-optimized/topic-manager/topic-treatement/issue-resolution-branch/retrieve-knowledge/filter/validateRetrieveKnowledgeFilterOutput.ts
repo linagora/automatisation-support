@@ -1,6 +1,6 @@
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryIssueRetrieveKnowledge} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type RetrieveKnowledgeFilter = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["filter"];
+type RetrieveKnowledgeFilter = LiveMemoryIssueRetrieveKnowledge["filter"];
 
 function validateRetrieveKnowledgeFilterOutput(
   parsedResponse: unknown,

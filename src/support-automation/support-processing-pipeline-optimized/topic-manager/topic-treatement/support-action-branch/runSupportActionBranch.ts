@@ -10,6 +10,11 @@ type SupportActionBranchOutput = {
   status: "processed";
   fallbackReason: null;
   say: string;
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: {
+    isRequested: boolean;
+    reason: string | null;
+  };
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
   internalOutputs: {
     branch: "support_action";
@@ -23,19 +28,21 @@ async function runSupportActionBranch(
     status: "processed",
     fallbackReason: null,
     say: buildSupportActionMessage(),
+    topicStatus: "unsolved",
+    topicHandoverRequest: {
+      isRequested: true,
+      reason: "support_action_requested: topic finished as support action request and needs support review"
+    },
     sourceTopicManager: {
       ...input.sourceTopicManager,
-      currentStep: "idle",
-      resolutionStatus: {
-        value: "unsolved",
-        reason: "The topic requires a support action rather than automated issue resolution."
-      },
-      handover: {
-        isRequested: true,
-        reason: "support_action_requested: topic finished as support action request and needs support review"
-      },
-      idleMode: {
-        isActivated: true
+      workflows: {
+        ...input.sourceTopicManager.workflows,
+        supportAction: {
+          ...input.sourceTopicManager.workflows.supportAction,
+          idle: {
+            isActivated: true
+          }
+        }
       }
     },
     internalOutputs: {

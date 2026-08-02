@@ -4,10 +4,7 @@ import {buildSegmentationKnowledgePrompt} from "./buildSegmentationKnowledgeProm
 import {segmentationKnowledgeResponseFormat} from "./responseFormat";
 import {validateSegmentationKnowledgeOutput} from "./validateSegmentationKnowledgeOutput";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 import type {RawKnowledgeCandidate} from "../ranked-search/runRankedSearch--oneShotStep";
-
-type SegmentationKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"]["segmentationKnowledge"];
 
 export type SegmentedKnowledgePiece = {
   text: string;
@@ -19,6 +16,11 @@ export type SegmentedKnowledgeBySource = {
   rawKnowledgeId: string;
   userFacingKnowledge: SegmentedKnowledgePiece[];
   supportFacingKnowledge: SegmentedKnowledgePiece[];
+};
+
+export type SegmentationKnowledge = {
+  isSegmented: boolean;
+  segmentedKnowledge: SegmentedKnowledgeBySource[];
 };
 
 export type RunSegmentationKnowledgeInput = {

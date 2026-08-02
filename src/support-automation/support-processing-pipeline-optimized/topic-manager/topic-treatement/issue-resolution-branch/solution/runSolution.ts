@@ -4,18 +4,20 @@ import {runBuildCaseDetailsForSolution} from "./build-case-details-for-solution/
 import {isSolutionCompleted} from "./isSolutionCompleted--blockingStep";
 import {planIssueSolutionAsk} from "./asking-planner/planIssueSolutionAsk";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {
+  LiveMemoryIssueSolution,
+  LiveMemoryTopicOptimized
+} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {SegmentedKnowledgeBySource} from "../retrieve-knowledge/segmentation-knowledge/runSegmentationKnowledge--oneShotStep";
 
-type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
-type RetrieveKnowledge = LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"];
+type Solution = LiveMemoryIssueSolution;
 type SourceTopicManager = LiveMemoryTopicOptimized["sourceTopicManager"];
 type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
 type AttemptedActionExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["attemptedActionsExtracted"][number];
-type SegmentationKnowledge = RetrieveKnowledge["segmentationKnowledge"];
 
 export type RunSolutionInput = {
   previousTopic: LiveMemoryTopicOptimized | null;
-  retrieveKnowledge: RetrieveKnowledge | null;
+  segmentedKnowledge: SegmentedKnowledgeBySource[] | null;
   summaryTopic: string | null;
   sourceTopicManager: SourceTopicManager;
   currentCaseDetailsExtracted: CaseDetailExtracted[];
@@ -33,11 +35,12 @@ export type RunSolutionOutput = {
 };
 
 async function runSolution(input: RunSolutionInput): Promise<RunSolutionOutput> {
-  let solution = input.previousTopic?.sourceTopicManager.solution ?? buildEmptySolution();
+  let solution =
+    input.previousTopic?.sourceTopicManager.workflows.issueResolution.solution ??
+    buildEmptySolution();
 
-  const retrieveKnowledge = input.retrieveKnowledge ?? input.previousTopic?.sourceTopicManager.retrieveKnowledge ?? null;
-  const userFacingKnowledgeText = buildUserFacingKnowledgeText(retrieveKnowledge?.segmentationKnowledge);
-  const supportFacingKnowledgeText = buildSupportFacingKnowledgeText(retrieveKnowledge?.segmentationKnowledge);
+  const userFacingKnowledgeText = buildUserFacingKnowledgeText(input.segmentedKnowledge);
+  const supportFacingKnowledgeText = buildSupportFacingKnowledgeText(input.segmentedKnowledge);
 
   if (userFacingKnowledgeText === null && supportFacingKnowledgeText === null) {
     return {
@@ -158,9 +161,9 @@ function buildAlreadyRequestedCaseDetailKeys(input: {
   solution: Solution;
 }): string[] {
   return [
-    ...input.sourceTopicManager.basicQualification.caseDetailsToAskBecauseOfBasicQualification,
-    ...input.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification,
-    ...input.sourceTopicManager.solution.caseDetailsToAskBecauseOfSolutionFound,
+    ...input.sourceTopicManager.workflows.issueResolution.basicQualification.caseDetailsToAskBecauseOfBasicQualification,
+    ...input.sourceTopicManager.workflows.issueResolution.deepQualification.caseDetailsToAskBecauseOfDeepQualification,
+    ...input.sourceTopicManager.workflows.issueResolution.solution.caseDetailsToAskBecauseOfSolutionFound,
     ...input.solution.caseDetailsToAskBecauseOfSolutionFound
   ]
     .map((caseDetail) => caseDetail.key)
@@ -172,7 +175,7 @@ function buildAlreadyRequestedCaseDetailQuestions(input: {
   solution: Solution;
 }): string[] {
   return [
-    ...input.sourceTopicManager.solution.caseDetailsToAskBecauseOfSolutionFound,
+    ...input.sourceTopicManager.workflows.issueResolution.solution.caseDetailsToAskBecauseOfSolutionFound,
     ...input.solution.caseDetailsToAskBecauseOfSolutionFound
   ]
     .map((caseDetail) => caseDetail.question)
@@ -180,9 +183,9 @@ function buildAlreadyRequestedCaseDetailQuestions(input: {
 }
 
 function buildUserFacingKnowledgeText(
-  segmentationKnowledge: SegmentationKnowledge | null | undefined
+  segmentedKnowledge: SegmentedKnowledgeBySource[] | null | undefined
 ): string | null {
-  const pieces = segmentationKnowledge?.segmentedKnowledge.flatMap((source) => {
+  const pieces = segmentedKnowledge?.flatMap((source) => {
     return source.userFacingKnowledge.map((piece) => {
       return formatKnowledgePiece(
         source.rawKnowledgeId,
@@ -197,9 +200,9 @@ function buildUserFacingKnowledgeText(
 }
 
 function buildSupportFacingKnowledgeText(
-  segmentationKnowledge: SegmentationKnowledge | null | undefined
+  segmentedKnowledge: SegmentedKnowledgeBySource[] | null | undefined
 ): string | null {
-  const pieces = segmentationKnowledge?.segmentedKnowledge.flatMap((source) => {
+  const pieces = segmentedKnowledge?.flatMap((source) => {
     return source.supportFacingKnowledge.map((piece) => {
       return formatKnowledgePiece(
         source.rawKnowledgeId,

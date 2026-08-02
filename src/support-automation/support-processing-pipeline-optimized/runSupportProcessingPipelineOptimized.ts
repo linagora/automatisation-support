@@ -26,6 +26,8 @@ import type {LiveMemoryTopicOptimized} from "../../infrastructure/live-memory/li
 import {buildMessage, type BuildMessageOutput} from "./composer-message/buildMessage";
 import {runTranslateMessage, type TranslateMessageOutput} from "./translator-message/runTranslateMessage";
 import {buildLiveMemoryPatches, type BuildLiveMemoryPatchesOutput} from "./build-live-memory-patches/buildLiveMemoryPatches";
+import type {KnowledgeMemory} from "../../infrastructure/live-memory/knowledgeMemory.template";
+import type {KnowledgeMemoryPatch} from "../../infrastructure/live-memory/knowledgeMemoryStore";
 
 import type {
   ReportSupportProcessingProgress,
@@ -43,6 +45,7 @@ type RunSupportProcessingPipelineV3OptimizedInput = {
   };
   latestUserAttachments: unknown[];
   liveMemory: SupportLiveMemoryInput;
+  knowledgeMemory: KnowledgeMemory;
   progress?: {
     report: ReportSupportProcessingProgress;
   };
@@ -102,6 +105,7 @@ type RunSupportProcessingPipelineV3OptimizedOutput = {
   fallbackReason: RunSupportProcessingPipelineV3OptimizedFallbackReason | null;
   userResponse: PipelineUserResponse;
   patches: PipelinePatch[];
+  knowledgeMemoryPatch: KnowledgeMemoryPatch;
   intermOutputs: RunSupportProcessingPipelineV3OptimizedIntermOutputs;
 };
 
@@ -311,6 +315,7 @@ async function runSupportProcessingPipelineV3Optimized(
           hasHandoverRequestedSurface(intermOutputs.analyzeTextSurfaceOutput)
         ),
         patches: extractPatches(intermOutputs.patchesOutput),
+        knowledgeMemoryPatch: {upsertRetrievals: []},
         intermOutputs
       };
     }
@@ -427,6 +432,7 @@ async function runSupportProcessingPipelineV3Optimized(
           return runTopicManager({
             topicUpdatePlan,
             currentTopic: selectCurrentTopic(input.liveMemory, topicUpdatePlan),
+            knowledgeMemory: input.knowledgeMemory,
             sourceFacts: selectSourceFacts({
               facts: supportTextFacts,
               topicUpdatePlan
@@ -441,6 +447,9 @@ async function runSupportProcessingPipelineV3Optimized(
       );
 
     intermOutputs.topicManagerOutputs = topicManagerOutputs;
+    const knowledgeMemoryPatch = buildKnowledgeMemoryPatchFromTopicManagers(
+      topicManagerOutputs
+    );
 
     const failedTopicManager =
       topicManagerOutputs.find((topicManagerOutput) => topicManagerOutput.status === "fallback");
@@ -504,6 +513,7 @@ async function runSupportProcessingPipelineV3Optimized(
           hasTopicManagerHandoverRequested(intermOutputs.topicManagerOutputs)
       ),
       patches: extractPatches(intermOutputs.patchesOutput),
+      knowledgeMemoryPatch,
       intermOutputs
     };
   }
@@ -554,10 +564,12 @@ function buildAnalyzeSupportTextPendingRequestedItems(
 } {
   return {
     caseDetailsToAsk: topics.flatMap((topic) => {
+      const issueResolution = topic.sourceTopicManager.workflows.issueResolution;
+
       return [
-        ...topic.sourceTopicManager.basicQualification.caseDetailsToAskBecauseOfBasicQualification,
-        ...topic.sourceTopicManager.deepQualification.caseDetailsToAskBecauseOfDeepQualification,
-        ...topic.sourceTopicManager.solution.caseDetailsToAskBecauseOfSolutionFound
+        ...issueResolution.basicQualification.caseDetailsToAskBecauseOfBasicQualification,
+        ...issueResolution.deepQualification.caseDetailsToAskBecauseOfDeepQualification,
+        ...issueResolution.solution.caseDetailsToAskBecauseOfSolutionFound
       ]
         .filter((field) => {
           return field.status === "asking" &&
@@ -572,7 +584,7 @@ function buildAnalyzeSupportTextPendingRequestedItems(
         }));
     }),
     attemptedActionsToAsk: topics.flatMap((topic) => {
-      return topic.sourceTopicManager.solution.attemptedActionsToAskBecauseOfSolutionFound
+      return topic.sourceTopicManager.workflows.issueResolution.solution.attemptedActionsToAskBecauseOfSolutionFound
         .filter((action) => {
           return action.status === "asking" &&
             typeof action.action === "string" &&
@@ -683,8 +695,20 @@ function hasTopicManagerHandoverRequested(
 ): boolean {
   return outputs?.some((output) => {
     return output.status === "processed" &&
-      output.sourceTopicManager.handover.isRequested === true;
+      output.topicHandoverRequest.isRequested === true;
   }) ?? false;
+}
+
+function buildKnowledgeMemoryPatchFromTopicManagers(
+  outputs: RunTopicManagerOutput[]
+): KnowledgeMemoryPatch {
+  return {
+    upsertRetrievals: outputs.flatMap((output) => {
+      return output.status === "processed"
+        ? output.knowledgeMemoryPatch.upsertRetrievals
+        : [];
+    })
+  };
 }
 
 function getTargetLanguage(
@@ -731,6 +755,7 @@ function buildPipelineFallback(params: {
         latestUserAttachmentsCount: params.input.latestUserAttachments.length
       }
     ],
+    knowledgeMemoryPatch: {upsertRetrievals: []},
     intermOutputs: params.intermOutputs
   };
 }
@@ -753,11 +778,16 @@ function buildNotAnalyzedOutput(params: {
         latestUserAttachmentsCount: params.input.latestUserAttachments.length
       }
     ],
+    knowledgeMemoryPatch: {upsertRetrievals: []},
     intermOutputs: params.intermOutputs
   };
 }
 
-export {runSupportProcessingPipelineV3Optimized};
+export {
+  buildAnalyzeSupportTextPendingRequestedItems,
+  hasTopicManagerHandoverRequested,
+  runSupportProcessingPipelineV3Optimized
+};
 
 export type {
   RunSupportProcessingPipelineV3OptimizedInput,

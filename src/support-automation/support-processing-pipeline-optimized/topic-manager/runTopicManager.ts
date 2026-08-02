@@ -4,6 +4,10 @@ import {runFeatureRequestBranch, type FeatureRequestBranchOutput} from "./topic-
 import {runKnowledgeAnswerBranch, type KnowledgeAnswerBranchOutput} from "./topic-treatement/knowledge-answer-branch/runKnowledgeAnswerBranch";
 import {runSupportActionBranch, type SupportActionBranchOutput} from "./topic-treatement/support-action-branch/runSupportActionBranch";
 import {runUnclearTopicBranch, type UnclearTopicBranchOutput} from "./topic-treatement/unclear-topic-branch/runUnclearTopicBranch";
+import {
+  getKnowledgeRetrievalById,
+  type KnowledgeMemoryPatch
+} from "../../../infrastructure/live-memory/knowledgeMemoryStore";
 
 import type {
   AnalyzeSupportTextAttemptedAction,
@@ -11,7 +15,15 @@ import type {
   AnalyzeSupportTextOther
 } from "../analyze-support-text-optimized/runAnalyzeSupportText";
 import type {TopicUpdatePlan} from "../propose-topic-updates-optimized/runProposeTopicUpdates";
-import type {LiveMemoryTopicOptimized} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {KnowledgeMemory} from "../../../infrastructure/live-memory/knowledgeMemory.template";
+import type {
+  LiveMemoryIssueBasicQualification,
+  LiveMemoryIssueDeepQualification,
+  LiveMemoryIssueIdle,
+  LiveMemoryIssueRetrieveKnowledge,
+  LiveMemoryIssueSolution,
+  LiveMemoryTopicOptimized
+} from "../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type CurrentUserMessage = {
   content: string;
@@ -35,9 +47,15 @@ type TopicRoutedSupportFacts = {
   otherExtracted: AnalyzeSupportTextOther[];
 };
 
+type TopicHandoverRequest = {
+  isRequested: boolean;
+  reason: string | null;
+};
+
 type RunTopicManagerInput = {
   topicUpdatePlan: TopicUpdatePlan;
   currentTopic: LiveMemoryTopicOptimized | null;
+  knowledgeMemory: KnowledgeMemory;
   sourceFacts: TopicRoutedSupportFacts;
   currentUserMessage: CurrentUserMessage;
   previousConversationTurn: PreviousConversationTurn;
@@ -47,6 +65,9 @@ type RunTopicManagerProcessedOutput = {
   status: "processed";
   fallbackReason: null;
   topicPlannerOutput: TopicPlannerOutput;
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: TopicHandoverRequest;
+  knowledgeMemoryPatch: KnowledgeMemoryPatch;
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
   intermediateOutputs: RunTopicManagerIntermediateOutputs;
 };
@@ -55,6 +76,9 @@ type RunTopicManagerFallbackOutput = {
   status: "fallback";
   fallbackReason: unknown;
   topicPlannerOutput: null;
+  topicStatus: null;
+  topicHandoverRequest: null;
+  knowledgeMemoryPatch: null;
   sourceTopicManager: null;
   intermediateOutputs: RunTopicManagerIntermediateOutputs;
 };
@@ -103,15 +127,7 @@ async function runTopicManager(input: RunTopicManagerInput): Promise<RunTopicMan
 
     sourceTopicManager = {
       ...sourceTopicManager,
-      currentStep: "support_need_resolution",
-      supportNeedResolution: supportNeedResolutionOutput.supportNeedResolution,
-      resolutionStatus: {
-        value: "in_progress",
-        reason: "The support need has been reassessed from the latest topic update."
-      },
-      idleMode: {
-        isActivated: false
-      }
+      supportNeedResolution: supportNeedResolutionOutput.supportNeedResolution
     };
 
     const treatmentOutput = await runTopicTreatment({
@@ -130,6 +146,9 @@ async function runTopicManager(input: RunTopicManagerInput): Promise<RunTopicMan
     return buildProcessedOutput({
       topicUpdatePlan: input.topicUpdatePlan,
       say: treatmentOutput.say,
+      topicStatus: treatmentOutput.topicStatus,
+      topicHandoverRequest: treatmentOutput.topicHandoverRequest,
+      knowledgeMemoryPatch: extractKnowledgeMemoryPatch(treatmentOutput),
       sourceTopicManager: treatmentOutput.sourceTopicManager,
       intermediateOutputs
     });
@@ -158,7 +177,11 @@ async function runTopicTreatment(params: {
       sourceFacts: params.input.sourceFacts,
       currentUserMessage: params.input.currentUserMessage,
       previousConversationTurn: params.input.previousConversationTurn,
-      sourceTopicManager: params.sourceTopicManager
+      sourceTopicManager: params.sourceTopicManager,
+      activeKnowledgeRetrieval: getActiveKnowledgeRetrieval({
+        knowledgeMemory: params.input.knowledgeMemory,
+        sourceTopicManager: params.sourceTopicManager
+      })
     });
 
     params.intermediateOutputs.issueResolutionBranchOutput = output;
@@ -210,22 +233,9 @@ function buildInitialSourceTopicManager(
   const previousSourceTopicManager = currentTopic?.sourceTopicManager;
 
   return {
-    currentStep: previousSourceTopicManager?.currentStep ?? null,
     supportNeedResolution:
       previousSourceTopicManager?.supportNeedResolution ?? buildEmptySupportNeedResolution(),
-    basicQualification: previousSourceTopicManager?.basicQualification ?? buildEmptyBasicQualification(),
-    retrieveKnowledge: previousSourceTopicManager?.retrieveKnowledge ?? buildEmptyRetrieveKnowledge(),
-    deepQualification: previousSourceTopicManager?.deepQualification ?? buildEmptyDeepQualification(),
-    solution: previousSourceTopicManager?.solution ?? buildEmptySolution(),
-    idleMode: previousSourceTopicManager?.idleMode ?? {isActivated: false},
-    resolutionStatus: previousSourceTopicManager?.resolutionStatus ?? {
-      value: "in_progress",
-      reason: "The topic manager has started processing this topic."
-    },
-    handover: previousSourceTopicManager?.handover ?? {
-      isRequested: false,
-      reason: null
-    }
+    workflows: previousSourceTopicManager?.workflows ?? buildEmptyWorkflows()
   };
 }
 
@@ -238,7 +248,28 @@ function buildEmptySupportNeedResolution(): LiveMemoryTopicOptimized["sourceTopi
   };
 }
 
-function buildEmptyBasicQualification(): LiveMemoryTopicOptimized["sourceTopicManager"]["basicQualification"] {
+function buildEmptyWorkflows(): LiveMemoryTopicOptimized["sourceTopicManager"]["workflows"] {
+  return {
+    issueResolution: {
+      basicQualification: buildEmptyBasicQualification(),
+      retrieveKnowledge: buildEmptyRetrieveKnowledge(),
+      solution: buildEmptySolution(),
+      deepQualification: buildEmptyDeepQualification(),
+      idle: buildEmptyIdle()
+    },
+    knowledgeAnswer: {
+      idle: buildEmptyIdle()
+    },
+    supportAction: {
+      idle: buildEmptyIdle()
+    },
+    featureRequest: {
+      idle: buildEmptyIdle()
+    }
+  };
+}
+
+function buildEmptyBasicQualification(): LiveMemoryIssueBasicQualification {
   return {
     isBuilt: false,
     isCompleted: false,
@@ -246,12 +277,13 @@ function buildEmptyBasicQualification(): LiveMemoryTopicOptimized["sourceTopicMa
   };
 }
 
-function buildEmptyRetrieveKnowledge(): LiveMemoryTopicOptimized["sourceTopicManager"]["retrieveKnowledge"] {
+function buildEmptyRetrieveKnowledge(): LiveMemoryIssueRetrieveKnowledge {
   return {
     isCompleted: false,
+    activeRetrievalId: null,
+    retrievalIds: [],
     rankedSearch: {
-      isSearched: false,
-      rawRagKnowledge: null
+      isSearched: false
     },
     filter: {
       isFiltered: false,
@@ -265,13 +297,12 @@ function buildEmptyRetrieveKnowledge(): LiveMemoryTopicOptimized["sourceTopicMan
       selectionExplanation: null
     },
     segmentationKnowledge: {
-      isSegmented: false,
-      segmentedKnowledge: []
+      isSegmented: false
     }
   };
 }
 
-function buildEmptyDeepQualification(): LiveMemoryTopicOptimized["sourceTopicManager"]["deepQualification"] {
+function buildEmptyDeepQualification(): LiveMemoryIssueDeepQualification {
   return {
     isBuilt: false,
     isCompleted: false,
@@ -279,7 +310,7 @@ function buildEmptyDeepQualification(): LiveMemoryTopicOptimized["sourceTopicMan
   };
 }
 
-function buildEmptySolution(): LiveMemoryTopicOptimized["sourceTopicManager"]["solution"] {
+function buildEmptySolution(): LiveMemoryIssueSolution {
   return {
     isActionForUserBuilt: false,
     isActionForSupportBuilt: false,
@@ -291,9 +322,16 @@ function buildEmptySolution(): LiveMemoryTopicOptimized["sourceTopicManager"]["s
   };
 }
 
+function buildEmptyIdle(): LiveMemoryIssueIdle {
+  return {isActivated: false};
+}
+
 function buildProcessedOutput(params: {
   topicUpdatePlan: TopicUpdatePlan;
   say: string;
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: TopicHandoverRequest;
+  knowledgeMemoryPatch: KnowledgeMemoryPatch;
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
   intermediateOutputs: RunTopicManagerIntermediateOutputs;
 }): RunTopicManagerProcessedOutput {
@@ -305,6 +343,9 @@ function buildProcessedOutput(params: {
       title: params.topicUpdatePlan.title,
       say: params.say
     },
+    topicStatus: params.topicStatus,
+    topicHandoverRequest: params.topicHandoverRequest,
+    knowledgeMemoryPatch: params.knowledgeMemoryPatch,
     sourceTopicManager: params.sourceTopicManager,
     intermediateOutputs: params.intermediateOutputs
   };
@@ -318,9 +359,32 @@ function buildFallbackOutput(params: {
     status: "fallback",
     fallbackReason: params.fallbackReason,
     topicPlannerOutput: null,
+    topicStatus: null,
+    topicHandoverRequest: null,
+    knowledgeMemoryPatch: null,
     sourceTopicManager: null,
     intermediateOutputs: params.intermediateOutputs
   };
+}
+
+function getActiveKnowledgeRetrieval(input: {
+  knowledgeMemory: KnowledgeMemory;
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
+}) {
+  const activeRetrievalId =
+    input.sourceTopicManager.workflows.issueResolution.retrieveKnowledge.activeRetrievalId;
+
+  return activeRetrievalId
+    ? getKnowledgeRetrievalById(input.knowledgeMemory, activeRetrievalId)
+    : null;
+}
+
+function extractKnowledgeMemoryPatch(
+  output: TopicTreatmentOutput
+): KnowledgeMemoryPatch {
+  return "knowledgeMemoryPatch" in output
+    ? output.knowledgeMemoryPatch
+    : {upsertRetrievals: []};
 }
 
 function buildEmptyIntermediateOutputs(): RunTopicManagerIntermediateOutputs {
@@ -341,6 +405,7 @@ export type {
   PreviousConversationTurn,
   RunTopicManagerInput,
   RunTopicManagerOutput,
+  TopicHandoverRequest,
   TopicRoutedSupportFacts,
   TopicPlannerOutput
 };

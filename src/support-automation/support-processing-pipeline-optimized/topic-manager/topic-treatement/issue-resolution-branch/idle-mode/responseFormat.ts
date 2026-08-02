@@ -6,22 +6,12 @@ const idleModeResponseFormat = {
     schema: {
       type: "object",
       additionalProperties: false,
-      required: ["resolutionStatus", "handover", "say"],
+      required: ["topicStatus", "topicHandoverRequest", "say"],
       properties: {
-        resolutionStatus: {
-          type: "object",
-          additionalProperties: false,
-          required: ["value", "reason"],
-          properties: {
-            value: {
-              enum: ["solved_by_bot", "unsolved"]
-            },
-            reason: {
-              type: ["string", "null"]
-            }
-          }
+        topicStatus: {
+          enum: ["solved_by_bot", "unsolved"]
         },
-        handover: {
+        topicHandoverRequest: {
           type: "object",
           additionalProperties: false,
           required: ["isRequested", "reason"],

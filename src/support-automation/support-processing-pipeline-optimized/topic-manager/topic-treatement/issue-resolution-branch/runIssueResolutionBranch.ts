@@ -6,7 +6,12 @@ import {runSolution} from "./solution/runSolution";
 import {runIdleMode} from "./idle-mode/runIdleMode";
 
 import type {TopicUpdatePlan} from "../../../propose-topic-updates-optimized/runProposeTopicUpdates";
-import type {LiveMemoryTopicOptimized} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {KnowledgeMemoryPatch} from "../../../../../infrastructure/live-memory/knowledgeMemoryStore";
+import type {KnowledgeMemoryRetrieval} from "../../../../../infrastructure/live-memory/knowledgeMemory.template";
+import type {
+  LiveMemoryIssueResolutionWorkflow,
+  LiveMemoryTopicOptimized
+} from "../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type CurrentCaseDetailExtracted =
   LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
@@ -33,12 +38,19 @@ type IssueResolutionBranchInput = {
     previousBotMessage: string | null;
   };
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
+  activeKnowledgeRetrieval: KnowledgeMemoryRetrieval | null;
 };
 
 type IssueResolutionBranchProcessedOutput = {
   status: "processed";
   fallbackReason: null;
   say: string;
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: {
+    isRequested: boolean;
+    reason: string | null;
+  };
+  knowledgeMemoryPatch: KnowledgeMemoryPatch;
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
   internalOutputs: IssueResolutionInternalOutputs;
 };
@@ -70,12 +82,13 @@ async function runIssueResolutionBranch(
 
   try {
     let sourceTopicManager = input.sourceTopicManager;
+    let activeKnowledgeRetrieval = input.activeKnowledgeRetrieval;
     const supportDomain = input.topicUpdatePlan.supportDomain.value;
     const summaryTopic = input.topicUpdatePlan.summaryTopic;
     const currentCaseDetailsExtracted = input.sourceFacts.caseDetailsExtracted;
     const currentAttemptedActionsExtracted = input.sourceFacts.attemptedActionsExtracted;
 
-    if (sourceTopicManager.idleMode.isActivated === true) {
+    if (sourceTopicManager.workflows.issueResolution.idle.isActivated === true) {
       const idleModeOutput = await runIdleMode({
         mode: "reevaluate_existing_idle",
         topicId: input.topicUpdatePlan.topicId ?? null,
@@ -87,14 +100,23 @@ async function runIssueResolutionBranch(
       internalOutputs.idleModeOutput = idleModeOutput;
       sourceTopicManager = {
         ...sourceTopicManager,
-        currentStep: "idle",
-        resolutionStatus: idleModeOutput.resolutionStatus,
-        handover: idleModeOutput.handover,
-        idleMode: idleModeOutput.idleMode
+        workflows: {
+          ...sourceTopicManager.workflows,
+          issueResolution: {
+            ...sourceTopicManager.workflows.issueResolution,
+            idle: idleModeOutput.idleMode
+          }
+        }
       };
 
       return buildProcessedOutput({
-        say: idleModeOutput.say ?? buildIdleAcknowledgement(sourceTopicManager),
+        say: idleModeOutput.say ?? buildIdleAcknowledgement({
+          topicStatus: idleModeOutput.topicStatus,
+          topicHandoverRequest: idleModeOutput.topicHandoverRequest
+        }),
+        topicStatus: idleModeOutput.topicStatus,
+        topicHandoverRequest: idleModeOutput.topicHandoverRequest,
+        knowledgeMemoryPatch: buildEmptyKnowledgeMemoryPatch(),
         sourceTopicManager,
         internalOutputs
       });
@@ -108,25 +130,26 @@ async function runIssueResolutionBranch(
     });
 
     internalOutputs.basicQualificationOutput = basicQualificationOutput;
-    sourceTopicManager = markInProgress({
-      ...sourceTopicManager,
-      currentStep: basicQualificationOutput.say ? "basic_qualification" : sourceTopicManager.currentStep,
+    sourceTopicManager = updateIssueResolution(sourceTopicManager, {
       basicQualification: basicQualificationOutput.basicQualification,
-      idleMode: {
-        isActivated: false
-      }
+      idle: {isActivated: false}
     });
 
     if (basicQualificationOutput.say) {
       return buildProcessedOutput({
         say: basicQualificationOutput.say,
+        topicStatus: "in_progress",
+        topicHandoverRequest: buildNoTopicHandoverRequest(),
+        knowledgeMemoryPatch: buildEmptyKnowledgeMemoryPatch(),
         sourceTopicManager,
         internalOutputs
       });
     }
 
     const retrieveKnowledgeOutput = await runRetrieveKnowledge({
-      previousRetrieveKnowledge: sourceTopicManager.retrieveKnowledge,
+      previousRetrieveKnowledge: sourceTopicManager.workflows.issueResolution.retrieveKnowledge,
+      activeKnowledgeRetrieval,
+      topicId: input.topicUpdatePlan.topicId ?? null,
       summaryTopic,
       currentUserMessage: input.currentUserMessage,
       previousConversationTurn: input.previousConversationTurn,
@@ -134,18 +157,22 @@ async function runIssueResolutionBranch(
     });
 
     internalOutputs.retrieveKnowledgeOutput = retrieveKnowledgeOutput;
-    sourceTopicManager = markInProgress({
-      ...sourceTopicManager,
-      currentStep: retrieveKnowledgeOutput.say ? "retrieve_knowledge" : sourceTopicManager.currentStep,
+    activeKnowledgeRetrieval = getActiveKnowledgeRetrievalAfterPatch({
+      previous: activeKnowledgeRetrieval,
+      patch: retrieveKnowledgeOutput.knowledgeMemoryPatch,
+      activeRetrievalId: retrieveKnowledgeOutput.retrieveKnowledge.activeRetrievalId
+    });
+    sourceTopicManager = updateIssueResolution(sourceTopicManager, {
       retrieveKnowledge: retrieveKnowledgeOutput.retrieveKnowledge,
-      idleMode: {
-        isActivated: false
-      }
+      idle: {isActivated: false}
     });
 
     if (retrieveKnowledgeOutput.say) {
       return buildProcessedOutput({
         say: retrieveKnowledgeOutput.say,
+        topicStatus: "in_progress",
+        topicHandoverRequest: buildNoTopicHandoverRequest(),
+        knowledgeMemoryPatch: retrieveKnowledgeOutput.knowledgeMemoryPatch,
         sourceTopicManager,
         internalOutputs
       });
@@ -153,7 +180,7 @@ async function runIssueResolutionBranch(
 
     const solutionOutput = await runSolution({
       previousTopic: input.currentTopic,
-      retrieveKnowledge: sourceTopicManager.retrieveKnowledge,
+      segmentedKnowledge: activeKnowledgeRetrieval?.segmentedKnowledge ?? null,
       summaryTopic,
       sourceTopicManager,
       currentCaseDetailsExtracted,
@@ -163,18 +190,17 @@ async function runIssueResolutionBranch(
     });
 
     internalOutputs.solutionOutput = solutionOutput;
-    sourceTopicManager = markInProgress({
-      ...sourceTopicManager,
-      currentStep: solutionOutput.say ? "solution" : sourceTopicManager.currentStep,
+    sourceTopicManager = updateIssueResolution(sourceTopicManager, {
       solution: solutionOutput.solution,
-      idleMode: {
-        isActivated: false
-      }
+      idle: {isActivated: false}
     });
 
     if (solutionOutput.say) {
       return buildProcessedOutput({
         say: solutionOutput.say,
+        topicStatus: "in_progress",
+        topicHandoverRequest: buildNoTopicHandoverRequest(),
+        knowledgeMemoryPatch: retrieveKnowledgeOutput.knowledgeMemoryPatch,
         sourceTopicManager,
         internalOutputs
       });
@@ -184,24 +210,23 @@ async function runIssueResolutionBranch(
       supportDomain,
       previousTopic: input.currentTopic,
       currentCaseDetailsExtracted,
-      retrieveKnowledge: sourceTopicManager.retrieveKnowledge,
+      segmentedKnowledge: activeKnowledgeRetrieval?.segmentedKnowledge ?? null,
       currentUserMessage: input.currentUserMessage,
       previousConversationTurn: input.previousConversationTurn
     });
 
     internalOutputs.deepQualificationOutput = deepQualificationOutput;
-    sourceTopicManager = markInProgress({
-      ...sourceTopicManager,
-      currentStep: deepQualificationOutput.say ? "deep_qualification" : sourceTopicManager.currentStep,
+    sourceTopicManager = updateIssueResolution(sourceTopicManager, {
       deepQualification: deepQualificationOutput.deepQualification,
-      idleMode: {
-        isActivated: false
-      }
+      idle: {isActivated: false}
     });
 
     if (deepQualificationOutput.say) {
       return buildProcessedOutput({
         say: deepQualificationOutput.say,
+        topicStatus: "in_progress",
+        topicHandoverRequest: buildNoTopicHandoverRequest(),
+        knowledgeMemoryPatch: retrieveKnowledgeOutput.knowledgeMemoryPatch,
         sourceTopicManager,
         internalOutputs
       });
@@ -218,14 +243,23 @@ async function runIssueResolutionBranch(
     internalOutputs.idleModeOutput = idleModeOutput;
     sourceTopicManager = {
       ...sourceTopicManager,
-      currentStep: "idle",
-      resolutionStatus: idleModeOutput.resolutionStatus,
-      handover: idleModeOutput.handover,
-      idleMode: idleModeOutput.idleMode
+      workflows: {
+        ...sourceTopicManager.workflows,
+        issueResolution: {
+          ...sourceTopicManager.workflows.issueResolution,
+          idle: idleModeOutput.idleMode
+        }
+      }
     };
 
     return buildProcessedOutput({
-      say: idleModeOutput.say ?? buildIdleAcknowledgement(sourceTopicManager),
+      say: idleModeOutput.say ?? buildIdleAcknowledgement({
+        topicStatus: idleModeOutput.topicStatus,
+        topicHandoverRequest: idleModeOutput.topicHandoverRequest
+      }),
+      topicStatus: idleModeOutput.topicStatus,
+      topicHandoverRequest: idleModeOutput.topicHandoverRequest,
+      knowledgeMemoryPatch: retrieveKnowledgeOutput.knowledgeMemoryPatch,
       sourceTopicManager,
       internalOutputs
     });
@@ -240,30 +274,34 @@ async function runIssueResolutionBranch(
   }
 }
 
-function markInProgress(
-  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
+function updateIssueResolution(
+  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"],
+  patch: Partial<LiveMemoryIssueResolutionWorkflow>
 ): LiveMemoryTopicOptimized["sourceTopicManager"] {
   return {
     ...sourceTopicManager,
-    resolutionStatus: {
-      value: "in_progress",
-      reason: "The issue-resolution route is still collecting information or waiting for a user action."
-    },
-    handover: {
-      isRequested: false,
-      reason: null
+    workflows: {
+      ...sourceTopicManager.workflows,
+      issueResolution: {
+        ...sourceTopicManager.workflows.issueResolution,
+        ...patch
+      }
     }
   };
 }
 
-function buildIdleAcknowledgement(
-  sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
-): string {
-  if (sourceTopicManager.handover.isRequested) {
+function buildIdleAcknowledgement(input: {
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: {
+    isRequested: boolean;
+    reason: string | null;
+  };
+}): string {
+  if (input.topicHandoverRequest.isRequested) {
     return "Thanks. I’ve kept this update with the topic and will pass it to the support team.";
   }
 
-  if (sourceTopicManager.resolutionStatus.value === "solved_by_bot") {
+  if (input.topicStatus === "solved_by_bot") {
     return "Great, I’m glad this is working now. I’ll keep the topic marked as resolved.";
   }
 
@@ -272,6 +310,12 @@ function buildIdleAcknowledgement(
 
 function buildProcessedOutput(params: {
   say: string;
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: {
+    isRequested: boolean;
+    reason: string | null;
+  };
+  knowledgeMemoryPatch: KnowledgeMemoryPatch;
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
   internalOutputs: IssueResolutionInternalOutputs;
 }): IssueResolutionBranchProcessedOutput {
@@ -279,8 +323,49 @@ function buildProcessedOutput(params: {
     status: "processed",
     fallbackReason: null,
     say: params.say,
+    topicStatus: params.topicStatus,
+    topicHandoverRequest: params.topicHandoverRequest,
+    knowledgeMemoryPatch: params.knowledgeMemoryPatch,
     sourceTopicManager: params.sourceTopicManager,
     internalOutputs: params.internalOutputs
+  };
+}
+
+function getActiveKnowledgeRetrievalAfterPatch(input: {
+  previous: KnowledgeMemoryRetrieval | null;
+  patch: KnowledgeMemoryPatch;
+  activeRetrievalId: string | null;
+}): KnowledgeMemoryRetrieval | null {
+  if (!input.activeRetrievalId) {
+    return null;
+  }
+
+  for (let index = input.patch.upsertRetrievals.length - 1; index >= 0; index -= 1) {
+    const retrieval = input.patch.upsertRetrievals[index];
+
+    if (retrieval.retrievalId === input.activeRetrievalId) {
+      return retrieval;
+    }
+  }
+
+  return input.previous?.retrievalId === input.activeRetrievalId
+    ? input.previous
+    : null;
+}
+
+function buildEmptyKnowledgeMemoryPatch(): KnowledgeMemoryPatch {
+  return {
+    upsertRetrievals: []
+  };
+}
+
+function buildNoTopicHandoverRequest(): {
+  isRequested: boolean;
+  reason: string | null;
+} {
+  return {
+    isRequested: false,
+    reason: null
   };
 }
 
@@ -307,7 +392,10 @@ function buildEmptyIssueResolutionInternalOutputs(): IssueResolutionInternalOutp
   };
 }
 
-export {runIssueResolutionBranch};
+export {
+  getActiveKnowledgeRetrievalAfterPatch,
+  runIssueResolutionBranch
+};
 
 export type {
   IssueResolutionBranchInput,

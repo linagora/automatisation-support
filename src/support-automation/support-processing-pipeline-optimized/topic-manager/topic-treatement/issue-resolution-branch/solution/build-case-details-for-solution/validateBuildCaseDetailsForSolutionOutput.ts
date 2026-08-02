@@ -1,8 +1,11 @@
 import {formatCatalogSelection} from "../../../../../analyze-support-text-optimized/catalogSelection";
 
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {
+  LiveMemoryIssueSolution,
+  LiveMemoryTopicOptimized
+} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type Solution = LiveMemoryTopicOptimized["sourceTopicManager"]["solution"];
+type Solution = LiveMemoryIssueSolution;
 type SolutionCaseDetailToAsk = Solution["caseDetailsToAskBecauseOfSolutionFound"][number];
 type CaseDetailExtracted = LiveMemoryTopicOptimized["sourceAnalyzeSupportText"]["caseDetailsExtracted"][number];
 

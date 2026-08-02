@@ -10,6 +10,11 @@ type KnowledgeAnswerBranchOutput = {
   status: "processed";
   fallbackReason: null;
   say: string;
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: {
+    isRequested: boolean;
+    reason: string | null;
+  };
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"];
   internalOutputs: {
     branch: "knowledge_answer";
@@ -23,19 +28,21 @@ async function runKnowledgeAnswerBranch(
     status: "processed",
     fallbackReason: null,
     say: buildKnowledgeAnswerMessage(),
+    topicStatus: "unsolved",
+    topicHandoverRequest: {
+      isRequested: true,
+      reason: "knowledge_question_received: topic finished as knowledge question and needs support review"
+    },
     sourceTopicManager: {
       ...input.sourceTopicManager,
-      currentStep: "idle",
-      resolutionStatus: {
-        value: "unsolved",
-        reason: "The topic is a knowledge question. The dedicated knowledge-answer route is not implemented yet."
-      },
-      handover: {
-        isRequested: true,
-        reason: "knowledge_question_received: topic finished as knowledge question and needs support review"
-      },
-      idleMode: {
-        isActivated: true
+      workflows: {
+        ...input.sourceTopicManager.workflows,
+        knowledgeAnswer: {
+          ...input.sourceTopicManager.workflows.knowledgeAnswer,
+          idle: {
+            isActivated: true
+          }
+        }
       }
     },
     internalOutputs: {

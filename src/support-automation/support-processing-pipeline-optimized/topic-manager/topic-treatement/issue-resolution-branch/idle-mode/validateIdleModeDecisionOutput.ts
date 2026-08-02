@@ -1,11 +1,13 @@
 import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type ResolutionStatus = LiveMemoryTopicOptimized["sourceTopicManager"]["resolutionStatus"];
-type Handover = LiveMemoryTopicOptimized["sourceTopicManager"]["handover"];
+type TopicHandoverRequest = {
+  isRequested: boolean;
+  reason: string | null;
+};
 
 type IdleModeDecisionOutput = {
-  resolutionStatus: ResolutionStatus;
-  handover: Handover;
+  topicStatus: Extract<LiveMemoryTopicOptimized["status"], "solved_by_bot" | "unsolved">;
+  topicHandoverRequest: TopicHandoverRequest;
   say: string | null;
 };
 
@@ -17,10 +19,10 @@ function validateIdleModeDecisionOutput(
   }
 
   const raw = value as Record<string, unknown>;
-  const resolutionStatus = validateResolutionStatus(raw.resolutionStatus);
-  const handover = validateHandover(raw.handover);
+  const topicStatus = validateTopicStatus(raw.topicStatus);
+  const topicHandoverRequest = validateTopicHandoverRequest(raw.topicHandoverRequest);
 
-  if (!resolutionStatus || !handover) {
+  if (!topicStatus || !topicHandoverRequest) {
     return null;
   }
 
@@ -28,43 +30,24 @@ function validateIdleModeDecisionOutput(
     return null;
   }
 
-  if (resolutionStatus.value === "solved_by_bot" && handover.isRequested) {
-    return null;
-  }
-
   return {
-    resolutionStatus,
-    handover,
+    topicStatus,
+    topicHandoverRequest,
     say: typeof raw.say === "string" && raw.say.trim() !== ""
       ? raw.say.trim()
       : null
   };
 }
 
-function validateResolutionStatus(value: unknown): ResolutionStatus | null {
-  if (!value || typeof value !== "object") {
-    return null;
-  }
-
-  const raw = value as Record<string, unknown>;
-
-  if (raw.value !== "solved_by_bot" && raw.value !== "unsolved") {
-    return null;
-  }
-
-  if (raw.reason !== null && typeof raw.reason !== "string") {
-    return null;
-  }
-
-  return {
-    value: raw.value,
-    reason: typeof raw.reason === "string" && raw.reason.trim() !== ""
-      ? raw.reason.trim()
-      : null
-  } as ResolutionStatus;
+function validateTopicStatus(
+  value: unknown
+): IdleModeDecisionOutput["topicStatus"] | null {
+  return value === "solved_by_bot" || value === "unsolved"
+    ? value
+    : null;
 }
 
-function validateHandover(value: unknown): Handover | null {
+function validateTopicHandoverRequest(value: unknown): TopicHandoverRequest | null {
   if (!value || typeof value !== "object") {
     return null;
   }
@@ -84,7 +67,7 @@ function validateHandover(value: unknown): Handover | null {
     reason: typeof raw.reason === "string" && raw.reason.trim() !== ""
       ? raw.reason.trim()
       : null
-  } as Handover;
+  };
 }
 
 export {validateIdleModeDecisionOutput};

@@ -1,4 +1,7 @@
-import type {LiveMemoryTopicOptimized} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {
+  LiveMemoryIssueIdle,
+  LiveMemoryTopicOptimized
+} from "../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
 type RunIdleModeInput = {
   mode: "finalize_after_solution" | "reevaluate_existing_idle";
@@ -13,9 +16,12 @@ type RunIdleModeInput = {
 
 type RunIdleModeOutput = {
   say: string | null;
-  resolutionStatus: LiveMemoryTopicOptimized["sourceTopicManager"]["resolutionStatus"];
-  handover: LiveMemoryTopicOptimized["sourceTopicManager"]["handover"];
-  idleMode: LiveMemoryTopicOptimized["sourceTopicManager"]["idleMode"];
+  topicStatus: LiveMemoryTopicOptimized["status"];
+  topicHandoverRequest: {
+    isRequested: boolean;
+    reason: string | null;
+  };
+  idleMode: LiveMemoryIssueIdle;
 };
 
 async function runIdleMode(input: RunIdleModeInput): Promise<RunIdleModeOutput> {
@@ -33,7 +39,7 @@ async function runIdleMode(input: RunIdleModeInput): Promise<RunIdleModeOutput> 
 function hasSucceededProposedAction(
   sourceTopicManager: LiveMemoryTopicOptimized["sourceTopicManager"]
 ): boolean {
-  return sourceTopicManager.solution.attemptedActionsToAskBecauseOfSolutionFound.some(
+  return sourceTopicManager.workflows.issueResolution.solution.attemptedActionsToAskBecauseOfSolutionFound.some(
     (action) => action.status === "succeeded"
   );
 }
@@ -41,11 +47,8 @@ function hasSucceededProposedAction(
 function buildResolvedIdleOutput(input: RunIdleModeInput): RunIdleModeOutput {
   return {
     say: buildResolvedMessage(),
-    resolutionStatus: {
-      value: "solved_by_bot",
-      reason: "At least one proposed action was confirmed successful by the user."
-    },
-    handover: {
+    topicStatus: "solved_by_bot",
+    topicHandoverRequest: {
       isRequested: true,
       reason: buildHandoverReason({
         label: "issue_finished_resolved",
@@ -62,11 +65,8 @@ function buildResolvedIdleOutput(input: RunIdleModeInput): RunIdleModeOutput {
 function buildUnresolvedIdleOutput(input: RunIdleModeInput): RunIdleModeOutput {
   return {
     say: buildUnresolvedMessage(),
-    resolutionStatus: {
-      value: "unsolved",
-      reason: "No proposed action was confirmed successful by the user."
-    },
-    handover: {
+    topicStatus: "unsolved",
+    topicHandoverRequest: {
       isRequested: true,
       reason: buildHandoverReason({
         label: "issue_finished_unresolved_need_review",

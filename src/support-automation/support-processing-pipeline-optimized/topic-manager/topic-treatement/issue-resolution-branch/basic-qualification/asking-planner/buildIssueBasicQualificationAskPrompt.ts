@@ -1,9 +1,9 @@
 import {getBasicIssueFieldAskPrompt} from "../qualificationRules.catalog";
 
 import type {LLMMessage} from "../../../../../../../infrastructure/llm/llm-client";
-import type {LiveMemoryTopicOptimized} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
+import type {LiveMemoryIssueBasicQualification} from "../../../../../../../infrastructure/live-memory/liveMemoryContextOptimized.template";
 
-type BasicQualification = LiveMemoryTopicOptimized["sourceTopicManager"]["basicQualification"];
+type BasicQualification = LiveMemoryIssueBasicQualification;
 type FieldToAsk = BasicQualification["caseDetailsToAskBecauseOfBasicQualification"][number] & {
   status: "asking";
 };
